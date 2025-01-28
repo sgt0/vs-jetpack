@@ -135,7 +135,7 @@ class _dre_edgemask(CustomEnum):
         if self is self.CLAHE:  # type: ignore
             limit, tile = kwargs.get('limit', 0.0305), kwargs.get('tile', 5)
 
-            return depth(depth(clip, 16).vszip.CLAHE(scale_delta(limit, 32, 16), tile), clip)
+            return depth(depth(clip, 16).vszip.CLAHE(int(scale_delta(limit, 32, 16)), tile), clip)
 
         return clip
 
