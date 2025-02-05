@@ -12,8 +12,8 @@ from vssource import IMWRI, Indexer
 from vstools import (
     ColorRange, CustomOverflowError, FileNotExistsError, FilePathType, FrameRangeN, FrameRangesN,
     Matrix, VSFunction, check_variable, core, depth, fallback, get_lowest_value, get_neutral_value,
-    get_neutral_values, get_peak_value, get_y, iterate, normalize_ranges, replace_ranges,
-    scale_value, scale_delta, vs, vs_object
+    get_neutral_values, get_peak_value, get_y, iterate, limiter, normalize_ranges, replace_ranges,
+    scale_delta, scale_value, vs, vs_object
 )
 
 from .abstract import DeferredMask, GeneralMask
@@ -222,9 +222,12 @@ class HardsubSign(HardsubMask):
         self.expand_mode = expand_mode
         super().__init__(*args, **kwargs)
 
+    @limiter
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+        assert clip.format
+
         hsmf = norm_expr([clip, ref], 'x y - abs')
-        hsmf = Bilinear.resample(hsmf, clip.format.replace(subsampling_w=0, subsampling_h=0))  # type: ignore
+        hsmf = Bilinear.resample(hsmf, clip.format.replace(subsampling_w=0, subsampling_h=0))
 
         hsmf = ExprOp.MAX(hsmf, split_planes=True)
 
@@ -233,7 +236,7 @@ class HardsubSign(HardsubMask):
         hsmf = Morpho.expand(hsmf, self.expand, mode=self.expand_mode)
         hsmf = Morpho.inflate(hsmf, iterations=self.inflate)
 
-        return hsmf.std.Limiter()
+        return hsmf
 
 
 class HardsubLine(HardsubMask):
@@ -314,6 +317,7 @@ class HardsubASS(HardsubMask):
         self.shift = shift
         super().__init__(*args, **kwargs)
 
+    @limiter
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         ref = ref[0] * self.shift + ref if self.shift else ref
         mask = ref.sub.TextFile(self.filename, fontdir=self.fontdir, blend=False).std.PropToClip('_Alpha')
@@ -321,7 +325,7 @@ class HardsubASS(HardsubMask):
         mask = mask.std.Binarize(1)
         mask = iterate(mask, core.std.Maximum, 3)
         mask = iterate(mask, core.std.Inflate, 3)
-        return mask.std.Limiter()
+        return mask
 
 
 def bounded_dehardsub(
@@ -342,6 +346,7 @@ def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> vs.Vid
     )
 
 
+@limiter
 def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask]) -> vs.VideoNode:
     assert check_variable(hrdsb, get_all_sign_masks)
     assert check_variable(ref, get_all_sign_masks)
@@ -353,4 +358,4 @@ def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[Hards
     for sign in signs:
         mask = replace_ranges(mask, ExprOp.ADD.combine(mask, max_planes(sign.get_mask(hrdsb, ref))), sign.ranges)
 
-    return mask.std.Limiter()
+    return mask

@@ -6,8 +6,8 @@ from typing import Any, Sequence
 from vsexprtools import ExprOp
 from vsrgtools import box_blur
 from vstools import (
-    ColorRange, FrameRangeN, FrameRangesN, FramesLengthError, Position, Size,
-    check_variable, depth, inject_self, normalize_seq, replace_ranges, vs
+    ColorRange, FrameRangeN, FrameRangesN, FramesLengthError, Position, Size, check_variable, depth,
+    inject_self, limiter, normalize_seq, replace_ranges, vs
 )
 
 __all__ = [
@@ -66,6 +66,7 @@ class DeferredMask(GeneralMask):
                 self.__class__, '', 'Received reference frame and range list size mismatch!'
             )
 
+    @limiter
     def get_mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         assert check_variable(clip, self.get_mask)
         assert check_variable(ref, self.get_mask)
@@ -101,7 +102,7 @@ class DeferredMask(GeneralMask):
 
             hm = hm.std.BlankClip(keep=True).std.MaskedMerge(hm, bm)
 
-        return hm.std.Limiter()
+        return hm
 
     @abstractmethod
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:

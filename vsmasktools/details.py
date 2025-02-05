@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vsexprtools import ExprOp
 from vsrgtools import RemoveGrainMode, RemoveGrainModeT, bilateral, gauss_blur, removegrain
-from vstools import check_variable, get_y, plane, vs
+from vstools import check_variable, get_y, limiter, plane, vs
 
 from .edge import Kirsch, MinMax, Prewitt, PrewittTCanny
 from .masks import range_mask
@@ -18,6 +18,7 @@ __all__ = [
 ]
 
 
+@limiter
 def detail_mask(
     clip: vs.VideoNode, brz_mm: float, brz_ed: float,
     minmax: MinMax = MinMax(rady=3, radc=2),
@@ -34,9 +35,10 @@ def detail_mask(
     mask = removegrain(mask, 22)
     mask = removegrain(mask, 11)
 
-    return mask.std.Limiter()
+    return mask
 
 
+@limiter
 def detail_mask_neo(
     clip: vs.VideoNode, sigma: float = 1.0, detail_brz: float = 0.05, lines_brz: float = 0.08,
     edgemask: GenericMaskT = Prewitt, rg_mode: RemoveGrainModeT = RemoveGrainMode.MINMAX_MEDIAN_OPP
@@ -60,9 +62,10 @@ def detail_mask_neo(
 
     merged = ExprOp.ADD.combine(blur_pref, prew_mask)
 
-    return removegrain(merged, rg_mode).std.Limiter()
+    return removegrain(merged, rg_mode)
 
 
+@limiter
 def simple_detail_mask(
     clip: vs.VideoNode, sigma: float | None = None, rad: int = 3, brz_a: float = 0.025, brz_b: float = 0.045
 ) -> vs.VideoNode:
@@ -76,7 +79,7 @@ def simple_detail_mask(
 
     mask = ExprOp.MAX.combine(mask_a, mask_b)
 
-    return removegrain(removegrain(mask, 22), 11).std.Limiter()
+    return removegrain(removegrain(mask, 22), 11)
 
 
 def multi_detail_mask(clip: vs.VideoNode, thr: float = 0.015) -> vs.VideoNode:

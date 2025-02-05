@@ -6,7 +6,7 @@ from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
 from vstools import (
     ColorRange, ConvMode, CustomEnum, VSFunctionAllArgs, check_variable, depth, get_peak_value,
-    get_y, plane, scale_mask, scale_value, scale_delta, vs
+    get_y, limiter, plane, scale_delta, scale_mask, scale_value, vs
 )
 
 from .details import multi_detail_mask
@@ -44,7 +44,8 @@ def ringing_mask(
 
     blur_kernel = BlurMatrix.BINOMIAL(1, mode=ConvMode.SQUARE)
 
-    edgemask = normalize_mask(credit_mask, plane(clip, 0), **kwargs).std.Limiter()
+    edgemask = normalize_mask(credit_mask, plane(clip, 0), **kwargs)
+    edgemask = limiter(edgemask)
 
     light = norm_expr(edgemask, f'x {thlimi} - {thma - thmi} / {ExprToken.RangeMax} *')
 
