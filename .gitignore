@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+.eggs/
+parts/
+sdist/
+wheels/
+*.egg-info/
+*.egg
+
+.env
+.venv
+env/
+venv/
+
+# DEVELOPERS:
+# Before adding a file directory to this .gitignore,
+# check if it should maybe go in your local .gitignore
+# (.git/info/exclude), or your own user-wide .gitignore
+# (https://sebastiandedeyne.com/setting-up-a-global-gitignore-file/)
+# instead.
+# Repository-specific files (Python cache files, build artifacts,
+# coverage reports, etc.) should go in here, user-specific files
+# (IDE folders, video index files, etc.) shouldn't.
