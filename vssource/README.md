@@ -6,23 +6,7 @@
 
 A wrapper for DVD file structure and ISO files.
 
-For support you can check out the [JET Discord server](https://discord.gg/XTpc6Fa9eB). <br><br> <br><br>
-
-## How to install
-
-Install `vssource` with the following command:
-
-```sh
-pip install vssource
-```
-
-Or if you want the latest git version, install it with this command:
-
-```sh
-pip install git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-source.git
-```
-
-<br>
+## Dependencies
 One of the following plugins is required:
 
 - [dvdsrc2](https://github.com/jsaowji/dvdsrc2/)

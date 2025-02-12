@@ -11,19 +11,3 @@ src = ...
 
 dehaloed = fine_dehalo(src)
 ```
-
-## How to install
-
-Install `vsdehalo` with the following command:
-
-```sh
-pip install vsdehalo
-```
-
-Or if you want the latest git version, install it with this command:
-
-```sh
-pip install git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-dehalo.git
-```
-
-<br>
