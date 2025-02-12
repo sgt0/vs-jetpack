@@ -3,7 +3,7 @@ name: Lint Python code with Ruff
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - '**.py'
   pull_request:
@@ -36,4 +36,4 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Running ruff
-        run: ruff check vstools
+        run: ruff check stgpytools vstools vskernels vsexprtools vsrgtools vsmasktools vsaa vsscale vsdenoise vsdehalo vsdeband vsdeinterlace vssource

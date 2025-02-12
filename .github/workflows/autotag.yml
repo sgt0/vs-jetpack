@@ -2,20 +2,20 @@ name: Check and create tag
 on:
   push:
     branches:
-      - master
+      - main
     paths:
-      - vstools/_metadata.py
+      - _metadata.py
 
 jobs:
   new_version:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get version number
         run: |
-          echo "CURR_VER=v$(python -c "import runpy;runpy.run_path('vstools/_metadata.py', None, '__github__')")" >> $GITHUB_ENV
+          echo "CURR_VER=v$(python -c "import runpy;runpy.run_path('_metadata.py', None, '__github__')")" >> $GITHUB_ENV
       - name: Check if version exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
