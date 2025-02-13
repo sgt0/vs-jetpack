@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable, Iterable, Sequence, TypeAlias, TypeVar
 
 import vapoursynth as vs
-from stgpytools import (
+from jetpytools import (
     F0, F1, F2, P0, P1, P2, R0, R1, R2, T0, T1, T2, ByteData, ComparatorFunc, F, KwargsT, Nb, P, R, R_contra, Self,
     SimpleByteData, SimpleByteDataArray, SingleOrArr, SingleOrArrOpt, SingleOrSeq, SingleOrSeqOpt, SoftRange,
     SoftRangeN, SoftRangesN, SupportsAllComparisons, SupportsDunderGE, SupportsDunderGT, SupportsDunderLE,

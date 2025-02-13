@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Literal, overload
 
 import vapoursynth as vs
-from stgpytools import KwargsT
+from jetpytools import KwargsT
 from vstools import PropEnum
 
 from ..enums import ChromaLocation, ColorRange, Matrix, Primaries, Transfer

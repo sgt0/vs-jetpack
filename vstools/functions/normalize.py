@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Any, Iterable, Sequence, overload
 
 import vapoursynth as vs
-from stgpytools import T, norm_display_name, norm_func_name, normalize_list_to_ranges, to_arr
-from stgpytools import (
-    flatten as stg_flatten,
-    invert_ranges as stg_invert_ranges,
+from jetpytools import T, norm_display_name, norm_func_name, normalize_list_to_ranges, to_arr
+from jetpytools import (
+    flatten as jetp_flatten,
+    invert_ranges as jetp_invert_ranges,
     normalize_range as normalize_franges,
-    normalize_ranges as stg_normalize_ranges,
-    normalize_seq as stg_normalize_seq
+    normalize_ranges as jetp_normalize_ranges,
+    normalize_seq as jetp_normalize_seq
 )
 
 from ..types import FrameRangeN, FrameRangesN, PlanesT, VideoNodeIterable
@@ -40,7 +40,7 @@ def normalize_seq(val: T | Sequence[T], length: int = 3) -> list[T]:
 def normalize_seq(val: T | Sequence[T], length: int = 3) -> list[T]:
     """Normalize a sequence to the given length."""
 
-    return stg_normalize_seq(val, length)
+    return jetp_normalize_seq(val, length)
 
 
 def normalize_planes(clip: vs.VideoNode, planes: PlanesT = None) -> list[int]:
@@ -87,7 +87,7 @@ def flatten(items: Any) -> Any:
     if isinstance(items, (vs.RawNode, vs.RawFrame)):
         yield items
     else:
-        yield from stg_flatten(items)
+        yield from jetp_flatten(items)
 
 
 def flatten_vnodes(
@@ -142,7 +142,7 @@ def normalize_ranges(clip: vs.VideoNode, ranges: FrameRangeN | FrameRangesN) -> 
     :return:            List of positive frame ranges.
     """
 
-    return stg_normalize_ranges(ranges, clip.num_frames)
+    return jetp_normalize_ranges(ranges, clip.num_frames)
 
 
 def invert_ranges(
@@ -167,4 +167,4 @@ def invert_ranges(
     :return:                A list of inverted frame ranges.
     """
 
-    return stg_invert_ranges(ranges, clipa.num_frames, None if clipb is None else clipb.num_frames)
+    return jetp_invert_ranges(ranges, clipa.num_frames, None if clipb is None else clipb.num_frames)

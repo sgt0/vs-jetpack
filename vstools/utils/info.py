@@ -4,7 +4,7 @@ from fractions import Fraction
 from typing import Any, SupportsFloat, overload
 
 import vapoursynth as vs
-from stgpytools import fallback, mod_x
+from jetpytools import fallback, mod_x
 
 from ..exceptions import UnsupportedSubsamplingError
 from ..functions import depth, disallow_variable_format

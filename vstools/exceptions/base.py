@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from stgpytools import (
+from jetpytools import (
     CustomError, CustomIndexError, CustomKeyError, CustomNotImplementedError, CustomOverflowError,
     CustomPermissionError, CustomRuntimeError, CustomTypeError, CustomValueError
 )

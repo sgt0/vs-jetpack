@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, MutableMapping, TypeVar, cast
 
-from stgpytools import T
+from jetpytools import T
 
 from ..functions import Keyframes
 from ..types import vs_object

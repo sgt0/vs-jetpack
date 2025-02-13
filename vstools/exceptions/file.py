@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from stgpytools import (
+from jetpytools import (
     FileIsADirectoryError, FileNotExistsError, FilePermissionError, FileTypeMismatchError, FileWasNotFoundError
 )
 

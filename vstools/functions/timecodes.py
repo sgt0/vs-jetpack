@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Iterable, NamedTuple, TypeVar, overload
 
 import vapoursynth as vs
-from stgpytools import CustomValueError, FilePathType, FuncExceptT, LinearRangeLut, Sentinel, SPath, inject_self
+from jetpytools import CustomValueError, FilePathType, FuncExceptT, LinearRangeLut, Sentinel, SPath, inject_self
 
 from ..enums import Matrix, SceneChangeMode
 from ..exceptions import FramesLengthError, InvalidTimecodeVersionError

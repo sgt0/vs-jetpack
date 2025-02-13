@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, NamedTuple, TypeAlias, Union
 
 import vapoursynth as vs
-from stgpytools import FuncExceptT, classproperty
+from jetpytools import FuncExceptT, classproperty
 
 from ..exceptions import (
     ReservedMatrixError, ReservedPrimariesError, ReservedTransferError, UndefinedMatrixError, UndefinedPrimariesError,

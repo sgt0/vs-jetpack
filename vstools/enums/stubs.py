@@ -4,7 +4,7 @@ from string import capwords
 from typing import TYPE_CHECKING, Any, Iterable, TypeVar, overload
 
 import vapoursynth as vs
-from stgpytools import MISSING, CustomError, CustomIntEnum, FuncExceptT, classproperty
+from jetpytools import MISSING, CustomError, CustomIntEnum, FuncExceptT, classproperty
 
 __all__ = [
     'PropEnum',

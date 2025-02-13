@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil
 from typing import Any, Callable
 
-from stgpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params
 from vstools import core, fallback, inject_self, vs
 
 from ..types import LeftShift, TopShift

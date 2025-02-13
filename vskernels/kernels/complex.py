@@ -3,7 +3,7 @@ from __future__ import annotations
 from math import ceil
 from typing import TYPE_CHECKING, Any, SupportsFloat, TypeVar, Union, cast
 
-from stgpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params
 from vstools import (
     Dar, KwargsT, Resolution, Sar, VSFunctionAllArgs, check_correct_subsampling, fallback, inject_self, vs
 )

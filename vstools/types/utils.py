@@ -4,7 +4,7 @@ from abc import ABC, ABCMeta
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
-from stgpytools import (
+from jetpytools import (
     KwargsNotNone, LinearRangeLut, Singleton, cachedproperty, classproperty, complex_hash, copy_signature,
     get_subclasses, inject_self, to_singleton
 )

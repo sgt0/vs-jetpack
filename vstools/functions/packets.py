@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile
 from typing import Self, TypedDict
 
 import vapoursynth as vs
-from stgpytools import CustomValueError, DependencyNotFoundError, FuncExceptT, SPath, SPathLike
+from jetpytools import CustomValueError, DependencyNotFoundError, FuncExceptT, SPath, SPathLike
 
 from .file import PackageStorage
 from .timecodes import Keyframes

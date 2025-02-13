@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import partial
 from typing import Any
 
-from stgpytools import CustomIntEnum
+from jetpytools import CustomIntEnum
 from vsdenoise import MVTools
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr

@@ -8,7 +8,7 @@ from weakref import WeakValueDictionary
 
 import vapoursynth as vs
 
-from stgpytools import CustomIndexError, CustomStrEnum, CustomValueError, FuncExceptT, normalize_seq
+from jetpytools import CustomIndexError, CustomStrEnum, CustomValueError, FuncExceptT, normalize_seq
 
 from ..enums import ColorRange, ColorRangeT, Matrix
 from ..exceptions import ClipLengthError, InvalidColorFamilyError

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, auto
 from typing import Any, ClassVar, NoReturn, Sequence, TypeAlias
 
-from stgpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vstools import (
     ColorRange, CustomRuntimeError, CustomValueError, DitherType, FuncExceptT, KwargsT, PlanesT, T,

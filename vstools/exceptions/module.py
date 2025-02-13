@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from stgpytools import CustomImportError, DependencyNotFoundError, FuncExceptT, SupportsString
+from jetpytools import CustomImportError, DependencyNotFoundError, FuncExceptT, SupportsString
 
 __all__ = [
     'CustomImportError',

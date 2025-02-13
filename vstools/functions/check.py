@@ -5,7 +5,7 @@ from functools import partial, wraps
 from typing import Any, Callable, TypeGuard, cast, overload
 
 import vapoursynth as vs
-from stgpytools import CustomError, F, FuncExceptT
+from jetpytools import CustomError, F, FuncExceptT
 
 from ..exceptions import (
     FormatsRefClipMismatchError, ResolutionsRefClipMismatchError, VariableFormatError, VariableResolutionError

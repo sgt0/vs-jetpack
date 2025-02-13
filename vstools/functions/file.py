@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from stgpytools import CustomRuntimeError, SPath, get_script_path
+from jetpytools import CustomRuntimeError, SPath, get_script_path
 
 __all__ = [
     'PackageStorage'

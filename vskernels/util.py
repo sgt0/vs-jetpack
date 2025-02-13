@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from math import exp
 from typing import Any, ClassVar, cast
 
-from stgpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params
 from vstools import (
     ConstantFormatVideoNode, CustomRuntimeError, CustomValueError, HoldsVideoFormatT, InvalidTransferError, Matrix,
     MatrixT, Transfer, cachedproperty, depth, get_video_format, inject_self, to_singleton, vs

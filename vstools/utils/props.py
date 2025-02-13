@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, MutableMapping, Literal, TypeVa
 
 import vapoursynth as vs
 
-from stgpytools import MISSING, FileWasNotFoundError, FuncExceptT, MissingT, SPath, SPathLike, SupportsString
+from jetpytools import MISSING, FileWasNotFoundError, FuncExceptT, MissingT, SPath, SPathLike, SupportsString
 
 from ..enums import PropEnum
 from ..exceptions import FramePropError

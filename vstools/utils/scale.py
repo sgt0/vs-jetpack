@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Sequence
 
 import vapoursynth as vs
-from stgpytools import normalize_seq
+from jetpytools import normalize_seq
 
 from ..enums import ColorRange, ColorRangeT
 from ..types import HoldsVideoFormatT, VideoFormatT

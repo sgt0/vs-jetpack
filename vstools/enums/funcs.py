@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, TypeAlias, Union
 
-from stgpytools import CustomIntEnum, CustomStrEnum
+from jetpytools import CustomIntEnum, CustomStrEnum
 
 __all__ = [
     'ConvMode',

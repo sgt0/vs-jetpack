@@ -4,7 +4,7 @@ from fractions import Fraction
 from typing import TYPE_CHECKING, Any, Iterable, Sized
 
 import vapoursynth as vs
-from stgpytools import (
+from jetpytools import (
     CustomKeyError, CustomOverflowError, CustomValueError, FuncExceptT, MismatchError, MismatchRefError, SupportsString
 )
 

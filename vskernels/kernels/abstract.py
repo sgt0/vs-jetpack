@@ -5,7 +5,7 @@ from inspect import Signature
 from math import ceil
 from typing import Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
 
-from stgpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params
 from vstools import (
     CustomIndexError, CustomRuntimeError, CustomValueError, FieldBased, FuncExceptT, GenericVSFunction,
     HoldsVideoFormatT, KwargsT, Matrix, MatrixT, T, VideoFormatT, check_correct_subsampling, check_variable_resolution,

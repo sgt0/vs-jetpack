@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from stgpytools import CustomValueError, NotFoundEnumValue
+from jetpytools import CustomValueError, NotFoundEnumValue
 
 __all__ = [
     'UndefinedChromaLocationError',

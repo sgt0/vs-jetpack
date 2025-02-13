@@ -7,8 +7,8 @@ from math import floor
 from typing import BinaryIO, Callable, Literal, overload
 
 import vapoursynth as vs
-from stgpytools import CustomRuntimeError, CustomValueError, Sentinel, T, normalize_list_to_ranges
-from stgpytools.types.funcs import SentinelDispatcher
+from jetpytools import CustomRuntimeError, CustomValueError, Sentinel, T, normalize_list_to_ranges
+from jetpytools.types.funcs import SentinelDispatcher
 
 from ..exceptions import InvalidColorFamilyError
 from .progress import get_render_progress

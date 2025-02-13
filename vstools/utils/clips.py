@@ -4,7 +4,7 @@ import inspect
 from functools import partial, wraps
 from typing import Any, Callable, Literal, TypeVar, cast, overload
 
-from stgpytools import CustomValueError, FuncExceptT, KwargsT, T, fallback
+from jetpytools import CustomValueError, FuncExceptT, KwargsT, T, fallback
 
 from ..enums import (
     ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix, MatrixT, Primaries,

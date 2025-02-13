@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, TypeAlias, Union
 
 import vapoursynth as vs
-from stgpytools import FuncExceptT
+from jetpytools import FuncExceptT
 
 from ..exceptions import (
     UndefinedChromaLocationError, UndefinedFieldBasedError, UnsupportedChromaLocationError,

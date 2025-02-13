@@ -28,13 +28,6 @@ setuptools.setup(
     install_requires=requirements,
     python_requires='>=3.10',
     packages=[
-        'stgpytools',
-        'stgpytools.enums',
-        'stgpytools.exceptions',
-        'stgpytools.functions',
-        'stgpytools.types',
-        'stgpytools.utils',
-
         'vstools',
         'vstools.enums',
         'vstools.exceptions',

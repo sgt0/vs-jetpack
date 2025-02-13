@@ -5,7 +5,7 @@ from math import gcd as max_common_div
 from typing import Callable, Iterable, Literal, NamedTuple, TypeVar, overload
 
 import vapoursynth as vs
-from stgpytools import Coordinate, CustomIntEnum, CustomStrEnum, FuncExceptT, Position, Sentinel, Size
+from jetpytools import Coordinate, CustomIntEnum, CustomStrEnum, FuncExceptT, Position, Sentinel, Size
 
 from ..types import HoldsPropValueT
 

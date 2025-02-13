@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from stgpytools import Sentinel, StrList
+from jetpytools import Sentinel, StrList
 
 __all__ = [
     'StrList',

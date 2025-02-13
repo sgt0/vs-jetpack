@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, Union
 
 import vapoursynth as vs
-from stgpytools import MISSING, DataType, FuncExceptT, MissingT, PassthroughC, SingleOrArr, StrArr, StrArrOpt
+from jetpytools import MISSING, DataType, FuncExceptT, MissingT, PassthroughC, SingleOrArr, StrArr, StrArrOpt
 
 __all__ = [
     'MissingT', 'MISSING',

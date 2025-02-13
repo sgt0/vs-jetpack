@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from stgpytools import CustomEnum, CustomIntEnum, CustomStrEnum, SelfEnum
+from jetpytools import CustomEnum, CustomIntEnum, CustomStrEnum, SelfEnum
 
 __all__ = [
     'SelfEnum',

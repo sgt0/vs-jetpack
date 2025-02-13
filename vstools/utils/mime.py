@@ -8,7 +8,7 @@ from os import path
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeGuard
 
-from stgpytools import (
+from jetpytools import (
     CustomRuntimeError, CustomStrEnum, CustomValueError, FilePathType, FuncExceptT, complex_hash, inject_self
 )
 

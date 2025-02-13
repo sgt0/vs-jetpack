@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable, Sequence
 
 import vapoursynth as vs
-from stgpytools import FuncExceptT, T, cachedproperty, fallback, iterate, kwargs_fallback, normalize_seq, to_arr
+from jetpytools import FuncExceptT, T, cachedproperty, fallback, iterate, kwargs_fallback, normalize_seq, to_arr
 
 from vstools.exceptions.color import InvalidColorspacePathError
 

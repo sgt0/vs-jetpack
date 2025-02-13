@@ -3,7 +3,7 @@ from math import sqrt
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import vapoursynth as vs
-from stgpytools import CustomIntEnum, FuncExceptT, KwargsT, inject_self, interleave_arr
+from jetpytools import CustomIntEnum, FuncExceptT, KwargsT, inject_self, interleave_arr
 
 from ..enums import Matrix, Primaries, Transfer
 from ..enums.color import _norm_props_enums

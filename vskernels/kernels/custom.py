@@ -1,5 +1,5 @@
 from __future__ import annotations
-from stgpytools import CustomValueError, DependencyNotFoundError, KwargsT, inject_self
+from jetpytools import CustomValueError, DependencyNotFoundError, KwargsT, inject_self
 from inspect import Signature
 from math import ceil
 
