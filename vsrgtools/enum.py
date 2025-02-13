@@ -18,7 +18,7 @@ __all__ = [
     'RemoveGrainMode', 'RemoveGrainModeT',
     'RepairMode', 'RepairModeT',
     'VerticalCleanerMode', 'VerticalCleanerModeT',
-    'BlurMatrixBase', 'BlurMatrix'
+    'BlurMatrixBase', 'BlurMatrix', 'BilateralBackend'
 ]
 
 
@@ -440,3 +440,9 @@ class BlurMatrix(CustomIntEnum):
             kernel = kernel.outer()
 
         return kernel
+
+
+class BilateralBackend(CustomIntEnum):
+    CPU = 0
+    GPU = 1
+    GPU_RTC = 2

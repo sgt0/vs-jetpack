@@ -11,7 +11,7 @@ from vstools import (
     TempConvModeT, check_variable, core, depth, get_depth, join, normalize_planes, normalize_seq, split, to_arr, vs
 )
 
-from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode
+from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode, BilateralBackend
 from .freqs import MeanMode
 from .limit import limit_filter
 from .util import normalize_radius
@@ -295,16 +295,16 @@ def bilateral(
     ref: vs.VideoNode | None = None, radius: int | list[int] | None = None,
     device_id: int = 0, num_streams: int | None = None, use_shared_memory: bool = True,
     block_x: int | None = None, block_y: int | None = None, planes: PlanesT = None,
-    *, gpu: bool | None = None
+    *, backend: BilateralBackend = BilateralBackend.CPU
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
     sigmaS, sigmaR = func.norm_seq(sigmaS), func.norm_seq(sigmaR)
 
-    if gpu is not False:
+    if backend in (BilateralBackend.GPU, BilateralBackend.GPU_RTC):
         basic_args, new_args = (sigmaS, sigmaR, radius, device_id), (num_streams, use_shared_memory)
 
-        if hasattr(core, 'bilateralgpu_rtc'):
+        if backend == BilateralBackend.GPU_RTC:
             return clip.bilateralgpu_rtc.Bilateral(*basic_args, *new_args, block_x, block_y, ref)
         else:
             return clip.bilateralgpu.Bilateral(*basic_args, *new_args, ref)
