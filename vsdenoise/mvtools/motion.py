@@ -1,35 +1,30 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NamedTuple
 
 from vstools import vs
 
-from .enums import MVDirection
+from .enums import MVDirection, MVToolsPlugin, FinestMode
 
 __all__ = [
     'MotionVectors',
+
+    'SuperClips'
 ]
 
 
 class MotionVectors:
-    """Class for storing and managing motion vectors for a video clip."""
-
     vmulti: vs.VideoNode
-    """Super-sampled clip used for motion vector analysis."""
+    """Super analyzed clip."""
 
-    analysis_data: dict[str, Any]
-    """Dictionary containing motion vector analysis data."""
-
-    scaled: bool
-    """Whether motion vectors have been scaled."""
+    kwargs: dict[str, Any]
 
     temporal_vectors: dict[MVDirection, dict[int, vs.VideoNode]]
-    """Dictionary containing both backward and forward motion vectors."""
+    """Dict containing backwards and forwards motion vectors."""
 
     def __init__(self) -> None:
         self._init_vects()
-        self.analysis_data = dict()
-        self.scaled = False
+        self.vmulti = None  # type: ignore
         self.kwargs = dict[str, Any]()
 
     def _init_vects(self) -> None:
@@ -37,41 +32,82 @@ class MotionVectors:
 
     @property
     def has_vectors(self) -> bool:
-        """Check if motion vectors are available."""
+        """Whether the instance uses bidirectional motion vectors."""
 
         return bool(
             (self.temporal_vectors[MVDirection.BACK] and self.temporal_vectors[MVDirection.FWRD]) or self.vmulti
         )
 
+    def has_mv(self, direction: MVDirection, delta: int) -> bool:
+        """
+        Returns whether the motion vector exists.
+
+        :param direction:   Which direction the motion vector was analyzed.
+        :param delta:       Delta with which the motion vector was analyzed.
+
+        :return:            Whether the motion vector exists.
+        """
+
+        return delta in self.temporal_vectors[direction]
+
     def get_mv(self, direction: MVDirection, delta: int) -> vs.VideoNode:
         """
-        Retrieve a specific motion vector.
+        Get the motion vector.
 
-        :param direction:    Direction of the motion vector (forward or backward).
-        :param delta:        Frame distance for the motion vector.
+        :param direction:   Which direction the motion vector was analyzed.
+        :param delta:       Delta with which the motion vector was analyzed.
 
-        :return:             The requested motion vector clip.
+        :return:            Motion vector.
         """
 
         return self.temporal_vectors[direction][delta]
 
-    def set_mv(self, direction: MVDirection, delta: int, vector: vs.VideoNode) -> None:
+    def set_mv(self, direction: MVDirection, delta: int, vect: vs.VideoNode) -> None:
         """
-        Store a motion vector.
+        Sets the motion vector.
 
-        :param direction:    Direction of the motion vector (forward or backward).
-        :param delta:        Frame distance for the motion vector.
-        :param vect:         Motion vector clip to store.
+        :param direction:   Which direction the motion vector was analyzed.
+        :param delta:       Delta with which the motion vector was analyzed.
         """
 
-        self.temporal_vectors[direction][delta] = vector
+        self.temporal_vectors[direction][delta] = vect
 
     def clear(self) -> None:
-        """Clear all stored motion vectors and reset the instance."""
+        """Deletes all :py:class:`vsdenoise.mvtools.MotionVectors` attributes."""
 
         del self.vmulti
-        self.analysis_data.clear()
-        self.scaled = False
         self.kwargs.clear()
         self.temporal_vectors.clear()
         self._init_vects()
+
+    def calculate_vectors(
+        self, delta: int, mvtools: MVToolsPlugin, supers: SuperClips, recalc: bool, finest: FinestMode, **kwargs: Any
+    ) -> None:
+        for direction in MVDirection:
+            if not recalc:
+                vect = mvtools.Analyse(supers.search, isb=direction.isb, delta=delta, **kwargs)
+                if finest.after_analyze:
+                    vect = mvtools.Finest(vect)
+            else:
+                vect = mvtools.Recalculate(
+                    supers.recalculate, self.get_mv(direction, delta), **kwargs
+                )
+                if finest.after_recalculate:
+                    vect = mvtools.Finest(vect)
+
+            self.set_mv(direction, delta, vect)
+
+    def finest(self, mvtools: MVToolsPlugin) -> None:
+        self.temporal_vectors = {
+            direction: {
+                delta: mvtools.Finest(vect)
+                for delta, vect in vectors.items()
+            } for direction, vectors in self.temporal_vectors.items()
+        }
+
+
+class SuperClips(NamedTuple):
+    base: vs.VideoNode
+    render: vs.VideoNode
+    search: vs.VideoNode
+    recalculate: vs.VideoNode
