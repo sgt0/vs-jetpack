@@ -36,4 +36,4 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Running ruff
-        run: ruff check stgpytools vstools vskernels vsexprtools vsrgtools vsmasktools vsaa vsscale vsdenoise vsdehalo vsdeband vsdeinterlace vssource
+        run: ruff check vstools vskernels vsexprtools vsrgtools vsmasktools vsaa vsscale vsdenoise vsdehalo vsdeband vsdeinterlace vssource
