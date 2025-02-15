@@ -52,7 +52,7 @@ class MagDirection(IntFlag):
     CORNERS = NW | SW | SE | NE
 
     NORTH = N | NW | NE
-    WEAST = W | NW | SW
+    WEST = W | NW | SW
     EAST = E | NE | SE
     SOUTH = S | SW | SE
 
