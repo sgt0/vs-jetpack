@@ -211,7 +211,10 @@ def temporal_degrain(
         (i for i, (k, j) in enumerate([(1050, 576), (1280, 720), (2048, 1152)]) if long_lat <= k and short_lat <= j), 3
     )
 
-    thSCD = normalize_thscd(thSCD, ([192, 192, 192, 256, 320, 384][grain_level], 50), temporal_degrain, scale=False)
+    thSCD = normalize_thscd(thSCD, temporal_degrain, scale=False)
+
+    if thSCD[0] is None:
+        thSCD = ([192, 192, 192, 256, 320, 384][grain_level], thSCD[1])
 
     if post is None:
         post = PostProcess.REPAIR
