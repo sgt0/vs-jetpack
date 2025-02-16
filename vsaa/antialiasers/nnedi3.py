@@ -27,8 +27,7 @@ class NNEDI3(_FullInterpolate, _Antialiaser):
 
     def get_aa_args(self, clip: vs.VideoNode, **kwargs: Any) -> dict[str, Any]:
         assert clip.format
-        is_float = clip.format.sample_type == vs.FLOAT
-        pscrn = 1 if is_float else self.pscrn
+        pscrn = min(self.pscrn, 1) if clip.format.sample_type == vs.FLOAT else self.pscrn
         return dict(nsize=self.nsize, nns=self.nns, qual=self.qual, etype=self.etype, pscrn=pscrn)
 
     def interpolate(self, clip: vs.VideoNode, double_y: bool, **kwargs: Any) -> vs.VideoNode:
