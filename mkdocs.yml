@@ -1,0 +1,96 @@
+site_name: vs-jetpack API docs
+site_url: https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/
+
+theme:
+  direction: ltr
+  language: en
+  name: material
+  features:
+    - content.tooltips
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+
+extra_css:
+  - css/extra.css
+
+plugins:
+  - privacy
+  - search
+  - gen-files:
+      scripts:
+        - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      custom_templates: docs/templates
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://www.vapoursynth.com/doc/objects.inv
+          options:
+            docstring_section_style: list
+            docstring_style: "sphinx"
+            filters:
+              - "!^_"
+              - "^__call__$"
+              - "^_dre_edgemask$" # vs-masktools: mostly public via alias.
+            heading_level: 1
+            inherited_members: true
+            line_length: 80
+            merge_init_into_class: true
+            parameter_headings: true
+            separate_signature: true
+            show_if_no_docstring: true
+            show_root_full_path: false
+            show_root_heading: true
+            show_signature_annotations: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            summary: true
+  - minify:
+      minify_html: !ENV [PROD, false]
+
+markdown_extensions:
+  - footnotes
+  - pymdownx.details
+  - pymdownx.highlight:
+      pygments_lang_class: true
+  - pymdownx.superfences
+  - toc:
+      permalink: "¶"
+
+nav:
+  - Home:
+      - Overview: index.md
+  - API: api/
+
+validation:
+  absolute_links: warn
+  omitted_files: warn
+  unrecognized_links: warn

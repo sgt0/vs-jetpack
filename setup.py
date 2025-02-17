@@ -5,7 +5,7 @@ from pathlib import Path
 
 package_name = 'vsjetpack'
 
-exec(Path(f'_metadata.py').read_text(), meta := dict[str, str]())
+exec(Path('_metadata.py').read_text(), meta := dict[str, str]())
 
 readme = Path('README.md').read_text()
 requirements = Path('requirements.txt').read_text()
