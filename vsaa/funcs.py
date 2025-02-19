@@ -143,8 +143,7 @@ if TYPE_CHECKING:
         antialiaser: Antialiaser | None = None,
         prefilter: vs.VideoNode | VSFunction | Literal[False] = False,
         postfilter: VSFunction | Literal[False] | None = None,
-        show_mask: bool = False, planes: PlanesT = 0,
-        **aa_kwargs: Any
+        show_mask: bool = False, **aa_kwargs: Any
     ) -> vs.VideoNode:
         """
         Perform based anti-aliasing on a video clip.
@@ -194,7 +193,6 @@ if TYPE_CHECKING:
                                 created during antialiasing. Default: None.
         :param show_mask:       If True, returns the edge detection mask instead of the processed clip.
                                 Default: False
-        :param planes:          Planes to process. Default: Luma only.
 
         :return:                Anti-aliased clip or edge detection mask if show_mask is True.
 
@@ -213,11 +211,10 @@ else:
         antialiaser: Antialiaser | None = None,
         prefilter: vs.VideoNode | VSFunction | Literal[False] = False,
         postfilter: VSFunction | Literal[False] | None = None,
-        show_mask: bool = False, planes: PlanesT = 0,
-        **aa_kwargs: Any
+        show_mask: bool = False, **aa_kwargs: Any
     ) -> vs.VideoNode:
 
-        func = FunctionUtil(clip, based_aa, planes, (vs.YUV, vs.GRAY))
+        func = FunctionUtil(clip, based_aa, 0, (vs.YUV, vs.GRAY))
 
         if supersampler is False:
             supersampler = downscaler = NoScale
