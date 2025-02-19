@@ -19,7 +19,6 @@ from .helpers import GenericScaler
 __all__ = [
     'DPID',
     'SSIM',
-    'DLISR',
     'Waifu2x'
 ]
 
@@ -143,46 +142,6 @@ class SSIM(LinearScaler):
     @inject_self.property
     def kernel_radius(self) -> int:  # type: ignore
         return self.scaler.kernel_radius
-
-
-@dataclass
-class DLISR(GenericScaler):
-    """Use Nvidia NGX Technology DLISR DNN to scale up nodes. https://developer.nvidia.com/rtx/ngx"""
-
-    scaler: ScalerT = field(default_factory=lambda: DPID(0.5, Mitchell))
-    """Scaler to use to downscale clip to desired resolution, if necessary."""
-
-    matrix: MatrixT | None = None
-    """Input clip's matrix. Set only if necessary."""
-
-    device_id: int | None = None
-    """Which cuda device to run this filter on."""
-
-    @inject_self
-    def scale(  # type: ignore
-        self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-        shift: tuple[float, float] = (0, 0), *, matrix: MatrixT | None = None, **kwargs: Any
-    ) -> vs.VideoNode:
-        width, height = self._wh_norm(clip, width, height)
-
-        output = clip
-
-        assert check_variable(clip, self.__class__)
-
-        if width > clip.width or height > clip.width:
-            if not matrix:
-                matrix = Matrix.from_param_or_video(matrix or self.matrix, clip, False, self.__class__)
-
-            output = self._kernel.resample(output, vs.RGBS, Matrix.RGB, matrix)
-            output = limiter(output, func=self.__class__)
-
-            max_scale = max(ceil(width / clip.width), ceil(height / clip.height))
-
-            output = output.akarin.DLISR(max_scale, self.device_id)
-
-        return self._finish_scale(output, clip, width, height, shift, matrix)
-
-    _static_kernel_radius = 2
 
 
 class Waifu2xPadHelper(ProcessVariableResClip):
