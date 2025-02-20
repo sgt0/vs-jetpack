@@ -1197,7 +1197,7 @@ class MVTools:
             )
         
         if self.mvtools is MVToolsPlugin.FLOAT:
-            return cast(vs.VideoNode, vectors.mv_multi).std.SelectEvery(delta * 2, (delta - 1) + (direction - 1))
+            return cast(vs.VideoNode, vectors.mv_multi).std.SelectEvery(self.tr * 2, (delta - 1) * 2 + direction - 1)
         else:
             return vectors.get_mv(direction, delta)
 
