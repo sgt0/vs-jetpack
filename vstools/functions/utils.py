@@ -151,8 +151,8 @@ class DitherType(CustomStrEnum):
             - Dithering is NEVER needed if the conversion results in a float sample type.
             - Dithering is ALWAYS needed for a range conversion (i.e. full to limited or vice-versa).
             - Dithering is ALWAYS needed to convert a float sample type to an integer sample type.
-            - Dithering is needed when upsampling full range content with the exception of 8 -> 16 bit upsampling,
-              as this is a simple bitshift without rounding, (0-255) * 257 -> (0-65535).
+            - Dithering is needed when upsampling full range content except when one depth is a multiple of the other,
+              when the upsampling is a simple integer multiplication, e.g. for 8 -> 16: (0-255) * 257 -> (0-65535).
             - Dithering is needed when downsampling limited or full range.
 
         Dithering is theoretically needed when converting from an integer depth greater than 10 to half float,
@@ -182,8 +182,8 @@ class DitherType(CustomStrEnum):
             - Dithering is NEVER needed if the conversion results in a float sample type.
             - Dithering is ALWAYS needed for a range conversion (i.e. full to limited or vice-versa).
             - Dithering is ALWAYS needed to convert a float sample type to an integer sample type.
-            - Dithering is needed when upsampling full range content with the exception of 8 -> 16 bit upsampling,
-              as this is a simple bitshift without rounding, (0-255) * 257 -> (0-65535).
+            - Dithering is needed when upsampling full range content except when one depth is a multiple of the other,
+              when the upsampling is a simple integer multiplication, e.g. for 8 -> 16: (0-255) * 257 -> (0-65535).
             - Dithering is needed when downsampling limited or full range.
 
         Dithering is theoretically needed when converting from an integer depth greater than 10 to half float,
@@ -233,7 +233,7 @@ class DitherType(CustomStrEnum):
         if in_bits > out_bits:
             return True
 
-        return in_range == ColorRange.FULL and (in_bits, out_bits) != (8, 16)
+        return in_range == ColorRange.FULL and out_bits % in_bits
 
 
 _dither_fmtc_types: dict[DitherType, int] = {
@@ -283,9 +283,11 @@ def depth(
     :param range_out:       Output pixel range (defaults to input `clip`'s range).
     :param dither_type:     Dithering algorithm. Allows overriding default dithering behavior. See :py:class:`Dither`.
 
-                            Defaults to :attr:`Dither.ERROR_DIFFUSION`, or Floyd-Steinberg error diffusion,
-                            when downsampling, converting between ranges, or upsampling full range input.
-                            Defaults to :attr:`Dither.NONE`, or round to nearest, otherwise.
+                            When integer output is desired but the conversion may produce fractional values,
+                            defaults to :attr:`Dither.VOID` if it is available via the fmtc VapourSynth plugin,
+                            or to Floyd-Steinberg :attr:`Dither.ERROR_DIFFUSION` for 8-bit output
+                            or :attr:`DitherType.ORDERED` for higher bit depths.
+                            In other cases, defaults to :attr:`Dither.NONE`, or round to nearest.
                             See :py:func:`Dither.should_dither` for more information.
 
     :return:                Converted clip with desired bit depth and sample type.
