@@ -1267,6 +1267,6 @@ class MVTools:
             if direction in [MVDirection.BACKWARD, MVDirection.BOTH]:
                 vectors_backward.append(self.get_vector(vectors, direction=MVDirection.BACKWARD, delta=delta))
             if direction in [MVDirection.FORWARD, MVDirection.BOTH]:
-                vectors_backward.append(self.get_vector(vectors, direction=MVDirection.FORWARD, delta=delta))
+                vectors_forward.append(self.get_vector(vectors, direction=MVDirection.FORWARD, delta=delta))
 
         return (vectors_backward, vectors_forward)
