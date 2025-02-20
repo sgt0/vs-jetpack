@@ -14,8 +14,11 @@ __all__ = [
 class MotionVectors:
     """Class for storing and managing motion vectors for a video clip."""
 
-    vmulti: vs.VideoNode
-    """Super-sampled clip used for motion vector analysis."""
+    motion_vectors: dict[MVDirection, dict[int, vs.VideoNode]]
+    """Dictionary containing both backward and forward motion vectors."""
+
+    mv_multi: vs.VideoNode | None
+    """Multi-vector clip."""
 
     analysis_data: dict[str, Any]
     """Dictionary containing motion vector analysis data."""
@@ -23,23 +26,21 @@ class MotionVectors:
     scaled: bool
     """Whether motion vectors have been scaled."""
 
-    temporal_vectors: dict[MVDirection, dict[int, vs.VideoNode]]
-    """Dictionary containing both backward and forward motion vectors."""
-
     def __init__(self) -> None:
         self._init_vects()
+        self.mv_multi = None
         self.analysis_data = dict[str, Any]()
         self.scaled = False
 
     def _init_vects(self) -> None:
-        self.temporal_vectors = {w: {} for w in MVDirection}
+        self.motion_vectors = {w: {} for w in MVDirection}
 
     @property
     def has_vectors(self) -> bool:
         """Check if motion vectors are available."""
 
         return bool(
-            (self.temporal_vectors[MVDirection.BACK] and self.temporal_vectors[MVDirection.FWRD]) or self.vmulti
+            (self.motion_vectors[MVDirection.BACKWARD] and self.motion_vectors[MVDirection.FORWARD]) or self.mv_multi
         )
 
     def get_mv(self, direction: MVDirection, delta: int) -> vs.VideoNode:
@@ -52,24 +53,24 @@ class MotionVectors:
         :return:             The requested motion vector clip.
         """
 
-        return self.temporal_vectors[direction][delta]
+        return self.motion_vectors[direction][delta]
 
-    def set_mv(self, direction: MVDirection, delta: int, vector: vs.VideoNode) -> None:
+    def set_mv(self, vector: vs.VideoNode, direction: MVDirection, delta: int) -> None:
         """
         Store a motion vector.
 
+        :param vector:       Motion vector clip to store.
         :param direction:    Direction of the motion vector (forward or backward).
         :param delta:        Frame distance for the motion vector.
-        :param vect:         Motion vector clip to store.
         """
 
-        self.temporal_vectors[direction][delta] = vector
+        self.motion_vectors[direction][delta] = vector
 
     def clear(self) -> None:
         """Clear all stored motion vectors and reset the instance."""
 
-        del self.vmulti
+        self.motion_vectors.clear()
+        self.mv_multi = None
         self.analysis_data.clear()
         self.scaled = False
-        self.temporal_vectors.clear()
         self._init_vects()

@@ -31,7 +31,7 @@ class MVToolsPlugin(CustomIntEnum):
     def namespace(self) -> Any:
         """Get the appropriate MVTools namespace based on plugin type."""
 
-        return core.lazy.mv if self is MVToolsPlugin.INTEGER else core.lazy.mvsf
+        return core.mv if self is MVToolsPlugin.INTEGER else core.mvsf
 
     @property
     def Super(self) -> VSFunctionKwArgs:
@@ -146,13 +146,13 @@ class MVToolsPlugin(CustomIntEnum):
 class MVDirection(IntFlag):
     """Motion vector analyze direction."""
 
-    BACK = 1
+    BACKWARD = 1
     """Backwards motion detection."""
 
-    FWRD = 2
+    FORWARD = 2
     """Forwards motion detection."""
 
-    BOTH = BACK | FWRD
+    BOTH = BACKWARD | FORWARD
     """Backwards and forwards motion detection."""
 
 

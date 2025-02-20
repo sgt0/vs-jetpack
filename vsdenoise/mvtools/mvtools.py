@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 from itertools import chain
-from typing import Any, Literal, overload
+from typing import Any, Literal, overload, cast
 
 from vstools import (
     ColorRange, CustomRuntimeError, FieldBased, GenericVSFunction, InvalidColorFamilyError,
@@ -147,6 +147,7 @@ class MVTools:
         self.planes = normalize_planes(self.clip, planes)
         self.mv_plane = planes_to_mvtools(self.planes)
         self.chroma = self.mv_plane != 0
+        self.disable_compensate = False
 
         self.tr = tr
         self.pel = pel
@@ -159,15 +160,6 @@ class MVTools:
                 self.search_clip = search_clip(self.clip)
         else:
             self.search_clip = fallback(search_clip, self.clip)
-
-        self.disable_compensate = False
-
-        if self.mvtools is MVToolsPlugin.FLOAT:
-            self.disable_manipmv = True
-            self.disable_degrain = True if tr == 1 else False
-        else:
-            self.disable_manipmv = False
-            self.disable_degrain = False
 
         self.super_args = fallback(super_args, KwargsT())
         self.analyze_args = fallback(analyze_args, KwargsT())
@@ -334,23 +326,24 @@ class MVTools:
             fields=self.fieldbased.is_inter, tff=self.fieldbased.is_tff, dct=dct
         )
 
-        if self.mvtools is MVToolsPlugin.INTEGER and not any(
-            (analyze_args.get('overlap'), analyze_args.get('overlapv'))
-        ):
-            self.disable_compensate = True
-
         if self.vectors.has_vectors:
             self.vectors.clear()
 
         if self.mvtools is MVToolsPlugin.FLOAT:
-            self.vectors.vmulti = self.mvtools.Analyze(super_clip, radius=self.tr, **analyze_args)
+            self.vectors.mv_multi = self.mvtools.Analyze(super_clip, radius=self.tr, **analyze_args)
         else:
+            if not any((analyze_args.get('overlap'), analyze_args.get('overlapv'))):
+                self.disable_compensate = True
+
             for i in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vector = self.mvtools.Analyze(
-                        super_clip, isb=direction is MVDirection.BACK, delta=i, **analyze_args
+                    self.vectors.set_mv(
+                        self.mvtools.Analyze(
+                            super_clip, isb=direction is MVDirection.BACKWARD, delta=i, **analyze_args
+                        ),
+                        direction,
+                        i,
                     )
-                    self.vectors.set_mv(direction, i, vector)
 
     def recalculate(
         self, super: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
@@ -420,20 +413,21 @@ class MVTools:
             divide=divide, meander=meander, fields=self.fieldbased.is_inter, tff=self.fieldbased.is_tff, dct=dct
         )
 
-        if self.mvtools is MVToolsPlugin.INTEGER and not any(
-            (recalculate_args.get('overlap'), recalculate_args.get('overlapv'))
-        ):
-            self.disable_compensate = True
-
         if self.mvtools is MVToolsPlugin.FLOAT:
-            vectors.vmulti = self.mvtools.Recalculate(super_clip, vectors=vectors.vmulti, **recalculate_args)
+            vectors.mv_multi = self.mvtools.Recalculate(super_clip, vectors=vectors.mv_multi, **recalculate_args)
         else:
-            for i in range(1, self.tr + 1):
-                for direction in MVDirection:
-                    vector = self.mvtools.Recalculate(super_clip, vectors.get_mv(direction, i), **recalculate_args)
-                    vectors.set_mv(direction, i, vector)
+            if not any((recalculate_args.get('overlap'), recalculate_args.get('overlapv'))):
+                self.disable_compensate = True
 
             vectors.analysis_data.clear()
+
+            for i in range(1, self.tr + 1):
+                for direction in MVDirection:
+                    vectors.set_mv(
+                        self.mvtools.Recalculate(super_clip, vectors.get_mv(direction, i), **recalculate_args),
+                        direction,
+                        i,
+                    )
 
     @overload
     def compensate(
@@ -539,17 +533,17 @@ class MVTools:
             return (comp_back, comp_fwrd)
 
         comp_clips = [*comp_fwrd, clip, *comp_back]
-        n_clips = len(comp_clips)
-        offset = (n_clips - 1) // 2
+        cycle = len(comp_clips)
+        offset = (cycle - 1) // 2
 
         interleaved = core.std.Interleave(comp_clips)
 
         if temporal_func:
             processed = temporal_func(interleaved)
 
-            return processed.std.SelectEvery(n_clips, offset)
+            return processed.std.SelectEvery(cycle, offset)
 
-        return interleaved, (n_clips, offset)
+        return interleaved, (cycle, offset)
 
     @overload
     def flow(
@@ -650,17 +644,17 @@ class MVTools:
             return (flow_back, flow_fwrd)
 
         flow_clips = [*flow_fwrd, clip, *flow_back]
-        n_clips = len(flow_clips)
-        offset = (n_clips - 1) // 2
+        cycle = len(flow_clips)
+        offset = (cycle - 1) // 2
 
         interleaved = core.std.Interleave(flow_clips)
 
         if temporal_func:
             processed = temporal_func(interleaved)
 
-            return processed.std.SelectEvery(n_clips, offset)
+            return processed.std.SelectEvery(cycle, offset)
 
-        return interleaved, (n_clips, offset)
+        return interleaved, (cycle, offset)
 
     def degrain(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
@@ -699,9 +693,6 @@ class MVTools:
         :return:           Motion compensated and temporally filtered clip with reduced noise.
         """
 
-        if self.disable_degrain:
-            raise CustomRuntimeError('Motion analysis was performed with a temporal radius of 1!', self.degrain)
-
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
@@ -717,6 +708,12 @@ class MVTools:
         degrain_args = dict[str, Any](thscd1=thscd1, thscd2=thscd2, plane=self.mv_plane)
 
         if self.mvtools is MVToolsPlugin.FLOAT:
+            if tr == 1:
+                raise CustomRuntimeError(
+                    f'Cannot degrain with a temporal radius of {tr} while using {self.mvtools}!',
+                    self.degrain
+                )
+
             degrain_args.update(thsad=thsad, thsad2=thsad2, limit=limit)
         else:
             vect_b, vect_f = self.get_vectors(vectors, tr=tr)
@@ -735,7 +732,13 @@ class MVTools:
         degrain_args = self.degrain_args | KwargsNotNone(degrain_args)
 
         if self.mvtools is MVToolsPlugin.FLOAT:
-            output = self.mvtools.Degrain()(clip, super_clip, vectors.vmulti, **degrain_args)
+            mv_multi = cast(vs.VideoNode, vectors.mv_multi)
+
+            if tr != self.tr:
+                trim = self.tr - tr
+                mv_multi = mv_multi.std.SelectEvery(self.tr * 2, range(trim, self.tr * 2 - trim))
+
+            output = self.mvtools.Degrain()(clip, super_clip, mv_multi, **degrain_args)
         else:
             output = self.mvtools.Degrain(tr)(
                 clip, super_clip, *chain.from_iterable(zip(vect_b, vect_f)), **degrain_args
@@ -954,7 +957,7 @@ class MVTools:
 
     def mask(
         self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
-        direction: Literal[MVDirection.FWRD] | Literal[MVDirection.BACK] = MVDirection.BACK,
+        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
         delta: int = 1, ml: float | None = None, gamma: float | None = None,
         kind: MaskMode | None = None, time: float | None = None, ysc: int | None = None,
         thscd: int | tuple[int | None, int | None] | None = None
@@ -1051,7 +1054,7 @@ class MVTools:
                            If None, uses the vectors from this instance.
         """
 
-        if self.disable_manipmv:
+        if self.mvtools is MVToolsPlugin.FLOAT:
             raise CustomRuntimeError(
                 f'Motion vector manipulation not supported with {self.mvtools}!', self.scale_vectors
             )
@@ -1077,21 +1080,20 @@ class MVTools:
 
             if strict and scaled_blksize not in supported_blksize:
                 raise CustomRuntimeError('Unsupported block size!', self.scale_vectors)
-
-            for i in range(1, self.tr + 1):
-                for direction in MVDirection:
-                    vector = vectors.get_mv(direction, i).manipmv.ScaleVect(scalex, scaley)
-                    vectors.set_mv(direction, i, vector)
-
+            
+            vectors.analysis_data.clear()
+            vectors.scaled = True
+            
             self.clip = self.clip.std.RemoveFrameProps('MSuper')
             self.search_clip = self.search_clip.std.RemoveFrameProps('MSuper')
 
-            vectors.analysis_data.clear()
-            vectors.scaled = True
+            for i in range(1, self.tr + 1):
+                for direction in MVDirection:
+                    vectors.set_mv(vectors.get_mv(direction, i).manipmv.ScaleVect(scalex, scaley), direction, i)
 
     def show_vector(
         self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
-        direction: Literal[MVDirection.FWRD] | Literal[MVDirection.BACK] = MVDirection.BACK,
+        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
         delta: int = 1, scenechange: bool | None = None
     ) -> vs.VideoNode:
         """
@@ -1108,7 +1110,7 @@ class MVTools:
         :return:               Clip with motion vectors overlaid.
         """
 
-        if self.disable_manipmv:
+        if self.mvtools is MVToolsPlugin.FLOAT:
             raise CustomRuntimeError(f'Motion vector manipulation not supported with {self.mvtools}!', self.show_vector)
 
         clip = fallback(clip, self.clip)
@@ -1130,7 +1132,7 @@ class MVTools:
                            If None, uses the vectors from this instance.
         """
 
-        if self.disable_manipmv:
+        if self.mvtools is MVToolsPlugin.FLOAT:
             raise CustomRuntimeError(
                 f'Motion vector manipulation not supported with {self.mvtools}!', self.expand_analysis_data
             )
@@ -1149,7 +1151,7 @@ class MVTools:
         if not vectors.analysis_data:
             analysis_props = dict[str, Any]()
 
-            with vectors.get_mv(MVDirection.BACK, 1).manipmv.ExpandAnalysisData().get_frame(0) as clip_props:
+            with vectors.get_mv(MVDirection.BACKWARD, 1).manipmv.ExpandAnalysisData().get_frame(0) as clip_props:
                 for i in props_list:
                     analysis_props[i] = get_prop(clip_props, i, int | list)  # type: ignore
 
@@ -1201,18 +1203,18 @@ class MVTools:
         vectors_forward = list[vs.VideoNode]()
 
         if self.mvtools is MVToolsPlugin.FLOAT:
-            vmulti = vectors.vmulti
+            mv_multi = cast(vs.VideoNode, vectors.mv_multi)
 
             for i in range(0, tr * 2, 2):
-                if direction in [MVDirection.BACK, MVDirection.BOTH]:
-                    vectors_backward.append(vmulti.std.SelectEvery(tr * 2, i))
-                if direction in [MVDirection.FWRD, MVDirection.BOTH]:
-                    vectors_forward.append(vmulti.std.SelectEvery(tr * 2, i + 1))
+                if direction in [MVDirection.BACKWARD, MVDirection.BOTH]:
+                    vectors_backward.append(mv_multi.std.SelectEvery(tr * 2, i))
+                if direction in [MVDirection.FORWARD, MVDirection.BOTH]:
+                    vectors_forward.append(mv_multi.std.SelectEvery(tr * 2, i + 1))
         else:
             for i in range(1, tr + 1):
-                if direction in [MVDirection.BACK, MVDirection.BOTH]:
-                    vectors_backward.append(vectors.get_mv(MVDirection.BACK, i))
-                if direction in [MVDirection.FWRD, MVDirection.BOTH]:
-                    vectors_forward.append(vectors.get_mv(MVDirection.FWRD, i))
+                if direction in [MVDirection.BACKWARD, MVDirection.BOTH]:
+                    vectors_backward.append(vectors.get_mv(MVDirection.BACKWARD, i))
+                if direction in [MVDirection.FORWARD, MVDirection.BOTH]:
+                    vectors_forward.append(vectors.get_mv(MVDirection.FORWARD, i))
 
         return (vectors_backward, vectors_forward)
