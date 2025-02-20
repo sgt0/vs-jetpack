@@ -9,7 +9,7 @@ from typing import Any, Iterable, Literal, Self, Sequence, overload
 
 from vsexprtools import ExprList, ExprOp, ExprToken, ExprVars
 from vstools import (
-    ConvMode, CustomIntEnum, CustomValueError, KwargsT, Nb, PlanesT, check_variable, core, fallback,
+    ConvMode, CustomIntEnum, CustomStrEnum, CustomValueError, KwargsT, Nb, PlanesT, check_variable, core, fallback,
     iterate, shift_clip_multi, to_singleton, vs
 )
 
@@ -18,6 +18,7 @@ __all__ = [
     'RemoveGrainMode', 'RemoveGrainModeT',
     'RepairMode', 'RepairModeT',
     'VerticalCleanerMode', 'VerticalCleanerModeT',
+    'ClenseMode', 'ClenseModeT',
     'BlurMatrixBase', 'BlurMatrix', 'BilateralBackend'
 ]
 
@@ -67,21 +68,22 @@ class RemoveGrainMode(CustomIntEnum):
     BOB_BOTTOM_INTER = 16
     MINMAX_MEDIAN_OPP = 17
     LINE_CLIP_OPP = 18
-    BOX_BLUR_NO_CENTER = 19
-    BOX_BLUR = 20
+    MEAN_NO_CENTER = 19
+    MEAN = 20
+    BOX_BLUR_NO_CENTER = MEAN_NO_CENTER
+    BOX_BLUR = MEAN
     OPP_CLIP_AVG = 21
     OPP_CLIP_AVG_FAST = 22
     EDGE_DEHALO = 23
     EDGE_DEHALO2 = 24
-    MIN_SHARP2 = 25
     SMART_RGC = 26
     SMART_RGCL = 27
     SMART_RGCL2 = 28
 
     def __call__(self, clip: vs.VideoNode, planes: PlanesT = None) -> vs.VideoNode:
-        from .rgtools import removegrain
+        from .rgtools import remove_grain
         from .util import norm_rmode_planes
-        return removegrain(clip, norm_rmode_planes(clip, self, planes))
+        return remove_grain(clip, norm_rmode_planes(clip, self, planes))
 
 
 RemoveGrainModeT = int | RemoveGrainMode | Sequence[int | RemoveGrainMode]
@@ -138,6 +140,23 @@ class VerticalCleanerMode(CustomIntEnum):
 
 
 VerticalCleanerModeT = int | VerticalCleanerMode | Sequence[int | VerticalCleanerMode]
+
+
+class ClenseMode(CustomStrEnum):
+    NONE = ''
+    BACKWARD = 'BackwardClense'
+    FORWARD = 'ForwardClense'
+    BOTH = 'Clense'
+
+    def __call__(
+            self, clip: vs.VideoNode, previous_clip: vs.VideoNode | None = None,
+            next_clip: vs.VideoNode | None = None, planes: PlanesT = None
+        ) -> vs.VideoNode:
+        from .rgtools import clense
+        return clense(clip, previous_clip, next_clip, self, planes)
+
+
+ClenseModeT = str | ClenseMode
 
 
 class BlurMatrixBase(list[Nb]):
@@ -313,8 +332,11 @@ class BlurMatrixBase(list[Nb]):
 
 
 class BlurMatrix(CustomIntEnum):
-    CIRCLE = 0
+    MEAN_NO_CENTER = 0
     MEAN = 1
+    BOX_BLUR_NO_CENTER = MEAN_NO_CENTER
+    CIRCLE = MEAN_NO_CENTER  # todo: remove
+    BOX_BLUR = MEAN
     BINOMIAL = 2
     LOG = 3
 
@@ -368,7 +390,7 @@ class BlurMatrix(CustomIntEnum):
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[BlurMatrix.CIRCLE], taps: int = 1, *, mode: ConvMode = ConvMode.SQUARE
+        self: Literal[BlurMatrix.MEAN_NO_CENTER], taps: int = 1, *, mode: ConvMode = ConvMode.SQUARE
     ) -> BlurMatrixBase[int]:
         ...
 
@@ -394,7 +416,7 @@ class BlurMatrix(CustomIntEnum):
         kernel: BlurMatrixBase[Any]
 
         match self:
-            case BlurMatrix.CIRCLE:
+            case BlurMatrix.MEAN_NO_CENTER:
                 mode = kwargs.pop("mode", ConvMode.SQUARE)
 
                 matrix = [1 for _ in range(((2 * taps + 1) ** (2 if mode == ConvMode.SQUARE else 1)) - 1)]

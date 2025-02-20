@@ -10,16 +10,15 @@ c = 'x'
 PIXELS = ' '.join([A1, A2, A3, A4, A5, A6, A7, A8])
 
 
-def aka_removegrain_expr_1() -> str:
+def aka_remove_grain_expr_1() -> str:
     return f'x {PIXELS} min min min min min min min {PIXELS} max max max max max max max clamp'
 
 
-def aka_removegrain_expr_2_4(m: int) -> str:
-    # print(f'dup{9 - m} dup{m - 1}')
+def aka_remove_grain_expr_2_4(m: int) -> str:
     return f'{PIXELS} sort8 dup{8 - m} max_val! dup{m - 1} min_val! drop8 x min_val@ max_val@ clamp'
 
 
-def aka_removegrain_expr_5() -> str:
+def aka_remove_grain_expr_5() -> str:
     return (
         f'x {A1} {A8} min {A1} {A8} max clamp clamp1! '
         f'x {A2} {A7} min {A2} {A7} max clamp clamp2! '
@@ -34,7 +33,7 @@ def aka_removegrain_expr_5() -> str:
     )
 
 
-def aka_removegrain_expr_6() -> str:
+def aka_remove_grain_expr_6() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -61,7 +60,7 @@ def aka_removegrain_expr_6() -> str:
     )
 
 
-def aka_removegrain_expr_7() -> str:
+def aka_remove_grain_expr_7() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -89,7 +88,7 @@ def aka_removegrain_expr_7() -> str:
     )
 
 
-def aka_removegrain_expr_8() -> str:
+def aka_remove_grain_expr_8() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -116,7 +115,7 @@ def aka_removegrain_expr_8() -> str:
     )
 
 
-def aka_removegrain_expr_9() -> str:
+def aka_remove_grain_expr_9() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -136,7 +135,7 @@ def aka_removegrain_expr_9() -> str:
     )
 
 
-def aka_removegrain_expr_10() -> str:
+def aka_remove_grain_expr_10() -> str:
     return (
         f'x {A1} - abs d1! '
         f'x {A2} - abs d2! '
@@ -152,11 +151,11 @@ def aka_removegrain_expr_10() -> str:
     )
 
 
-def aka_removegrain_expr_11_12() -> str:
+def aka_remove_grain_expr_11_12() -> str:
     return f'x 4 * {A2} {A4} {A5} {A7} + + + 2 * + {A1} {A3} {A6} {A8} + + + + 16 /'
 
 
-def aka_removegrain_expr_17() -> str:
+def aka_remove_grain_expr_17() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -172,7 +171,7 @@ def aka_removegrain_expr_17() -> str:
     )
 
 
-def aka_removegrain_expr_18() -> str:
+def aka_remove_grain_expr_18() -> str:
     return (
         f'x {A1} - abs x {A8} - abs max d1! '
         f'x {A2} - abs x {A7} - abs max d2! '
@@ -186,15 +185,15 @@ def aka_removegrain_expr_18() -> str:
     )
 
 
-def aka_removegrain_expr_19() -> str:
+def aka_remove_grain_expr_19() -> str:
     return f'{A1} {A2} {A3} {A4} {A5} {A6} {A7} {A8} + + + + + + + 8.0 /'
 
 
-def aka_removegrain_expr_20() -> str:
+def aka_remove_grain_expr_20() -> str:
     return f'x {A1} {A2} {A3} {A4} {A5} {A6} {A7} {A8} + + + + + + + + 9.0 /'
 
 
-def aka_removegrain_expr_21_22() -> str:
+def aka_remove_grain_expr_21_22() -> str:
     return (
         f'{A1} {A8} + 2 / av1! '
         f'{A2} {A7} + 2 / av2! '
@@ -204,10 +203,11 @@ def aka_removegrain_expr_21_22() -> str:
     )
 
 
-def aka_removegrain_expr_23(peak_min: float) -> str:
-    minmax = f'min max max max {peak_min} max'
+def aka_remove_grain_expr_23() -> str:
+    minmax = 'min max max max range_min max'
     u = f'x mal1@ - linediff1@ min x mal2@ - linediff2@ min x mal3@ - linediff3@ min x mal4@ - linediff4@ {minmax}'
     d = f'mil1@ x - linediff1@ min mil2@ x - linediff2@ min mil3@ x - linediff3@ min mil4@ x - linediff4@ {minmax}'
+
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -225,11 +225,11 @@ def aka_removegrain_expr_23(peak_min: float) -> str:
     )
 
 
-def aka_removegrain_expr_24(peak_min: float) -> str:
+def aka_remove_grain_expr_24() -> str:
     linediff_minmax = (
         'linediff1@ t1@ - t1@ min linediff2@ t2@ - t2@ min '
         'linediff3@ t3@ - t3@ min linediff4@ t4@ - t4@ min '
-        f'max max max {peak_min} max'
+        'max max max range_min max'
     )
 
     return (
@@ -259,11 +259,7 @@ def aka_removegrain_expr_24(peak_min: float) -> str:
     )
 
 
-def aka_removegrain_expr_25() -> str:
-    raise NotImplementedError
-
-
-def aka_removegrain_expr_26() -> str:
+def aka_remove_grain_expr_26() -> str:
     return (
         f'{A1} {A2} min mil1! '
         f'{A1} {A2} max mal1! '
@@ -289,7 +285,7 @@ def aka_removegrain_expr_26() -> str:
     )
 
 
-def aka_removegrain_expr_27() -> str:
+def aka_remove_grain_expr_27() -> str:
     return (
         f'{A1} {A8} min mil1! '
         f'{A1} {A8} max mal1! '
@@ -325,7 +321,7 @@ def aka_removegrain_expr_27() -> str:
     )
 
 
-def aka_removegrain_expr_28() -> str:
+def aka_remove_grain_expr_28() -> str:
     return (
         f'{A1} {A2} min mil1! '
         f'{A1} {A2} max mal1! '
