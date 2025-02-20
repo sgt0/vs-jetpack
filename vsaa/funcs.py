@@ -10,7 +10,7 @@ from vsmasktools import EdgeDetect, EdgeDetectT, Prewitt, ScharrTCanny
 from vsrgtools import MeanMode, bilateral, box_blur, unsharp_masked
 from vstools import (
     MISSING, CustomRuntimeError, CustomValueError, FormatsMismatchError, FunctionUtil, KwargsT,
-    MissingT, PlanesT, VSFunction, fallback, get_peak_value, get_y, limiter, plane, scale_mask, vs
+    MissingT, PlanesT, VSFunction, fallback, get_peak_value, get_y, limiter, scale_mask, vs
 )
 
 from .abstract import Antialiaser
@@ -161,7 +161,7 @@ if TYPE_CHECKING:
                                 Values closer to 1.0 will perform faster at the cost of precision.
                                 This value must be greater than 0.0. Default: 2.0.
         :param mask:            Edge detection mask or function to generate it.  Default: Prewitt.
-        :param mask_thr:        Threshold for edge detection mask. Must be less than or equal to 255.
+        :param mask_thr:        Threshold for edge detection mask.
                                 Only used if an EdgeDetect class is passed to `mask`. Default: 60.
         :param pskip:           Whether to skip processing if antialiaser had no contribution to the pixel's output.
         :param downscaler:      Scaler used for downscaling after anti-aliasing. This should ideally be
@@ -253,8 +253,8 @@ else:
             downscaler, supersampler = supersampler, downscaler
 
         if not isinstance(mask, vs.VideoNode) and mask is not False:
-            mask = EdgeDetect.ensure_obj(mask, based_aa).edgemask(plane(func.work_clip, 0))
-            mask = mask.std.Binarize(scale_mask(min(mask_thr, 255), 8, func.work_clip))
+            mask = EdgeDetect.ensure_obj(mask, based_aa).edgemask(func.work_clip, 0)
+            mask = mask.std.Binarize(scale_mask(mask_thr, 8, func.work_clip))
 
             mask = box_blur(mask.std.Maximum())
             mask = limiter(mask, func=based_aa)
