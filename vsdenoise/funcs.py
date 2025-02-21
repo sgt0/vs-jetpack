@@ -109,6 +109,7 @@ def mc_degrain(
     :param planes:            Which planes to process. Default: None (all planes).
 
     :return:                  Motion compensated and temporally filtered clip with reduced noise.
+                              If export_globals is true: A tuple containing the processed clip and the MVTools object.
     """
     def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
         return (x[0] // 2, x[1] // 2)

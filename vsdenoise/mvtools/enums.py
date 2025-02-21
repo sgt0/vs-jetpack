@@ -147,13 +147,13 @@ class MVDirection(IntFlag):
     """Motion vector analyze direction."""
 
     BACKWARD = 1
-    """Backwards motion detection."""
+    """Backward motion compensation."""
 
     FORWARD = 2
-    """Forwards motion detection."""
+    """Forward motion compensation."""
 
     BOTH = BACKWARD | FORWARD
-    """Backwards and forwards motion detection."""
+    """Backward and forward motion compensation."""
 
 
 class SharpMode(CustomIntEnum):

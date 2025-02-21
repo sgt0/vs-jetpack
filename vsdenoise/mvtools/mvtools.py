@@ -492,8 +492,8 @@ class MVTools:
         :param temporal_func:    Temporal function to apply to the motion compensated frames.
 
         :return:                 Motion compensated frames if func is provided, otherwise returns a tuple containing:
-                                 - The interleaved compensated frames.
-                                 - A tuple of (total_frames, center_offset) for manual frame selection.
+                                  - The interleaved compensated frames.
+                                  - A tuple of (total_frames, center_offset) for manual frame selection.
         """
 
         if self.disable_compensate:
@@ -606,8 +606,8 @@ class MVTools:
                                  Takes the interleaved frames as input and returns processed frames.
 
         :return:                 Motion compensated frames if func is provided, otherwise returns a tuple containing:
-                                 - The interleaved compensated frames.
-                                 - A tuple of (total_frames, center_offset) for manual frame selection.
+                                  - The interleaved compensated frames.
+                                  - A tuple of (total_frames, center_offset) for manual frame selection.
         """
 
         clip = fallback(clip, self.clip)
@@ -681,8 +681,8 @@ class MVTools:
                            Only used with the FLOAT MVTools plugin.
         :param limit:      Maximum allowed change in pixel values.
         :param thscd:      Scene change detection thresholds:
-                           - First value: SAD threshold for considering a block changed between frames.
-                           - Second value: Number of changed blocks needed to trigger a scene change.
+                            - First value: SAD threshold for considering a block changed between frames.
+                            - Second value: Number of changed blocks needed to trigger a scene change.
 
         :return:           Motion compensated and temporally filtered clip with reduced noise.
         """
@@ -1066,12 +1066,14 @@ class MVTools:
         if scalex > 1 and scaley > 1:
             self.expand_analysis_data(vectors)
 
-            blksize, blksizev = vectors.analysis_data['Analysis_BlockSize']
+            blksizex, blksizev = vectors.analysis_data['Analysis_BlockSize']
 
-            scaled_blksize = (blksize * scalex, blksizev * scaley)
+            scaled_blksizex, scaled_blksizev = blksizex * scalex, blksizev * scaley
 
-            if strict and scaled_blksize not in supported_blksize:
-                raise CustomRuntimeError('Unsupported block size!', self.scale_vectors)
+            if strict and (scaled_blksizex, scaled_blksizev) not in supported_blksize:
+                raise CustomRuntimeError(
+                    f"Unsupported block size! {scaled_blksizex}x{scaled_blksizev}", self.scale_vectors
+                )
             
             vectors.analysis_data.clear()
             vectors.scaled = True
@@ -1231,13 +1233,17 @@ class MVTools:
         tr: int | None = None, multi: bool = False
     ) -> vs.VideoNode | tuple[list[vs.VideoNode], list[vs.VideoNode]]:
         """
-        Get the backwards and forward vectors.
+        Get the backward and forward vectors.
 
-        :param vectors:    The motion vectors to get the backwards and forward vectors from.
-        :param tr:         The number of frames to get the vectors for.
+        :param vectors:       The motion vectors to get the backward and forward vectors from.
+        :param direction:     Motion vector direction to get.
+        :param tr:            The number of frames to get the vectors for.
+        :param multi:         Whether to return the mv_multi vector clip
+                              Only used with the FLOAT MVTools plugin.
 
-        :return:           A tuple containing two lists of motion vectors.
-                           The first list contains backward vectors and the second contains forward vectors.
+        :return:              If multi is false: A tuple containing two lists of motion vectors.
+                              The first list contains backward vectors and the second contains forward vectors.
+                              If multi is true: The multi vector VideoNode used by the FLOAT MVTools plugin.
         """
 
         if not vectors.has_vectors:
