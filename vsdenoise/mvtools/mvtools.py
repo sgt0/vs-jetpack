@@ -325,7 +325,7 @@ class MVTools:
 
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    self.vectors.set_mv(
+                    self.vectors.set_vector(
                         self.mvtools.Analyze(
                             super_clip, isb=direction is MVDirection.BACKWARD, delta=delta, **analyze_args
                         ),
@@ -407,7 +407,7 @@ class MVTools:
 
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vectors.set_mv(
+                    vectors.set_vector(
                         self.mvtools.Recalculate(
                             super_clip, self.get_vector(vectors, direction=direction, delta=delta), **recalculate_args
                         ),
@@ -493,9 +493,7 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        tr = fallback(tr, self.tr)
-
-        vect_b, vect_f = self.get_vectors(vectors, direction=direction, tr=tr)
+        vect_b, vect_f = self.get_vectors(vectors, direction, tr)
 
         thscd1, thscd2 = normalize_thscd(thscd)
 
@@ -599,9 +597,7 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        tr = fallback(tr, self.tr)
-
-        vect_b, vect_f = self.get_vectors(vectors, direction=direction, tr=tr)
+        vect_b, vect_f = self.get_vectors(vectors, direction, tr)
 
         thscd1, thscd2 = normalize_thscd(thscd)
 
@@ -902,8 +898,8 @@ class MVTools:
         return self.mvtools.FlowBlur(clip, super_clip, vect_b, vect_f, **flow_blur_args)
 
     def mask(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
-        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None, *,
+        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD],
         delta: int = 1, ml: float | None = None, gamma: float | None = None,
         kind: MaskMode | None = None, time: float | None = None, ysc: int | None = None,
         thscd: int | tuple[int | None, int | None] | None = None
@@ -1024,7 +1020,7 @@ class MVTools:
 
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vectors.set_mv(
+                    vectors.set_vector(
                         self.get_vector(vectors, direction=direction, delta=delta).manipmv.ScaleVect(scalex, scaley),
                         direction, delta,
                     )
@@ -1129,7 +1125,7 @@ class MVTools:
         vectors = fallback(vectors, self.vectors)
 
         if not vectors.has_vectors:
-            raise CustomRuntimeError('You need to run analyze before getting a motion vector!', self.get_vector)
+            raise CustomRuntimeError(f'You need to run {self.analyze} before getting a motion vector!', self.get_vector)
 
         if delta > self.tr:
             raise CustomRuntimeError(
@@ -1139,11 +1135,11 @@ class MVTools:
         if self.mvtools is MVToolsPlugin.FLOAT:
             return cast(vs.VideoNode, vectors.mv_multi)[(delta - 1) * 2 + direction - 1 :: self.tr]
         else:
-            return vectors.get_mv(direction, delta)
+            return vectors.motion_vectors[direction][delta]
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors | None = None, *,
+        self, vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: Literal[False] = ...
     ) -> tuple[list[vs.VideoNode], list[vs.VideoNode]]:
@@ -1151,7 +1147,7 @@ class MVTools:
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors | None = None, *,
+        self, vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: Literal[True] = ...
     ) -> vs.VideoNode:
@@ -1159,14 +1155,14 @@ class MVTools:
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors | None = None, *,
+        self, vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: bool = ...
     ) -> vs.VideoNode | tuple[list[vs.VideoNode], list[vs.VideoNode]]:
         ...
 
     def get_vectors(
-        self, vectors: MotionVectors | None = None, *,
+        self, vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: bool = False
     ) -> vs.VideoNode | tuple[list[vs.VideoNode], list[vs.VideoNode]]:

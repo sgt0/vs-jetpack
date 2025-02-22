@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from vstools import CustomRuntimeError, vs
+from vstools import vs
 
 from .enums import MVDirection
 
@@ -35,6 +35,15 @@ class MotionVectors:
     def _init_vects(self) -> None:
         self.motion_vectors = {w: {} for w in MVDirection}
 
+    def clear(self) -> None:
+        """Clear all stored motion vectors and reset the instance."""
+
+        self.motion_vectors.clear()
+        self.mv_multi = None
+        self.analysis_data.clear()
+        self.scaled = False
+        self._init_vects()
+
     @property
     def has_vectors(self) -> bool:
         """Check if motion vectors are available."""
@@ -43,24 +52,7 @@ class MotionVectors:
             (self.motion_vectors[MVDirection.BACKWARD] and self.motion_vectors[MVDirection.FORWARD]) or self.mv_multi
         )
 
-    def get_mv(self, direction: MVDirection, delta: int) -> vs.VideoNode:
-        """
-        Retrieve a specific motion vector.
-
-        :param direction:    Direction of the motion vector (forward or backward).
-        :param delta:        Frame distance for the motion vector.
-
-        :return:             The requested motion vector clip.
-        """
-
-        if delta not in self.motion_vectors[direction]:
-            raise CustomRuntimeError(
-                'Tried to get a motion vector that does not exist!', self.get_mv, f'({direction}, {delta})'
-            )
-
-        return self.motion_vectors[direction][delta]
-
-    def set_mv(self, vector: vs.VideoNode, direction: MVDirection, delta: int) -> None:
+    def set_vector(self, vector: vs.VideoNode, direction: MVDirection, delta: int) -> None:
         """
         Store a motion vector.
 
@@ -70,12 +62,3 @@ class MotionVectors:
         """
 
         self.motion_vectors[direction][delta] = vector
-
-    def clear(self) -> None:
-        """Clear all stored motion vectors and reset the instance."""
-
-        self.motion_vectors.clear()
-        self.mv_multi = None
-        self.analysis_data.clear()
-        self.scaled = False
-        self._init_vects()
