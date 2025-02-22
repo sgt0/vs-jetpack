@@ -1133,7 +1133,7 @@ class MVTools:
             )
 
         if self.mvtools is MVToolsPlugin.FLOAT:
-            return cast(vs.VideoNode, vectors.mv_multi)[(delta - 1) * 2 + direction - 1 :: self.tr]
+            return cast(vs.VideoNode, vectors.mv_multi)[(delta - 1) * 2 + direction - 1 :: self.tr * 2]
         else:
             return vectors.motion_vectors[direction][delta]
 
