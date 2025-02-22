@@ -992,7 +992,7 @@ class MVTools:
             raise CustomRuntimeError(
                 f'Motion vector manipulation not supported with {self.mvtools}!', self.scale_vectors
             )
-        
+
         supported_blksize = (
             (4, 4), (8, 4), (8, 8), (16, 2), (16, 8), (16, 16), (32, 16),
             (32, 32), (64, 32), (64, 64), (128, 64), (128, 128)
