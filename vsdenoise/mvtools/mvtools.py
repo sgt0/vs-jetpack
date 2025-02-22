@@ -6,9 +6,8 @@ from typing import Any, Literal, overload, cast
 
 from vstools import (
     ColorRange, CustomRuntimeError, FieldBased, GenericVSFunction, InvalidColorFamilyError,
-    KwargsNotNone, KwargsT, PlanesT, VSFunction, check_variable, core, depth,
-    disallow_variable_format, disallow_variable_resolution, fallback, get_prop, normalize_planes,
-    normalize_seq, scale_delta, vs
+    KwargsNotNone, KwargsT, PlanesT, VSFunction, core, depth, disallow_variable_format,
+    disallow_variable_resolution, fallback, get_prop, normalize_planes, normalize_seq, scale_delta, vs
 )
 
 from .enums import (
@@ -72,11 +71,10 @@ class MVTools:
     @disallow_variable_resolution
     def __init__(
         self, clip: vs.VideoNode, search_clip: vs.VideoNode | GenericVSFunction | None = None,
-        vectors: MotionVectors | MVTools | None = None,
+        vectors: MotionVectors | None = None,
         tr: int = 1, pad: int | tuple[int | None, int | None] | None = None,
         pel: int | None = None, planes: PlanesT = None,
         *,
-        # kwargs for mvtools calls
         super_args: KwargsT | None = None,
         analyze_args: KwargsT | None = None,
         recalculate_args: KwargsT | None = None,
@@ -106,7 +104,7 @@ class MVTools:
 
         :param clip:                     The clip to process.
         :param search_clip:              Optional clip or callable to be used for motion vector gathering only.
-        :param vectors:                  Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:                  Motion vectors to use.
                                          If None, uses the vectors from this instance.
         :param tr:                       The temporal radius. This determines how many frames are analyzed before/after the current frame.
                                          Default: 1.
@@ -129,18 +127,11 @@ class MVTools:
         :param sc_detection_args:        Arguments passed to every :py:attr:`MVToolsPlugin.SCDetection` calls.
         """
 
-        assert check_variable(clip, self.__class__)
-
         InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), self.__class__)
 
-        if isinstance(vectors, MVTools):
-            self.vectors = vectors.vectors
-        elif isinstance(vectors, MotionVectors):
-            self.vectors = vectors
-        else:
-            self.vectors = MotionVectors()
-
         self.mvtools = MVToolsPlugin.from_video(clip)
+        self.vectors = fallback(vectors, MotionVectors())
+
         self.fieldbased = FieldBased.from_video(clip, False, self.__class__)
         self.clip = clip.std.SeparateFields(self.fieldbased.is_tff) if self.fieldbased.is_inter else clip
 
@@ -175,7 +166,7 @@ class MVTools:
         self.sc_detection_args = fallback(sc_detection_args, KwargsT())
 
     def super(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None, 
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
         levels: int | None = None, sharp: SharpMode | None = None,
         rfilter: RFilterMode | None = None, pelclip: vs.VideoNode | VSFunction | None = None
     ) -> vs.VideoNode:
@@ -187,7 +178,7 @@ class MVTools:
         Source clip is appended to clip's frameprops, :py:attr:`get_super` can be used to extract the super clip if you wish to view it yourself.
 
         :param clip:       The clip to process. If None, the :py:attr:`clip` attribute is used.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param levels:     The number of hierarchical levels in super clip frames.
                            More levels are needed for :py:attr:`analyze` to get better vectors,
@@ -207,10 +198,7 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
+        vectors = fallback(vectors, self.vectors)
 
         if vectors.scaled:
             self.expand_analysis_data(vectors)
@@ -337,13 +325,15 @@ class MVTools:
 
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vector = self.mvtools.Analyze(
-                        super_clip, isb=direction is MVDirection.BACKWARD, delta=delta, **analyze_args
+                    self.vectors.set_mv(
+                        self.mvtools.Analyze(
+                            super_clip, isb=direction is MVDirection.BACKWARD, delta=delta, **analyze_args
+                        ),
+                        direction, delta,
                     )
-                    self.vectors.set_mv(vector, direction, delta)
 
     def recalculate(
-        self, super: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
+        self, super: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
         thsad: int | None = None, smooth: SmoothMode | None = None,
         blksize: int | tuple[int | None, int | None] | None = None, search: SearchMode | None = None,
         searchparam: int | None = None, lambda_: int | None = None, truemotion: MotionMode | None = None,
@@ -363,7 +353,7 @@ class MVTools:
 
         :param super:          The multilevel super clip prepared by :py:attr:`super`.
                                If None, super will be obtained from clip.
-        :param vectors:        Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:        Motion vectors to use.
                                If None, uses the vectors from this instance.
         :param thsad:          Only bad quality new vectors with a SAD above thid will be re-estimated by search.
                                thsad value is scaled to 8x8 block size.
@@ -393,13 +383,10 @@ class MVTools:
 
         super_clip = self.get_super(fallback(super, self.search_clip))
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
+        vectors = fallback(vectors, self.vectors)
 
         if not vectors.has_vectors:
-            raise CustomRuntimeError('You must run `analyze` before `recalculate`!', self.recalculate)
+            raise CustomRuntimeError(f'You must run {self.analyze} before recalculating motion vectors!', self.recalculate)
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
@@ -410,23 +397,27 @@ class MVTools:
             divide=divide, meander=meander, fields=self.fieldbased.is_inter, tff=self.fieldbased.is_tff, dct=dct
         )
 
+        vectors.analysis_data.clear()
+
         if self.mvtools is MVToolsPlugin.FLOAT:
             vectors.mv_multi = self.mvtools.Recalculate(super_clip, vectors=vectors.mv_multi, **recalculate_args)
         else:
             if not any((recalculate_args.get('overlap'), recalculate_args.get('overlapv'))):
                 self.disable_compensate = True
 
-            vectors.analysis_data.clear()
-
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vector = self.get_vector(vectors, direction=direction, delta=delta)
-                    vectors.set_mv(self.mvtools.Recalculate(super_clip, vector, **recalculate_args), direction, delta)
+                    vectors.set_mv(
+                        self.mvtools.Recalculate(
+                            super_clip, self.get_vector(vectors, direction=direction, delta=delta), **recalculate_args
+                        ),
+                        direction, delta,
+                    )
 
     @overload
     def compensate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, scbehavior: bool | None = None,
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
@@ -437,7 +428,7 @@ class MVTools:
     @overload
     def compensate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, scbehavior: bool | None = None,
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
@@ -448,7 +439,7 @@ class MVTools:
     @overload
     def compensate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, scbehavior: bool | None = None,
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
@@ -458,7 +449,7 @@ class MVTools:
 
     def compensate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, scbehavior: bool | None = None,
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
@@ -471,7 +462,7 @@ class MVTools:
         :param clip:             The clip to process.
         :param super:            The multilevel super clip prepared by :py:attr:`super`.
                                  If None, super will be obtained from clip.
-        :param vectors:          Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:          Motion vectors to use.
                                  If None, uses the vectors from this instance.
         :param direction:        Motion vector direction to use.
         :param tr:               The temporal radius. This determines how many frames are analyzed before/after the current frame.
@@ -501,11 +492,6 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
-
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
 
         tr = fallback(tr, self.tr)
 
@@ -542,7 +528,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None,
+        vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
@@ -553,7 +539,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None,
+        vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
@@ -564,7 +550,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None,
+        vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
@@ -574,7 +560,7 @@ class MVTools:
 
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None,
+        vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
@@ -590,7 +576,7 @@ class MVTools:
         :param clip:             The clip to process.
         :param super:            The multilevel super clip prepared by :py:attr:`super`.
                                  If None, super will be obtained from clip.
-        :param vectors:          Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:          Motion vectors to use.
                                  If None, uses the vectors from this instance.
         :param direction:        Motion vector direction to use.
         :param tr:               The temporal radius. This determines how many frames are analyzed before/after the current frame.
@@ -612,11 +598,6 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
-
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
 
         tr = fallback(tr, self.tr)
 
@@ -652,7 +633,7 @@ class MVTools:
 
     def degrain(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, tr: int | None = None,
+        vectors: MotionVectors | None = None, tr: int | None = None,
         thsad: int | tuple[int | None, int | None] | None = None,
         thsad2: int | tuple[int | None, int | None] | None = None,
         limit: int | tuple[int | None, int | None] | None = None,
@@ -668,7 +649,7 @@ class MVTools:
                            If None, the :py:attr:`workclip` attribute is used.
         :param super:      The multilevel super clip prepared by :py:attr:`super`.
                            If None, super will be obtained from clip.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param tr:         The temporal radius. This determines how many frames are analyzed before/after the current frame.
         :param thsad:      Defines the soft threshold of block sum absolute differences.
@@ -689,11 +670,6 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
-
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
 
         tr = fallback(tr, self.tr)
 
@@ -738,7 +714,7 @@ class MVTools:
 
     def flow_interpolate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, time: float | None = None,
+        vectors: MotionVectors | None = None, time: float | None = None,
         ml: float | None = None, blend: bool | None = None, thscd: int | tuple[int | None, int | None] | None = None,
         interleave: bool = True
     ) -> vs.VideoNode:
@@ -752,7 +728,7 @@ class MVTools:
         :param clip:          The clip to process.
         :param super:         The multilevel super clip prepared by :py:attr:`super`.
                               If None, super will be obtained from clip.
-        :param vectors:       Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:       Motion vectors to use.
                               If None, uses the vectors from this instance.
         :param time:          Time position between frames as a percentage (0.0-100.0).
                               Controls the interpolation position between frames.
@@ -774,11 +750,6 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
         vect_b, vect_f = self.get_vectors(vectors, tr=1)
 
         thscd1, thscd2 = normalize_thscd(thscd)
@@ -796,7 +767,7 @@ class MVTools:
 
     def flow_fps(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, fps: Fraction | None = None,
+        vectors: MotionVectors | None = None, fps: Fraction | None = None,
         mask: int | None = None, ml: float | None = None, blend: bool | None = None,
         thscd: int | tuple[int | None, int | None] | None = None
     ) -> vs.VideoNode:
@@ -810,7 +781,7 @@ class MVTools:
         :param clip:       The clip to process.
         :param super:      The multilevel super clip prepared by :py:attr:`super`.
                            If None, super will be obtained from clip.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param fps:        Target output framerate as a Fraction.
         :param mask:       Processing mask mode for handling occlusions and motion failures.
@@ -830,11 +801,6 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
         vect_b, vect_f = self.get_vectors(vectors, tr=1)
 
         thscd1, thscd2 = normalize_thscd(thscd)
@@ -850,7 +816,7 @@ class MVTools:
 
     def block_fps(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, fps: Fraction | None = None,
+        vectors: MotionVectors | None = None, fps: Fraction | None = None,
         mode: int | None = None, ml: float | None = None, blend: bool | None = None,
         thscd: int | tuple[int | None, int | None] | None = None
     ) -> vs.VideoNode:
@@ -865,7 +831,7 @@ class MVTools:
         :param clip:       The clip to process.
         :param super:      The multilevel super clip prepared by :py:attr:`super`.
                            If None, super will be obtained from clip.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param fps:        Target output framerate as a Fraction.
         :param mode:       Processing mask mode for handling occlusions and motion failures.
@@ -885,11 +851,6 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
         vect_b, vect_f = self.get_vectors(vectors, tr=1)
 
         thscd1, thscd2 = normalize_thscd(thscd)
@@ -905,7 +866,7 @@ class MVTools:
 
     def flow_blur(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | MVTools | None = None, blur: float | None = None,
+        vectors: MotionVectors | None = None, blur: float | None = None,
         prec: int | None = None, thscd: int | tuple[int | None, int | None] | None = None
     ) -> vs.VideoNode:
         """
@@ -917,7 +878,7 @@ class MVTools:
         :param clip:       The clip to process.
         :param super:      The multilevel super clip prepared by :py:attr:`super`.
                            If None, super will be obtained from clip.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param blur:       Blur time interval between frames as a percentage (0.0-100.0).
                            Controls the simulated shutter time/motion blur strength.
@@ -932,11 +893,6 @@ class MVTools:
         clip = fallback(clip, self.clip)
         super_clip = self.get_super(fallback(super, clip))
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
         vect_b, vect_f = self.get_vectors(vectors, tr=1)
 
         thscd1, thscd2 = normalize_thscd(thscd)
@@ -946,7 +902,7 @@ class MVTools:
         return self.mvtools.FlowBlur(clip, super_clip, vect_b, vect_f, **flow_blur_args)
 
     def mask(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
         direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
         delta: int = 1, ml: float | None = None, gamma: float | None = None,
         kind: MaskMode | None = None, time: float | None = None, ysc: int | None = None,
@@ -957,7 +913,7 @@ class MVTools:
 
         :param clip:         The clip to process.
                              If None, the :py:attr:`workclip` attribute is used.
-        :param vectors:      Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:      Motion vectors to use.
                              If None, uses the vectors from this instance.
         :param direction:    Motion vector direction to use.
         :param delta:        Motion vector delta to use.
@@ -977,11 +933,6 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
         vect = self.get_vector(vectors, direction=direction, delta=delta)
 
         thscd1, thscd2 = normalize_thscd(thscd)
@@ -997,7 +948,7 @@ class MVTools:
         return depth(mask_clip, clip, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
 
     def sc_detection(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
         delta: int = 1, thscd: int | tuple[int | None, int | None] | None = None
     ) -> vs.VideoNode:
         """
@@ -1005,7 +956,7 @@ class MVTools:
 
         :param clip:       The clip to process.
                            If None, the :py:attr:`workclip` attribute is used.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         :param delta:      Motion vector delta to use.
         :param thscd:      Scene change detection thresholds.
@@ -1016,11 +967,6 @@ class MVTools:
         """
 
         clip = fallback(clip, self.clip)
-
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
 
         thscd1, thscd2 = normalize_thscd(thscd)
 
@@ -1035,14 +981,14 @@ class MVTools:
         return detect
 
     def scale_vectors(
-            self, scale: int | tuple[int, int], vectors: MotionVectors | MVTools | None = None, strict: bool = True
-        ) -> None:
+        self, scale: int | tuple[int, int], vectors: MotionVectors | None = None, strict: bool = True
+    ) -> None:
         """
         Scales image_size, block_size, overlap, padding, and the individual motion_vectors contained in Analyse output
         by arbitrary and independent x and y factors.
 
         :param scale:      Factor to scale motion vectors by.
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         """
 
@@ -1051,43 +997,40 @@ class MVTools:
                 f'Motion vector manipulation not supported with {self.mvtools}!', self.scale_vectors
             )
         
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
-
-        scalex, scaley = normalize_seq(scale, 2)
-
         supported_blksize = (
             (4, 4), (8, 4), (8, 8), (16, 2), (16, 8), (16, 16), (32, 16),
             (32, 32), (64, 32), (64, 64), (128, 64), (128, 128)
         )
+
+        vectors = fallback(vectors, self.vectors)
+
+        scalex, scaley = normalize_seq(scale, 2)
 
         if scalex > 1 and scaley > 1:
             self.expand_analysis_data(vectors)
 
             blksizex, blksizev = vectors.analysis_data['Analysis_BlockSize']
 
-            scaled_blksizex, scaled_blksizev = blksizex * scalex, blksizev * scaley
+            scaled_blksize = (blksizex * scalex, blksizev * scaley)
 
-            if strict and (scaled_blksizex, scaled_blksizev) not in supported_blksize:
-                raise CustomRuntimeError(
-                    f"Unsupported block size! {scaled_blksizex}x{scaled_blksizev}", self.scale_vectors
-                )
-            
+            if strict and scaled_blksize not in supported_blksize:
+                raise CustomRuntimeError('Unsupported block size!', self.scale_vectors, scaled_blksize)
+
             vectors.analysis_data.clear()
             vectors.scaled = True
-            
+
             self.clip = self.clip.std.RemoveFrameProps('MSuper')
             self.search_clip = self.search_clip.std.RemoveFrameProps('MSuper')
 
             for delta in range(1, self.tr + 1):
                 for direction in MVDirection:
-                    vector = self.get_vector(vectors, direction=direction, delta=delta)
-                    vectors.set_mv(vector.manipmv.ScaleVect(scalex, scaley), direction, delta)
+                    vectors.set_mv(
+                        self.get_vector(vectors, direction=direction, delta=delta).manipmv.ScaleVect(scalex, scaley),
+                        direction, delta,
+                    )
 
     def show_vector(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | MVTools | None = None,
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
         direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
         delta: int = 1, scenechange: bool | None = None
     ) -> vs.VideoNode:
@@ -1095,7 +1038,7 @@ class MVTools:
         Draws generated vectors onto a clip.
 
         :param clip:           The clip to overlay the motion vectors on.
-        :param vectors:        Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:        Motion vectors to use.
                                If None, uses the vectors from this instance.
         :param direction:      Motion vector direction to use.
         :param delta:          Motion vector delta to use.
@@ -1110,20 +1053,17 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
+        vectors = fallback(vectors, self.vectors)
 
         vect = self.get_vector(vectors, direction=direction, delta=delta)
 
         return clip.manipmv.ShowVect(vect, scenechange)
-    
-    def expand_analysis_data(self, vectors: MotionVectors | MVTools | None = None) -> None:
+
+    def expand_analysis_data(self, vectors: MotionVectors | None = None) -> None:
         """
         Expands the binary MVTools_MVAnalysisData frame prop into separate frame props for convenience.
 
-        :param vectors:    Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
+        :param vectors:    Motion vectors to use.
                            If None, uses the vectors from this instance.
         """
 
@@ -1132,10 +1072,7 @@ class MVTools:
                 f'Motion vector manipulation not supported with {self.mvtools}!', self.expand_analysis_data
             )
 
-        if isinstance(vectors, MVTools):
-            vectors = vectors.vectors
-        elif vectors is None:
-            vectors = self.vectors
+        vectors = fallback(vectors, self.vectors)
 
         props_list = (
             'Analysis_BlockSize', 'Analysis_Pel', 'Analysis_LevelCount', 'Analysis_CpuFlags', 'Analysis_MotionFlags',
@@ -1151,8 +1088,8 @@ class MVTools:
                 .manipmv.ExpandAnalysisData()
                 .get_frame(0) as clip_props
             ):
-                for i in props_list:
-                    analysis_props[i] = get_prop(clip_props, i, int | list)  # type: ignore
+                for prop in props_list:
+                    analysis_props[prop] = get_prop(clip_props, prop, int | list)  # type: ignore
 
             vectors.analysis_data = analysis_props
 
@@ -1177,8 +1114,8 @@ class MVTools:
             super_clip = clip.std.PropToClip(prop='MSuper')
 
         return super_clip
-    
-    def get_vector(self, vectors: MotionVectors, *, direction: MVDirection, delta: int) -> vs.VideoNode:
+
+    def get_vector(self, vectors: MotionVectors | None = None, *, direction: MVDirection, delta: int) -> vs.VideoNode:
         """
         Get a single motion vector.
 
@@ -1189,23 +1126,24 @@ class MVTools:
         :return:               A single motion vector VideoNode
         """
 
+        vectors = fallback(vectors, self.vectors)
+
         if not vectors.has_vectors:
             raise CustomRuntimeError('You need to run analyze before getting a motion vector!', self.get_vector)
 
         if delta > self.tr:
             raise CustomRuntimeError(
-                f'Tried to get a motion vector delta larger than what exists! {delta} > {self.tr}',
-                self.get_vector
+                'Tried to get a motion vector delta larger than what exists!', self.get_vector, f'{delta} > {self.tr}'
             )
-        
+
         if self.mvtools is MVToolsPlugin.FLOAT:
-            return cast(vs.VideoNode, vectors.mv_multi).std.SelectEvery(self.tr * 2, (delta - 1) * 2 + direction - 1)
+            return cast(vs.VideoNode, vectors.mv_multi)[(delta - 1) * 2 + direction - 1 :: self.tr]
         else:
             return vectors.get_mv(direction, delta)
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors, *,
+        self, vectors: MotionVectors | None = None, *,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: Literal[False] = ...
     ) -> tuple[list[vs.VideoNode], list[vs.VideoNode]]:
@@ -1213,7 +1151,7 @@ class MVTools:
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors, *,
+        self, vectors: MotionVectors | None = None, *,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: Literal[True] = ...
     ) -> vs.VideoNode:
@@ -1221,14 +1159,14 @@ class MVTools:
 
     @overload
     def get_vectors(
-        self, vectors: MotionVectors, *,
+        self, vectors: MotionVectors | None = None, *,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: bool = ...
     ) -> vs.VideoNode | tuple[list[vs.VideoNode], list[vs.VideoNode]]:
         ...
 
     def get_vectors(
-        self, vectors: MotionVectors, *,
+        self, vectors: MotionVectors | None = None, *,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, multi: bool = False
     ) -> vs.VideoNode | tuple[list[vs.VideoNode], list[vs.VideoNode]]:
@@ -1236,6 +1174,7 @@ class MVTools:
         Get the backward and forward vectors.
 
         :param vectors:       The motion vectors to get the backward and forward vectors from.
+                              If None, uses the vectors from this instance.
         :param direction:     Motion vector direction to get.
         :param tr:            The number of frames to get the vectors for.
         :param multi:         Whether to return the mv_multi vector clip
@@ -1246,17 +1185,17 @@ class MVTools:
                               If multi is true: The multi vector VideoNode used by the FLOAT MVTools plugin.
         """
 
-        if not vectors.has_vectors:
-            raise CustomRuntimeError('You need to run analyze before getting motion vectors!', self.get_vectors)
-
+        vectors = fallback(vectors, self.vectors)
         tr = fallback(tr, self.tr)
+
+        if not vectors.has_vectors:
+            raise CustomRuntimeError(f'You must run {self.analyze} before getting motion vectors!', self.get_vectors)
 
         if tr > self.tr:
             raise CustomRuntimeError(
-                f'Tried to obtain more motion vectors than what exist! {tr} > {self.tr}',
-                self.get_vectors
+                'Tried to obtain more motion vectors than what exist!', self.get_vectors, f'{tr} > {self.tr}'
             )
-        
+
         if multi and self.mvtools is MVToolsPlugin.FLOAT:
             mv_multi = cast(vs.VideoNode, vectors.mv_multi)
 

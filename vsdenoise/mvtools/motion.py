@@ -54,7 +54,9 @@ class MotionVectors:
         """
 
         if delta not in self.motion_vectors[direction]:
-            raise CustomRuntimeError(f'Motion vector does not exist! ({direction}, {delta})', self.get_mv)
+            raise CustomRuntimeError(
+                'Tried to get a motion vector that does not exist!', self.get_mv, f'({direction}, {delta})'
+            )
 
         return self.motion_vectors[direction][delta]
 

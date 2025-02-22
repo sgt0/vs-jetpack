@@ -22,7 +22,7 @@ __all__ = [
 
 @overload
 def mc_degrain(
-    clip: vs.VideoNode, vectors: MotionVectors | MVTools | None = None,
+    clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
     rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
@@ -37,7 +37,7 @@ def mc_degrain(
 
 @overload
 def mc_degrain(
-    clip: vs.VideoNode, vectors: MotionVectors | MVTools | None = None,
+    clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
     rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
@@ -52,7 +52,7 @@ def mc_degrain(
 
 @overload
 def mc_degrain(
-    clip: vs.VideoNode, vectors: MotionVectors | MVTools | None = None,
+    clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
     rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
@@ -66,7 +66,7 @@ def mc_degrain(
 
 
 def mc_degrain(
-    clip: vs.VideoNode, vectors: MotionVectors | MVTools | None = None,
+    clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
     rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),

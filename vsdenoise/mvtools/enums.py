@@ -102,7 +102,7 @@ class MVToolsPlugin(CustomIntEnum):
         return cast(VSFunctionAllArgs, self.namespace.SCDetection)
 
     def Degrain(self, tr: int | None = None) -> VSFunctionAllArgs:
-        """Get the Degrain function for motion vector denoising."""
+        """Get the Degrain function for motion compensated denoising."""
 
         if tr is None and self is not MVToolsPlugin.FLOAT:
             raise CustomValueError('This implementation needs a temporal radius!', f'{self.name}.Degrain')
@@ -110,7 +110,7 @@ class MVToolsPlugin(CustomIntEnum):
         try:
             return cast(VSFunctionAllArgs, getattr(self.namespace, f"Degrain{fallback(tr, '')}"))
         except AttributeError:
-            raise CustomValueError(f'This temporal radius isn\'t supported! ({tr})', f'{self.name}.Degrain')
+            raise CustomValueError('This temporal radius isn\'t supported!', f'{self.name}.Degrain', tr)
 
     @classmethod
     def from_video(cls, clip: vs.VideoNode) -> MVToolsPlugin:
