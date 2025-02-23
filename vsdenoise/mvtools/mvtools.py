@@ -526,8 +526,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None,
-        direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
         interleave: Literal[True] = True, temporal_func: None = None
@@ -537,8 +536,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None,
-        direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
         interleave: Literal[True] = True, temporal_func: VSFunction = ...
@@ -548,8 +546,7 @@ class MVTools:
     @overload
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None,
-        direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
         interleave: Literal[False] = False
@@ -558,8 +555,7 @@ class MVTools:
 
     def flow(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None,
-        direction: MVDirection = MVDirection.BOTH,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
         interleave: bool = True, temporal_func: VSFunction | None = None
@@ -711,8 +707,8 @@ class MVTools:
     def flow_interpolate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
         vectors: MotionVectors | None = None, time: float | None = None,
-        ml: float | None = None, blend: bool | None = None, thscd: int | tuple[int | None, int | None] | None = None,
-        interleave: bool = True
+        ml: float | None = None, blend: bool | None = None,
+        thscd: int | tuple[int | None, int | None] | None = None, interleave: bool = True
     ) -> vs.VideoNode:
         """
         Motion interpolation function that creates an intermediate frame between two frames.
@@ -898,8 +894,8 @@ class MVTools:
         return self.mvtools.FlowBlur(clip, super_clip, vect_b, vect_f, **flow_blur_args)
 
     def mask(
-        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None, *,
-        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD],
+        self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
+        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.FORWARD,
         delta: int = 1, ml: float | None = None, gamma: float | None = None,
         kind: MaskMode | None = None, time: float | None = None, ysc: int | None = None,
         thscd: int | tuple[int | None, int | None] | None = None
@@ -977,7 +973,7 @@ class MVTools:
         return detect
 
     def scale_vectors(
-        self, scale: int | tuple[int, int], vectors: MotionVectors | None = None, strict: bool = True
+        self, vectors: MotionVectors | None = None, *, scale: int | tuple[int, int], strict: bool = True
     ) -> None:
         """
         Scales image_size, block_size, overlap, padding, and the individual motion_vectors contained in Analyse output
@@ -1027,7 +1023,7 @@ class MVTools:
 
     def show_vector(
         self, clip: vs.VideoNode | None = None, vectors: MotionVectors | None = None,
-        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.BACKWARD,
+        direction: Literal[MVDirection.FORWARD] | Literal[MVDirection.BACKWARD] = MVDirection.FORWARD,
         delta: int = 1, scenechange: bool | None = None
     ) -> vs.VideoNode:
         """
