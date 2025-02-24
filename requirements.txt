@@ -1,5 +1,5 @@
 VapourSynth>=68
-jetpytools>=1.2.3
+jetpytools>=1.2.5
 numpy>=2.0.0
 rich>=12.6.0
 scipy>=1.10.0
