@@ -145,8 +145,9 @@ class FunctionUtil(cachedproperty.baseclass, list[int]):
         if cfamily is vs.RGB:
             if not self._matrix:
                 raise UndefinedMatrixError(
-                    'You must specify a matrix for RGB to '
-                    f'{'/'.join(cf.name for cf in sorted(self.allowed_cfamilies, key=lambda x: x.name))} conversions!',
+                    'You must specify a matrix for RGB to {} conversions!'.format(
+                        '/'.join(cf.name for cf in sorted(self.allowed_cfamilies, key=lambda x: x.name))
+                    ),
                     self.func
                 )
 
