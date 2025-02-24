@@ -139,21 +139,18 @@ def gauss_blur(
     if isinstance(sigma, list):
         return normalize_radius(clip, gauss_blur, ('sigma', sigma), planes, mode=mode)
 
-    if ConvMode.VERTICAL in mode:
-        sigma = min(sigma, clip.height)
+    fast = kwargs.pop("_fast", False)
 
-    if ConvMode.HORIZONTAL in mode:
-        sigma = min(sigma, clip.width)
+    sigma_constant = 0.9 if fast and not mode.is_temporal else sigma
+    taps = BlurMatrix.GAUSS.get_taps(sigma_constant, taps)
 
-    taps = BlurMatrix.GAUSS.get_taps(sigma, taps)
-
-    if hasattr(core, 'resize2') and not mode.is_temporal:
+    if not mode.is_temporal:
         def _resize2_blur(plane: vs.VideoNode, sigma: float, taps: int) -> vs.VideoNode:
             resize_kwargs = dict[str, Any]()
 
             # Downscale approximation can be used by specifying _fast=True
             # Has a big speed gain when taps is large
-            if kwargs.pop("_fast", False):
+            if fast:
                 wdown, hdown = plane.width, plane.height
 
                 if ConvMode.VERTICAL in mode:
@@ -165,8 +162,7 @@ def gauss_blur(
                 resize_kwargs.update(width=plane.width, height=plane.height)
 
                 plane = Bilinear.scale(plane, wdown, hdown)
-                sigma = 0.8952637851149309
-                taps = min(taps, 128)
+                sigma = sigma_constant
             else:
                 resize_kwargs.update({f'force_{k}': k in mode for k in 'hv'})
 
@@ -181,7 +177,7 @@ def gauss_blur(
         ])
 
     kernel: BlurMatrixBase[float] = BlurMatrix.GAUSS(  # type: ignore
-        taps, sigma=sigma, mode=mode, scale_value=1.0 if taps > 12 else 1023
+        taps, sigma=sigma, mode=mode, scale_value=1023
     )
 
     return kernel(clip, planes, **kwargs)
