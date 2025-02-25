@@ -7,8 +7,8 @@ from vsmasktools import EdgeDetect, EdgeDetectT, PrewittStd, Morpho
 from vsrgtools import min_blur, remove_grain, repair, BlurMatrix, box_blur
 from vsexprtools import norm_expr
 from vstools import (
-    DitherType, PlanesT, core, cround, disallow_variable_format, disallow_variable_resolution, depth_func,
-    get_peak_value, get_y, join, normalize_planes, padder, scale_mask, split, limiter, vs
+    DitherType, PlanesT, cround, disallow_variable_format, disallow_variable_resolution, depth_func,
+    get_y, join, normalize_planes, padder, scale_mask, split, limiter, vs
 )
 
 __all__ = [
