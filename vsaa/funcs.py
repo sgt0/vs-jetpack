@@ -114,7 +114,7 @@ def clamp_aa(
 
     clamped = norm_expr(
         [func.work_clip, ref, weak_aa, strong_aa],
-        'z y - D1! z x - D2! xor a D1@ abs D2@ abs < x y {thr} - y {thr} + clip x ? ?',
+        'y z - D1! y a - D2! xor x D1@ abs D2@ abs < a z {thr} - z {thr} + clip a ? ?',
         thr=thr, planes=func.norm_planes
     )
 
