@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from inspect import Signature
-from typing import Callable
+from typing import Callable, cast
 
 from vsexprtools import complexpr_available, norm_expr
 from vstools import (
@@ -49,17 +49,17 @@ def contrasharpening(
     planes = normalize_planes(flt, planes)
 
     # Damp down remaining spots of the denoised clip
+    if callable(sharp):
+        sharp = sharp(flt)
     if isinstance(sharp, vs.VideoNode):
-        sharpened = sharp
-    elif callable(sharp):
-        sharpened = sharp(flt)
+        sharp = sharp
     else:
         damp = min_blur(flt, radius, planes=planes)
         blurred = BlurMatrix.BINOMIAL(radius=radius)(damp, planes=planes)
 
     # Difference of a simple kernel blur
     diff_blur = core.std.MakeDiff(
-        sharpened if sharp else damp,
+        sharp if sharp else damp,
         flt if sharp else blurred,
         planes
     )
@@ -72,9 +72,9 @@ def contrasharpening(
 
     # abs(diff) after limiting may not be bigger than before
     # Apply the limited difference (sharpening is just inverse blurring)
-    expr = 'x neutral - X! y neutral - Y! X@ abs Y@ abs < X@ Y@ ? z +'
+    expr = 'y neutral - Y! z neutral - Z! Y@ abs Z@ abs < Y@ Z@ ? x +'
 
-    return norm_expr([limit, diff_blur, flt], expr, planes)
+    return norm_expr([flt, limit, diff_blur], expr, planes)
 
 
 def contrasharpening_dehalo(
@@ -100,7 +100,7 @@ def contrasharpening_dehalo(
 
     return norm_expr(
         [blur, blur2, src, flt],
-        'x y - {alpha} * {level} * D1! z a - D2! D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? a +',
+        'z a - {alpha} * {level} * D1! y x - D2! D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? x +',
         planes, alpha=alpha, level=level
     )
 
@@ -130,12 +130,7 @@ def contrasharpening_median(
     else:
         raise CustomValueError('Invalid mode or function passed!', contrasharpening_median)
 
-    if complexpr_available:
-        expr = 'x dup + z - D! x y < D@ x y clamp D@ y x clamp ?'
-    else:
-        expr = 'x dup + z - x y min max x y max min'
-
-    return norm_expr([flt, src, repaired], expr, planes)
+    return norm_expr([flt, src, repaired], 'x dup + z - x y min x y max clip', planes)
 
 
 def fine_contra(
