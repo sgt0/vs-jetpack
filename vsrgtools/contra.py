@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from inspect import Signature
-from typing import Callable, cast
+from typing import Callable
 
 from vsexprtools import complexpr_available, norm_expr
 from vstools import (
@@ -99,7 +99,7 @@ def contrasharpening_dehalo(
     blur2 = iterate(blur2, partial(repair, repairclip=blur), 2, mode=rep_modes)
 
     return norm_expr(
-        [blur, blur2, src, flt],
+        [flt, src, blur, blur2],
         'z a - {alpha} * {level} * D1! y x - D2! D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? x +',
         planes, alpha=alpha, level=level
     )
