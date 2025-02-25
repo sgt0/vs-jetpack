@@ -3,20 +3,16 @@ from __future__ import annotations
 from typing import Any, Sequence, TypeVar, cast
 
 from vstools import (
-    ConvMode, GenericVSFunction, KwargsT, Nb, PlanesT, check_variable, check_variable_format, join, normalize_planes,
-    normalize_seq, plane, vs
+    GenericVSFunction, KwargsT, Nb, PlanesT, check_variable, check_variable_format,
+    join, normalize_planes, normalize_seq, plane, vs
 )
 
-from .enum import RemoveGrainMode, RepairMode, BlurMatrix
+from .enum import RemoveGrainMode, RepairMode
 
 __all__ = [
-    'wmean_matrix', 'mean_matrix',
     'norm_rmode_planes',
     'normalize_radius'
 ]
-
-wmean_matrix = list(BlurMatrix.BINOMIAL(1, mode=ConvMode.SQUARE))
-mean_matrix = list(BlurMatrix.MEAN(1, mode=ConvMode.SQUARE))
 
 RModeT = TypeVar('RModeT', RemoveGrainMode, RepairMode)
 
