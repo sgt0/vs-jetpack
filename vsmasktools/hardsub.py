@@ -260,12 +260,6 @@ class HardsubLine(HardsubMask):
         uv_thr = uv_range * 0.8
         uvexpr = f'x {uv_abs} {uv_thr} < y {uv_abs} {uv_thr} < and 255 0 ?'
 
-        upper = scale_value(0.8, 32, clip)
-        lower = scale_value(0.2, 32, clip)
-        mindiff = y_range * 0.1
-
-        difexpr = f'x {upper} > x {lower} < or x y - abs {mindiff} > and 255 0 ?'
-
         right = core.resize.Point(clip, src_left=4)
 
         subedge = norm_expr(
@@ -277,7 +271,15 @@ class HardsubLine(HardsubMask):
         clip_y, ref_y = get_y(clip), depth(get_y(ref), clip)
 
         clips = [box_blur(clip_y), box_blur(ref_y)]
-        diff = core.std.Expr(clips, difexpr, vs.GRAY8).std.Maximum().std.Maximum()
+        diff = norm_expr(
+            clips,
+            'x {upper} > x {lower} < or x y - abs {mindiff} > and 255 0 ?',
+            upper=scale_value(0.8, 32, clip),
+            lower=scale_value(0.2, 32, clip),
+            mindiff=y_range * 0.1,
+            format=vs.GRAY8,
+        )
+        diff = Morpho.maximum(diff, iterations=2)
 
         mask: vs.VideoNode = core.misc.Hysteresis(subedge, diff)
         mask = iterate(mask, core.std.Maximum, expand_n)

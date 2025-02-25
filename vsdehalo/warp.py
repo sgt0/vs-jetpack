@@ -3,11 +3,12 @@ from __future__ import annotations
 from math import sqrt
 from typing import Sequence
 
-from vsmasktools import EdgeDetect, EdgeDetectT, PrewittStd
+from vsmasktools import EdgeDetect, EdgeDetectT, PrewittStd, Morpho
 from vsrgtools import min_blur, remove_grain, repair, BlurMatrix, box_blur
+from vsexprtools import norm_expr
 from vstools import (
     DitherType, PlanesT, core, cround, disallow_variable_format, disallow_variable_resolution, depth_func,
-    get_peak_value, get_y, join, normalize_planes, padder, scale_mask, split, vs
+    get_peak_value, get_y, join, normalize_planes, padder, scale_mask, split, limiter, vs
 )
 
 __all__ = [
@@ -34,7 +35,6 @@ def edge_cleaner(
     work_clip, *chroma = split(clip) if planes == [0] else (clip, )
     assert work_clip.format
 
-    peak = get_peak_value(work_clip)
     is_float = work_clip.format.sample_type == vs.FLOAT
 
     if smode:
@@ -61,11 +61,13 @@ def edge_cleaner(
 
     y_mask = get_y(work_clip)
 
-    mask = edgemask.edgemask(y_mask).std.Expr(
-        f'x {scale_mask(4, 8, work_clip)} < 0 x '
-        f'{scale_mask(32, 8, work_clip)} > {peak} x ? ?'
-    ).std.InvertMask()
-    mask = box_blur(mask)
+    mask = norm_expr(
+        edgemask.edgemask(y_mask),
+        'x {c4} < 0 x {c32} > range_in_max x ? ?',
+        c4=scale_mask(4, 8, work_clip),
+        c32=scale_mask(32, 8, work_clip),
+    )
+    mask = box_blur(mask.std.InvertMask())
 
     final = work_clip.std.MaskedMerge(warped, mask)
 
@@ -84,9 +86,12 @@ def edge_cleaner(
                 0.35
             )
         )
-        sc4 = scale_mask(4, 8, work_clip)
-        sc16 = scale_mask(16, 8, work_clip)
-        mask = remove_grain(mask, 7).std.Expr(f'x {sc4} < 0 x {sc16} > {peak} x ? ?')
+        mask = norm_expr(
+            remove_grain(mask, 7),
+            'x {sc4} < 0 x {sc16} > range_in_max x ? ?',
+            sc4=scale_mask(4, 8, work_clip),
+            sc16=scale_mask(16, 8, work_clip),
+        )
 
         final = final.std.MaskedMerge(work_clip, mask)
 
@@ -142,16 +147,13 @@ def YAHR(
 
     y_mask = get_y(work_clip)
 
-    vEdge = core.std.Expr(
-        [y_mask, y_mask.std.Maximum().std.Maximum()],
-        f'y x - {8 * get_peak_value(y_mask) / 255} - 128 *'
-    )
+    vEdge = norm_expr([y_mask, Morpho.maximum(y_mask, iterations=2)], 'y x - 8 range_max * 255 / - 128 *')
 
     mask1 = vEdge.tcanny.TCanny(sqrt(expand * 2), mode=-1)
 
     mask2 = BlurMatrix.BINOMIAL()(vEdge, planes=planes).std.Invert()
 
-    mask = core.std.Expr([mask1, mask2], 'x 16 * y min 0 max 1 min' if is_float else 'x 16 * y min')
+    mask = limiter(norm_expr([mask1, mask2], 'x 16 * y min'))
 
     final = work_clip.std.MaskedMerge(yahr, mask, planes)
 

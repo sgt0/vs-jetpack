@@ -3,12 +3,12 @@ from __future__ import annotations
 from functools import partial
 from math import sqrt
 
-from vsexprtools import complexpr_available, norm_expr, norm_expr_planes
+from vsexprtools import norm_expr
 from vskernels import Bilinear, Point, Scaler, ScalerT
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
     ColorRange, ColorRangeT, PlanesT, check_ref_clip, check_variable, cround, depth, expect_bits, get_plane_sizes,
-    get_prop, normalize_planes, normalize_seq, vs
+    normalize_planes, normalize_seq, vs
 )
 
 from .types import GuidedFilterMode
@@ -105,39 +105,19 @@ def guided_filter(
 
         denominator = denominator.std.PlaneStats(None, 0)
 
-        if complexpr_available:
-            weight = norm_expr([weight_in, denominator], 'x 1e-06 + y.PlaneStatsAverage *', planes)
-        else:
-            weight = denominator.std.FrameEval(
-                lambda n, f: weight_in.std.Expr(
-                    norm_expr_planes(weight_in, f'x 1e-06 + {f.props.PlaneStatsAverage} *', planes)
-                ), denominator
-            )
+        weight = norm_expr([weight_in, denominator], 'x 1e-06 + y.PlaneStatsAverage *', planes)
 
         if mode is GuidedFilterMode.WEIGHTED:
             a = norm_expr([cov_Ip, var_I, weight], 'x y {thr} z / + /', planes, thr=thr)
         else:
             weight_in = weight_in.std.PlaneStats(None, 0)
 
-            if complexpr_available:
-                a = norm_expr(
-                    [cov_Ip, weight_in, weight, var_I],
-                    'x {thr} 1 1 1 -4 y.PlaneStatsMin y.PlaneStatsAverage 1e-6 - - / '
-                    'y y.PlaneStatsAverage - * exp + / - * z / + a {thr} z / + /',
-                    planes, thr=thr
-                )
-            else:
-                def _gradient(n: int, f: vs.VideoFrame) -> vs.VideoNode:
-                    frameMean = get_prop(f, 'PlaneStatsAverage', int, float)
-
-                    return norm_expr(
-                        [cov_Ip, weight_in, weight, var_I],
-                        'x {thr} 1 1 1 {kk} y {alpha} - * exp + / - * z / + a {thr} z / + /',
-                        planes, thr=thr, alpha=frameMean,
-                        kk=-4 / (get_prop(f, 'PlaneStatsMin', int, float) - frameMean - 1e-6)
-                    )
-
-                a = weight.std.FrameEval(_gradient, weight_in)
+            a = norm_expr(
+                [cov_Ip, weight_in, weight, var_I],
+                'x {thr} 1 1 1 -4 y.PlaneStatsMin y.PlaneStatsAverage 1e-6 - - / '
+                'y y.PlaneStatsAverage - * exp + / - * z / + a {thr} z / + /',
+                planes, thr=thr
+            )
 
     b = norm_expr([mean_p, a, mean_I], 'x y z * -', planes)
 

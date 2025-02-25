@@ -6,7 +6,7 @@ import math
 from abc import ABC
 from typing import Any, NoReturn, Sequence
 
-from vsexprtools import ExprOp
+from vsexprtools import norm_expr, ExprOp
 from vstools import ColorRange, KwargsT, depth, get_depth, join, split, vs
 
 from ..morpho import Morpho
@@ -245,7 +245,7 @@ class FreyChen(MatrixEdgeDetect):
     def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
         M = 'x x * y y * + z z * + a a * +'
         S = f'b b * c c * + d d * + e e * + f f * + {M} +'
-        return vs.core.std.Expr(clips, f'{M} {S} / sqrt')
+        return norm_expr(clips, f'{M} {S} / sqrt')
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode | NoReturn:
         raise NotImplementedError

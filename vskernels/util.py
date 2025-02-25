@@ -5,6 +5,7 @@ from math import exp
 from typing import Any, ClassVar, cast
 
 from jetpytools import inject_kwargs_params
+from vsexprtools import norm_expr
 from vstools import (
     ConstantFormatVideoNode, CustomRuntimeError, CustomValueError, HoldsVideoFormatT, InvalidTransferError, Matrix,
     MatrixT, Transfer, cachedproperty, depth, get_video_format, inject_self, to_singleton, vs
@@ -174,9 +175,10 @@ class LinearLight:
                         Transfer.from_video(wclip, self.__class__)
                     )
 
-                wclip = wclip.std.Expr(
-                    f'{self.ll._scenter} 1 {self.ll._sslope} / 1 x 0 max 1 min {self.ll._sscale} * '
-                    f'{self.ll._soffset} + / 1 - log * -'
+                wclip = norm_expr(
+                    '{center} 1 {slope} / 1 x 0 max 1 min {scale} * {offset} + / 1 - log * -',
+                    center=self.ll._scenter, slope=self.ll._sslope,
+                    scale=self.ll._sscale, offset=self.ll._soffset,
                 )
 
             return wclip
@@ -198,9 +200,10 @@ class LinearLight:
             processed = self._linear  # type: ignore
 
             if self.ll.sigmoid:
-                processed = processed.std.Expr(
-                    f'1 1 {self.ll._sslope} {self.ll._scenter} x 0 max 1 min - * exp + /'
-                    f' {self.ll._soffset} - {self.ll._sscale} /'
+                processed = norm_expr(
+                    '1 1 {slope} {center} x 0 max 1 min - * exp + / {offset} - {scale} /',
+                    slope=self.ll._sslope, center=self.ll._scenter,
+                    offset=self.ll._soffset, scale=self.ll._sscale,
                 )
 
             if self.ll.linear:

@@ -39,7 +39,7 @@ __all__ = [
 
 
 EXPR_VARS = (alph := list(string.ascii_lowercase))[(idx := alph.index('x')):] + alph[:idx]
-"""Variables to access clips in core.std.Expr."""
+"""Variables to access clips in Expr."""
 
 
 class DitherType(CustomStrEnum):

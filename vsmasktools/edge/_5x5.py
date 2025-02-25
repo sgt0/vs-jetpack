@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Any, Sequence
 
 from vstools import ColorRange, depth, vs
+from vsexprtools import norm_expr
 
 from ._abstract import EdgeDetect, EuclideanDistance, Max, RidgeDetect, SingleMatrix
 
@@ -110,7 +111,7 @@ class DoG(EuclideanDistance, Matrix5x5):
         return depth(clip, input_bits, range_out=ColorRange.FULL, range_in=ColorRange.FULL)
 
     def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
-        return vs.core.std.Expr(clips, 'x y -')
+        return norm_expr(clips, 'x y -')
 
 
 class Farid(RidgeDetect, EuclideanDistance, Matrix5x5):

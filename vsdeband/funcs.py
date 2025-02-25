@@ -10,6 +10,7 @@ from vsrgtools import (
     BlurMatrix, MeanMode, RemoveGrainMode, RemoveGrainModeT,
     box_blur, gauss_blur, limit_filter, remove_grain
 )
+from vsexprtools import norm_expr
 from vstools import (
     ColorRange, PlanesT, VSFunction, FunctionUtil, check_ref_clip, check_variable, depth,
      expect_bits, fallback, normalize_planes, normalize_seq, scale_value, to_arr, vs
@@ -224,6 +225,7 @@ def multi_deband(
             ]).resize.Bicubic(format=vs.YUV444P16), split_planes=True
         )
         textures = box_blur(ExprOp.SUB(textures, edges), 2)
+        textures = norm_expr(textures, 'x 2 *')
 
     line_big = ExprOp.ADD(
         edgemask, gauss_blur(edgemask.std.Maximum(), 0.75), expr_suffix='4 *'
@@ -262,6 +264,4 @@ def multi_deband(
         lowpass=lambda *args, **kwargs: lowpass_deband, **freq_merge_kwargs
     )
 
-    return deband.std.MaskedMerge(
-        clip.std.Merge(base_deband, 0.5), textures.std.Expr('x 2 *')
-    )
+    return deband.std.MaskedMerge(clip.std.Merge(base_deband, 0.5), textures)

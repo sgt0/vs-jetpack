@@ -8,7 +8,7 @@ from jetpytools import inject_kwargs_params
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vstools import (
     ColorRange, CustomRuntimeError, CustomValueError, DitherType, FuncExceptT, KwargsT, PlanesT, T,
-    check_variable, core, depth, get_lowest_values, get_peak_value, get_peak_values, get_subclasses,
+    check_variable, depth, get_lowest_values, get_peak_value, get_peak_values, get_subclasses,
     inject_self, join, normalize_planes, plane, scale_mask, vs
 )
 
@@ -343,7 +343,7 @@ class RidgeDetect(MatrixEdgeDetect):
         return self._mask(clip, lthr, hthr, multi, clamp, _Feature.RIDGE, planes, **kwargs)
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
-        return core.std.Expr(clips, 'x 2 pow z 2 pow 4 * + x y * 2 * - y 2 pow + sqrt x y + + 0.5 *')
+        return norm_expr(clips, 'x 2 pow z 2 pow 4 * + x y * 2 * - y 2 pow + sqrt x y + + 0.5 *')
 
     def _preprocess(self, clip: vs.VideoNode) -> vs.VideoNode:
         if len(self.matrices[0]) > 9 or (self.mode_types and self.mode_types[0] != 's'):
@@ -370,7 +370,7 @@ class SingleMatrix(MatrixEdgeDetect, ABC):
 
 class EuclideanDistance(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
-        return core.std.Expr(clips, 'x x * y y * + sqrt')
+        return norm_expr(clips, 'x x * y y * + sqrt')
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode | NoReturn:
         raise NotImplementedError

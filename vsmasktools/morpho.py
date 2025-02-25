@@ -693,7 +693,7 @@ class Morpho:
 
     def _multiply_mm_func(self, func: VSFunctionAllArgs, multiply: float) -> VSFunctionAllArgs:
         def mm_func(clip: vs.VideoNode, *args: Any, **kwargs: Any) -> vs.VideoNode:
-            return func(clip, *args, **kwargs).std.Expr(f'x {multiply} *')
+            return norm_expr(func(clip, *args, **kwargs), 'x {multiply} *', multiply=multiply)
         return mm_func
 
     @staticmethod
@@ -744,6 +744,6 @@ def grow_mask(
     blurred = BlurMatrix.BINOMIAL()(outer, planes=planes)
 
     if multiply:
-        return blurred.std.Expr(f'x {multiply} *')
+        return norm_expr(blurred, 'x {multiply} *', multiply=multiply)
 
     return blurred
