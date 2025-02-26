@@ -50,9 +50,6 @@ def box_blur(
     if hasattr(core, 'vszip'):
         return clip.vszip.BoxBlur(*box_args)
 
-    if radius > 12:
-        return clip.std.BoxBlur(*box_args)
-
     return BlurMatrix.MEAN(radius, mode=mode)(clip, planes, passes=passes, **kwargs)
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from scipy import interpolate
 
 from vsexprtools import norm_expr
 from vstools import (
@@ -84,8 +85,6 @@ def fine_sharp(
         clip: vs.VideoNode, mode: int = 1, sstr: float = 2.0, cstr: float | None = None, xstr: float = 0.19,
         lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
 ) -> vs.VideoNode:
-    from scipy import interpolate
-
     func = FunctionUtil(clip, fine_sharp, planes)
     
     if cstr is None:
