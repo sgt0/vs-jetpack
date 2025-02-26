@@ -8,7 +8,7 @@ from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
 from vstools import (
     ConvMode, CustomValueError, FunctionUtil, OneDimConvModeT, PlanesT, SpatialConvModeT, KwargsNotNone,
-    TempConvModeT, check_variable, core, depth, get_depth, join, normalize_planes, normalize_seq, split, to_arr, vs
+    TempConvModeT, check_variable, core, join, normalize_planes, normalize_seq, split, to_arr, vs
 )
 
 from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode, BilateralBackend
@@ -287,18 +287,21 @@ def median_blur(
 
 
 def bilateral(
-    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | list[float] = 3.0,
-    sigmaR: float | list[float] = 0.02, algorithm: int | None = None, pbfic_num: int | None = None,
+    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | list[float] | None = None,
+    sigmaR: float | list[float] | None = None, algorithm: int | None = None, pbfic_num: int | list[int] | None = None,
     radius: int | list[int] | None = None, device_id: int | None = None, num_streams: int | None = None,
     use_shared_memory: bool | None = None, block_size: int | tuple[int, int] | None = None,
     backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = [0, 1, 2],
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
-    sigmaS, sigmaR = func.norm_seq(sigmaS), func.norm_seq(sigmaR)
     block_x, block_y = normalize_seq(block_size, 2)
 
-    if backend in (BilateralBackend.GPU, BilateralBackend.GPU_RTC):
+    if backend == BilateralBackend.CPU:
+        bilateral_args = KwargsNotNone(
+            ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=planes, algorithm=algorithm, PBFICnum=pbfic_num
+        )
+    else:
         bilateral_args = KwargsNotNone(
             sigma_spatial=sigmaS,
             sigma_color=sigmaR,
@@ -310,19 +313,9 @@ def bilateral(
         )
 
         if backend == BilateralBackend.GPU_RTC:
-            return clip.bilateralgpu_rtc.Bilateral(**bilateral_args, block_x=block_x, block_y=block_y)
-        else:
-            return clip.bilateralgpu.Bilateral(**bilateral_args)
+            bilateral_args | KwargsNotNone(block_x=block_x, block_y=block_y)
 
-    if (bits := get_depth(clip)) > 16:
-        clip = depth(clip, 16)
-
-    if ref and clip.format != ref.format:
-        ref = depth(ref, clip)
-
-    clip = clip.vszip.Bilateral(ref, sigmaS, sigmaR, planes, algorithm, pbfic_num)
-
-    return depth(clip, bits)
+    return func.return_clip(getattr(func.work_clip, backend).Bilateral(**bilateral_args))
 
 
 def flux_smooth(

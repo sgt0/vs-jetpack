@@ -464,7 +464,7 @@ class BlurMatrix(CustomIntEnum):
         return kernel
 
 
-class BilateralBackend(CustomIntEnum):
-    CPU = 0
-    GPU = 1
-    GPU_RTC = 2
+class BilateralBackend(CustomStrEnum):
+    CPU = 'vszip'
+    GPU = 'bilateralgpu'
+    GPU_RTC = 'bilateralgpu_rtc'
