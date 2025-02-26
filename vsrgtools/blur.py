@@ -47,10 +47,7 @@ def box_blur(
         radius, 0 if mode == ConvMode.HORIZONTAL else passes
     )
 
-    if hasattr(core, 'vszip'):
-        return clip.vszip.BoxBlur(*box_args)
-
-    return BlurMatrix.MEAN(radius, mode=mode)(clip, planes, passes=passes, **kwargs)
+    return clip.vszip.BoxBlur(*box_args)
 
 
 def side_box_blur(
