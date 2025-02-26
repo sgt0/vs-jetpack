@@ -14,8 +14,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        vs-versions: [70]
+        vs-versions: [66]
         python-version: ['3.12']
 
     steps:
