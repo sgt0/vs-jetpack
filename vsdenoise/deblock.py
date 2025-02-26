@@ -50,7 +50,7 @@ class _dpir(CustomStrEnum):
         :param i444:            Output as 444 if True.
         :param tiles:           Splits up the frame into multiple tiles.
                                 Helps if you're lacking in vram but models may behave differently.
-        :param overlap:         
+        :param overlap:         Overlap size when using tiling.
         :param zones:           Apply different strength in specified zones.
         :param fp16:            Process in half-precision floating-point format.
         :param num_streams:     Number of asynchrononous operations. If None, auto pick the best number based on your GPU.
@@ -456,7 +456,7 @@ def mpeg2stinx(
         repaired = core.std.Interleave([repair_even, repair_odd]).std.SeparateFields(True)
 
         return repaired.std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
-    
+
     def temporal_limit(src: vs.VideoNode, flt: vs.VideoNode) -> vs.VideoNode:
         if limit is None:
             return flt
@@ -466,16 +466,16 @@ def mpeg2stinx(
         diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
 
         return norm_expr([flt, src, diff], 'x y z {limit} * - y z {limit} * + clip', limit=limit)
-    
+
     def default_bob(clip: vs.VideoNode) -> vs.VideoNode:
         bobbed = Nnedi3(field=3).interpolate(clip, double_y=False)
         return clip.bwdif.Bwdif(field=3, edeint=bobbed)
-    
+
     if (fb := FieldBased.from_video(clip, False, mpeg2stinx)).is_inter:
         raise UnsupportedFieldBasedError('Interlaced input is not supported!', mpeg2stinx, fb)
-    
+
     sw, sh = normalize_seq(radius, 2)
-    
+
     if not bobber:
         bobber = default_bob
 

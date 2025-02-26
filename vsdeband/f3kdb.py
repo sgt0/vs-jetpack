@@ -146,7 +146,7 @@ class F3kdb(Debander):
         :param sample_mode:     Determines how pixels are taken as reference.
         :param dynamic_grain:   Use different grain pattern for each frame.
         :param blur_first:      If True current pixel is compared with average value of all pixels.
-                                If False current pixel is compared with all pixels. 
+                                If False current pixel is compared with all pixels.
                                 The pixel is considered as banded pixel only if all differences are less than threshold.
         :param seed:            Seed for random number generation
         :param random:          Random number algorithm for reference positions / grains.

@@ -86,7 +86,7 @@ def fine_sharp(
         lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, fine_sharp, planes)
-    
+
     if cstr is None:
         cstr = interpolate.CubicSpline(
             x=(0, 0.5, 1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 8.0, 255.0),

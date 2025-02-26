@@ -192,7 +192,7 @@ def min_blur(
 
     if isinstance(radius, list):
         return normalize_radius(clip, min_blur, radius, planes)
-    
+
     mode_blur, mode_median = normalize_seq(mode, 2)
 
     blurred = BlurMatrix.BINOMIAL(radius=radius, mode=mode_blur)(clip, planes=planes, **kwargs)

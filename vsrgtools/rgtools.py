@@ -25,7 +25,7 @@ def repair(clip: vs.VideoNode, repairclip: vs.VideoNode, mode: RepairModeT) -> v
 
     if not sum(mode):
         return clip
-    
+
     if clip.format.sample_type == vs.INTEGER and all(m in range(24 + 1) for m in mode):
         return core.rgvs.Repair(clip, repairclip, mode)
 
@@ -62,7 +62,7 @@ def clense(
     mode: ClenseModeT = ClenseMode.NONE, planes: PlanesT = None
 ) -> vs.VideoNode:
     warnings.warn('clense is deprecated! Use MeanMode instead!', DeprecationWarning)
-    
+
     kwargs = KwargsNotNone(previous=previous_clip, next=next_clip)
 
     if mode == ClenseMode.NONE:
@@ -83,7 +83,7 @@ def vertical_cleaner(clip: vs.VideoNode, mode: VerticalCleanerModeT) -> vs.Video
 
     if not sum(mode):
         return clip
-    
+
     for m in mode:
         if m == VerticalCleanerMode.MEDIAN:
             warnings.warn(f'Deprecated verticalcleaner mode {m}! Use median_blur instead!', DeprecationWarning)
