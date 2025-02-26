@@ -57,13 +57,9 @@ runs:
         make -j$(nproc)
         sudo make install -j$(nproc)
         sudo mkdir -p /usr/lib/vapoursynth
-        python setup.py sdist -d sdist
-        mkdir empty
-        pushd empty
-        pip install vapoursynth --no-index --find-links ../sdist
-        popd
         popd
         rm -rf vapoursynth
+        pip install vapoursynth==${{ inputs.vapoursynth-version }}
 
     - name: Verify VapourSynth install
       shell: python
