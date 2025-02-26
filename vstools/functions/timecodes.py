@@ -1,18 +1,21 @@
 from __future__ import annotations
 
 import re
+
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, ClassVar, Iterable, NamedTuple, TypeVar, overload
 
 import vapoursynth as vs
+
 from jetpytools import CustomValueError, FilePathType, FuncExceptT, LinearRangeLut, Sentinel, SPath, inject_self
+from typing_extensions import Self
 
 from ..enums import Matrix, SceneChangeMode
 from ..exceptions import FramesLengthError, InvalidTimecodeVersionError
-from .render import clip_async_render
 from .file import PackageStorage
+from .render import clip_async_render
 
 __all__ = [
     'Timecodes',
@@ -149,49 +152,55 @@ class Timecodes(list[Timecode]):
         return major_time, acc_ranges
 
     @classmethod
-    def from_clip(cls: type[TimecodesBoundT], clip: vs.VideoNode, **kwargs: Any) -> TimecodesBoundT:
+    def from_clip(cls, clip: vs.VideoNode, **kwargs: Any) -> Self:
         """
         Get the timecodes from a given clip.
 
         :param clip:        Clip to gather metrics from.
         :param kwargs:      Keyword arguments to pass on to `clip_async_render`.
         """
+        from ..utils import get_prop
+
         def _get_timecode(n: int, f: vs.VideoFrame) -> Timecode:
-            return Timecode(n, f.props._DurationNum, f.props._DurationDen)
+            return Timecode(n, get_prop(f, "_DurationNum", int), get_prop(f, "_DurationDen", int))
 
         return cls(clip_async_render(clip, None, 'Fetching timecodes...', _get_timecode, **kwargs))
 
     @overload
     @classmethod
     def from_file(
-        cls: type[TimecodesBoundT], file: FilePathType, ref: vs.VideoNode, *, func: FuncExceptT | None = None
-    ) -> TimecodesBoundT:
-        ...
-
-    @overload
-    @classmethod
-    def from_file(
-        cls: type[TimecodesBoundT],
-        file: FilePathType, length: int, den: int | None = None, *, func: FuncExceptT | None = None
-    ) -> TimecodesBoundT:
-        ...
-
-    @classmethod  # type: ignore
-    def from_file(
-        cls: type[TimecodesBoundT], file: FilePathType, ref_or_length: int | vs.VideoNode, den: int | None = None,
-        *, func: FuncExceptT | None = None
-    ) -> TimecodesBoundT:
+        cls, file: FilePathType, ref: vs.VideoNode, /, *, func: FuncExceptT | None = None
+    ) -> Self:
         """
         Read the timecodes from a given file.
 
         :param file:            File to read.
-        :param ref_or_length:   Reference clip to get the total number of frames from.
-                                If int, take that as the total number of frames.
+        :param ref:             Reference clip to get the total number of frames from.
+        :param func:            Function returned for custom error handling.
+                                This should only be set by VS package developers.
+        """
+
+    @overload
+    @classmethod
+    def from_file(
+        cls, file: FilePathType, length: int, den: int | None = None, /, func: FuncExceptT | None = None
+    ) -> Self:
+        """
+        Read the timecodes from a given file.
+
+        :param file:            File to read.
+        :param length:          Total number of frames.
         :param den:             The denominator. If None, try to obtain it from the ref if possible,
                                 else fall back to 1001.
         :param func:            Function returned for custom error handling.
                                 This should only be set by VS package developers.
         """
+
+    @classmethod
+    def from_file(
+        cls, file: FilePathType, ref_or_length: int | vs.VideoNode, den: int | None = None,
+        /, func: FuncExceptT | None = None
+    ) -> Self:
         func = func or cls.from_file
 
         file = Path(str(file)).resolve()
@@ -317,9 +326,6 @@ class Timecodes(list[Timecode]):
         out_path.write_text('\n'.join(out_text + ['']))
 
 
-TimecodesBoundT = TypeVar('TimecodesBoundT', bound=Timecodes)
-
-
 class Keyframes(list[int]):
     """
     Class representing keyframes, or scenechanges.
@@ -343,10 +349,6 @@ class Keyframes(list[int]):
                 })
 
             self.indices = LinearRangeLut(self)
-
-    @overload  # type: ignore
-    def __init__(self, iterable: Iterable[int]) -> None:
-        ...
 
     def __init__(self, iterable: Iterable[int] = [], *, _dummy: bool = False) -> None:
         super().__init__(sorted(list(iterable)))

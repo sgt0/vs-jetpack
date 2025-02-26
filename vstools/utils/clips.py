@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import inspect
-from functools import partial, wraps
-from typing import Any, Callable, Literal, TypeVar, cast, overload
 
-from jetpytools import CustomValueError, FuncExceptT, KwargsT, T, fallback
+from functools import partial, wraps
+from typing import Any, Callable, Literal, cast, overload
+
+from jetpytools import CustomValueError, FuncExceptT, KwargsT, T
 
 from ..enums import (
-    ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix, MatrixT, Primaries,
-    PrimariesT, PropEnum, Transfer, TransferT
+    ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix,
+    MatrixT, Primaries, PrimariesT, PropEnum, Transfer, TransferT
 )
 from ..functions import DitherType, check_variable, depth
 from ..types import F_VD, HoldsVideoFormatT, VideoFormatT
@@ -145,7 +146,7 @@ def initialize_clip(
     :return:                Clip with relevant frame properties set, and optionally dithered up to 16 bits by default.
     """
 
-    func = fallback(func, initialize_clip)
+    func = func or initialize_clip
 
     values: list[tuple[type[PropEnum], Any]] = [
         (Matrix, matrix),
@@ -277,7 +278,7 @@ class ProcessVariableClip(DynamicClipsCache[T]):
         if out_fmt is False:
             bk_args.update(format=vs.GRAY8, varformat=True)
         else:
-            bk_args.update(format=out_fmt)
+            bk_args.update(format=out_fmt if isinstance(out_fmt, int) else out_fmt.id)
 
         super().__init__(cache_size)
 
@@ -297,14 +298,14 @@ class ProcessVariableClip(DynamicClipsCache[T]):
 
     @classmethod
     def from_clip(
-        cls: type[ProcVarClipSelf],
+        cls,
         clip: vs.VideoNode
     ) -> vs.VideoNode:
         return cls(clip).eval_clip()
 
     @classmethod
     def from_func(
-        cls: type[ProcVarClipSelf],
+        cls,
         clip: vs.VideoNode,
         func: Callable[[vs.VideoNode], vs.VideoNode],
         out_dim: tuple[int, int] | Literal[False] | None = None,
@@ -316,7 +317,7 @@ class ProcessVariableClip(DynamicClipsCache[T]):
 
         return _inner(clip, out_dim, out_fmt, cache_size).eval_clip()
 
-    def get_key(self, frame: vs.VideoFrame) -> T:
+    def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> T:
         raise NotImplementedError
 
     def normalize(self, clip: vs.VideoNode, cast_to: T) -> vs.VideoNode:
@@ -326,11 +327,8 @@ class ProcessVariableClip(DynamicClipsCache[T]):
         return clip
 
 
-ProcVarClipSelf = TypeVar('ProcVarClipSelf', bound=ProcessVariableClip)  # type: ignore
-
-
 class ProcessVariableResClip(ProcessVariableClip[tuple[int, int]]):
-    def get_key(self, frame: vs.VideoFrame) -> tuple[int, int]:
+    def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> tuple[int, int]:
         return (frame.width, frame.height)
 
     def normalize(self, clip: vs.VideoNode, cast_to: tuple[int, int]) -> vs.VideoNode:
@@ -338,16 +336,19 @@ class ProcessVariableResClip(ProcessVariableClip[tuple[int, int]]):
 
 
 class ProcessVariableFormatClip(ProcessVariableClip[vs.VideoFormat]):
-    def get_key(self, frame: vs.VideoFrame) -> vs.VideoFormat:
+    def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> vs.VideoFormat:
+        assert frame.format
         return frame.format
 
     def normalize(self, clip: vs.VideoNode, cast_to: vs.VideoFormat) -> vs.VideoNode:
-        return clip.std.RemoveFrameProps().resize.Point(format=cast_to).std.CopyFrameProps(clip)
+        return clip.std.RemoveFrameProps().resize.Point(format=cast_to.id).std.CopyFrameProps(clip)
 
 
 class ProcessVariableResFormatClip(ProcessVariableClip[tuple[int, int, vs.VideoFormat]]):
-    def get_key(self, frame: vs.VideoFrame) -> tuple[int, int, vs.VideoFormat]:
+    def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> tuple[int, int, vs.VideoFormat]:
+        assert frame.format
         return (frame.width, frame.height, frame.format)
 
     def normalize(self, clip: vs.VideoNode, cast_to: tuple[int, int, vs.VideoFormat]) -> vs.VideoNode:
-        return clip.std.RemoveFrameProps().resize.Point(*cast_to).std.CopyFrameProps(clip)
+        w, h, fmt = cast_to
+        return clip.std.RemoveFrameProps().resize.Point(w, h, fmt.id).std.CopyFrameProps(clip)

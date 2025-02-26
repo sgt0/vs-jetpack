@@ -120,7 +120,7 @@ class InvalidColorFamilyError(CustomValueError):
 
         super().__init__(
             message, func, wrong=wrong_str,
-            correct=iter(set(get_color_family(c).name for c in to_arr(correct))), **kwargs
+            correct=iter(set(get_color_family(c).name for c in to_arr(correct))), **kwargs  # type: ignore[arg-type]
         )
 
     @staticmethod
@@ -151,7 +151,7 @@ class InvalidColorFamilyError(CustomValueError):
         from ..utils import get_color_family
 
         to_check = get_color_family(to_check)
-        correct_list = [get_color_family(c) for c in to_arr(correct)]
+        correct_list = [get_color_family(c) for c in to_arr(correct)] # type: ignore[arg-type]
 
         if to_check not in correct_list:
             if message is not None:
@@ -276,7 +276,7 @@ class LengthMismatchError(MismatchError):
 
     if TYPE_CHECKING:
         @classmethod
-        def check(  # type: ignore[override]
+        def check(
             cls, func: FuncExceptT, *lengths: int | Sized, **kwargs: Any
         ) -> None:
             ...

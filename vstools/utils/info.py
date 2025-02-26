@@ -50,7 +50,8 @@ def get_video_format(
         sample_type = vs.SampleType(sample_type)
 
     if isinstance(value, vs.VideoFormat):
-        return value
+        # TODO: mypy bug
+        return value  # type: ignore[return-value]
 
     if isinstance(value, VSPresetVideoFormat):
         return vs.core.get_video_format(value)
@@ -64,12 +65,15 @@ def get_video_format(
 
         return vs.core.query_video_format(vs.YUV, sample_type, value)
 
-    assert value.format
+    # TODO: mypy bug
+    assert value.format  # type: ignore[union-attr]
 
     if sample_type is not None:
-        return value.format.replace(sample_type=sample_type)
+        # TODO: mypy bug
+        return value.format.replace(sample_type=sample_type)  # type: ignore[union-attr]
 
-    return value.format
+    # TODO: mypy bug
+    return value.format  # type: ignore[union-attr]
 
 
 def get_depth(clip: VideoFormatT | HoldsVideoFormatT, /) -> int:
@@ -100,7 +104,7 @@ def get_framerate(clip: vs.VideoNode | Fraction | tuple[int, int] | float) -> Fr
     """Get the framerate from any object holding it."""
 
     if isinstance(clip, vs.VideoNode):
-        return clip.fps  # type: ignore
+        return clip.fps
 
     if isinstance(clip, Fraction):
         return clip
@@ -223,13 +227,13 @@ def get_w(
 
     :return:                Calculated width.
     """
-
-    if isinstance(ar_or_ref, (vs.VideoNode, vs.VideoFrame)):
-        assert (ref := ar_or_ref).format
+    if not isinstance(ar_or_ref, SupportsFloat):
+        ref = ar_or_ref
+        assert ref.format
         aspect_ratio = ref.width / ref.height
         mod = fallback(mod, ref.format.subsampling_w and 2 << ref.format.subsampling_w)
     else:
-        aspect_ratio = ar_or_ref
+        aspect_ratio = float(ar_or_ref)
 
         if mod is None:
             mod = 0 if height % 2 else 2
@@ -272,12 +276,13 @@ def get_h(
     :return:                Calculated height.
     """
 
-    if isinstance(ar_or_ref, (vs.VideoNode, vs.VideoFrame)):
-        assert (ref := ar_or_ref).format  #
+    if not isinstance(ar_or_ref, SupportsFloat):
+        ref = ar_or_ref
+        assert ref.format
         aspect_ratio = ref.height / ref.width
         mod = fallback(mod, ref.format.subsampling_h and 2 << ref.format.subsampling_h)
     else:
-        aspect_ratio = 1.0 / ar_or_ref  # type: ignore
+        aspect_ratio = 1.0 / float(ar_or_ref)
 
         if mod is None:
             mod = 0 if width % 2 else 2

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
 import vapoursynth as vs
 from jetpytools import KwargsT
 from vstools import PropEnum
 
 from ..enums import ChromaLocation, ColorRange, Matrix, Primaries, Transfer
-from ..enums.stubs import SelfPropEnum
+from ..enums.stubs import PropEnumT
 
 __all__ = [
     'video_heuristics',
@@ -60,11 +60,11 @@ def video_heuristics(
 
     if props is True:
         with clip.get_frame(0) as frame:
-            props_dict = frame.props.copy()
+            props_dict = cast(vs.FrameProps, frame.props.copy())
     else:
         props_dict = props or None
 
-    def try_or_fallback(prop_type: type[SelfPropEnum]) -> SelfPropEnum:
+    def try_or_fallback(prop_type: type[PropEnumT]) -> PropEnumT:
         try:
             assert props_dict
             if prop_type.prop_key in props_dict:

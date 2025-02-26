@@ -52,8 +52,8 @@ class vs_object(ABC, metaclass=ABCMeta):
 
         if hasattr(self, '__vs_del__'):
             def _register(core_id: int) -> None:
-                self.__vsdel_partial_register = partial(self.__vs_del__, core_id)
-                core.register_on_destroy(self.__vsdel_partial_register)
+                self.__vsdel_partial_register = partial(self.__vs_del__, core_id)  # type: ignore[attr-defined]
+                core.register_on_destroy(self.__vsdel_partial_register)  # type: ignore[attr-defined]
 
             # [un]register_on_creation/destroy will only hold a weakref to the object
             self.__vsdel_register = _register
@@ -75,7 +75,7 @@ VSObjSelf = TypeVar('VSObjSelf', bound=vs_object)
 class VSDebug(Singleton, init=True):
     """Special class that follows the VapourSynth lifecycle for debug purposes."""
 
-    _print_func = print
+    _print_func: Callable[..., None] = print
 
     def __init__(self, *, env_life: bool = True, core_fetch: bool = False, use_logging: bool = False) -> None:
         """

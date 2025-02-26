@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from fractions import Fraction
 from math import gcd as max_common_div
-from typing import Callable, Iterable, Literal, NamedTuple, TypeVar, overload
+from typing import Callable, Iterable, NamedTuple, overload
 
 import vapoursynth as vs
-from jetpytools import Coordinate, CustomIntEnum, CustomStrEnum, FuncExceptT, Position, Sentinel, Size
+
+from jetpytools import Coordinate, CustomIntEnum, CustomStrEnum, FuncExceptT, Position, Sentinel, SentinelT, Size
+from typing_extensions import Self
 
 from ..types import HoldsPropValueT
 
@@ -62,12 +64,12 @@ class Dar(Fraction):
     @overload
     @classmethod
     def from_size(
-        cls: type[DarSelf],
+        cls,
         width: int,
         height: int,
         sar: Sar | bool = True, /,
         func: FuncExceptT | None = ...
-    ) -> DarSelf:
+    ) -> Self:
         """
         Get the Display Aspect Ratio from the clip's dimensions or Sample Aspect Ratio (SAR).
 
@@ -83,11 +85,11 @@ class Dar(Fraction):
     @overload
     @classmethod
     def from_size(
-        cls: type[DarSelf],
+        cls,
         clip: vs.VideoNode,
-        sar: Sar | bool = True, /,
+        sar: Sar | bool = True, /, *,
         func: FuncExceptT | None = ...
-    ) -> DarSelf:
+    ) -> Self:
         """
         Get the Display Aspect Ratio from the clip's Sample Aspect Ratio (SAR).
 
@@ -101,28 +103,27 @@ class Dar(Fraction):
 
     @classmethod
     def from_size(
-        cls: type[DarSelf],
-        clip_width: vs.VideoNode | int,
-        _height: int | Sar | bool = True,
-        _sar: Sar | bool = True,
+        cls,
+        width_or_clip: int | vs.VideoNode,
+        height_or_sar: int | Sar | bool = True,
+        sar: Sar | bool = True,
         /,
         func: FuncExceptT | None = None
-    ) -> DarSelf:
-        width: int
-        height: int
-        sar: Sar | Literal[False]
-
-        if isinstance(clip_width, vs.VideoNode):
+    ) -> Self:
+        if isinstance(width_or_clip, vs.VideoNode) and isinstance(height_or_sar, (Sar, bool)):
             from ..functions import check_variable_resolution
 
-            check_variable_resolution(clip_width, func or cls.from_size)
+            clip = width_or_clip
 
-            width, height, sar = clip_width.width, clip_width.height, _height  # type: ignore
+            check_variable_resolution(clip, func or cls.from_size)
+
+            width, height, sar = clip.width, clip.height, height_or_sar
 
             if sar is True:
-                sar = Sar.from_clip(clip_width)  # type: ignore
-        else:
-            width, height, sar = clip_width, _height, _sar if isinstance(_sar, Sar) else False  # type: ignore
+                sar = Sar.from_clip(clip)
+
+        elif isinstance(width_or_clip, int) and isinstance(height_or_sar, int):
+            width, height = width_or_clip, height_or_sar
 
         gcd = max_common_div(width, height)
 
@@ -143,9 +144,6 @@ class Dar(Fraction):
         return Sar.from_dar(self, active_area, height)
 
 
-DarSelf = TypeVar('DarSelf', bound=Dar)
-
-
 class Sar(Fraction):
     """
     A Fraction representing the Sample Aspect Ratio.
@@ -160,7 +158,7 @@ class Sar(Fraction):
     """
 
     @classmethod
-    def from_clip(cls: type[SarSelf], clip: HoldsPropValueT) -> SarSelf:
+    def from_clip(cls, clip: HoldsPropValueT) -> Self:
         """
         Get the SAR from the clip's frame properties.
 
@@ -174,7 +172,7 @@ class Sar(Fraction):
         return cls(get_prop(clip, '_SARNum', int, None, 1), get_prop(clip, '_SARDen', int, None, 1))
 
     @classmethod
-    def from_ar(cls: type[SarSelf], num: int, den: int, active_area: float, height: int) -> SarSelf:
+    def from_ar(cls, num: int, den: int, active_area: float, height: int) -> Self:
         """
         Calculate the SAR from the given display aspect ratio and active image area.
         This method is used to obtain metadata to set in the video container for anamorphic video.
@@ -193,7 +191,7 @@ class Sar(Fraction):
         return cls(Dar(num, den).to_sar(active_area, height))
 
     @classmethod
-    def from_dar(cls: type[SarSelf], dar: Dar, active_area: float, height: int) -> SarSelf:
+    def from_dar(cls, dar: Dar, active_area: float, height: int) -> Self:
         """Calculate the SAR using a DAR object. See ``Dar.to_sar`` for more information."""
 
         sar_n, sar_d = dar.numerator * height, dar.denominator * active_area
@@ -209,9 +207,6 @@ class Sar(Fraction):
         """Apply the SAR values as _SARNum and _SARDen frame properties to a clip."""
 
         return clip.std.SetFrameProps(_SARNum=self.numerator, _SARDen=self.denominator)
-
-
-SarSelf = TypeVar('SarSelf', bound=Sar)
 
 
 class Region(CustomStrEnum):
@@ -394,7 +389,7 @@ class SceneChangeMode(CustomIntEnum):
 
         return (lambda f: f.props[prop_key] == 1)
 
-    def lambda_cb(self, akarin: bool | None = None) -> Callable[[int, vs.VideoFrame], Sentinel.Type | int]:
+    def lambda_cb(self, akarin: bool | None = None) -> Callable[[int, vs.VideoFrame], SentinelT | int]:
         callback = self.check_cb(akarin)
         return (lambda n, f: Sentinel.check(n, callback(f)))
 
