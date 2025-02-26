@@ -38,7 +38,7 @@ def box_blur(
     if not radius:
         return clip
 
-    if mode == ConvMode.TEMPORAL or (clip.format.sample_type == vs.FLOAT and clip.format.bits_per_sample == 16):
+    if mode == ConvMode.TEMPORAL:
         return BlurMatrix.MEAN(radius, mode=mode)(clip, planes, passes=passes, **kwargs)
 
     box_args = (
