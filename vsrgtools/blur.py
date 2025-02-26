@@ -7,7 +7,7 @@ from typing import Any, Literal, overload
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
 from vstools import (
-    ConvMode, CustomValueError, FunctionUtil, OneDimConvModeT, PlanesT, SpatialConvModeT,
+    ConvMode, CustomValueError, FunctionUtil, OneDimConvModeT, PlanesT, SpatialConvModeT, KwargsNotNone,
     TempConvModeT, check_variable, core, depth, get_depth, join, normalize_planes, normalize_seq, split, to_arr, vs
 )
 
@@ -287,23 +287,32 @@ def median_blur(
 
 
 def bilateral(
-    clip: vs.VideoNode, sigmaS: float | list[float] = 3.0, sigmaR: float | list[float] = 0.02,
-    ref: vs.VideoNode | None = None, radius: int | list[int] | None = None,
-    device_id: int = 0, num_streams: int | None = None, use_shared_memory: bool = True,
-    block_x: int | None = None, block_y: int | None = None, planes: PlanesT = None,
-    *, backend: BilateralBackend = BilateralBackend.CPU
+    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | list[float] = 3.0,
+    sigmaR: float | list[float] = 0.02, algorithm: int | None = None, pbfic_num: int | None = None,
+    radius: int | list[int] | None = None, device_id: int | None = None, num_streams: int | None = None,
+    use_shared_memory: bool | None = None, block_size: int | tuple[int, int] | None = None,
+    backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = [0, 1, 2],
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
     sigmaS, sigmaR = func.norm_seq(sigmaS), func.norm_seq(sigmaR)
+    block_x, block_y = normalize_seq(block_size, 2)
 
     if backend in (BilateralBackend.GPU, BilateralBackend.GPU_RTC):
-        basic_args, new_args = (sigmaS, sigmaR, radius, device_id), (num_streams, use_shared_memory)
+        bilateral_args = KwargsNotNone(
+            sigma_spatial=sigmaS,
+            sigma_color=sigmaR,
+            radius=radius,
+            device_id=device_id,
+            num_streams=num_streams,
+            use_shared_memory=use_shared_memory,
+            ref=ref,
+        )
 
         if backend == BilateralBackend.GPU_RTC:
-            return clip.bilateralgpu_rtc.Bilateral(*basic_args, *new_args, block_x, block_y, ref)
+            return clip.bilateralgpu_rtc.Bilateral(**bilateral_args, block_x=block_x, block_y=block_y)
         else:
-            return clip.bilateralgpu.Bilateral(*basic_args, *new_args, ref)
+            return clip.bilateralgpu.Bilateral(**bilateral_args)
 
     if (bits := get_depth(clip)) > 16:
         clip = depth(clip, 16)
@@ -311,7 +320,7 @@ def bilateral(
     if ref and clip.format != ref.format:
         ref = depth(ref, clip)
 
-    clip = clip.vszip.Bilateral(ref, sigmaS, sigmaR)
+    clip = clip.vszip.Bilateral(ref, sigmaS, sigmaR, planes, algorithm, pbfic_num)
 
     return depth(clip, bits)
 

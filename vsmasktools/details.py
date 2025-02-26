@@ -48,7 +48,7 @@ def detail_mask_neo(
     clip_y = get_y(clip)
     blur_pf = gauss_blur(clip_y, sigma * 0.75)
 
-    blur_pref = bilateral(clip_y, sigma, ref=blur_pf)
+    blur_pref = bilateral(clip_y, blur_pf, sigma)
     blur_pref_diff = ExprOp.SUB.combine(blur_pref, clip_y).std.Deflate()
     blur_pref = Morpho.inflate(blur_pref_diff, iterations=4)
 

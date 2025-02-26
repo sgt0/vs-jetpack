@@ -171,9 +171,9 @@ class PrefilterBase(CustomIntEnum, metaclass=PrefilterMeta):
                     otherR = list[float | list[float]](reversed(normalize_seq(otherR or baseR, max_len)))
 
                     for siS, siR in zip(otherS, otherR):
-                        base, ref = ref or clip, bilateral(base, siS, siR, ref, **kwargs)
+                        base, ref = ref or clip, bilateral(base, ref, siS, siR, **kwargs)
 
-                return bilateral(clip, baseS, baseR, ref, **kwargs)
+                return bilateral(clip, ref, baseS, baseR, **kwargs)
 
             # TODO: To remove
             if pref_type.value in {Prefilter.MINBLUR1, Prefilter.MINBLUR2, Prefilter.MINBLUR3}:

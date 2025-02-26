@@ -133,7 +133,7 @@ def decrease_size(
     if show_mask:
         return mask
 
-    denoise = bilateral(clip, sigmaS, sigmaR, **kwargs)
+    denoise = bilateral(clip, sigmaS=sigmaS, sigmaR=sigmaR, **kwargs)
 
     return clip.std.MaskedMerge(denoise, mask, planes)
 
