@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from math import gcd as max_common_div
+from math import gcd
 from typing import Callable, Iterable, NamedTuple, overload
 
 import vapoursynth as vs
@@ -125,14 +125,14 @@ class Dar(Fraction):
         elif isinstance(width_or_clip, int) and isinstance(height_or_sar, int):
             width, height = width_or_clip, height_or_sar
 
-        gcd = max_common_div(width, height)
+        max_common_div = gcd(width, height)
 
         if sar is False:
             sar = Sar(1, 1)
 
-        return cls(width // gcd * sar.numerator, height // gcd * sar.denominator)
+        return cls(width // max_common_div * sar.numerator, height // max_common_div * sar.denominator)
 
-    def to_sar(self, active_area: float, height: int) -> Sar:
+    def to_sar(self, active_area: int | str | Fraction, height: int) -> Sar:
         """
         Convert the DAR to a SAR object.
 
@@ -172,7 +172,7 @@ class Sar(Fraction):
         return cls(get_prop(clip, '_SARNum', int, None, 1), get_prop(clip, '_SARDen', int, None, 1))
 
     @classmethod
-    def from_ar(cls, num: int, den: int, active_area: float, height: int) -> Self:
+    def from_ar(cls, num: int, den: int, active_area: int | str | Fraction, height: int) -> Self:
         """
         Calculate the SAR from the given display aspect ratio and active image area.
         This method is used to obtain metadata to set in the video container for anamorphic video.
@@ -191,17 +191,12 @@ class Sar(Fraction):
         return cls(Dar(num, den).to_sar(active_area, height))
 
     @classmethod
-    def from_dar(cls, dar: Dar, active_area: float, height: int) -> Self:
+    def from_dar(cls, dar: Dar, active_area: int | str | Fraction, height: int) -> Self:
         """Calculate the SAR using a DAR object. See ``Dar.to_sar`` for more information."""
 
-        sar_n, sar_d = dar.numerator * height, dar.denominator * active_area
+        assert isinstance(active_area, int | str | Fraction)
 
-        if isinstance(active_area, float):
-            sar_n, sar_d = int(sar_n * 10000), int(sar_d * 10000)
-
-        gcd = max_common_div(sar_n, sar_d)
-
-        return cls(sar_n // gcd, sar_d // gcd)
+        return cls(dar / (Fraction(active_area) / height))
 
     def apply(self, clip: vs.VideoNode) -> vs.VideoNode:
         """Apply the SAR values as _SARNum and _SARDen frame properties to a clip."""
