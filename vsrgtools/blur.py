@@ -289,12 +289,9 @@ def bilateral(
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
-    if planes is None:
-        planes = func.norm_seq([0, 1, 2])
-
     if backend == BilateralBackend.CPU:
         bilateral_args = KwargsNotNone(
-            ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=planes, algorithm=algorithm, PBFICnum=pbfic_num
+            ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=func.norm_planes, algorithm=algorithm, PBFICnum=pbfic_num
         )
     else:
         bilateral_args = KwargsNotNone(
