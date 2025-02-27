@@ -34,7 +34,7 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 
 Note: Not all plugin dependencies are hard dependencies, many are optional.
 
-- [eedi2](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI2)
+- [eedi2](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI2) / [eedi2cuda](https://github.com/hooke007/VapourSynth-EEDI2CUDA)
 - [eedi3](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI3)
 - [znedi3](https://github.com/sekrit-twc/znedi3) / [sneedif](https://github.com/Jaded-Encoding-Thaumaturgy/vapoursynth-SNEEDIF)
 - [sangnom](https://github.com/dubhater/vapoursynth-sangnom)
