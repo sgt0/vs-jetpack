@@ -285,9 +285,12 @@ def bilateral(
     sigmaR: float | list[float] | None = None, algorithm: int | None = None, pbfic_num: int | list[int] | None = None,
     radius: int | list[int] | None = None, device_id: int | None = None, num_streams: int | None = None,
     use_shared_memory: bool | None = None, block_size: int | tuple[int, int] | None = None,
-    backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = [0, 1, 2],
+    backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = None,
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
+
+    if planes is None:
+        planes = func.norm_seq([0, 1, 2])
 
     if backend == BilateralBackend.CPU:
         bilateral_args = KwargsNotNone(
@@ -307,7 +310,7 @@ def bilateral(
         if backend == BilateralBackend.GPU_RTC:
             block_x, block_y = normalize_seq(block_size, 2)
 
-            bilateral_args = bilateral_args | KwargsNotNone(block_x=block_x, block_y=block_y)
+            bilateral_args |= KwargsNotNone(block_x=block_x, block_y=block_y)
 
     return func.return_clip(getattr(func.work_clip, backend).Bilateral(**bilateral_args))
 
