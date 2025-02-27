@@ -34,15 +34,15 @@ class TestDar(TestCase):
         self.assertEqual(result, Dar(16, 9))
 
     def test_to_sar(self) -> None:
-        self.assertEqual(Dar(16, 9).to_sar(1.0, 1080), Sar(1920, 1))
+        self.assertEqual(Dar(16, 9).to_sar(1, 1080), Sar(1920, 1))
 
 
 class TestSar(TestCase):
     def test_from_ar(self) -> None:
-        self.assertEqual(Sar.from_ar(16, 9, 1.0, 1080), Sar(1920, 1))
+        self.assertEqual(Sar.from_ar(16, 9, 1, 1080), Sar(1920, 1))
 
     def test_from_dar(self) -> None:
-        self.assertEqual(Sar.from_dar(Dar(16, 9), 1.0, 1080), Sar(1920, 1))
+        self.assertEqual(Sar.from_dar(Dar(16, 9), 1, 1080), Sar(1920, 1))
 
     def test_apply(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.YUV420P8, width=1920, height=1080)
