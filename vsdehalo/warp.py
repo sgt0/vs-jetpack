@@ -63,9 +63,9 @@ def edge_cleaner(
 
     mask = norm_expr(
         edgemask.edgemask(y_mask),
-        'x {c4} < 0 x {c32} > range_in_max x ? ?',
-        c4=scale_mask(4, 8, work_clip),
-        c32=scale_mask(32, 8, work_clip),
+        'x {sc4} < 0 x {sc32} > range_in_max x ? ?',
+        sc4=scale_mask(4, 8, work_clip),
+        sc32=scale_mask(32, 8, work_clip),
     )
     mask = box_blur(mask.std.InvertMask())
 

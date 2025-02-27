@@ -289,8 +289,6 @@ def bilateral(
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
-    block_x, block_y = normalize_seq(block_size, 2)
-
     if backend == BilateralBackend.CPU:
         bilateral_args = KwargsNotNone(
             ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=planes, algorithm=algorithm, PBFICnum=pbfic_num
@@ -307,7 +305,9 @@ def bilateral(
         )
 
         if backend == BilateralBackend.GPU_RTC:
-            bilateral_args | KwargsNotNone(block_x=block_x, block_y=block_y)
+            block_x, block_y = normalize_seq(block_size, 2)
+
+            bilateral_args = bilateral_args | KwargsNotNone(block_x=block_x, block_y=block_y)
 
     return func.return_clip(getattr(func.work_clip, backend).Bilateral(**bilateral_args))
 
