@@ -1073,15 +1073,12 @@ class MVTools:
         )
 
         if not vectors.analysis_data:
+            vect = self.get_vector(vectors, direction=MVDirection.BACKWARD, delta=1).manipmv.ExpandAnalysisData()
+
             analysis_props = dict[str, Any]()
 
-            with (
-                self.get_vector(vectors, direction=MVDirection.BACKWARD, delta=1)
-                .manipmv.ExpandAnalysisData()
-                .get_frame(0) as clip_props
-            ):
-                for prop in props_list:
-                    analysis_props[prop] = get_prop(clip_props, prop, int | list)  # type: ignore
+            for prop in props_list:
+                analysis_props[prop] = get_prop(vect, prop, int | list)  # type: ignore
 
             vectors.analysis_data = analysis_props
 
