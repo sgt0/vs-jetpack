@@ -7,8 +7,7 @@ from vstools import (
     depth, expect_bits, get_nvidia_version, get_video_format, get_y, inject_self, limiter, vs
 )
 
-from vsmlrt import ArtCNN as mlrt_ArtCNN
-from vsmlrt import ArtCNNModel
+from vsmlrt import ArtCNNModel, ArtCNN as mlrt_ArtCNN
 
 from .helpers import GenericScaler
 

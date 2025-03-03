@@ -8,8 +8,8 @@ from typing import (
 from scipy.interpolate import interp1d
 
 from vstools import (
-    CustomEnum, CustomImportError, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
-     FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
+    CustomEnum, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
+    FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
     UnsupportedFieldBasedError, check_variable, core, flatten, get_depth, get_sample_type, inject_self, vs
 )
 
