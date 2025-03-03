@@ -219,9 +219,8 @@ def vinverse(
     clip: vs.VideoNode,
     comb_blur: GenericVSFunction | vs.VideoNode = partial(sbr, mode=ConvMode.VERTICAL),
     contra_blur: GenericVSFunction | vs.VideoNode = BlurMatrix.BINOMIAL(mode=ConvMode.VERTICAL),
-    contra_str: float = 2.7, amnt: int | None = None, scl: float = 0.25,
-    thr: int = 0, planes: PlanesT = None,
-    **kwargs: Any
+    contra_str: float = 2.7, amnt: int | float | None = None, scl: float = 0.25,
+    thr: int | float = 0, planes: PlanesT = None
 ) -> vs.VideoNode:
     """
     A simple but effective script to remove residual combing. Based on an AviSynth script by Didée.
@@ -235,21 +234,17 @@ def vinverse(
     :param scl:             Scale factor for vshrpD * vblurD < 0.
     """
 
-    func = FunctionUtil(clip, vinverse, planes)
-
-    kwrg_a, kwrg_b = not callable(comb_blur), not callable(contra_blur)
-
-    if isinstance(comb_blur, vs.VideoNode):
+    if callable(comb_blur):
+        blurred = comb_blur(clip, planes=planes)
+    else:
         blurred = comb_blur
-    else:
-        blurred = comb_blur(func.work_clip, planes=planes, **kwargs if kwrg_a else kwargs)
 
-    if isinstance(contra_blur, vs.VideoNode):
+    if callable(contra_blur):
+        blurred2 = contra_blur(blurred, planes=planes)
+    else:
         blurred2 = contra_blur
-    else:
-        blurred2 = contra_blur(blurred, planes=planes, **kwargs if kwrg_b else kwargs)
 
-    FormatsMismatchError.check(func.func, func.work_clip, blurred, blurred2)
+    FormatsMismatchError.check(vinverse, clip, blurred, blurred2)
 
     expr = (
         'x y - D1! D1@ abs D1A! D1A@ {thr} < x y z - {sstr} * D2! D1A@ D2@ abs < D1@ D2@ ? D3! '
@@ -258,12 +253,11 @@ def vinverse(
 
     if amnt is not None:
         expr += 'x {amnt} - x {amnt} + clip '
-        amnt = scale_delta(amnt, 8, func.work_clip)  # type: ignore[assignment]
+        amnt = scale_delta(amnt, 8, clip)
 
-    combed = norm_expr(
-        [func.work_clip, blurred, blurred2],
-        expr + '?',
-        planes, sstr=contra_str, amnt=amnt, scl=scl, thr=scale_delta(thr, 8, func.work_clip),
+    return norm_expr(
+        [clip, blurred, blurred2],
+        f'{expr} ?',
+        planes, sstr=contra_str, amnt=amnt,
+        scl=scl, thr=scale_delta(thr, 8, clip)
     )
-
-    return func.return_clip(combed)
