@@ -651,14 +651,14 @@ else:
 
 if not TYPE_CHECKING:
     from vapoursynth import (
-        ccfDisableAutoLoading, ccfDisableLibraryUnloading, ccfEnableGraphInspection, fmFrameState, fmParallel,
-        fmParallelRequests, fmUnordered
+        DISABLE_AUTO_LOADING, DISABLE_LIBRARY_UNLOADING, ENABLE_GRAPH_INSPECTION, FRAME_STATE, PARALLEL,
+        PARALLEL_REQUESTS, UNORDERED
     )
 
-    PARALLEL = fmParallel
-    PARALLEL_REQUESTS = fmParallelRequests
-    UNORDERED = fmUnordered
-    FRAME_STATE = fmFrameState
-    ENABLE_GRAPH_INSPECTION = ccfEnableGraphInspection
-    DISABLE_AUTO_LOADING = ccfDisableAutoLoading
-    DISABLE_LIBRARY_UNLOADING = ccfDisableLibraryUnloading
+    fmParallel = PARALLEL
+    fmParallelRequests = PARALLEL_REQUESTS
+    fmUnordered = UNORDERED
+    fmFrameState = FRAME_STATE
+    ccfEnableGraphInspection = ENABLE_GRAPH_INSPECTION
+    ccfDisableAutoLoading = DISABLE_AUTO_LOADING
+    ccfDisableLibraryUnloading = DISABLE_LIBRARY_UNLOADING
