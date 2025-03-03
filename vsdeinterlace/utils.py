@@ -4,6 +4,7 @@ from vstools import core, vs
 
 __all__ = [
     'telecine_patterns',
+    'get_field_difference'
 ]
 
 
@@ -16,3 +17,11 @@ def telecine_patterns(clipa: vs.VideoNode, clipb: vs.VideoNode, length: int = 5)
             (b_select if i == j else a_select)[j] for j in range(length)
         ]) for i in range(length)
     ]
+
+
+def get_field_difference(clip: vs.VideoNode) -> vs.VideoNode:
+    stats = clip.std.SeparateFields(tff=True).std.PlaneStats()
+
+    return core.akarin.PropExpr(
+        [clip, stats[::2], stats[1::2]], lambda: {'FieldDifference': 'y.PlaneStatsAverage z.PlaneStatsAverage - abs'}
+    )
