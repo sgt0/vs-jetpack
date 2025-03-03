@@ -7,8 +7,6 @@ from vstools import (
     depth, expect_bits, get_nvidia_version, get_video_format, get_y, inject_self, limiter, vs
 )
 
-from vsmlrt import ArtCNNModel, ArtCNN as mlrt_ArtCNN
-
 from .helpers import GenericScaler
 
 __all__ = ["GenericOnnxScaler", "autoselect_backend", "ArtCNN"]
@@ -139,6 +137,7 @@ class BaseArtCNN(_BaseArtCNN, GenericScaler):
         shift: tuple[float, float] = (0, 0),
         **kwargs: Any,
     ) -> vs.VideoNode:
+        from vsmlrt import ArtCNNModel, ArtCNN as mlrt_ArtCNN
 
         clip_format = get_video_format(clip)
         chroma_model = self._model in [4, 5, 9]

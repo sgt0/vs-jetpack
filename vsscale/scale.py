@@ -9,7 +9,7 @@ from vsexprtools import complexpr_available, expr_func, norm_expr
 from vskernels import Catrom, Hermite, LinearScaler, Scaler, ScalerT
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
-    DependencyNotFoundError, KwargsT, Matrix, MatrixT, PlanesT, ProcessVariableClip,
+    KwargsT, Matrix, MatrixT, PlanesT, ProcessVariableClip,
     ProcessVariableResClip, VSFunction, check_ref_clip, check_variable, check_variable_format,
     clamp, core, depth, fallback, get_nvidia_version, get_prop, inject_self, limiter, padder, vs
 )
