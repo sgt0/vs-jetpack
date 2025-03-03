@@ -5,11 +5,16 @@ import operator
 from collections import deque
 from dataclasses import dataclass
 from math import floor
+from os import PathLike
+from pathlib import Path
 from typing import Any, BinaryIO, Callable, Literal, overload
 
 import vapoursynth as vs
 
-from jetpytools import CustomRuntimeError, CustomValueError, Sentinel, SentinelT, T, normalize_list_to_ranges
+from jetpytools import (
+    CustomRuntimeError, CustomValueError, Sentinel, SentinelT, SPath, SPathLike, T,
+    normalize_list_to_ranges
+)
 
 from ..exceptions import InvalidColorFamilyError
 from .progress import get_render_progress
@@ -37,8 +42,9 @@ class AsyncRenderConf:
 
 @overload
 def clip_async_render(
-    clip: vs.VideoNode, outfile: BinaryIO | None = None, progress: str | Callable[[int, int], None] | None = None,
-    callback: None = None, prefetch: int = 0, backlog: int = -1, y4m: bool = False,
+    clip: vs.VideoNode, outfile: BinaryIO | SPathLike | None = None, progress: str | Callable[[int, int], None] | None = None,
+    callback: None = None,
+    prefetch: int = 0, backlog: int = -1, y4m: bool | None = None,
     async_requests: int | bool | AsyncRenderConf = False
 ) -> None:
     ...
@@ -46,28 +52,50 @@ def clip_async_render(
 
 @overload
 def clip_async_render(
-    clip: vs.VideoNode, outfile: BinaryIO | None = None, progress: str | Callable[[int, int], None] | None = None,
-    callback: Callable[[int, vs.VideoFrame], T] = ..., prefetch: int = 0,
-    backlog: int = -1, y4m: bool = False, async_requests: int | bool | AsyncRenderConf = False
+    clip: vs.VideoNode, outfile: BinaryIO | SPathLike | None = None, progress: str | Callable[[int, int], None] | None = None,
+    callback: Callable[[int, vs.VideoFrame], T] = ...,
+    prefetch: int = 0, backlog: int = -1, y4m: bool | None = None,
+    async_requests: int | bool | AsyncRenderConf = False
 ) -> list[T]:
     ...
 
 
+@overload
 def clip_async_render(
-    clip: vs.VideoNode, outfile: BinaryIO | None = None, progress: str | Callable[[int, int], None] | None = None,
-    callback: Callable[[int, vs.VideoFrame], T] | None = None, prefetch: int = 0,
-    backlog: int = -1, y4m: bool | None = None, async_requests: int | bool | AsyncRenderConf = False
+    clip: vs.VideoNode, outfile: BinaryIO | SPathLike | None = None, progress: str | Callable[[int, int], None] | None = None,
+    callback: Callable[[int, vs.VideoFrame], T] | None = ...,
+    prefetch: int = 0, backlog: int = -1, y4m: bool | None = None,
+    async_requests: int | bool | AsyncRenderConf = False
+) -> list[T] | None:
+    ...
+
+
+def clip_async_render(
+    clip: vs.VideoNode, outfile: BinaryIO | SPathLike | None = None, progress: str | Callable[[int, int], None] | None = None,
+    callback: Callable[[int, vs.VideoFrame], T] | None = None,
+    prefetch: int = 0, backlog: int = -1, y4m: bool | None = None,
+    async_requests: int | bool | AsyncRenderConf = False
 ) -> list[T] | None:
     """
-    Iterate over an entire clip and optionally write results in a file.
+    Iterate over an entire clip and optionally write results to a file.
 
-    This is mostly useful for metric gathering that must be performed before you do anything else.
+    This is mostly useful for metric gathering that must be performed before any other processing.
     This could be for example gathering scenechanges, per-frame heuristics, etc.
 
     It's highly recommended to perform as little filtering as possible on the input clip for speed purposes.
 
+    Example usage:
+
+    .. code-block:: python
+
+        # Gather scenechanges.
+        >>> scenechanges = clip_async_render(clip, None, 'Searching for scenechanges...', lambda n, f: get_prop(f, "_SceneChange", int))
+
+        # Gather average planes stats.
+        >>> avg_planes = clip_async_render(clip, None, 'Calculating average planes...', lambda n, f: get_prop(f, "PlaneStatsAverage", float))
+
     :param clip:            Clip to render.
-    :param outfile:         Optional binary output to write.
+    :param outfile:         Optional binary output or path to write to.
     :param progress:        A message to display during rendering. This is shown alongside the progress.
     :param callback:        Callback function. Must accept `n` and `f` (like a frameeval would) and return some value.
                             This function is used to determine what information gets returned per frame.
@@ -85,9 +113,13 @@ def clip_async_render(
 
     from .funcs import fallback
 
-    result = dict[int, T]()
+    if isinstance(outfile, (str, PathLike, Path, SPath)) and outfile is not None:
+        with open(outfile, 'wb') as f:
+            return clip_async_render(clip, f, progress, callback, prefetch, backlog, y4m, async_requests)
 
+    result = dict[int, T]()
     async_conf: AsyncRenderConf | Literal[False]
+
     if async_requests is True:
         async_conf = AsyncRenderConf(1)
     elif isinstance(async_requests, int):
