@@ -8,6 +8,7 @@ from vstools import (
     MatrixT, ParsedFile, PrimariesT, SPath, SPathLike, TransferT, check_perms, copy_signature, initialize_clip,
     match_clip, to_arr, vs
 )
+from pymediainfo import MediaInfo
 
 from .indexers import IMWRI, LSMAS, BestSource, D2VWitch, DGIndex, DGIndexNV, Indexer
 
@@ -146,11 +147,6 @@ def source(
         try:
             if DGIndexNV in to_skip:
                 raise RuntimeError
-
-            try:
-                from pymediainfo import MediaInfo  # type: ignore
-            except ImportError:
-                ...
             else:
                 tracks = MediaInfo.parse(filepath, parse_speed=0.25).video_tracks
                 if tracks:

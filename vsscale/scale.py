@@ -207,10 +207,7 @@ class Waifu2xResizeHelper(ProcessVariableResClip):
     def normalize(self, wclip: vs.VideoNode, cast_to: tuple[int, int]) -> vs.VideoNode:
         mult = max(int(log2(ceil(size))) for size in (self.width / cast_to[0], self.height / cast_to[1]))
 
-        try:
-            wclip = limiter(wclip, func=self.__class__)
-        except vs.Error:
-            wclip = norm_expr(wclip, 'x 0 1 clamp', planes=self.planes)
+        wclip = limiter(wclip, func=self.__class__)
 
         for _ in range(mult):
             if self.do_padding:
@@ -223,10 +220,7 @@ class Waifu2xResizeHelper(ProcessVariableResClip):
             if self.do_padding:
                 cropped = Waifu2xCropHelper.from_clip(wclip)
 
-                try:
-                    wclip = norm_expr(cropped, 'x 0.5 255 / + 0 1 clamp', planes=self.planes)
-                except RuntimeError:
-                    wclip = norm_expr(depth(cropped, 32), 'x 0.5 255 / + 0 max 1 min', planes=self.planes)
+                wclip = norm_expr(cropped, 'x 0.5 255 / + 0 1 clamp', planes=self.planes)
 
         return wclip
 
@@ -354,10 +348,7 @@ class BaseWaifu2x(_BaseWaifu2x, GenericScaler):
 
     @property
     def _backend(self) -> object:
-        try:
-            from vsmlrt import Backend
-        except ModuleNotFoundError as e:
-            raise DependencyNotFoundError(self.__class__, e)
+        from vsmlrt import Backend
 
         if self._cuda is True:
             if hasattr(core, 'ort'):
@@ -380,10 +371,7 @@ class BaseWaifu2x(_BaseWaifu2x, GenericScaler):
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
         shift: tuple[float, float] = (0, 0), **kwargs: Any
     ) -> vs.VideoNode:
-        try:
-            from vsmlrt import Backend
-        except ModuleNotFoundError as e:
-            raise DependencyNotFoundError(self.__class__, e)
+        from vsmlrt import Backend
 
         width, height = self._wh_norm(clip, width, height)
 

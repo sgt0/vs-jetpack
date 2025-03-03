@@ -5,10 +5,11 @@ from enum import Enum, auto
 from typing import (
     TYPE_CHECKING, Any, Iterator, Literal, Mapping, NamedTuple, Sequence, TypeAlias, TypeVar, cast, overload
 )
+from scipy.interpolate import interp1d
 
 from vstools import (
     CustomEnum, CustomImportError, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
-    DependencyNotFoundError, FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
+     FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
     UnsupportedFieldBasedError, check_variable, core, flatten, get_depth, get_sample_type, inject_self, vs
 )
 
@@ -168,13 +169,6 @@ class SLocation:
         )
 
     def interpolate(self, method: SInterMode = SInterMode.LINEAR, res: int = 20, digits: int = 3) -> SLocation:
-        try:
-            from scipy.interpolate import interp1d  # type: ignore
-        except ModuleNotFoundError as e:
-            raise DependencyNotFoundError(
-                self.__class__, e, "scipy is required for interpolation. Use `pip install scipy`"
-            )
-
         frequencies = list({round(x / (res - 1), digits) for x in range(res)})
         sigmas = interp1d(
             list(self.frequencies), list(self.sigmas), method.value, fill_value='extrapolate'
@@ -637,20 +631,12 @@ class DFTTest:
 def fft3d(clip: vs.VideoNode, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
     kwargs |= dict(interlaced=FieldBased.from_video(clip, False, fft3d).is_inter)
 
-    if hasattr(core, 'fft3dfilter'):
-        # fft3dfilter requires sigma values to be scaled to bit depth
-        # https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md#scaling-parameters-according-to-bit-depth
-        sigmaMultiplier = 1.0 / 256.0 if get_sample_type(clip) is vs.FLOAT else 1 << (get_depth(clip) - 8)
+    # fft3dfilter requires sigma values to be scaled to bit depth
+    # https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md#scaling-parameters-according-to-bit-depth
+    sigmaMultiplier = 1.0 / 256.0 if get_sample_type(clip) is vs.FLOAT else 1 << (get_depth(clip) - 8)
 
-        for sigma in ['sigma', 'sigma2', 'sigma3', 'sigma4']:
-            if sigma in kwargs:
-                kwargs[sigma] *= sigmaMultiplier
+    for sigma in ['sigma', 'sigma2', 'sigma3', 'sigma4']:
+        if sigma in kwargs:
+            kwargs[sigma] *= sigmaMultiplier
 
-        return core.fft3dfilter.FFT3DFilter(clip, **kwargs)  # type: ignore
-
-    if hasattr(core, 'neo_fft3d'):
-        return core.neo_fft3d.FFT3D(clip, **kwargs)  # type: ignore
-
-    raise CustomImportError(
-        func or fft3d, 'fft3d', "No fft3d plugin (fft3dfilter, neo_fft3d) found, please install one."
-    )
+    return core.fft3dfilter.FFT3DFilter(clip, **kwargs)  # type: ignore

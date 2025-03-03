@@ -12,6 +12,7 @@ from multiprocessing import cpu_count
 from types import UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, NoReturn
 from weakref import ReferenceType
+from psutil import Process
 
 import vapoursynth as vs
 from vapoursynth import (
@@ -509,15 +510,8 @@ class VSCoreProxy(CoreProxyBase):
         :raises DependencyNotFoundError:    Psutil was not found.
         """
 
-        try:
-            from psutil import Process
-        except ModuleNotFoundError as e:
-            from ..exceptions import DependencyNotFoundError
-
-            raise DependencyNotFoundError(self.set_affinity, e)
-
         if threads is None:
-            threads = 0.6
+            threads = cpu_count()
 
         if isinstance(threads, float):
             if 0.0 <= threads or threads >= 1.0:
@@ -656,29 +650,15 @@ else:
 
 
 if not TYPE_CHECKING:
-    try:
-        from vapoursynth import (
-            ccfDisableAutoLoading, ccfDisableLibraryUnloading, ccfEnableGraphInspection, fmFrameState, fmParallel,
-            fmParallelRequests, fmUnordered
-        )
+    from vapoursynth import (
+        ccfDisableAutoLoading, ccfDisableLibraryUnloading, ccfEnableGraphInspection, fmFrameState, fmParallel,
+        fmParallelRequests, fmUnordered
+    )
 
-        PARALLEL = fmParallel
-        PARALLEL_REQUESTS = fmParallelRequests
-        UNORDERED = fmUnordered
-        FRAME_STATE = fmFrameState
-        ENABLE_GRAPH_INSPECTION = ccfEnableGraphInspection
-        DISABLE_AUTO_LOADING = ccfDisableAutoLoading
-        DISABLE_LIBRARY_UNLOADING = ccfDisableLibraryUnloading
-    except ImportError:
-        from vapoursynth import (
-            DISABLE_AUTO_LOADING, DISABLE_LIBRARY_UNLOADING, ENABLE_GRAPH_INSPECTION, FRAME_STATE, PARALLEL,
-            PARALLEL_REQUESTS, UNORDERED
-        )
-
-        fmParallel = PARALLEL
-        fmParallelRequests = PARALLEL_REQUESTS
-        fmUnordered = UNORDERED
-        fmFrameState = FRAME_STATE
-        ccfEnableGraphInspection = ENABLE_GRAPH_INSPECTION
-        ccfDisableAutoLoading = DISABLE_AUTO_LOADING
-        ccfDisableLibraryUnloading = DISABLE_LIBRARY_UNLOADING
+    PARALLEL = fmParallel
+    PARALLEL_REQUESTS = fmParallelRequests
+    UNORDERED = fmUnordered
+    FRAME_STATE = fmFrameState
+    ENABLE_GRAPH_INSPECTION = ccfEnableGraphInspection
+    DISABLE_AUTO_LOADING = ccfDisableAutoLoading
+    DISABLE_LIBRARY_UNLOADING = ccfDisableLibraryUnloading

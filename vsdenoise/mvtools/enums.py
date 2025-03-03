@@ -125,20 +125,7 @@ class MVToolsPlugin(CustomIntEnum):
         assert clip.format
 
         if clip.format.sample_type is vs.FLOAT:
-            if not hasattr(core, 'mvsf'):
-                raise ImportError(
-                    "MVTools: With the current clip, the processing has to be done in float precision, "
-                    "but you're missing mvsf."
-                    "\n\tPlease download it from: https://github.com/IFeelBloated/vapoursynth-mvtools-sf"
-                )
-
             return MVToolsPlugin.FLOAT
-
-        elif not hasattr(core, 'mv'):
-            raise ImportError(
-                "MVTools: You're missing mvtools."
-                "\n\tPlease download it from: https://github.com/dubhater/vapoursynth-mvtools"
-            )
 
         return MVToolsPlugin.INTEGER
 

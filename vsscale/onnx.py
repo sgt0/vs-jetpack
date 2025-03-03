@@ -3,9 +3,12 @@ from typing import Any, ClassVar
 
 from vskernels import Kernel, KernelT
 from vstools import (
-    CustomValueError, DependencyNotFoundError, KwargsT, NotFoundEnumValue, SPath, SPathLike, core,
+    CustomValueError, KwargsT, NotFoundEnumValue, SPath, SPathLike, core,
     depth, expect_bits, get_nvidia_version, get_video_format, get_y, inject_self, limiter, vs
 )
+
+from vsmlrt import ArtCNN as mlrt_ArtCNN
+from vsmlrt import ArtCNNModel
 
 from .helpers import GenericScaler
 
@@ -137,11 +140,6 @@ class BaseArtCNN(_BaseArtCNN, GenericScaler):
         shift: tuple[float, float] = (0, 0),
         **kwargs: Any,
     ) -> vs.VideoNode:
-        try:
-            from vsmlrt import ArtCNN as mlrt_ArtCNN
-            from vsmlrt import ArtCNNModel
-        except ImportError:
-            raise DependencyNotFoundError("vsmlrt", self._func)
 
         clip_format = get_video_format(clip)
         chroma_model = self._model in [4, 5, 9]
