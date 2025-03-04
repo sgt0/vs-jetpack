@@ -176,6 +176,7 @@ class LinearLight:
                     )
 
                 wclip = norm_expr(
+                    wclip,
                     '{center} 1 {slope} / 1 x 0 max 1 min {scale} * {offset} + / 1 - log * -',
                     center=self.ll._scenter, slope=self.ll._sslope,
                     scale=self.ll._sscale, offset=self.ll._soffset,
@@ -201,6 +202,7 @@ class LinearLight:
 
             if self.ll.sigmoid:
                 processed = norm_expr(
+                    processed,
                     '1 1 {slope} {center} x 0 max 1 min - * exp + / {offset} - {scale} /',
                     slope=self.ll._sslope, center=self.ll._scenter,
                     offset=self.ll._soffset, scale=self.ll._sscale,
