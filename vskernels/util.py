@@ -171,8 +171,8 @@ class LinearLight:
             if self.ll.sigmoid:
                 if Transfer.from_video(wclip, func=self.__class__) in (Transfer.ST2084, Transfer.STD_B67):
                     raise InvalidTransferError(
-                        'Sigmoid scaling is not supported with HDR!', self.__class__,
-                        Transfer.from_video(wclip, self.__class__)
+                        self.__class__, Transfer.from_video(wclip, func=self.__class__),
+                        'Sigmoid scaling is not supported with HDR!'
                     )
 
                 wclip = norm_expr(
