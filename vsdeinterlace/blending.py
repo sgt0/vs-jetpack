@@ -80,8 +80,7 @@ def deblend(
 
 
 def deblend_bob(
-    bobbed: vs.VideoNode | tuple[vs.VideoNode, vs.VideoNode],
-    fieldmatched: vs.VideoNode | None = None, blend_out: bool = False
+    bobbed: vs.VideoNode | tuple[vs.VideoNode, vs.VideoNode], fieldmatched: vs.VideoNode | None = None
 ) -> vs.VideoNode:
     """
     Stronger version of `deblend` that uses a bobbed clip to deblend. Adopted from jvsfunc.
