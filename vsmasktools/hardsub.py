@@ -187,7 +187,7 @@ class HardsubSignFades(HardsubMask):
         highpass = scale_delta(self.highpass, 32, clip)
 
         mask = norm_expr(
-            [clipedge, refedge], f'x y - {highpass} < 0 {ExprToken.RangeMax} ?'
+            [clipedge, refedge], f'x y - {highpass} < 0 {ExprToken.RangeMax} ?', func=self.__class__
         ).std.Median()
 
         return max_planes(Morpho.inflate(Morpho.expand(mask, self.expand, mode=self.expand_mode), iterations=4))
@@ -226,15 +226,15 @@ class HardsubSign(HardsubMask):
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         assert clip.format
 
-        hsmf = norm_expr([clip, ref], 'x y - abs')
+        hsmf = norm_expr([clip, ref], 'x y - abs', func=self.__class__)
         hsmf = Bilinear.resample(hsmf, clip.format.replace(subsampling_w=0, subsampling_h=0))
 
         hsmf = ExprOp.MAX(hsmf, split_planes=True)
 
         hsmf = Morpho.binarize(hsmf, self.thr)
-        hsmf = Morpho.minimum(hsmf, iterations=self.minimum)
-        hsmf = Morpho.expand(hsmf, self.expand, mode=self.expand_mode)
-        hsmf = Morpho.inflate(hsmf, iterations=self.inflate)
+        hsmf = Morpho.minimum(hsmf, iterations=self.minimum, func=self.__class__)
+        hsmf = Morpho.expand(hsmf, self.expand, mode=self.expand_mode, func=self.__class__)
+        hsmf = Morpho.inflate(hsmf, iterations=self.inflate, func=self.__class__)
 
         return hsmf
 
@@ -263,7 +263,8 @@ class HardsubLine(HardsubMask):
         right = core.resize.Point(clip, src_left=4)
 
         subedge = norm_expr(
-            [clip, right], (yexpr, uvexpr), format=clip.format.replace(sample_type=vs.INTEGER, bits_per_sample=8)
+            [clip, right], (yexpr, uvexpr), format=clip.format.replace(sample_type=vs.INTEGER, bits_per_sample=8),
+            func=self.__class__
         )
 
         subedge = ExprOp.MIN(Catrom.resample(subedge, vs.YUV444P8), split_planes=True)
@@ -278,10 +279,11 @@ class HardsubLine(HardsubMask):
             lower=scale_value(0.2, 32, clip),
             mindiff=y_range * 0.1,
             format=vs.GRAY8,
+            func=self.__class__
         )
-        diff = Morpho.maximum(diff, iterations=2)
+        diff = Morpho.maximum(diff, iterations=2, func=self.__class__)
 
-        mask: vs.VideoNode = core.misc.Hysteresis(subedge, diff)
+        mask = core.misc.Hysteresis(subedge, diff)
         mask = iterate(mask, core.std.Maximum, expand_n)
         mask = box_blur(mask.std.Inflate().std.Inflate())
 

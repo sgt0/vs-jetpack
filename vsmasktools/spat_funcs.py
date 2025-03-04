@@ -70,7 +70,8 @@ def adg_mask(
             return norm_expr(
                 luma, f'{x_string} 1 X@ X@ X@ X@ X@ '
                 '18.188 * 45.47 - * 36.624 + * 9.466 - * 1.124 + * - '
-                f'x.PAverage 2 pow {ls} * pow {aft_int}'
+                f'x.PAverage 2 pow {ls} * pow {aft_int}',
+                func=func
             )
     else:
         def _adgfunc(luma: vs.VideoNode, ls: float) -> vs.VideoNode:
@@ -112,9 +113,11 @@ def retinex(
     is_float = get_sample_type(y) is vs.FLOAT
 
     if is_float:
-        luma_float = norm_expr(y, "x x.PlaneStatsMin - x.PlaneStatsMax x.PlaneStatsMin - /")
+        luma_float = norm_expr(y, "x x.PlaneStatsMin - x.PlaneStatsMax x.PlaneStatsMin - /", func=func)
     else:
-        luma_float = norm_expr(y, "1 x.PlaneStatsMax x.PlaneStatsMin - / x x.PlaneStatsMin - *", None, vs.GRAYS)
+        luma_float = norm_expr(
+            y, "1 x.PlaneStatsMax x.PlaneStatsMin - / x x.PlaneStatsMin - *", None, vs.GRAYS, func=func
+        )
 
     slen, slenm = len(sigma), len(sigma) - 1
 
@@ -130,7 +133,7 @@ def retinex(
     expr_msr.extend(ExprOp.ADD * slenm)
     expr_msr.append(f"log {slen} /")
 
-    msr = norm_expr([luma_float, (gauss_blur(luma_float, i, _fast=fast) for i in sigma)], expr_msr)
+    msr = norm_expr([luma_float, (gauss_blur(luma_float, i, _fast=fast) for i in sigma)], expr_msr, func=func)
 
     msr_stats = msr.vszip.PlaneMinMax(lower_thr, upper_thr)
 
@@ -142,7 +145,8 @@ def retinex(
     return norm_expr(
         msr_stats, expr_balance, None, y,
         ymin=get_lowest_value(y, False, ColorRange.LIMITED),
-        ymax=get_peak_value(y, False, ColorRange.LIMITED)
+        ymax=get_peak_value(y, False, ColorRange.LIMITED),
+        func=func
     )
 
 
@@ -191,11 +195,11 @@ def texture_mask(
             mean = peak * (levels[x + 1] - levels[x]) / (_points[x + 1] - _points[x])
             expr.append(f'x {_points[x]} - {mean} * {peak * levels[x]} +')
 
-    weighted = norm_expr(rm_txt, [expr, ExprOp.TERN * (qm - 1)])
+    weighted = norm_expr(rm_txt, [expr, ExprOp.TERN * (qm - 1)], func=texture_mask)
 
     if isinstance(blur, float):
         weighted = gauss_blur(weighted, blur)
     else:
         weighted = box_blur(weighted, blur)
 
-    return norm_expr(weighted, f'x {peak * thr} - {1 / (1 - thr)} *')
+    return norm_expr(weighted, f'x {peak * thr} - {1 / (1 - thr)} *', func=texture_mask)

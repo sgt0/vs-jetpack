@@ -225,7 +225,7 @@ def multi_deband(
             ]).resize.Bicubic(format=vs.YUV444P16), split_planes=True
         )
         textures = box_blur(ExprOp.SUB(textures, edges), 2)
-        textures = norm_expr(textures, 'x 2 *')
+        textures = norm_expr(textures, 'x 2 *', func=guided_filter)
 
     line_big = ExprOp.ADD(
         edgemask, gauss_blur(edgemask.std.Maximum(), 0.75), expr_suffix='4 *'

@@ -29,7 +29,7 @@ def repair(clip: vs.VideoNode, repairclip: vs.VideoNode, mode: RepairModeT) -> v
     if clip.format.sample_type == vs.INTEGER and all(m in range(24 + 1) for m in mode):
         return core.rgvs.Repair(clip, repairclip, mode)
 
-    return norm_expr([clip, repairclip], tuple([repair_aka_exprs[m]() for m in mode]))
+    return norm_expr([clip, repairclip], tuple([repair_aka_exprs[m]() for m in mode]), func=repair)
 
 
 def remove_grain(clip: vs.VideoNode, mode: RemoveGrainModeT) -> vs.VideoNode:
@@ -54,7 +54,7 @@ def remove_grain(clip: vs.VideoNode, mode: RemoveGrainModeT) -> vs.VideoNode:
     if all(m in range(24 + 1) for m in mode):
         return clip.zsmooth.RemoveGrain(mode)
 
-    return norm_expr(clip, tuple([removegrain_aka_exprs[m]() for m in mode]))
+    return norm_expr(clip, tuple([removegrain_aka_exprs[m]() for m in mode]), func=remove_grain)
 
 
 def clense(

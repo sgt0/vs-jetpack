@@ -29,7 +29,7 @@ def _recursive_denoise(
         elif i == 1:
             prev = denoised
         else:
-            prev = norm_expr([clip, prev, denoised], f'x y - {merge_factor} * z +', planes)
+            prev = norm_expr([clip, prev, denoised], f'x y - {merge_factor} * z +', planes, func=_recursive_denoise)
 
         dkwargs = (kwargs | {ref_key: denoised}) if ref_key and denoised else kwargs
 

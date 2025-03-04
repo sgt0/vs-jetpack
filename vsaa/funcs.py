@@ -115,7 +115,7 @@ def clamp_aa(
     clamped = norm_expr(
         [func.work_clip, ref, weak_aa, strong_aa],
         'y z - D1! y a - D2! xor x D1@ abs D2@ abs < a z {thr} - z {thr} + clip a ? ?',
-        thr=thr, planes=func.norm_planes
+        thr=thr, planes=func.norm_planes, func=func.func
     )
 
     if mask:
@@ -297,7 +297,7 @@ else:
 
         if pskip:
             no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
-            aa_out = norm_expr([func.work_clip, aa_out, aa, no_aa], "z a = x y ?")
+            aa_out = norm_expr([func.work_clip, aa_out, aa, no_aa], "z a = x y ?", func=func.func)
 
         if mask:
             aa_out = func.work_clip.std.MaskedMerge(aa_out, mask)

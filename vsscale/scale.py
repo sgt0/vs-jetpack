@@ -220,7 +220,7 @@ class Waifu2xResizeHelper(ProcessVariableResClip):
             if self.do_padding:
                 cropped = Waifu2xCropHelper.from_clip(wclip)
 
-                wclip = norm_expr(cropped, 'x 0.5 255 / + 0 1 clamp', planes=self.planes)
+                wclip = norm_expr(cropped, 'x 0.5 255 / + 0 1 clamp', planes=self.planes, func=self.__class__)
 
         return wclip
 

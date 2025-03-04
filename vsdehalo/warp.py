@@ -66,6 +66,7 @@ def edge_cleaner(
         'x {sc4} < 0 x {sc32} > range_in_max x ? ?',
         sc4=scale_mask(4, 8, work_clip),
         sc32=scale_mask(32, 8, work_clip),
+        func=edge_cleaner
     )
     mask = box_blur(mask.std.InvertMask())
 
@@ -91,6 +92,7 @@ def edge_cleaner(
             'x {sc4} < 0 x {sc16} > range_in_max x ? ?',
             sc4=scale_mask(4, 8, work_clip),
             sc16=scale_mask(16, 8, work_clip),
+            func=edge_cleaner
         )
 
         final = final.std.MaskedMerge(work_clip, mask)
@@ -147,13 +149,13 @@ def YAHR(
 
     y_mask = get_y(work_clip)
 
-    vEdge = norm_expr([y_mask, Morpho.maximum(y_mask, iterations=2)], 'y x - 8 range_max * 255 / - 128 *')
+    vEdge = norm_expr([y_mask, Morpho.maximum(y_mask, iterations=2)], 'y x - 8 range_max * 255 / - 128 *', func=YAHR)
 
     mask1 = vEdge.tcanny.TCanny(sqrt(expand * 2), mode=-1)
 
     mask2 = BlurMatrix.BINOMIAL()(vEdge, planes=planes).std.Invert()
 
-    mask = limiter(norm_expr([mask1, mask2], 'x 16 * y min'))
+    mask = limiter(norm_expr([mask1, mask2], 'x 16 * y min', func=YAHR))
 
     final = work_clip.std.MaskedMerge(yahr, mask, planes)
 

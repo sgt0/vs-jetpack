@@ -180,6 +180,7 @@ class LinearLight:
                     '{center} 1 {slope} / 1 x 0 max 1 min {scale} * {offset} + / 1 - log * -',
                     center=self.ll._scenter, slope=self.ll._sslope,
                     scale=self.ll._sscale, offset=self.ll._soffset,
+                    func=self.__class__
                 )
 
             return wclip
@@ -187,13 +188,17 @@ class LinearLight:
         @linear.setter  # type: ignore
         def linear(self, processed: vs.VideoNode) -> None:
             if self.ll._exited:
-                raise CustomRuntimeError('You can\'t set .linear after going out of the context manager!')
+                raise CustomRuntimeError(
+                    'You can\'t set .linear after going out of the context manager!', func=self.__class__
+                )
             self._linear = processed
 
         @cachedproperty
         def out(self) -> vs.VideoNode:
             if not self.ll._exited:
-                raise CustomRuntimeError('You can\'t get .out while still inside of the context manager!')
+                raise CustomRuntimeError(
+                    'You can\'t get .out while still inside of the context manager!', func=self.__class__
+                )
 
             if not hasattr(self, '_linear'):
                 raise CustomValueError('You need to set .linear before getting .out!', self.__class__)
@@ -206,6 +211,7 @@ class LinearLight:
                     '1 1 {slope} {center} x 0 max 1 min - * exp + / {offset} - {scale} /',
                     slope=self.ll._sslope, center=self.ll._scenter,
                     offset=self.ll._soffset, scale=self.ll._sscale,
+                    func=self.__class__
                 )
 
             if self.ll.linear:

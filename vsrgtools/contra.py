@@ -72,7 +72,7 @@ def contrasharpening(
     # Apply the limited difference (sharpening is just inverse blurring)
     expr = 'y neutral - Y! z neutral - Z! Y@ abs Z@ abs < Y@ Z@ ? x +'
 
-    return norm_expr([flt, limit, diff_blur], expr, planes)
+    return norm_expr([flt, limit, diff_blur], expr, planes, func=contrasharpening)
 
 
 def contrasharpening_dehalo(
@@ -84,9 +84,9 @@ def contrasharpening_dehalo(
     :param level:       Strength level
     :return:            Contrasharpened clip
     """
-    assert check_variable(src, contrasharpening)
-    assert check_variable(flt, contrasharpening)
-    check_ref_clip(src, flt, contrasharpening)
+    assert check_variable(src, contrasharpening_dehalo)
+    assert check_variable(flt, contrasharpening_dehalo)
+    check_ref_clip(src, flt, contrasharpening_dehalo)
 
     planes = normalize_planes(flt, planes)
 
@@ -99,7 +99,7 @@ def contrasharpening_dehalo(
     return norm_expr(
         [flt, src, blur, blur2],
         'z a - {alpha} * {level} * D1! y x - D2! D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? x +',
-        planes, alpha=alpha, level=level
+        planes, alpha=alpha, level=level, func=contrasharpening_dehalo
     )
 
 
@@ -115,9 +115,9 @@ def contrasharpening_median(
     :param planes:      Planes to process, defaults to None
     :return:            Contrasharpened clip
     """
-    assert check_variable(src, contrasharpening)
-    assert check_variable(flt, contrasharpening)
-    check_ref_clip(src, flt, contrasharpening)
+    assert check_variable(src, contrasharpening_median)
+    assert check_variable(flt, contrasharpening_median)
+    check_ref_clip(src, flt, contrasharpening_median)
 
     planes = normalize_planes(flt, planes)
 
@@ -128,4 +128,6 @@ def contrasharpening_median(
     else:
         raise CustomValueError('Invalid mode or function passed!', contrasharpening_median)
 
-    return norm_expr([flt, src, repaired], 'x dup + z - x y min x y max clip', planes)
+    return norm_expr(
+        [flt, src, repaired], 'x dup + z - x y min x y max clip', planes, func=contrasharpening_median
+    )

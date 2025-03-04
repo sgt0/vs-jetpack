@@ -245,7 +245,7 @@ class FreyChen(MatrixEdgeDetect):
     def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
         M = 'x x * y y * + z z * + a a * +'
         S = f'b b * c c * + d d * + e e * + f f * + {M} +'
-        return norm_expr(clips, f'{M} {S} / sqrt')
+        return norm_expr(clips, f'{M} {S} / sqrt', func=self.__class__)
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode | NoReturn:
         raise NotImplementedError

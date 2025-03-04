@@ -171,7 +171,8 @@ class ClampScaler(GenericScaler):
                 [ref, smooth, smooth.std.Maximum(), smooth.std.Minimum()],
                 expression, merge_weight=merge_weight, ref_weight=1.0 - merge_weight,
                 undershoot=scale_delta(self.undershoot, 32, clip),
-                overshoot=scale_delta(self.overshoot, 32, clip)
+                overshoot=scale_delta(self.overshoot, 32, clip),
+                func=self.__class__
             )
         else:
             merged = smooth.std.Merge(ref, merge_weight)

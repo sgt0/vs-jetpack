@@ -43,7 +43,7 @@ def base_dehalo_mask(
 
     exp_edges = norm_expr(
         [luma, Morpho.maximum(luma, iterations=2)], 'y x - {shift} - range_half *',
-        shift=scale_delta(shift, 8, luma)
+        shift=scale_delta(shift, 8, luma), func=base_dehalo_mask
     )
 
     edgemask = PrewittTCanny.edgemask(exp_edges, sigma=sqrt(expand * 2), mode=-1, multi=16)
@@ -56,7 +56,9 @@ def base_dehalo_mask(
         halo_mask = Morpho.inflate(halo_mask, iterations=2)
         halo_mask = Morpho.binarize(halo_mask, brz1)
 
-    mask = norm_expr([edgemask, BlurMatrix.BINOMIAL()(halo_mask)], 'x y min {multi} *', multi=multi)
+    mask = norm_expr(
+        [edgemask, BlurMatrix.BINOMIAL()(halo_mask)], 'x y min {multi} *', multi=multi, func=base_dehalo_mask
+    )
 
     if pre_ss:
         return Point.scale(mask, src.width, src.height)

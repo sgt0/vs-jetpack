@@ -28,7 +28,7 @@ class _SingleInterpolate(vs_object):
         mclip: vs.VideoNode | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         if not double_y and isinstance(mclip, vs.VideoNode):
-            return norm_expr([clip, aa_clip, mclip], 'z y x ?')
+            return norm_expr([clip, aa_clip, mclip], 'z y x ?', func=self.__class__._post_interpolate)
 
         return aa_clip
 

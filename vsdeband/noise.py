@@ -62,9 +62,11 @@ class GrainPP:
                 grained = grained.std.PlaneStats(plane=i, prop=f'PS{i}')
 
             if get_sample_type(grained) is vs.FLOAT:
-                return norm_expr(grained, 'x x.PS{plane_idx}Average -')
+                return norm_expr(grained, 'x x.PS{plane_idx}Average -', func=cls.NormBrightness)
 
-            return norm_expr(grained, 'x neutral range_size / x.PS{plane_idx}Average - range_size * +')
+            return norm_expr(
+                grained, 'x neutral range_size / x.PS{plane_idx}Average - range_size * +', func=cls.NormBrightness
+            )
 
         return _resolve
 
@@ -277,7 +279,7 @@ class Grainer(ABC):
             else:
                 limit_expr = 'x y neutral - abs - {low} < x y neutral - abs + {high} > or neutral y ?'
 
-            grained = norm_expr([clip, grained], limit_expr, planes, low=low, high=high)
+            grained = norm_expr([clip, grained], limit_expr, planes, low=low, high=high, func=self.__class__.grain)
 
         if self.postprocess:
             for postprocess in cast(list[GrainPostProcessT], to_arr(self.postprocess)):
@@ -297,7 +299,9 @@ class Grainer(ABC):
 
                     # fuck importing re
                     uses_y = ' y ' in postprocess or postprocess.startswith('y ') or postprocess.endswith(' y')  #type: ignore
-                    grained = norm_expr([grained, clip] if uses_y else grained, postprocess, **ppkwargs)
+                    grained = norm_expr(
+                        [grained, clip] if uses_y else grained, postprocess, **ppkwargs, func=self.__class__.grain
+                    )
 
         neutral = get_neutral_value(clip)
 
@@ -310,7 +314,8 @@ class Grainer(ABC):
             neutral_mask = Lanczos.resample(clip, clip.format.replace(subsampling_h=0, subsampling_w=0))
 
             neutral_mask = norm_expr(
-                split(neutral_mask), f'y {neutral} = z {neutral} = and {get_peak_value(clip, range_in=ColorRange.FULL)} 0 ?'
+                split(neutral_mask), f'y {neutral} = z {neutral} = and {get_peak_value(clip, range_in=ColorRange.FULL)} 0 ?',
+                func=self.__class__.grain
             )
 
             grained = grained.std.MaskedMerge(merge_clip, neutral_mask, [1, 2])
@@ -656,11 +661,11 @@ def multi_graining(
             'x {min_thr} >= x {max_thr} <= and x {min_thr} - {max_thr} {min_thr} '
             '- / {peak} * {peak} - abs x {min_thr} < {peak} x {max_thr} > 0 x ? ? ?',
             min_thr=f'{thr} {weight} {peak} * 2 / -', max_thr=f'{thr} {weight} {peak} * 2 / +',
-            peak=peak
+            peak=peak, func=multi_graining
         ) for _, thr, weight in norm_grainers
     ]
 
-    masks = [norm_expr(diffs, 'y x -') for diffs in zip(masks[:-1], masks[1:])]
+    masks = [norm_expr(diffs, 'y x -', func=multi_graining) for diffs in zip(masks[:-1], masks[1:])]
 
     if clip.format.num_planes == 3:
         masks = [Bilinear.resample(join(mask, mask, mask), clip) for mask in masks]

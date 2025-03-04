@@ -329,7 +329,7 @@ def dpir_mask(
     if relative:
         mask = gauss_blur(mask, 1.5)
 
-    mask = norm_expr(mask, f'{high} 255 / x {low} 255 / * -')
+    mask = norm_expr(mask, f'{high} 255 / x {low} 255 / * -', func=dpir_mask)
 
     if linemask:
         lines = fallback(lines, high)
@@ -406,11 +406,11 @@ def deblock_qed(
 
         with padder.ctx(16, align=align) as p16:
             strongD2 = p16.CROP(
-                norm_expr(p16.MIRROR(strongD2), 'x neutral - 1.01 * neutral +', planes)
+                norm_expr(p16.MIRROR(strongD2), 'x neutral - 1.01 * neutral +', planes, func=func.func)
                 .dctf.DCTFilter([1, 1, 0, 0, 0, 0, 0, 0], planes)
             )
 
-        strongD4 = norm_expr([strongD2, normalD2], 'y neutral = x y ?', planes)
+        strongD4 = norm_expr([strongD2, normalD2], 'y neutral = x y ?', planes, func=func.func)
         deblocked = clip.std.MakeDiff(strongD4, planes)
 
         if func.chroma and chroma_mode:
@@ -422,9 +422,9 @@ def deblock_qed(
 
 
 def mpeg2stinx(
-        clip: vs.VideoNode, bobber: VSFunction | None = None,
-        radius: int | tuple[int, int] = 2, limit: float | None = 1.0
-    ) -> vs.VideoNode:
+    clip: vs.VideoNode, bobber: VSFunction | None = None,
+    radius: int | tuple[int, int] = 2, limit: float | None = 1.0
+) -> vs.VideoNode:
     """
     This filter is designed to eliminate certain combing-like compression artifacts that show up all too often
     in hard-telecined MPEG-2 encodes, and works to a smaller extent on bitrate-starved hard-telecined AVC as well.
@@ -461,11 +461,11 @@ def mpeg2stinx(
         if limit is None:
             return flt
 
-        diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs').std.SeparateFields(True)
-        diff = norm_expr([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))], 'x y min')
+        diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs', func=mpeg2stinx).std.SeparateFields(True)
+        diff = norm_expr([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))], 'x y min', func=mpeg2stinx)
         diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
 
-        return norm_expr([flt, src, diff], 'x y z {limit} * - y z {limit} * + clip', limit=limit)
+        return norm_expr([flt, src, diff], 'x y z {limit} * - y z {limit} * + clip', limit=limit, func=mpeg2stinx)
 
     def default_bob(clip: vs.VideoNode) -> vs.VideoNode:
         bobbed = Nnedi3(field=3).interpolate(clip, double_y=False)

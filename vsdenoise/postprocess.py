@@ -107,7 +107,8 @@ def decrease_size(
         mask_planes = flatten_vnodes(yuv444, mask, split_planes=True)
 
         mask = norm_expr(
-            mask_planes, f'x y max z max {pm_min} < 0 {ExprToken.RangeMax} ? a max {pm_max} < 0 {ExprToken.RangeMax} ?'
+            mask_planes, f'x y max z max {pm_min} < 0 {ExprToken.RangeMax} ? a max {pm_max} < 0 {ExprToken.RangeMax} ?',
+            func=decrease_size
         )
 
         mask = box_blur(mask, 1, 2)
@@ -127,7 +128,8 @@ def decrease_size(
     mask = norm_expr(
         [pre, mask],  # type: ignore
         f'x {ExprOp.clamp(minf, maxf)} {minf} - {maxf} {minf} - / {1 / gamma} '
-        f'pow {ExprOp.clamp(0, 1)} {ExprToken.RangeMax} * y -', planes
+        f'pow {ExprOp.clamp(0, 1)} {ExprToken.RangeMax} * y -', planes,
+        func=decrease_size
     )
 
     if show_mask:

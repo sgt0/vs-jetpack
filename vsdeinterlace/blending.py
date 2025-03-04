@@ -68,7 +68,7 @@ def deblend(
     :return: Deblended clip.
     """
 
-    deblended = norm_expr(shift_clip_multi(clip, (-1, 2)), 'z a 2 / - y x 2 / - +')
+    deblended = norm_expr(shift_clip_multi(clip, (-1, 2)), 'z a 2 / - y x 2 / - +', func=deblend)
 
     if decomber:
         deblended = decomber(deblended, **kwargs)
@@ -99,7 +99,7 @@ def deblend_bob(
     ab0, bc0, c0 = shift_clip_multi(bob0, (0, 2))
     bc1, ab1, a1 = shift_clip_multi(bob1)
 
-    deblended = norm_expr([a1, ab1, ab0, bc1, bc0, c0], ('b', 'y x - z + b c - a + + 2 /'))
+    deblended = norm_expr([a1, ab1, ab0, bc1, bc0, c0], ('b', 'y x - z + b c - a + + 2 /'), func=deblend_bob)
 
     if fieldmatched:
         return deblending_helper(fieldmatched, deblended)

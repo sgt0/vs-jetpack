@@ -109,7 +109,8 @@ class PrefilterBase(CustomIntEnum, metaclass=PrefilterMeta):
                     lower, upper = (scale_value(x, 8, clip) for x in (lower, upper))
                     pref_mask = norm_expr(
                         get_y(clip),
-                        f'x {lower} < {peak} x {upper} > 0 {peak} x {lower} - {peak} {upper} {lower} - / * - ? ?'
+                        f'x {lower} < {peak} x {upper} > 0 {peak} x {lower} - {peak} {upper} {lower} - / * - ? ?',
+                        func=self
                     )
 
                 return dftt.std.MaskedMerge(clip, pref_mask, planes)
@@ -250,7 +251,7 @@ class PrefilterBase(CustomIntEnum, metaclass=PrefilterMeta):
                 else:
                     merge_expr = f'x {strg / 100} * y {(100 - strg) / 100} * +'
 
-                return norm_expr([gaussblur, clip], merge_expr, planes)
+                return norm_expr([gaussblur, clip], merge_expr, planes, func=self)
 
             # TODO: To remove
             if pref_type is Prefilter.BMLATERAL:
@@ -818,7 +819,9 @@ def prefilter_to_full_range(clip: vs.VideoNode, range_conversion: float = 5.0, p
         if is_integer:
             luma_expr += f' {max_val} *'
 
-        pref_full = norm_expr(work_clip, (luma_expr, f'x {neutral} - 128 * 112 / {neutral} +'), planes)
+        pref_full = norm_expr(
+            work_clip, (luma_expr, f'x {neutral} - 128 * 112 / {neutral} +'), planes, func=prefilter_to_full_range
+        )
     elif range_conversion > 0.0:
         pref_full = retinex(work_clip, upper_thr=range_conversion, fast=False)
     else:

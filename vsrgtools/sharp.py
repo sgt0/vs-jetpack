@@ -36,7 +36,7 @@ def unsharpen(
     den = ref or clip
     blur = gauss_blur(den, sigma, **kwargs)
 
-    unsharp = norm_expr([den, blur], f'x y - {strength} * x +', 0)
+    unsharp = norm_expr([den, blur], f'x y - {strength} * x +', 0, func=unsharpen)
 
     if ref is not None:
         return unsharp
@@ -54,7 +54,7 @@ def unsharp_masked(
 
     blurred = BlurMatrix.LOG(radius, strength=strength)(clip, planes)
 
-    return norm_expr([clip, blurred], 'x dup y - +')
+    return norm_expr([clip, blurred], 'x dup y - +', func=unsharp_masked)
 
 
 def limit_usm(
@@ -76,14 +76,14 @@ def limit_usm(
     else:
         raise CustomTypeError("'blur' must be an int, clip or a blurring function!", limit_usm, blur)
 
-    sharp = norm_expr([clip, blurred], 'x dup y - +', planes)
+    sharp = norm_expr([clip, blurred], 'x dup y - +', planes, func=limit_usm)
 
     return limit_filter(sharp, clip, thr=thr, elast=elast, bright_thr=bright_thr)
 
 
 def fine_sharp(
-        clip: vs.VideoNode, mode: int = 1, sstr: float = 2.0, cstr: float | None = None, xstr: float = 0.19,
-        lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
+    clip: vs.VideoNode, mode: int = 1, sstr: float = 2.0, cstr: float | None = None, xstr: float = 0.19,
+    lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
 ) -> vs.VideoNode:
     func = FunctionUtil(clip, fine_sharp, planes)
 
@@ -116,7 +116,8 @@ def fine_sharp(
         [func.work_clip, blurred],
         'range_size 256 / SCL! x y - SCL@ / D! D@ abs DA! DA@ {lstr} / 1 {pstr} / pow {sstr} * '
         'D@ DA@ 0.001 + / * D@ 2 pow D@ 2 pow {ldmp} + / * SCL@ * neutral +',
-        lstr=lstr, pstr=pstr, sstr=sstr, ldmp=ldmp
+        lstr=lstr, pstr=pstr, sstr=sstr, ldmp=ldmp,
+        func=func.func
     )
 
     sharp = func.work_clip
@@ -125,12 +126,12 @@ def fine_sharp(
         sharp = sharp.std.MergeDiff(diff)
 
     if cstr:
-        diff = norm_expr(diff, 'x neutral - {cstr} * neutral +', cstr=cstr)
+        diff = norm_expr(diff, 'x neutral - {cstr} * neutral +', cstr=cstr, func=func.func)
         diff = blur_kernel2(diff)
         sharp = sharp.std.MakeDiff(diff)
 
     if xstr:
-        xysharp = norm_expr([sharp, box_blur(sharp)], 'x x y - 9.9 * +')
+        xysharp = norm_expr([sharp, box_blur(sharp)], 'x x y - 9.9 * +', func=func.func)
         rpsharp = repair(xysharp, sharp, 12)
         sharp = rpsharp.std.Merge(sharp, weight=[1 - xstr])
 
@@ -149,16 +150,16 @@ def soothe(
     )
 
     if spatial_strength:
-        soothe = box_blur(sharp_diff, radius=spatial_radius, planes=planes)
+        blurred = box_blur(sharp_diff, radius=spatial_radius, planes=planes)
         strength = 100 - abs(max(min(spatial_strength, 100), 0))
-        sharp_diff = norm_expr([sharp_diff, soothe], expr, strength=strength, planes=planes)
+        sharp_diff = norm_expr([sharp_diff, blurred], expr, strength=strength, planes=planes, func=soothe)
 
     if temporal_strength:
-        soothe = (
+        blurred = (
             BlurMatrix.MEAN(temporal_radius, mode=ConvMode.TEMPORAL)
             (sharp_diff, planes=planes, scenechange=scenechange)
         )
         strength = 100 - abs(max(min(temporal_strength, 100), -100))
-        sharp_diff = norm_expr([sharp_diff, soothe], expr, strength=strength, planes=planes)
+        sharp_diff = norm_expr([sharp_diff, blurred], expr, strength=strength, planes=planes, func=soothe)
 
     return src.std.MakeDiff(sharp_diff, planes)

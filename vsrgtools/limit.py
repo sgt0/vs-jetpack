@@ -71,10 +71,12 @@ def limit_filter(
         if ref:
             clips.append(ref)
 
-        return norm_expr(clips, (
-            _limit_filter_expr(got_ref, thr, elast, bright_thr, peak, mode),
-            _limit_filter_expr(got_ref, thrc, elast, thrc, peak, mode)
-        ))
+        return norm_expr(
+            clips,
+            (_limit_filter_expr(got_ref, thr, elast, bright_thr, peak, mode),
+             _limit_filter_expr(got_ref, thrc, elast, thrc, peak, mode)),
+            func=limit_filter
+        )
 
     diff = flt.std.MakeDiff(src, planes)
 

@@ -34,7 +34,7 @@ def descale_detail_mask(
 
     :return:            Mask containing all the native FHD detail.
     """
-    mask = norm_expr([get_y(clip), get_y(rescaled)], 'x y - abs')
+    mask = norm_expr([get_y(clip), get_y(rescaled)], 'x y - abs', func=descale_detail_mask)
 
     mask = Morpho.binarize(mask, thr)
 
@@ -74,14 +74,14 @@ def descale_error_mask(
 
     y, *chroma = split(clip)
 
-    error = norm_expr([y, rescaled], 'x y - abs')
+    error = norm_expr([y, rescaled], 'x y - abs', func=descale_error_mask)
 
     if bwbias > 1 and chroma:
         chroma_abs = norm_expr(chroma, 'x neutral - abs y neutral - abs max')
         chroma_abs = Catrom.scale(chroma_abs, y.width, y.height)
 
-        bias = norm_expr([y, chroma_abs], f'x ymax >= x ymin <= or y 0 = and {bwbias} 1 ?')
-        bias = Morpho.expand(bias, 2)
+        bias = norm_expr([y, chroma_abs], f'x ymax >= x ymin <= or y 0 = and {bwbias} 1 ?', func=descale_error_mask)
+        bias = Morpho.expand(bias, 2, func=descale_error_mask)
 
         error = ExprOp.MUL(error, bias)
 
@@ -91,10 +91,10 @@ def descale_error_mask(
         exp1, exp2, exp3 = expands
 
     if exp1:
-        error = Morpho.expand(error, exp1)
+        error = Morpho.expand(error, exp1, func=descale_error_mask)
 
     if exp2:
-        error = Morpho.expand(error, exp2, mode=XxpandMode.ELLIPSE)
+        error = Morpho.expand(error, exp2, mode=XxpandMode.ELLIPSE, func=descale_error_mask)
 
     thrs = [thr] if isinstance(thr, (float, int)) else thr
 
@@ -105,7 +105,7 @@ def descale_error_mask(
         error = bin2.misc.Hysteresis(error)
 
     if exp3:
-        error = Morpho.expand(error, exp2, mode=XxpandMode.ELLIPSE)
+        error = Morpho.expand(error, exp2, mode=XxpandMode.ELLIPSE, func=descale_error_mask)
 
     if tr > 1:
         avg = Morpho.binarize(average_merge(*shift_clip_multi(error, (-tr, tr))), 0.5)

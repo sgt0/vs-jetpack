@@ -204,7 +204,9 @@ class EdgeDetect(ABC):
                     raise RuntimeError
                 mask = self._compute_ridge_mask(clip_p, **kwargs)
         except Exception as e:
-            raise CustomRuntimeError('There was an error processing the mask! Are you using an abstract class?') from e
+            raise CustomRuntimeError(
+                'There was an error processing the mask! Are you using an abstract class?', self.__class__
+            ) from e
 
         mask = self._postprocess(mask, clip.format.bits_per_sample)
 
@@ -212,13 +214,13 @@ class EdgeDetect(ABC):
             mask = ExprOp.MUL(mask, suffix=str(multi), planes=planes)
 
         if lthr == hthr:
-            mask = norm_expr(mask, f'x {hthr} >= {ExprToken.RangeMax} 0 ?', planes)
+            mask = norm_expr(mask, f'x {hthr} >= {ExprToken.RangeMax} 0 ?', planes, func=self.__class__)
         elif lthr > 0 and hthr < peak:
-            mask = norm_expr(mask, f'x {hthr} > {ExprToken.RangeMax} x {lthr} < 0 x ? ?', planes)
+            mask = norm_expr(mask, f'x {hthr} > {ExprToken.RangeMax} x {lthr} < 0 x ? ?', planes, func=self.__class__)
         elif lthr > 0:
-            mask = norm_expr(mask, f'x {lthr} < 0 x ?', planes)
+            mask = norm_expr(mask, f'x {lthr} < 0 x ?', planes, func=self.__class__)
         elif hthr < peak:
-            mask = norm_expr(mask, f'x {hthr} > {ExprToken.RangeMax} x ?', planes)
+            mask = norm_expr(mask, f'x {hthr} > {ExprToken.RangeMax} x ?', planes, func=self.__class__)
 
         if clamp:
             if clamp is True:
@@ -226,7 +228,7 @@ class EdgeDetect(ABC):
                 clamp = list(zip(get_lowest_values(mask, crange), get_peak_values(mask, crange)))
 
             if isinstance(clamp, list):
-                mask = norm_expr(mask, [ExprOp.clamp(*c, c='x') for c in clamp], planes)
+                mask = norm_expr(mask, [ExprOp.clamp(*c, c='x') for c in clamp], planes, func=self.__class__)
             elif isinstance(clamp, tuple):
                 mask = ExprOp.clamp(*clamp, c='x')(mask, planes=planes)
 
@@ -343,7 +345,9 @@ class RidgeDetect(MatrixEdgeDetect):
         return self._mask(clip, lthr, hthr, multi, clamp, _Feature.RIDGE, planes, **kwargs)
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
-        return norm_expr(clips, 'x 2 pow z 2 pow 4 * + x y * 2 * - y 2 pow + sqrt x y + + 0.5 *')
+        return norm_expr(
+            clips, 'x 2 pow z 2 pow 4 * + x y * 2 * - y 2 pow + sqrt x y + + 0.5 *', func=self.__class__
+        )
 
     def _preprocess(self, clip: vs.VideoNode) -> vs.VideoNode:
         if len(self.matrices[0]) > 9 or (self.mode_types and self.mode_types[0] != 's'):
@@ -370,7 +374,7 @@ class SingleMatrix(MatrixEdgeDetect, ABC):
 
 class EuclideanDistance(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
-        return norm_expr(clips, 'x x * y y * + sqrt')
+        return norm_expr(clips, 'x x * y y * + sqrt', func=self.__class__)
 
     def _merge_ridge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode | NoReturn:
         raise NotImplementedError

@@ -59,7 +59,9 @@ def _get_region_expr(
 
 def region_rel_mask(clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
     if complexpr_available:
-        return norm_expr(clip, _get_region_expr(clip, left, right, top, bottom, 0), force_akarin=region_rel_mask)
+        return norm_expr(
+            clip, _get_region_expr(clip, left, right, top, bottom, 0), func=region_rel_mask
+        )
 
     return clip.std.Crop(left, right, top, bottom).std.AddBorders(left, right, top, bottom)
 
@@ -74,7 +76,7 @@ def region_abs_mask(clip: vs.VideoNode, width: int, height: int, left: int = 0, 
         if complexpr_available:
             return norm_expr(
                 clip, _get_region_expr(clip, left, left + width, top, top + height, 0, True),
-                force_akarin=region_rel_mask
+                func=region_rel_mask
             )
 
         return clip.std.FrameEval(lambda f, n: _crop(f.width, f.height), clip)
@@ -115,7 +117,7 @@ def squaremask(
     ) if force_gray else clip.format
 
     if offset_x + width > clip.width or offset_y + height > clip.height:
-        raise CustomValueError('mask exceeds clip size!')
+        raise CustomValueError('mask exceeds clip size!', func)
 
     if complexpr_available:
         base_clip = clip.std.BlankClip(
@@ -144,7 +146,7 @@ def squaremask(
                     )
                 )
 
-        mask = norm_expr(base_clip, tuple(exprs), force_akarin=func)
+        mask = norm_expr(base_clip, tuple(exprs), func=func)
     else:
         base_clip = clip.std.BlankClip(
             width, height, mask_format.id, 1, color=get_peak_values(mask_format, ColorRange.FULL), keep=True
@@ -316,7 +318,8 @@ def rekt_partial(
         return norm_expr(
             [clip, filtered], [*vals, ['and'] * (len(vals) - 1), 'y x ?'],
             left=[left, left / ratio_w], right=[clip.width - right, (clip.width - right) / ratio_w],
-            top=[top, top / ratio_h], bottom=[clip.height - bottom, (clip.height - bottom) / ratio_h]
+            top=[top, top / ratio_h], bottom=[clip.height - bottom, (clip.height - bottom) / ratio_h],
+            func=rekt_partial
         )
 
     if not (top or bottom) and (right or left):

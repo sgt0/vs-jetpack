@@ -193,7 +193,7 @@ class BlurMatrixBase(list[Nb]):
         if len(self) <= 1:
             return clip
 
-        assert (check_variable(clip, self.__call__))
+        assert (check_variable(clip, self))
 
         expr_kwargs = expr_kwargs or KwargsT()
 

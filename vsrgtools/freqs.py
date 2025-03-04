@@ -101,7 +101,8 @@ class MeanMode(CustomIntEnum):
             ]
 
             return norm_expr(
-                clips, f'{yzmin} YZMIN! {yzmax} YZMAX! x YZMIN@ min x = YZMIN@ x YZMAX@ max x = YZMAX@ x ? ?', planes
+                clips, f'{yzmin} YZMIN! {yzmax} YZMAX! x YZMIN@ min x = YZMIN@ x YZMAX@ max x = YZMAX@ x ? ?',
+                planes, func=func
             )
 
         raise CustomNotImplementedError

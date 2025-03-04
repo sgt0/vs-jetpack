@@ -328,7 +328,7 @@ class Rescale(RescaleBase):
     def _generate_upscale(self, clip: vs.VideoNode) -> vs.VideoNode:
         upscale = super()._generate_upscale(clip)
 
-        merged_mask = norm_expr([self.line_mask, self.credit_mask], "x y - 0 yrange_max clamp")
+        merged_mask = norm_expr([self.line_mask, self.credit_mask], "x y - 0 yrange_max clamp", func=self.__class__)
 
         upscale = core.std.MaskedMerge(self.clipy, upscale, merged_mask).std.CopyFrameProps(upscale)
 
@@ -338,7 +338,7 @@ class Rescale(RescaleBase):
             mask = norm_expr(
                 black, _get_region_expr(
                     black, *self._crop, replace=f'{get_peak_value(black, False, ColorRange.FULL)} x'
-                )
+                ), func=self.__class__
             )
 
             upscale = core.std.MaskedMerge(upscale.std.AddBorders(*self._crop), pre_y, mask)
@@ -353,7 +353,9 @@ class Rescale(RescaleBase):
 
         if self.border_handling:
             px = (self.kernel.kernel_radius, ) * 4
-            lm = norm_expr(lm, _get_region_expr(lm, *px, replace=f'{get_peak_value(lm, False, ColorRange.FULL)} x'))
+            lm = norm_expr(
+                lm, _get_region_expr(lm, *px, replace=f'{get_peak_value(lm, False, ColorRange.FULL)} x'), func=self.__class__
+            )
 
         self._line_mask = lm
 

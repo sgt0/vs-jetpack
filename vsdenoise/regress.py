@@ -205,7 +205,7 @@ class Regression:
             variation = [
                 norm_expr([
                     Ex, self(ExprOp.MUL.combine(shifted, suffix=ExprOp.DUP))
-                ], 'y x dup * - 0 max')
+                ], 'y x dup * - 0 max', func=self)
                 for Ex, shifted in zip(blur, planes)
             ]
 
@@ -265,19 +265,24 @@ class Regression:
                 '"weight" must be between 0.0 and 1.0 (exclusive)!', self.__class__.linear, weight
             )
 
-        cov_xys = [norm_expr([vm_y, blur_x, Ey], 'x y z * -') for vm_y, Ey in zip(var_mul, blur_ys)]
+        cov_xys = [
+            norm_expr([vm_y, blur_x, Ey], 'x y z * -', func=self.__class__.linear) for vm_y, Ey in zip(var_mul, blur_ys)
+        ]
 
-        slopes = [norm_expr([cov_xy, var_x], f'x y {self.eps} + /') for cov_xy in cov_xys]
+        slopes = [norm_expr([cov_xy, var_x], f'x y {self.eps} + /', func=self.__class__.linear) for cov_xy in cov_xys]
 
         scale_str = f'{intercept_scale} /' if intercept_scale != 0 else ''
         intercepts = [
-            norm_expr([blur_y, slope, blur_x], f'x y z * - {scale_str}') for blur_y, slope in zip(blur_ys, slopes)
+            norm_expr([blur_y, slope, blur_x], f'x y z * - {scale_str}', func=self.__class__.linear)
+            for blur_y, slope in zip(blur_ys, slopes)
         ]
 
         weight_str = f'{1 - weight} - {weight} / dup 0 > swap 0 ?' if weight > 0.0 else ''
 
         corrs = [
-            norm_expr([cov_xy, var_x, var_y], f'x dup * y z * {self.eps} + / sqrt {weight_str}')
+            norm_expr(
+                [cov_xy, var_x, var_y], f'x dup * y z * {self.eps} + / sqrt {weight_str}', func=self.__class__.linear
+            )
             for cov_xy, var_y in zip(cov_xys, var_ys)
         ]
 
@@ -317,10 +322,12 @@ class Regression:
         corr_slopes = [
             norm_expr(
                 [Exys_y, blur_x, Ex_y, var_x, var_y],
-                f'x y z * - XYS! XYS@ a {self.eps} + / XYS@ dup * a b * {self.eps} + / sqrt {weight_str} *'
+                f'x y z * - XYS! XYS@ a {self.eps} + / XYS@ dup * a b * {self.eps} + / sqrt {weight_str} *',
+                func=self.__class__.sloped_corr
             ) if complexpr_available else norm_expr(
                 [norm_expr([Exys_y, blur_x, Ex_y], 'x y z * -'), var_x, var_y],
-                f'x y {self.eps} + / x dup * y z * {self.eps} + / sqrt {weight_str} *'
+                f'x y {self.eps} + / x dup * y z * {self.eps} + / sqrt {weight_str} *',
+                func=self.__class__.sloped_corr
             )
             for Exys_y, Ex_y, var_y in zip(var_mul, blur_ys, var_ys)
         ]
@@ -553,10 +560,10 @@ class ChromaReconstruct(ABC):
 
         chroma_regs = reg.linear([y_dm, *chroma_dm], lin_cutoff, diff_mode.inter_scale)
 
-        y_diff = norm_expr((y_base, y_dm), 'x y -')
+        y_diff = norm_expr((y_base, y_dm), 'x y -', func=self.reconstruct)
 
         y_diffxb = gauss_blur(
-            norm_expr((y_base, y_dm), f'x y / {reg.eps} 1 clamp'), diff_mode.diff_sigma
+            norm_expr((y_base, y_dm), f'x y / {reg.eps} 1 clamp'), diff_mode.diff_sigma, func=self.reconstruct
         )
 
         fixup = (
@@ -568,7 +575,7 @@ class ChromaReconstruct(ABC):
         )
 
         fixed_chroma = (
-            norm_expr((dm, fix, y_diffxb, base), diff_mode.mode.value)
+            norm_expr((dm, fix, y_diffxb, base), diff_mode.mode.value, func=self.reconstruct)
             for dm, fix, base in zip(chroma_dm, fixup, chroma_base)
         )
 

@@ -237,6 +237,6 @@ def based_diff_mask(
         mask = EdgeDetect.ensure_obj(ampl, func).edgemask(mask, lthr=thr, hthr=thr)
 
     if expand:
-        mask = Morpho.expand(mask, expand, mode=XxpandMode.ELLIPSE)
+        mask = Morpho.expand(mask, expand, mode=XxpandMode.ELLIPSE, func=func)
 
     return mask

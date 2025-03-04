@@ -209,7 +209,8 @@ class FixInterlacedFades(CustomEnum):
         fix = norm_expr(
             props_clip, (expr_luma, expr_chroma),
             planes, i=f.norm_planes, color=colors,
-            expr_mode=(expr_mode, expr_mode_chroma)
+            expr_mode=(expr_mode, expr_mode_chroma),
+            func=func
         )
 
         return f.return_clip(fix)
@@ -259,5 +260,6 @@ def vinverse(
         [clip, blurred, blurred2],
         f'{expr} ?',
         planes, sstr=contra_str, amnt=amnt,
-        scl=scl, thr=scale_delta(thr, 8, clip)
+        scl=scl, thr=scale_delta(thr, 8, clip),
+        func=vinverse
     )

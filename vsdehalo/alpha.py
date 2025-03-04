@@ -38,7 +38,7 @@ def _limit_dehalo(
 ) -> vs.VideoNode:
     return norm_expr(
         [clip, ref], 'x y < x x y - {darkstr} * - x x y - {brightstr} * - ?', planes,
-        darkstr=darkstr, brightstr=brightstr
+        darkstr=darkstr, brightstr=brightstr, func=_limit_dehalo
     )
 
 
@@ -56,7 +56,8 @@ def _dehalo_mask(
         ],
         'x 0 = 0.0 x y - x / ? {lowsens} - x {peak} / 256 255 / + 512 255 / / {highsens} + * '
         '0.0 max 1.0 min {peak} *', planes, peak=peak,
-        lowsens=[lo / 255 for lo in lowsens], highsens=[hi / 100 for hi in highsens]
+        lowsens=[lo / 255 for lo in lowsens], highsens=[hi / 100 for hi in highsens],
+        func=_dehalo_mask
     )
 
     if sigma_mask is not False:
@@ -95,11 +96,14 @@ def _dehalo_supersample_minmax(
             return repair(work_clip, dehalo, norm_rmode_planes(work_clip, 1, planes))
 
         w, h = mod4(work_clip.width * ss), mod4(work_clip.height * ss)
-        ss_clip = norm_expr([
-            supersampler.scale(work_clip, w, h),
-            supersampler_ref.scale(dehalo.std.Maximum(), w, h),
-            supersampler_ref.scale(dehalo.std.Minimum(), w, h)
-        ], 'x y min z max', planes)
+        ss_clip = norm_expr(
+            [
+                supersampler.scale(work_clip, w, h),
+                supersampler_ref.scale(dehalo.std.Maximum(), w, h),
+                supersampler_ref.scale(dehalo.std.Minimum(), w, h)
+            ],
+            'x y min z max', planes, func=_dehalo_supersample_minmax
+        )
 
         return supersampler.scale(ss_clip, work_clip.width, work_clip.height)
 
@@ -220,10 +224,10 @@ class _fine_dehalo:
         edges = edgemask.edgemask(work_clip)
 
         # Keeps only the sharpest edges (line edges)
-        strong = norm_expr(edges, f'x {thmif} - {thmaf - thmif} / {peak} *', planes)
+        strong = norm_expr(edges, f'x {thmif} - {thmaf - thmif} / {peak} *', planes, func=func)
 
         # Extends them to include the potential halos
-        large = Morpho.expand(strong, rx_i, ry_i, planes=planes)
+        large = Morpho.expand(strong, rx_i, ry_i, planes=planes, func=func)
 
         # Exclusion zones #
         # When two edges are close from each other (both edges of a single
@@ -233,21 +237,21 @@ class _fine_dehalo:
         # these zones from the halo removal.
 
         # Includes more edges than previously, but ignores simple details
-        light = norm_expr(edges, f'x {thlimif} - {thlimaf - thlimif} / {peak} *', planes)
+        light = norm_expr(edges, f'x {thlimif} - {thlimaf - thlimif} / {peak} *', planes, func=func)
 
         # To build the exclusion zone, we make grow the edge mask, then shrink
         # it to its original shape. During the growing stage, close adjacent
         # edge masks will join and merge, forming a solid area, which will
         # remain solid even after the shrinking stage.
         # Mask growing
-        shrink = Morpho.expand(light, rx_i, ry_i, XxpandMode.ELLIPSE, planes=planes)
+        shrink = Morpho.expand(light, rx_i, ry_i, XxpandMode.ELLIPSE, planes=planes, func=func)
 
         # At this point, because the mask was made of a shades of grey, we may
         # end up with large areas of dark grey after shrinking. To avoid this,
         # we amplify and saturate the mask here (actually we could even
         # binarize it).
-        shrink = norm_expr(shrink, 'x 4 *', planes)
-        shrink = Morpho.inpand(shrink, rx_i, rx_i, XxpandMode.ELLIPSE, planes=planes)
+        shrink = norm_expr(shrink, 'x 4 *', planes, func=func)
+        shrink = Morpho.inpand(shrink, rx_i, rx_i, XxpandMode.ELLIPSE, planes=planes, func=func)
 
         # This mask is almost binary, which will produce distinct
         # discontinuities once applied. Then we have to smooth it.
@@ -262,18 +266,18 @@ class _fine_dehalo:
 
         # Subtracts masks and amplifies the difference to be sure we get 255
         # on the areas to be processed.
-        mask = norm_expr([large, shr_med], 'x y - 2 *', planes)
+        mask = norm_expr([large, shr_med], 'x y - 2 *', planes, func=func)
 
         # If edge processing is required, adds the edgemask
         if edgeproc > 0:
-            mask = norm_expr([mask, strong], f'x y {edgeproc} 0.66 * * +', planes)
+            mask = norm_expr([mask, strong], f'x y {edgeproc} 0.66 * * +', planes, func=func)
 
         # Smooth again and amplify to grow the mask a bit, otherwise the halo
         # parts sticking to the edges could be missed.
         # Also clamp to legal ranges
         mask = box_blur(mask, planes=planes)
 
-        mask = norm_expr(mask, f'x 2 * {ExprOp.clamp(0, peak)}', planes)
+        mask = norm_expr(mask, f'x 2 * {ExprOp.clamp(0, peak)}', planes, func=func)
 
         # Masking #
         if show_mask:
@@ -651,7 +655,7 @@ def dehalomicron(
 
     ymask_ref0 = gauss_blur(y_mask, sigma=sigma_ref)
 
-    dehalo_mask = norm_expr([dehalo_ref0mask, y_mask], 'x y - abs 100 *')
+    dehalo_mask = norm_expr([dehalo_ref0mask, y_mask], 'x y - abs 100 *', func=func.func)
     dehalo_mask = remove_grain(dehalo_mask, RemoveGrainMode.BOX_BLUR_NO_CENTER)
     dehalo_mask = remove_grain(dehalo_mask, RemoveGrainMode.MINMAX_MEDIAN_OPP)
 
@@ -663,16 +667,19 @@ def dehalomicron(
     else:
         dmask_expr = 'x 2 *'
 
-    dehalo_mask = norm_expr(dehalo_mask, dmask_expr)
+    dehalo_mask = norm_expr(dehalo_mask, dmask_expr, func=func.func)
 
-    fine_edge_mask = fine_dehalo.mask(norm_expr([y_mask, ymask_ref0], 'y x -'))
-    dehalo_mask = norm_expr([dehalo_mask, y_mask, ymask_ref0, fine_edge_mask], 'y z + 2 / x < x and x abs a ?')
+    fine_edge_mask = fine_dehalo.mask(norm_expr([y_mask, ymask_ref0], 'y x -', func=func.func))
+    dehalo_mask = norm_expr(
+        [dehalo_mask, y_mask, ymask_ref0, fine_edge_mask], 'y z + 2 / x < x and x abs a ?', func=func.func
+    )
     dehalo_mask = remove_grain(dehalo_mask, RemoveGrainMode.EDGE_CLIP_STRONG)
 
     actual_dehalo = dehalo_sigma(
-        func.work_clip, pre_ss=1 + pre_ss, sigma=sigma, ss=ss - 0.5 * pre_ss, planes=func.norm_planes, **kwargs
+        func.work_clip, pre_ss=1 + pre_ss, sigma=sigma, ss=ss - 0.5 * pre_ss, planes=func.norm_planes,
+        func=func.func, **kwargs
     )
-    dehalo_ref = fine_dehalo(func.work_clip, planes=func.norm_planes, **fdehalo_kwargs)  # type: ignore[arg-type]
+    dehalo_ref = fine_dehalo(func.work_clip, planes=func.norm_planes, func=func.func, **fdehalo_kwargs)  # type: ignore[arg-type]
 
     dehalo_min = ExprOp.MIN(actual_dehalo, dehalo_ref, planes=func.norm_planes)
 

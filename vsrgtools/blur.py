@@ -106,7 +106,7 @@ def side_box_blur(
         else:
             clips = [clip, *intermediates]
 
-        cum = norm_expr(clips, cum_expr, planes, force_akarin='vsrgtools.side_box_blur')
+        cum = norm_expr(clips, cum_expr, planes, func=side_box_blur)
     else:
         cum = intermediates[0]
         for new in intermediates[1:]:
@@ -220,7 +220,7 @@ def sbr(
     return norm_expr(
         [clip, diff, blurred_diff],
         'y z - D1! y neutral - D2! x D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? -',
-        planes=planes
+        planes=planes, func=sbr
     )
 
 
@@ -275,7 +275,7 @@ def median_blur(
         expr_plane.append(expr_passes)
 
     for e in zip(*expr_plane):
-        clip = norm_expr(clip, e, planes, force_akarin=median_blur)
+        clip = norm_expr(clip, e, planes, func=median_blur)
 
     return clip
 

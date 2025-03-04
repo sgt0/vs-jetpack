@@ -249,7 +249,7 @@ def ccd(
 
         expression.append(f'{plusses_points} x + WQ@ /')
 
-        return norm_expr(expr_clips, expression, planes, src444_format, force_akarin='vsdenoise.ccd')
+        return norm_expr(expr_clips, expression, planes, src444_format, func=ccd)
 
     if not is_yuv:
         return _ccd_expr(ref or src, src)

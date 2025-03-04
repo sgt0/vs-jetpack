@@ -79,36 +79,36 @@ def guided_filter(
     mean_p = blur_filter(p)
     mean_I = blur_filter(g) if guidance is not None else mean_p
 
-    I_square = norm_expr(g, 'x dup *', planes)
+    I_square = norm_expr(g, 'x dup *', planes, func=guided_filter)
     corr_I = blur_filter(I_square)
-    corr_Ip = blur_filter(norm_expr([g, p], 'x y *', planes)) if guidance is not None else corr_I
+    corr_Ip = blur_filter(norm_expr([g, p], 'x y *', planes, func=guided_filter)) if guidance is not None else corr_I
 
-    var_I = norm_expr([corr_I, mean_I], 'x y dup * -', planes)
-    cov_Ip = norm_expr([corr_Ip, mean_I, mean_p], 'x y z * -', planes) if guidance is not None else var_I
+    var_I = norm_expr([corr_I, mean_I], 'x y dup * -', planes, func=guided_filter)
+    cov_Ip = norm_expr([corr_Ip, mean_I, mean_p], 'x y z * -', planes, func=guided_filter) if guidance is not None else var_I
 
     if mode is GuidedFilterMode.ORIGINAL:
-        a = norm_expr([cov_Ip, var_I], 'x y {thr} + /', planes, thr=thr)
+        a = norm_expr([cov_Ip, var_I], 'x y {thr} + /', planes, thr=thr, func=guided_filter)
     else:
         if set(radius) == {1}:
             var_I_1 = var_I
         else:
             mean_I_1 = blur_filter_corr(g)
             corr_I_1 = blur_filter_corr(I_square)
-            var_I_1 = norm_expr([corr_I_1, mean_I_1], 'x y dup * -', planes)
+            var_I_1 = norm_expr([corr_I_1, mean_I_1], 'x y dup * -', planes, func=guided_filter)
 
         if mode is GuidedFilterMode.WEIGHTED:
             weight_in = var_I_1
         else:
-            weight_in = norm_expr([var_I, var_I_1], 'x y * sqrt', planes)
+            weight_in = norm_expr([var_I, var_I_1], 'x y * sqrt', planes, func=guided_filter)
 
-        denominator = norm_expr([weight_in], '1 x {eps} + /', planes, eps=1e-06)
+        denominator = norm_expr([weight_in], '1 x {eps} + /', planes, eps=1e-06, func=guided_filter)
 
         denominator = denominator.std.PlaneStats(None, 0)
 
-        weight = norm_expr([weight_in, denominator], 'x 1e-06 + y.PlaneStatsAverage *', planes)
+        weight = norm_expr([weight_in, denominator], 'x 1e-06 + y.PlaneStatsAverage *', planes, func=guided_filter)
 
         if mode is GuidedFilterMode.WEIGHTED:
-            a = norm_expr([cov_Ip, var_I, weight], 'x y {thr} z / + /', planes, thr=thr)
+            a = norm_expr([cov_Ip, var_I, weight], 'x y {thr} z / + /', planes, thr=thr, func=guided_filter)
         else:
             weight_in = weight_in.std.PlaneStats(None, 0)
 
@@ -119,7 +119,7 @@ def guided_filter(
                 planes, thr=thr
             )
 
-    b = norm_expr([mean_p, a, mean_I], 'x y z * -', planes)
+    b = norm_expr([mean_p, a, mean_I], 'x y z * -', planes, func=guided_filter)
 
     mean_a, mean_b = blur_filter(a), blur_filter(b)
 
@@ -127,6 +127,6 @@ def guided_filter(
         mean_a = upscaler.scale(mean_a, width, height)
         mean_b = upscaler.scale(mean_b, width, height)
 
-    q = norm_expr([mean_a, guidance_clip, mean_b], 'x y * z +', planes)
+    q = norm_expr([mean_a, guidance_clip, mean_b], 'x y * z +', planes, func=guided_filter)
 
     return depth(q, bits)

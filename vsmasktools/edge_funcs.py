@@ -47,17 +47,17 @@ def ringing_mask(
     edgemask = normalize_mask(credit_mask, plane(clip, 0), **kwargs)
     edgemask = limiter(edgemask)
 
-    light = norm_expr(edgemask, f'x {thlimi} - {thma - thmi} / {ExprToken.RangeMax} *')
+    light = norm_expr(edgemask, f'x {thlimi} - {thma - thmi} / {ExprToken.RangeMax} *', func=ringing_mask)
 
     shrink = Morpho.dilation(light, rad)
     shrink = Morpho.binarize(shrink, brz)
     shrink = Morpho.erosion(shrink, 2)
     shrink = blur_kernel(shrink, passes=2)
 
-    strong = norm_expr(edgemask, f'x {thmi} - {thlima - thlimi} / {ExprToken.RangeMax} *')
+    strong = norm_expr(edgemask, f'x {thmi} - {thlima - thlimi} / {ExprToken.RangeMax} *', func=ringing_mask)
     expand = Morpho.dilation(strong, iterations=rad)
 
-    mask = norm_expr([expand, strong, shrink], 'x y z max -')
+    mask = norm_expr([expand, strong, shrink], 'x y z max -', func=ringing_mask)
 
     return ExprOp.convolution('x', blur_kernel, premultiply=2, multiply=2, clamp=True)(mask)
 
@@ -73,7 +73,8 @@ def luma_mask(clip: vs.VideoNode, thr_lo: float, thr_hi: float, invert: bool = T
 
     return norm_expr(
         get_y(clip),
-        f'x {thr_lo} < {lo} x {thr_hi} > {hi} {inv_pre} x {thr_lo} - {thr_lo} {thr_hi} - / {peak} * {inv_post} ? ?'
+        f'x {thr_lo} < {lo} x {thr_hi} > {hi} {inv_pre} x {thr_lo} - {thr_lo} {thr_hi} - / {peak} * {inv_post} ? ?',
+        func=ringing_mask
     )
 
 
@@ -84,7 +85,7 @@ def luma_credit_mask(
 
     edge_mask = normalize_mask(edgemask, y, **kwargs)
 
-    credit_mask = norm_expr([edge_mask, y], f'y {scale_mask(thr, 32, y)} > y 0 ? x min')
+    credit_mask = norm_expr([edge_mask, y], f'y {scale_mask(thr, 32, y)} > y 0 ? x min', func=ringing_mask)
 
     if not draft:
         credit_mask = Morpho.maximum(credit_mask, iterations=4)

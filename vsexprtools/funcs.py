@@ -23,7 +23,7 @@ __all__ = [
 def expr_func(
     clips: vs.VideoNode | Sequence[vs.VideoNode], expr: str | Sequence[str],
     format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None, boundary: bool = True,
-    force_akarin: Literal[False] | FuncExceptT = False, func: FuncExceptT | None = None
+    force_akarin: Literal[False] = False, func: FuncExceptT | None = None
 ) -> vs.VideoNode:
     func = func or force_akarin or expr_func
     clips = list(clips) if isinstance(clips, Sequence) else [clips]
@@ -101,7 +101,7 @@ def norm_expr(
     expr: str | StrArr | ExprList | tuple[str | StrArr | ExprList, ...] | TupleExprList,
     planes: PlanesT = None, format: HoldsVideoFormatT | VideoFormatT | None = None,
     opt: bool | None = None, boundary: bool = True,
-    force_akarin: Literal[False] | FuncExceptT = False, func: FuncExceptT | None = None,
+    force_akarin: Literal[False] = False, func: FuncExceptT | None = None,
     split_planes: bool = False,
     **kwargs: Any
 ) -> vs.VideoNode:
