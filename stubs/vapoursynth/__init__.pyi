@@ -1038,6 +1038,80 @@ class _Plugin_akarin_VideoNode_Bound(Plugin):
 # end implementation
 
     
+# implementation: bs
+
+_ReturnDict_bs_TrackInfo = TypedDict("_ReturnDict_bs_TrackInfo", {"mediatype": int, "mediatypestr": DataType, "codec": int, "codecstr": DataType, "disposition": int, "dispositionstr": DataType})
+
+
+class _Plugin_bs_Core_Bound(Plugin):
+    """This class implements the module definitions for the "bs" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def AudioSource(self, source: DataType, track: Optional[int] = None, adjustdelay: Optional[int] = None, threads: Optional[int] = None, enable_drefs: Optional[int] = None, use_absolute_path: Optional[int] = None, drc_scale: Optional[float] = None, cachemode: Optional[int] = None, cachepath: Optional[DataType] = None, cachesize: Optional[int] = None, showprogress: Optional[int] = None) -> 'AudioNode': ...
+    def SetDebugOutput(self, enable: int) -> None: ...
+    def SetFFmpegLogLevel(self, level: int) -> int: ...
+    def TrackInfo(self, source: DataType, enable_drefs: Optional[int] = None, use_absolute_path: Optional[int] = None) -> '_ReturnDict_bs_TrackInfo': ...
+    def VideoSource(self, source: DataType, track: Optional[int] = None, variableformat: Optional[int] = None, fpsnum: Optional[int] = None, fpsden: Optional[int] = None, rff: Optional[int] = None, threads: Optional[int] = None, seekpreroll: Optional[int] = None, enable_drefs: Optional[int] = None, use_absolute_path: Optional[int] = None, cachemode: Optional[int] = None, cachepath: Optional[DataType] = None, cachesize: Optional[int] = None, hwdevice: Optional[DataType] = None, extrahwframes: Optional[int] = None, timecodes: Optional[DataType] = None, start_number: Optional[int] = None, showprogress: Optional[int] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: cs
+
+class _Plugin_cs_Core_Bound(Plugin):
+    """This class implements the module definitions for the "cs" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ConvertColor(self, clip: 'VideoNode', output_profile: DataType, input_profile: Optional[DataType] = None, float_output: Optional[int] = None) -> 'VideoNode': ...
+    def ImageSource(self, source: DataType, subsampling_pad: Optional[int] = None, jpeg_rgb: Optional[int] = None, jpeg_fancy_upsampling: Optional[int] = None, jpeg_cmyk_profile: Optional[DataType] = None, jpeg_cmyk_target_profile: Optional[DataType] = None) -> 'VideoNode': ...
+
+class _Plugin_cs_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "cs" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ConvertColor(self, output_profile: DataType, input_profile: Optional[DataType] = None, float_output: Optional[int] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: d2v
+
+class _Plugin_d2v_Core_Bound(Plugin):
+    """This class implements the module definitions for the "d2v" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Source(self, input: DataType, threads: Optional[int] = None, nocrop: Optional[int] = None, rff: Optional[int] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: dgdecodenv
+
+class _Plugin_dgdecodenv_Core_Bound(Plugin):
+    """This class implements the module definitions for the "dgdecodenv" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def DGSource(self, source: DataType, i420: Optional[int] = None, deinterlace: Optional[int] = None, use_top_field: Optional[int] = None, use_pf: Optional[int] = None, ct: Optional[int] = None, cb: Optional[int] = None, cl: Optional[int] = None, cr: Optional[int] = None, rw: Optional[int] = None, rh: Optional[int] = None, fieldop: Optional[int] = None, show: Optional[int] = None, show2: Optional[DataType] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: dvdsrc2
+
+class _Plugin_dvdsrc2_Core_Bound(Plugin):
+    """This class implements the module definitions for the "dvdsrc2" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def FullVts(self, path: DataType, vts: int, ranges: Optional[SingleAndSequence[int]] = None) -> 'VideoNode': ...
+    def FullVtsAc3(self, path: DataType, vts: int, audio: int, ranges: Optional[SingleAndSequence[int]] = None) -> 'AudioNode': ...
+    def FullVtsLpcm(self, path: DataType, vts: int, audio: int, ranges: Optional[SingleAndSequence[int]] = None) -> 'AudioNode': ...
+    def Ifo(self, path: DataType, ifo: int) -> DataType: ...
+    def RawAc3(self, path: DataType, vts: int, audio: int, ranges: Optional[SingleAndSequence[int]] = None) -> 'AudioNode': ...
+
+# end implementation
+
+    
+# implementation: ffms2
+
+class _Plugin_ffms2_Core_Bound(Plugin):
+    """This class implements the module definitions for the "ffms2" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def GetLogLevel(self) -> int: ...
+    def Index(self, source: DataType, cachefile: Optional[DataType] = None, indextracks: Optional[SingleAndSequence[int]] = None, errorhandling: Optional[int] = None, overwrite: Optional[int] = None, enable_drefs: Optional[int] = None, use_absolute_path: Optional[int] = None) -> DataType: ...
+    def SetLogLevel(self, level: int) -> int: ...
+    def Source(self, source: DataType, track: Optional[int] = None, cache: Optional[int] = None, cachefile: Optional[DataType] = None, fpsnum: Optional[int] = None, fpsden: Optional[int] = None, threads: Optional[int] = None, timecodes: Optional[DataType] = None, seekmode: Optional[int] = None, width: Optional[int] = None, height: Optional[int] = None, resizer: Optional[DataType] = None, format: Optional[int] = None, alpha: Optional[int] = None) -> 'VideoNode': ...
+    def Version(self) -> DataType: ...
+
+# end implementation
+
+    
 # implementation: fmtc
 
 class _Plugin_fmtc_Core_Bound(Plugin):
@@ -1063,6 +1137,30 @@ class _Plugin_fmtc_VideoNode_Bound(Plugin):
     def resample(self, w: Optional[int] = None, h: Optional[int] = None, sx: Optional[SingleAndSequence[float]] = None, sy: Optional[SingleAndSequence[float]] = None, sw: Optional[SingleAndSequence[float]] = None, sh: Optional[SingleAndSequence[float]] = None, scale: Optional[float] = None, scaleh: Optional[float] = None, scalev: Optional[float] = None, kernel: Optional[SingleAndSequence[DataType]] = None, kernelh: Optional[SingleAndSequence[DataType]] = None, kernelv: Optional[SingleAndSequence[DataType]] = None, impulse: Optional[SingleAndSequence[float]] = None, impulseh: Optional[SingleAndSequence[float]] = None, impulsev: Optional[SingleAndSequence[float]] = None, taps: Optional[SingleAndSequence[int]] = None, tapsh: Optional[SingleAndSequence[int]] = None, tapsv: Optional[SingleAndSequence[int]] = None, a1: Optional[SingleAndSequence[float]] = None, a2: Optional[SingleAndSequence[float]] = None, a3: Optional[SingleAndSequence[float]] = None, a1h: Optional[SingleAndSequence[float]] = None, a2h: Optional[SingleAndSequence[float]] = None, a3h: Optional[SingleAndSequence[float]] = None, a1v: Optional[SingleAndSequence[float]] = None, a2v: Optional[SingleAndSequence[float]] = None, a3v: Optional[SingleAndSequence[float]] = None, kovrspl: Optional[SingleAndSequence[int]] = None, fh: Optional[SingleAndSequence[float]] = None, fv: Optional[SingleAndSequence[float]] = None, cnorm: Optional[SingleAndSequence[int]] = None, total: Optional[SingleAndSequence[float]] = None, totalh: Optional[SingleAndSequence[float]] = None, totalv: Optional[SingleAndSequence[float]] = None, invks: Optional[SingleAndSequence[int]] = None, invksh: Optional[SingleAndSequence[int]] = None, invksv: Optional[SingleAndSequence[int]] = None, invkstaps: Optional[SingleAndSequence[int]] = None, invkstapsh: Optional[SingleAndSequence[int]] = None, invkstapsv: Optional[SingleAndSequence[int]] = None, csp: Optional[int] = None, css: Optional[DataType] = None, planes: Optional[SingleAndSequence[float]] = None, fulls: Optional[int] = None, fulld: Optional[int] = None, center: Optional[SingleAndSequence[int]] = None, cplace: Optional[DataType] = None, cplaces: Optional[DataType] = None, cplaced: Optional[DataType] = None, interlaced: Optional[int] = None, interlacedd: Optional[int] = None, tff: Optional[int] = None, tffd: Optional[int] = None, flt: Optional[int] = None, cpuopt: Optional[int] = None) -> 'VideoNode': ...
     def stack16tonative(self) -> 'VideoNode': ...
     def transfer(self, transs: Optional[SingleAndSequence[DataType]] = None, transd: Optional[SingleAndSequence[DataType]] = None, cont: Optional[float] = None, gcor: Optional[float] = None, bits: Optional[int] = None, flt: Optional[int] = None, fulls: Optional[int] = None, fulld: Optional[int] = None, logceis: Optional[int] = None, logceid: Optional[int] = None, cpuopt: Optional[int] = None, blacklvl: Optional[float] = None, sceneref: Optional[int] = None, lb: Optional[float] = None, lw: Optional[float] = None, lws: Optional[float] = None, lwd: Optional[float] = None, ambient: Optional[float] = None, match: Optional[int] = None, gy: Optional[int] = None, debug: Optional[int] = None, sig_c: Optional[float] = None, sig_t: Optional[float] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: imwri
+
+class _Plugin_imwri_Core_Bound(Plugin):
+    """This class implements the module definitions for the "imwri" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Read(self, filename: SingleAndSequence[DataType], firstnum: Optional[int] = None, mismatch: Optional[int] = None, alpha: Optional[int] = None, float_output: Optional[int] = None, embed_icc: Optional[int] = None) -> 'VideoNode': ...
+    def Write(self, clip: 'VideoNode', imgformat: DataType, filename: DataType, firstnum: Optional[int] = None, quality: Optional[int] = None, dither: Optional[int] = None, compression_type: Optional[DataType] = None, overwrite: Optional[int] = None, alpha: Optional['VideoNode'] = None) -> 'VideoNode': ...
+
+class _Plugin_imwri_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "imwri" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Write(self, imgformat: DataType, filename: DataType, firstnum: Optional[int] = None, quality: Optional[int] = None, dither: Optional[int] = None, compression_type: Optional[DataType] = None, overwrite: Optional[int] = None, alpha: Optional['VideoNode'] = None) -> 'VideoNode': ...
+
+# end implementation
+
+    
+# implementation: lsmas
+
+class _Plugin_lsmas_Core_Bound(Plugin):
+    """This class implements the module definitions for the "lsmas" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def LibavSMASHSource(self, source: DataType, track: Optional[int] = None, threads: Optional[int] = None, seek_mode: Optional[int] = None, seek_threshold: Optional[int] = None, dr: Optional[int] = None, fpsnum: Optional[int] = None, fpsden: Optional[int] = None, variable: Optional[int] = None, format: Optional[DataType] = None, decoder: Optional[DataType] = None, prefer_hw: Optional[int] = None, ff_loglevel: Optional[int] = None, ff_options: Optional[DataType] = None) -> 'VideoNode': ...
+    def LWLibavSource(self, source: DataType, stream_index: Optional[int] = None, cache: Optional[int] = None, cachefile: Optional[DataType] = None, threads: Optional[int] = None, seek_mode: Optional[int] = None, seek_threshold: Optional[int] = None, dr: Optional[int] = None, fpsnum: Optional[int] = None, fpsden: Optional[int] = None, variable: Optional[int] = None, format: Optional[DataType] = None, decoder: Optional[DataType] = None, prefer_hw: Optional[int] = None, repeat: Optional[int] = None, dominance: Optional[int] = None, ff_loglevel: Optional[int] = None, cachedir: Optional[DataType] = None, ff_options: Optional[DataType] = None) -> 'VideoNode': ...
 
 # end implementation
 
@@ -1423,10 +1521,20 @@ class VideoNode(RawNode):
     def akarin(self) -> _Plugin_akarin_VideoNode_Bound:
         """Akarin's Experimental Filters"""
     # end instance
+    # instance_bound_VideoNode: cs
+    @property
+    def cs(self) -> _Plugin_cs_VideoNode_Bound:
+        """carefulsource"""
+    # end instance
     # instance_bound_VideoNode: fmtc
     @property
     def fmtc(self) -> _Plugin_fmtc_VideoNode_Bound:
         """Format converter"""
+    # end instance
+    # instance_bound_VideoNode: imwri
+    @property
+    def imwri(self) -> _Plugin_imwri_VideoNode_Bound:
+        """VapourSynth ImageMagick 7 HDRI Writer/Reader"""
     # end instance
     # instance_bound_VideoNode: resize
     @property
@@ -1572,10 +1680,50 @@ class Core:
     def akarin(self) -> _Plugin_akarin_Core_Bound:
         """Akarin's Experimental Filters"""
     # end instance
+    # instance_bound_Core: bs
+    @property
+    def bs(self) -> _Plugin_bs_Core_Bound:
+        """Best Source 2"""
+    # end instance
+    # instance_bound_Core: cs
+    @property
+    def cs(self) -> _Plugin_cs_Core_Bound:
+        """carefulsource"""
+    # end instance
+    # instance_bound_Core: d2v
+    @property
+    def d2v(self) -> _Plugin_d2v_Core_Bound:
+        """D2V Source"""
+    # end instance
+    # instance_bound_Core: dgdecodenv
+    @property
+    def dgdecodenv(self) -> _Plugin_dgdecodenv_Core_Bound:
+        """DGDecodeNV for VapourSynth"""
+    # end instance
+    # instance_bound_Core: dvdsrc2
+    @property
+    def dvdsrc2(self) -> _Plugin_dvdsrc2_Core_Bound:
+        """Dvdsrc 2nd tour"""
+    # end instance
+    # instance_bound_Core: ffms2
+    @property
+    def ffms2(self) -> _Plugin_ffms2_Core_Bound:
+        """FFmpegSource 2 for VapourSynth"""
+    # end instance
     # instance_bound_Core: fmtc
     @property
     def fmtc(self) -> _Plugin_fmtc_Core_Bound:
         """Format converter"""
+    # end instance
+    # instance_bound_Core: imwri
+    @property
+    def imwri(self) -> _Plugin_imwri_Core_Bound:
+        """VapourSynth ImageMagick 7 HDRI Writer/Reader"""
+    # end instance
+    # instance_bound_Core: lsmas
+    @property
+    def lsmas(self) -> _Plugin_lsmas_Core_Bound:
+        """LSMASHSource for VapourSynth"""
     # end instance
     # instance_bound_Core: resize
     @property

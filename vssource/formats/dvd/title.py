@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 from itertools import count
-from typing import TYPE_CHECKING, Callable, Iterator, Sequence, SupportsIndex, overload, Optional
+from typing import TYPE_CHECKING, Callable, Iterator, Sequence, SupportsIndex, overload
 
 from vstools import CustomValueError, FuncExceptT, T, get_prop, set_output, to_arr, vs, vs_object
 
@@ -21,8 +21,8 @@ __all__ = [
 @dataclass
 class SplitTitle:
     # maybe just return None instead of a SplitTitle with video None
-    video: vs.VideoNode
-    audios: list[vs.AudioNode]
+    video: vs.VideoNode | None
+    audios: list[vs.AudioNode | None]
     chapters: list[int]
 
     _title: Title
@@ -188,7 +188,7 @@ class Title:
         video = SplitHelper.split_video(self, splits)
         chapters = SplitHelper.split_chapters(self, splits)
 
-        audios: list[list[vs.AudioNode]]
+        audios: list[list[vs.AudioNode | None]]
 
         if audio is not None and (audio := to_arr(audio)):
             audio_per_output_cnt = len(audio)
@@ -244,12 +244,14 @@ class Title:
             split = to_arr(split)
 
             for i, s in enumerate(split):
-                set_output(s.video, f'split {i}')
+                if s.video:
+                    set_output(s.video, f'split {i}')
 
             for i, s in enumerate(split):
                 if len(s.audios) >= 1:
                     for j, audio in enumerate(s.audios):
-                        set_output(audio, f'split {i} - {j}')
+                        if audio:
+                            set_output(audio, f'split {i} - {j}')
 
     def _assert_dvdsrc2(self, func: FuncExceptT) -> None:
         if not self._dvdsrc_ranges:
@@ -369,13 +371,13 @@ class SplitHelper:
         return out
 
     @staticmethod
-    def split_video(title: Title, splits: list[int]) -> tuple[vs.VideoNode, ...]:
+    def split_video(title: Title, splits: list[int]) -> tuple[vs.VideoNode | None, ...]:
         reta = SplitHelper._cut_split(title, splits, title.video, SplitHelper._cut_fz_v)
         assert len(reta) == len(splits) + 1
         return reta
 
     @staticmethod
-    def split_audio(title: Title, splits: list[int], i: int = 0) -> tuple[vs.AudioNode, ...]:
+    def split_audio(title: Title, splits: list[int], i: int = 0) -> tuple[vs.AudioNode | None, ...]:
         reta = SplitHelper._cut_split(title, splits, title.audios[i], SplitHelper._cut_fz_a)
         assert len(reta) == len(splits) + 1
         return reta
@@ -398,8 +400,8 @@ class SplitHelper:
         return len(splits) + 1
 
     @staticmethod
-    def _cut_split(title: Title, splits: list[int], a: T, b: Callable[[Title, T, int, int], T]) -> tuple[T, ...]:
-        out, last = list[T](), 0
+    def _cut_split(title: Title, splits: list[int], a: T, b: Callable[[Title, T, int, int], T | None]) -> tuple[T | None, ...]:
+        out, last = list[T | None](), 0
 
         for s in splits:
             index = s - 1
@@ -411,7 +413,7 @@ class SplitHelper:
         return tuple(out)
 
     @staticmethod
-    def _cut_fz_v(title: Title, vnode: vs.VideoNode, f: int, t: int) -> Optional[vs.VideoNode]:
+    def _cut_fz_v(title: Title, vnode: vs.VideoNode, f: int, t: int) -> vs.VideoNode | None:
         f = title.chapters[f]
         t = title.chapters[t]
         assert f >= 0
@@ -424,7 +426,7 @@ class SplitHelper:
             return vnode[f:t]
 
     @staticmethod
-    def _cut_fz_a(title: Title, anode: vs.AudioNode, start: int, end: int) -> Optional[vs.AudioNode]:
+    def _cut_fz_a(title: Title, anode: vs.AudioNode, start: int, end: int) -> vs.AudioNode | None:
         chapter_idxs = [title.chapters[i] for i in (start, end)]
         timecodes = [title._absolute_time[i] if i != len(
             title._absolute_time) else title._absolute_time[i - 1] + title._duration_times[i - 1] for i in chapter_idxs]

@@ -356,8 +356,8 @@ class IsoFileCore:
             ptts = target_vts.vts_ptt_srpt[tt.vts_ttn - 1]
 
             current_time = 0.0
-            seconds = []
-            vobids = []
+            seconds = list[float]()
+            vobids = list[tuple[int, int]]()
             for a in ptts:
                 target_pgc = target_vts.vts_pgci.pgcs[a.pgcn - 1]
                 cell_n = target_pgc.program_map[a.pgn - 1]
@@ -371,8 +371,8 @@ class IsoFileCore:
             to_print += f'Title: {i + 1:02}\n'
             lastv = None
 
-            crnt = 0
-            crnt_glbl = 0
+            crnt = 0.0
+            crnt_glbl = 0.0
             to_print += "  nbr vobid start localstart localend duration\n"
             for i, v in enumerate(vobids):
                 if lastv != v[0]:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Any, Literal, Generator, Protocol, Sequence, overload
+from typing import Any, Iterable, Literal, Protocol, Sequence, overload
 
 from vstools import (
     ChromaLocationT, ColorRangeT, CustomRuntimeError, FieldBasedT, FileType, FileTypeMismatchError, IndexingType,
@@ -17,10 +17,8 @@ __all__ = [
 ]
 
 
-def parse_video_filepath(
-    filepath: SPathLike | Sequence[SPathLike] | Generator[SPath, None, None]
-) -> tuple[SPath, ParsedFile]:
-    if isinstance(filepath, Generator):
+def parse_video_filepath(filepath: SPathLike | Iterable[SPathLike]) -> tuple[SPath, ParsedFile]:
+    if isinstance(filepath, Iterable):
         filepath = list(filepath)
 
     try:
@@ -109,7 +107,7 @@ _source_func: source_func = ...  # type: ignore
 
 @copy_signature(_source_func)
 def source(
-    filepath: SPathLike | Sequence[SPathLike] | Generator[SPathLike, None, None] | None = None,
+    filepath: SPathLike | Iterable[SPathLike] | None = None,
     bits: int | None = None, *,
     matrix: MatrixT | None = None,
     transfer: TransferT | None = None,
@@ -147,7 +145,7 @@ def source(
             if DGIndexNV in to_skip:
                 raise RuntimeError
             else:
-                from pymediainfo import MediaInfo
+                from pymediainfo import MediaInfo  # type: ignore[import-untyped]
 
                 tracks = MediaInfo.parse(filepath, parse_speed=0.25).video_tracks
                 if tracks:

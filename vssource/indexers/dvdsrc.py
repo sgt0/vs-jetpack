@@ -60,9 +60,9 @@ class DVDSRCIndexer(DVDIndexer):
         return rnode, staff.rff, _vobids, vts_indices
 
     def _extract_data(self, rawnode: vs.VideoNode) -> AllNeddedDvdFrameData:
-        dd = bytes(get_prop(rawnode, 'InfoFrame', vs.VideoFrame)[0])  # type: ignore
+        dd = bytes(get_prop(rawnode, 'InfoFrame', vs.VideoFrame)[0])
 
-        assert len(dd) == len(rawnode) * 4  # type: ignore
+        assert len(dd) == len(rawnode) * 4
 
         vobids = list[tuple[int, int]]()
         tff = list[int]()

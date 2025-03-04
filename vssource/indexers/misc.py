@@ -20,7 +20,7 @@ __all__ = [
 class BestSource(Indexer):
     """BestSource indexer"""
 
-    _source_func = core.lazy.bs.VideoSource  # type: ignore
+    _source_func = core.lazy.bs.VideoSource
 
 
 class IMWRI(Indexer):

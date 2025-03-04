@@ -98,4 +98,4 @@ class _LinuxIsoFile(IsoFileCore):
         return bool(self._run_disc_util(self.loop_path, ['loop-delete', '-b']))
 
 
-IsoFile: type[IsoFileCore] = _WinIsoFile if os_name == 'nt' else _LinuxIsoFile  # type: ignore
+IsoFile: type[IsoFileCore] = _WinIsoFile if os_name == 'nt' else _LinuxIsoFile
