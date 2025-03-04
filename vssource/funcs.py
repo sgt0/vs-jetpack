@@ -145,7 +145,7 @@ def source(
             if DGIndexNV in to_skip:
                 raise RuntimeError
             else:
-                from pymediainfo import MediaInfo  # type: ignore[import-untyped]
+                from pymediainfo import MediaInfo
 
                 tracks = MediaInfo.parse(filepath, parse_speed=0.25).video_tracks
                 if tracks:
