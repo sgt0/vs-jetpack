@@ -12,7 +12,6 @@ from multiprocessing import cpu_count
 from types import UnionType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, NoReturn
 from weakref import ReferenceType
-from psutil import Process
 
 import vapoursynth as vs
 from vapoursynth import (
@@ -500,6 +499,8 @@ class VSCoreProxy(CoreProxyBase):
         self, threads: int | float | range | tuple[int, int] | list[int] | None = None,
         max_cache: int | None = None, reserve: int | Iterable[int] = 2
     ) -> None:
+        from psutil import Process
+
         """
         Set core affinity.
 
