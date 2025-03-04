@@ -31,7 +31,7 @@ _finished_loading_abstract = False
 
 def _default_kernel_radius(cls: type[T], self: T) -> int:
     if hasattr(self, '_static_kernel_radius'):
-        return ceil(self._static_kernel_radius)  # type: ignore
+        return ceil(self._static_kernel_radius)
 
     return super(cls, self).kernel_radius  # type: ignore
 
@@ -201,9 +201,9 @@ class BaseScaler(vs_object):
 
     @inject_self.cached.property
     def pretty_string(self) -> str:
-        attrs = {}
+        attrs = dict[str, Any]()
 
-        if hasattr(self, 'b'):
+        if hasattr(self, 'b') and hasattr(self, 'c'):
             attrs.update(b=self.b, c=self.c)
         elif hasattr(self, 'taps'):
             attrs['taps'] = self.taps
@@ -514,7 +514,7 @@ class Kernel(Scaler, Descaler, Resampler):
     ) -> type[Scaler] | type[Descaler] | type[Resampler] | type[Kernel]:
         from ..util import abstract_kernels
         return _base_from_param(
-            cls, Kernel, kernel, UnknownKernelError, abstract_kernels, func_except  # type: ignore
+            cls, Kernel, kernel, UnknownKernelError, abstract_kernels, func_except
         )
 
     @overload

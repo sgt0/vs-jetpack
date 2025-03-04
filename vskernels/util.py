@@ -35,7 +35,7 @@ class NoShiftBase(Kernel):
         return super().get_descale_args(clip, (0, 0), *(args and args[1:]), **kwargs)
 
 
-class NoShift(Bicubic, NoShiftBase):  # type: ignore
+class NoShift(Bicubic, NoShiftBase):
     """
     Class util used to always pass shift=(0, 0)\n
     By default it inherits from :py:class:`vskernels.Bicubic`,

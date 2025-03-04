@@ -27,7 +27,7 @@ class ZimgDescaler(Descaler):
             ...
 
 
-class ZimgComplexKernel(ComplexKernel, ZimgDescaler):  # type: ignore[misc]
+class ZimgComplexKernel(ComplexKernel, ZimgDescaler):
     if TYPE_CHECKING:
         # Override signature to add `blur` and remove `border_handling`.
         @inject_self.cached

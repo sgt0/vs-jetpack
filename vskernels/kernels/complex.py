@@ -198,7 +198,11 @@ class KeepArScaler(Scaler):
 
             kwargs, shift = sample_grid_model.for_dst(clip, width, height, shift, **kwargs)
 
-            border_handling = BorderHandling.from_param(border_handling, self.scale)
+            if (bh := BorderHandling.from_param(border_handling, self.scale)) is not None:
+                border_handling = bh
+            else:
+                raise TypeError
+
             padded = border_handling.prepare_clip(clip, self.kernel_radius)
 
             shift, clip = tuple(
@@ -234,11 +238,11 @@ class ComplexScaler(LinearScaler, KeepArScaler):
         )
 
 
-class ComplexKernel(Kernel, LinearDescaler, ComplexScaler):  # type: ignore
+class ComplexKernel(Kernel, LinearDescaler, ComplexScaler):
     ...
 
 
-class CustomComplexKernel(CustomKernel, ComplexKernel):  # type: ignore
+class CustomComplexKernel(CustomKernel, ComplexKernel):
     if TYPE_CHECKING:
         @inject_self.cached
         @inject_kwargs_params
