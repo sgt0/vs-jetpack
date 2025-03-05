@@ -50,6 +50,7 @@ Note: Not all plugin dependencies are hard dependencies, many are optional.
 - [dfttest2](https://github.com/AmusementClub/vs-dfttest2) / [dfttest](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DFTTest)
 - [mvtools](https://github.com/dubhater/vapoursynth-mvtools) / [mvtools-sf](https://github.com/IFeelBloated/vapoursynth-mvtools-sf)
 - [manipmv](https://github.com/Mikewando/manipulate-motion-vectors)
+- [scxvid](https://github.com/dubhater/vapoursynth-scxvid) / [wwxd](https://github.com/dubhater/vapoursynth-wwxd)
 - [bwdif](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Bwdif)
 - [fft3dfilter](https://github.com/AmusementClub/VapourSynth-FFT3DFilter)
 - [nlm-ispc](https://github.com/AmusementClub/vs-nlm-ispc) / [nlm-cuda](https://github.com/AmusementClub/vs-nlm-cuda) / [knlmeanscl](https://github.com/Khanattila/KNLMeansCL)
