@@ -167,7 +167,7 @@ def vfm(
 
     func = FunctionUtil(clip, vfm, None, (vs.YUV, vs.GRAY), 8)
 
-    tff = FieldBased.from_param_or_video(tff, clip, False, func.func)
+    tff = FieldBased.from_param_or_video(tff, clip, True, func.func)
 
     vfm_kwargs = dict[str, Any](
         order=tff.is_tff, mode=mode
