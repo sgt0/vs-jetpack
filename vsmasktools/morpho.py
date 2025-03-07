@@ -8,7 +8,8 @@ from vsexprtools import ExprList, ExprOp, TupleExprList, complexpr_available, no
 from vsrgtools import BlurMatrix
 from vstools import (
     ConvMode, CustomValueError, FuncExceptT, PlanesT, SpatialConvModeT, VSFunctionAllArgs,
-    copy_signature, core, fallback, inject_self, iterate, scale_mask, scale_value, to_arr, vs
+    copy_signature, core, fallback, inject_self, interleave_arr, iterate, scale_mask, scale_value,
+    to_arr, vs
 )
 
 from .types import Coordinates, XxpandMode
@@ -531,8 +532,10 @@ class Morpho:
         else:
             expr = ExprOp.matrix('x', *radius, [(0, 0)])
 
-        for e in expr:
-            e.extend([op] * e.mlength)
+        nexpr = list(expr)
+
+        for i, e in enumerate(expr):
+            e = ExprList(interleave_arr(e, op * e.mlength, 2))
 
             if thr is not None:
                 e.append("x", scale_value(thr, 32, clip))
@@ -545,7 +548,9 @@ class Morpho:
             if clamp:
                 e.append(ExprOp.clamp())
 
-        return expr
+            nexpr[i] = e
+
+        return TupleExprList(nexpr)
 
     def _mm_func(
         self,
