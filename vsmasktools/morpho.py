@@ -321,8 +321,19 @@ class Morpho:
         return dilated
 
     @inject_self
-    @copy_signature(_morpho_method)
-    def gradient(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def gradient(
+        self,
+        clip: vs.VideoNode,
+        radius: RadiusT = 1,
+        thr: float | None = None,
+        iterations: int = 1,
+        coords: Sequence[int] | None = None,
+        multiply: float | None = None,
+        planes: PlanesT = None,
+        *,
+        func: FuncExceptT | None = None,
+        **kwargs: Any
+    ) -> vs.VideoNode:
         """
         A morphological gradient is the difference between a dilation and erosion.
 
@@ -344,12 +355,27 @@ class Morpho:
         """
         func = func or self.gradient
 
-        eroded = self.erosion(clip, *args, func=func, **kwargs)
-        dilated = self.dilation(clip, *args, func=func, **kwargs)
+        if isinstance(radius, tuple):
+            r, conv_mode = radius
+        else:
+            r, conv_mode = radius, ConvMode.SQUARE
 
-        return norm_expr(
-            [dilated, eroded], 'x y -', kwargs.get('planes', args[5] if len(args) > 5 else None), func=func
-        )
+        if iterations == 1 and conv_mode is not ConvMode.HV:
+            return norm_expr(
+                clip, '{dilated} {eroded} - {multiply}', planes,
+                dilated=self._morpho_xx_imum(
+                    clip, (r, conv_mode), thr, coords, multiply, True, op=ExprOp.MAX, func=func
+                )[0],
+                eroded=self._morpho_xx_imum(
+                    clip, (r, conv_mode), thr, coords, multiply, True, op=ExprOp.MIN, func=func
+                )[0],
+                multiply='' if multiply is None else f'{multiply} *'
+            )
+
+        dilated = self.dilation(clip, radius, thr, iterations, coords, multiply, planes, func=func, **kwargs)
+        eroded = self.erosion(clip, radius, thr, iterations, coords, multiply, planes, func=func, **kwargs)
+
+        return norm_expr([dilated, eroded], 'x y -', planes, func=func)
 
     @inject_self
     @copy_signature(_morpho_method)
@@ -422,8 +448,19 @@ class Morpho:
         return self.top_hat(*args, **dict(func=self.black_hat) | kwargs)
 
     @inject_self
-    @copy_signature(_morpho_method)
-    def outer_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def outer_hat(
+        self,
+        clip: vs.VideoNode,
+        radius: RadiusT = 1,
+        thr: float | None = None,
+        iterations: int = 1,
+        coords: Sequence[int] | None = None,
+        multiply: float | None = None,
+        planes: PlanesT = None,
+        *,
+        func: FuncExceptT | None = None,
+        **kwargs: Any
+    ) -> vs.VideoNode:
         """
         An outer hat is the difference of the dilation and the original clip.
 
@@ -445,14 +482,38 @@ class Morpho:
         """
         func = func or self.outer_hat
 
-        dilated = self.dilation(clip, *args, func=func, **kwargs)
+        if isinstance(radius, tuple):
+            r, conv_mode = radius
+        else:
+            r, conv_mode = radius, ConvMode.SQUARE
 
-        return norm_expr(
-            [dilated, clip], 'x y -', kwargs.get('planes', args[5] if len(args) > 5 else None), func=func
-        )
+        if iterations == 1 and conv_mode is not ConvMode.HV:
+            return norm_expr(
+                clip, '{dilated} {multiply} x -', planes,
+                dilated=self._morpho_xx_imum(
+                    clip, (r, conv_mode), thr, coords, multiply, True, op=ExprOp.MAX, func=func
+                )[0],
+                multiply='' if multiply is None else f'{multiply} *'
+            )
+
+        dilated = self.dilation(clip, radius, thr, iterations, coords, multiply, planes, func=func, **kwargs)
+
+        return norm_expr([dilated, clip], 'x y -', planes, func=func)
 
     @inject_self
-    def inner_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def inner_hat(
+        self,
+        clip: vs.VideoNode,
+        radius: RadiusT = 1,
+        thr: float | None = None,
+        iterations: int = 1,
+        coords: Sequence[int] | None = None,
+        multiply: float | None = None,
+        planes: PlanesT = None,
+        *,
+        func: FuncExceptT | None = None,
+        **kwargs: Any
+    ) -> vs.VideoNode:
         """
         An inner hat is the difference of the original clip and the erosion.
 
@@ -474,11 +535,23 @@ class Morpho:
         """
         func = func or self.inner_hat
 
-        eroded = self.erosion(clip, *args, func=func, **kwargs)
+        if isinstance(radius, tuple):
+            r, conv_mode = radius
+        else:
+            r, conv_mode = radius, ConvMode.SQUARE
 
-        return norm_expr(
-            [clip, eroded], 'x y -', kwargs.get('planes', args[5] if len(args) > 5 else None), func=func
-        )
+        if iterations == 1 and conv_mode is not ConvMode.HV:
+            return norm_expr(
+                clip, 'x {eroded} {multiply} -', planes,
+                eroded=self._morpho_xx_imum(
+                    clip, (r, conv_mode), thr, coords, multiply, True, op=ExprOp.MIN, func=func
+                )[0],
+                multiply='' if multiply is None else f'{multiply} *'
+            )
+
+        eroded = self.erosion(clip, radius, thr, iterations, coords, multiply, planes, func=func, **kwargs)
+
+        return norm_expr([clip, eroded], 'x y -', planes, func=func)
 
     @inject_self
     def binarize(
