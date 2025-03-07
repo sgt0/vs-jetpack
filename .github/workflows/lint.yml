@@ -59,6 +59,9 @@ jobs:
       - name: Running mypy on vskernels
         run: uv run mypy vskernels
 
+      - name: Running mypy on vsexprtools
+        run: uv run mypy vsexprtools
+
       - name: Post webhook for failure
         if: failure()
         uses: tsickert/discord-webhook@v6.0.0
