@@ -288,18 +288,16 @@ else:
 
         aa = downscaler.scale(aa, func.work_clip.width, func.work_clip.height)
 
-        if postfilter is None:
-            aa_out = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa))
-        elif callable(postfilter):
-            aa_out = postfilter(aa)
-        else:
-            aa_out = aa
-
         if pskip:
             no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
-            aa_out = norm_expr([func.work_clip, aa_out, aa, no_aa], "z a = x y ?", func=func.func)
+            aa = norm_expr([func.work_clip, aa, no_aa], 'x z - y +', func=func.func)
+
+        if postfilter is None:
+            aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa))
+        elif callable(postfilter):
+            aa = postfilter(aa)
 
         if mask:
-            aa_out = func.work_clip.std.MaskedMerge(aa_out, mask)
+            aa = func.work_clip.std.MaskedMerge(aa, mask)
 
-        return func.return_clip(aa_out)
+        return func.return_clip(aa)
