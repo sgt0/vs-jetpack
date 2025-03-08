@@ -7,7 +7,7 @@ from typing import Any, Type
 
 from vsexprtools import ExprOp, ExprToken, expr_func, norm_expr
 from vskernels import Bilinear, Catrom, Point
-from vsrgtools import box_blur
+from vsrgtools import box_blur, median_blur
 from vssource import IMWRI, Indexer
 from vstools import (
     ColorRange, CustomOverflowError, FileNotExistsError, FilePathType, FrameRangeN, FrameRangesN,
@@ -186,9 +186,9 @@ class HardsubSignFades(HardsubMask):
 
         highpass = scale_delta(self.highpass, 32, clip)
 
-        mask = norm_expr(
-            [clipedge, refedge], f'x y - {highpass} < 0 {ExprToken.RangeMax} ?', func=self.__class__
-        ).std.Median()
+        mask = median_blur(
+            norm_expr([clipedge, refedge], f'x y - {highpass} < 0 {ExprToken.RangeMax} ?', func=self.__class__)
+        )
 
         return max_planes(Morpho.inflate(Morpho.expand(mask, self.expand, mode=self.expand_mode), iterations=4))
 
@@ -283,7 +283,7 @@ class HardsubLine(HardsubMask):
         )
         diff = Morpho.maximum(diff, iterations=2, func=self.__class__)
 
-        mask = core.misc.Hysteresis(subedge, diff)
+        mask = subedge.hysteresis.Hysteresis(diff)
         mask = iterate(mask, core.std.Maximum, expand_n)
         mask = box_blur(mask.std.Inflate().std.Inflate())
 

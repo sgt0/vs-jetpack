@@ -9,7 +9,7 @@ from vsdenoise import Prefilter, frequency_merge, nl_means
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vskernels import Catrom, NoShift, Point, Scaler, ScalerT
 from vsmasktools import Morpho, Prewitt
-from vsrgtools import LimitFilterMode, contrasharpening, contrasharpening_dehalo, gauss_blur, limit_filter, repair
+from vsrgtools import LimitFilterMode, contrasharpening, contrasharpening_dehalo, gauss_blur, median_blur, limit_filter, repair
 from vstools import (
     ConstantFormatVideoNode, FieldBased, FunctionUtil, PlanesT, UnsupportedFieldBasedError,
     check_ref_clip, core, fallback, mod4, plane, to_arr, vs
@@ -127,7 +127,7 @@ def smooth_dering(
     if ringmask is None:
         prewittm = Prewitt.edgemask(work_clip, mthr)
 
-        fmask = prewittm.std.Median(planes).misc.Hysteresis(prewittm, planes)
+        fmask = median_blur(prewittm, planes=planes).hysteresis.Hysteresis(prewittm, planes)
 
         omask = Morpho.expand(fmask, mrad, mrad, planes=planes) if mrad > 0 else fmask
 

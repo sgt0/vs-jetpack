@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from math import ceil
-from typing import Any, Iterable, Literal, Sequence, cast
+from typing import Any, Literal, Sequence, cast
 
 from vstools import (
     CustomRuntimeError, CustomValueError, FuncExceptT, HoldsVideoFormatT, PlanesT, ProcessVariableResClip, StrArr,
@@ -14,9 +14,7 @@ from .exprop import ExprOp, ExprOpBase, ExprList, TupleExprList
 from .util import ExprVars, bitdepth_aware_tokenize_expr, complexpr_available, norm_expr_planes
 
 __all__ = [
-    'expr_func', 'combine', 'norm_expr',
-
-    'average_merge', 'weighted_merge'
+    'expr_func', 'combine', 'norm_expr'
 ]
 
 
@@ -157,25 +155,3 @@ def norm_expr(
     ]
 
     return expr_func(clips, tokenized_expr, format, opt, boundary, force_akarin, func)
-
-
-def average_merge(*clips: VideoNodeIterable) -> vs.VideoNode:
-    flat_clips = flatten_vnodes(clips)
-
-    length = len(flat_clips)
-
-    return combine(flat_clips, ExprOp.ADD, zip(((1 / length, ) * length), ExprOp.MUL))
-
-
-def weighted_merge(*weighted_clips: Iterable[tuple[vs.VideoNode, float]] | tuple[vs.VideoNode, float]) -> vs.VideoNode:
-    flat_clips = []
-
-    for clip in weighted_clips:
-        if isinstance(clip, tuple):
-            flat_clips.append(clip)
-        else:
-            flat_clips.extend(list(clip))
-
-    clips, weights = zip(*flat_clips)
-
-    return combine(clips, ExprOp.ADD, zip(weights, ExprOp.MUL), expr_suffix=[sum(weights), ExprOp.DIV])

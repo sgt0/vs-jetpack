@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from vsexprtools import ExprOp, average_merge, norm_expr
+from vsexprtools import ExprOp, norm_expr
 from vskernels import Catrom
 from vsmasktools import Morpho, XxpandMode
-from vsrgtools import box_blur, gauss_blur
-from vstools import core, get_y, iterate, shift_clip_multi, split, vs, limiter
+from vsrgtools import BlurMatrix, box_blur, gauss_blur
+from vstools import core, ConvMode, get_y, iterate, shift_clip_multi, split, vs, limiter
 
 __all__ = [
     'descale_detail_mask', 'descale_error_mask'
@@ -55,7 +55,7 @@ def descale_error_mask(
     clip: vs.VideoNode, rescaled: vs.VideoNode,
     thr: float | list[float] = 0.038,
     expands: int | tuple[int, int, int] = (2, 2, 3),
-    blur: int | float = 3, bwbias: int = 1, tr: int = 1
+    blur: int | float = 3, bwbias: int = 1, tr: int = 0
 ) -> vs.VideoNode:
     """
     Create an error mask from the original and rescaled clip.
@@ -102,13 +102,13 @@ def descale_error_mask(
 
     for scaled_thr in thrs[1:]:
         bin2 = Morpho.binarize(error, scaled_thr)
-        error = bin2.misc.Hysteresis(error)
+        error = bin2.hysteresis.Hysteresis(error)
 
     if exp3:
         error = Morpho.expand(error, exp2, mode=XxpandMode.ELLIPSE, func=descale_error_mask)
 
-    if tr > 1:
-        avg = Morpho.binarize(average_merge(*shift_clip_multi(error, (-tr, tr))), 0.5)
+    if tr:
+        avg = Morpho.binarize(BlurMatrix.MEAN(taps=tr, mode=ConvMode.TEMPORAL)(error), 0.5)
 
         error = ExprOp.MIN(error, ExprOp.MAX(shift_clip_multi(ExprOp.MIN(error, avg), (-tr, tr))))
 
