@@ -136,8 +136,8 @@ if TYPE_CHECKING:
 
     def based_aa(
         clip: vs.VideoNode, rfactor: float = 2.0,
-        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60, pskip: bool = True,
-        downscaler: ScalerT | None = None,
+        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60,
+        pscale: float = 0.0, downscaler: ScalerT | None = None,
         supersampler: ScalerT | ShaderFile | Path | Literal[False] = ArtCNN,
         double_rate: bool = False,
         antialiaser: Antialiaser | None = None,
@@ -163,7 +163,7 @@ if TYPE_CHECKING:
         :param mask:            Edge detection mask or function to generate it.  Default: Prewitt.
         :param mask_thr:        Threshold for edge detection mask.
                                 Only used if an EdgeDetect class is passed to `mask`. Default: 60.
-        :param pskip:           Whether to skip processing if antialiaser had no contribution to the pixel's output.
+        :param pscale:          Scale factor for the supersample-downscale process change.
         :param downscaler:      Scaler used for downscaling after anti-aliasing. This should ideally be
                                 a relatively sharp kernel that doesn't introduce too much haloing.
                                 If None, downscaler will be set to Box if the scale factor is an integer
@@ -204,8 +204,8 @@ if TYPE_CHECKING:
 else:
     def based_aa(
         clip: vs.VideoNode, rfactor: float = 2.0,
-        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60, pskip: bool = True,
-        downscaler: ScalerT | None = None,
+        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60,
+        pscale: float = 0.0, downscaler: ScalerT | None = None,
         supersampler: ScalerT | ShaderFile | Path | Literal[False] | MissingT = MISSING,
         double_rate: bool = False,
         antialiaser: Antialiaser | None = None,
@@ -288,9 +288,9 @@ else:
 
         aa = downscaler.scale(aa, func.work_clip.width, func.work_clip.height)
 
-        if pskip:
+        if pscale != 1.0:
             no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
-            aa = norm_expr([func.work_clip, aa, no_aa], 'x z - y +', func=func.func)
+            aa = norm_expr([func.work_clip, aa, no_aa], 'x z x - {pscale} * + y z - +', pscale=pscale, func=func.func)
 
         if postfilter is None:
             aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa))
