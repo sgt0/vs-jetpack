@@ -9,10 +9,11 @@ from dataclasses import dataclass
 from typing import Any, Literal, NamedTuple, final, overload
 
 from vstools import (
-    MISSING, ColorRange, ColorRangeT, Colorspace, ConstantFormatVideoNode, CustomIndexError, CustomRuntimeError,
-    CustomStrEnum, CustomValueError, FieldBased, FuncExceptT, FunctionUtil, KwargsT, Matrix, MatrixT, MissingT, PlanesT,
-    Self, SingleOrArr, check_variable, core, depth, get_video_format, get_y, is_gpu_available, join, normalize_seq, vs,
-    vs_object, UnsupportedFieldBasedError
+    MISSING, ColorRange, ColorRangeT, Colorspace, ConstantFormatVideoNode, CustomIndexError,
+    CustomRuntimeError, CustomStrEnum, CustomValueError, FieldBased, FuncExceptT, FunctionUtil,
+    KwargsT, Matrix, MatrixT, MissingT, PlanesT, SingleOrArr, UnsupportedFieldBasedError,
+    check_variable, core, depth, get_video_format, get_y, is_gpu_available, join, normalize_seq, vs,
+    vs_object
 )
 
 from .types import _Plugin_bm3dcpu_Core_Bound, _Plugin_bm3dcuda_Core_Bound, _Plugin_bm3dcuda_rtc_Core_Bound
@@ -490,11 +491,11 @@ class BM3DMawen(AbstractBM3D):
 
 class AbstractBM3DCudaMeta(ABCMeta):
     def __new__(
-        __mcls: type[Self], __name: str, __bases: tuple[type, ...], __namespace: dict[str, Any], **kwargs: Any
-    ) -> Self:
-        cls = super().__new__(__mcls, __name, __bases, __namespace)  # type: ignore
+        __mcls, __name: str, __bases: tuple[type, ...], __namespace: dict[str, Any], **kwargs: Any
+    ) -> AbstractBM3DCudaMeta:
+        cls = super().__new__(__mcls, __name, __bases, __namespace)
         cls.plugin = kwargs.get('plugin')
-        return cls  # type: ignore
+        return cls
 
 
 class AbstractBM3DCuda(AbstractBM3D, metaclass=AbstractBM3DCudaMeta):
