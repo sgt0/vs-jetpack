@@ -79,3 +79,4 @@ Note: Not all plugin dependencies are hard dependencies, many are optional.
 - [ffms2](https://github.com/FFMS/ffms2)
 - [lsmas](https://github.com/HomeOfAviSynthPlusEvolution/L-SMASH-Works)
 - [imwri](https://github.com/vapoursynth/vs-imwri)
+- [carefulsource](https://github.com/wwww-wwww/carefulsource)
