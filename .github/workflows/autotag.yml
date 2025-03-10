@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: qoomon/actions--context@v2
+      - uses: qoomon/actions--context@v3
         id: context
       - uses: tj-actions/branch-names@v8
         id: branch-names
