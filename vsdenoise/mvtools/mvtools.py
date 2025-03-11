@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from fractions import Fraction
 from itertools import chain
-from typing import Any, Literal, overload, cast
+from typing import Any, Literal, cast, overload
 
 from vstools import (
-    ColorRange, CustomRuntimeError, FieldBased, GenericVSFunction, InvalidColorFamilyError,
-    KwargsNotNone, KwargsT, PlanesT, VSFunction, core, depth, disallow_variable_format,
-    disallow_variable_resolution, fallback, get_prop, normalize_planes, normalize_seq, scale_delta, vs
+    ColorRange, ConstantFormatVideoNode, CustomRuntimeError, FieldBased, GenericVSFunction, InvalidColorFamilyError,
+    KwargsNotNone, KwargsT, PlanesT, VSFunction, check_variable, core, depth, fallback, get_prop, normalize_planes,
+    normalize_seq, scale_delta, vs
 )
 
 from .enums import (
-    FlowMode, MaskMode, MotionMode, MVDirection, MVToolsPlugin, PenaltyMode, RFilterMode, SADMode,
-    SearchMode, SharpMode, SmoothMode
+    FlowMode, MaskMode, MotionMode, MVDirection, MVToolsPlugin, PenaltyMode, RFilterMode, SADMode, SearchMode,
+    SharpMode, SmoothMode
 )
 from .motion import MotionVectors
 from .utils import normalize_thscd, planes_to_mvtools
@@ -64,11 +64,9 @@ class MVTools:
     vectors: MotionVectors
     """Motion vectors analyzed and used for all operations."""
 
-    clip: vs.VideoNode
+    clip: ConstantFormatVideoNode
     """Clip to process."""
 
-    @disallow_variable_format
-    @disallow_variable_resolution
     def __init__(
         self, clip: vs.VideoNode, search_clip: vs.VideoNode | GenericVSFunction | None = None,
         vectors: MotionVectors | None = None,
@@ -126,6 +124,8 @@ class MVTools:
         :param mask_args:                Arguments passed to every :py:attr:`MVToolsPlugin.Mask` calls.
         :param sc_detection_args:        Arguments passed to every :py:attr:`MVToolsPlugin.SCDetection` calls.
         """
+
+        assert check_variable(clip, self.__class__)
 
         InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), self.__class__)
 
