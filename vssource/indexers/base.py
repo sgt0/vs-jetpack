@@ -69,9 +69,9 @@ class Indexer(ABC):
     def normalize_filenames(cls, file: SPathLike | Sequence[SPathLike]) -> list[SPath]:
         files = list[SPath]()
 
-        for f in to_arr(file):  # type: ignore
+        for f in to_arr(file):
             if str(f).startswith('file:///'):
-                f = str(f)[8::]  # type: ignore
+                f = str(f)[8::]
 
             files.append(SPath(f))
 
@@ -212,7 +212,6 @@ class ExternalIndexer(Indexer):
         self, files: Sequence[SPath], force: bool = False, split_files: bool = False,
         output_folder: SPathLike | Literal[False] | None = None, *cmd_args: str
     ) -> list[SPath]:
-        files = to_arr(files)
 
         if len(unique_folders := list(set([f.get_folder().to_str() for f in files]))) > 1:
             return [

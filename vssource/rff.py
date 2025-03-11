@@ -5,7 +5,7 @@ from copy import deepcopy
 from itertools import count
 from typing import Sequence
 
-from vstools import CustomRuntimeError, T, flatten, remap_frames, vs
+from vstools import ConstantFormatVideoNode, CustomRuntimeError, T, flatten, remap_frames, vs
 
 __all__ = [
     'apply_rff_array', 'apply_rff_video',
@@ -41,7 +41,7 @@ def apply_rff_array(old_array: Sequence[T], rff: Sequence[int], tff: Sequence[in
 
 def apply_rff_video(
     node: vs.VideoNode, rff: list[int], tff: list[int], prog: list[int], prog_seq: list[int]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert len(node) == len(rff) == len(tff) == len(prog) == len(prog_seq)
 
     fields = list[dict[str, int]]()
@@ -107,7 +107,7 @@ def apply_rff_video(
 
         return f
 
-    final = final.std.ModifyFrame(final, _set_field)
+    final = vs.core.std.ModifyFrame(final, final, _set_field)
 
     woven = final.std.DoubleWeave()[::2]
 
@@ -121,7 +121,7 @@ def apply_rff_video(
             f.props['RepeatedField'] = -1
         return f
 
-    woven = woven.std.ModifyFrame(woven, _set_repeat)
+    woven = vs.core.std.ModifyFrame(woven, woven, _set_repeat)
 
     # TODO: this seems to not work or atleast useless since its disable for non progressive sequence which is rare
     def _update_progressive(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
@@ -135,8 +135,8 @@ def apply_rff_video(
 
         return fout
 
-    return woven.std.ModifyFrame(woven, _update_progressive)
+    return vs.core.std.ModifyFrame(woven, woven, _update_progressive)
 
 
 def cut_array_on_ranges(array: list[T], ranges: list[tuple[int, int]]) -> list[T]:
-    return [array[i] for i in flatten([range(rrange[0], rrange[1] + 1) for rrange in ranges])]  # type: ignore
+    return [array[i] for i in flatten([range(rrange[0], rrange[1] + 1) for rrange in ranges])]

@@ -1,0 +1,6 @@
+__all__ = ['LogHandle', 'Error']
+
+
+class LogHandle: ...
+
+class Error(Exception): ...

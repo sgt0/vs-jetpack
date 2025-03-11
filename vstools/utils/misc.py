@@ -3,7 +3,7 @@ from __future__ import annotations
 from fractions import Fraction
 from math import floor
 from types import TracebackType
-from typing import Any, Callable, Iterable, Sequence, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, TypeVar, cast, overload
 
 import vapoursynth as vs
 
@@ -551,15 +551,16 @@ def set_output(
 
     if isinstance(index_or_name, (str, bool)):
         index = None
-        # Backward compatible with older api
-        if isinstance(name, vs.VideoNode):
-            alpha = name  # type: ignore[unreachable]
+        if not TYPE_CHECKING:
+            # Backward compatible with older api
+            if isinstance(name, vs.VideoNode):
+                alpha = name
         name = index_or_name
     else:
         index = index_or_name
 
     ouputs = vs.get_outputs()
-    nodes = list(flatten(node))
+    nodes = list[vs.RawNode](flatten(node)) if isinstance(node, Iterable) else [node]
 
     index = to_arr(index) if index is not None else [max(ouputs, default=-1) + 1]
 

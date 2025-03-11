@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Sequence, cast
+from typing import Iterable, Sequence
 
 import vapoursynth as vs
 from jetpytools import FuncExceptT, T, cachedproperty, fallback, iterate, kwargs_fallback, normalize_seq, to_arr
@@ -170,7 +170,7 @@ class FunctionUtil(cachedproperty.baseclass, list[int]):
 
             InvalidColorspacePathError.check(self.func, clip)
 
-        return cast(ConstantFormatVideoNode, clip)
+        return clip
 
     @cachedproperty
     def work_clip(self) -> ConstantFormatVideoNode:
