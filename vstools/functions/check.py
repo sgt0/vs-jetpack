@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from functools import partial, wraps
-from typing import Any, Callable, TypeGuard, cast, overload
+from typing import Any, Callable, Literal, TypeGuard, cast, overload
 
 import vapoursynth as vs
 from jetpytools import CustomError, F, FuncExceptT
@@ -32,6 +32,10 @@ def _check_variable(
 
     @wraps(function)
     def _wrapper(*args: Any, **kwargs: Any) -> Any:
+        if only_first:
+            import warnings
+            warnings.warn("Please use the check functions if only_first is True", SyntaxWarning)
+
         for obj in args[:1] if only_first else [*args, *kwargs.values()]:
             if _check(obj):
                 raise error(func=function)
@@ -49,7 +53,7 @@ def _check_variable(
 
 
 @overload
-def disallow_variable_format(*, only_first: bool = False) -> Callable[[F], F]:
+def disallow_variable_format(*, only_first: Literal[False] = ...) -> Callable[[F], F]:
     ...
 
 
@@ -58,7 +62,7 @@ def disallow_variable_format(function: F | None = None, /) -> F:
     ...
 
 
-def disallow_variable_format(function: F | None = None, /, *, only_first: bool = False) -> Callable[[F], F] | F:
+def disallow_variable_format(function: F | None = None, /, *, only_first: Literal[False] = False) -> Callable[[F], F] | F:
     """
     Decorator for disallowing clips with variable formats.
 
@@ -77,7 +81,7 @@ def disallow_variable_format(function: F | None = None, /, *, only_first: bool =
 
 
 @overload
-def disallow_variable_resolution(*, only_first: bool = False) -> Callable[[F], F]:
+def disallow_variable_resolution(*, only_first: Literal[False] = ...) -> Callable[[F], F]:
     ...
 
 
@@ -86,7 +90,7 @@ def disallow_variable_resolution(func: F | None = None, /) -> F:
     ...
 
 
-def disallow_variable_resolution(function: F | None = None, /, *, only_first: bool = False) -> Callable[[F], F] | F:
+def disallow_variable_resolution(function: F | None = None, /, *, only_first: Literal[False] = False) -> Callable[[F], F] | F:
     """
     Decorator for disallowing clips with variable resolutions.
 
