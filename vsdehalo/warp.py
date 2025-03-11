@@ -3,12 +3,12 @@ from __future__ import annotations
 from math import sqrt
 from typing import Sequence
 
-from vsmasktools import EdgeDetect, EdgeDetectT, PrewittStd, Morpho
-from vsrgtools import min_blur, remove_grain, repair, BlurMatrix, box_blur
 from vsexprtools import norm_expr
+from vsmasktools import EdgeDetect, EdgeDetectT, Morpho, PrewittStd
+from vsrgtools import BlurMatrix, box_blur, min_blur, remove_grain, repair
 from vstools import (
-    DitherType, PlanesT, cround, disallow_variable_format, disallow_variable_resolution, depth_func,
-    get_y, join, normalize_planes, padder, scale_mask, split, limiter, vs
+    DitherType, InvalidColorFamilyError, PlanesT, check_variable, cround, depth_func, get_y, join, limiter,
+    normalize_planes, padder, scale_mask, split, vs
 )
 
 __all__ = [
@@ -16,17 +16,14 @@ __all__ = [
 ]
 
 
-@disallow_variable_format
-@disallow_variable_resolution
 def edge_cleaner(
     clip: vs.VideoNode, strength: float = 10, rmode: int = 17,
     hot: bool = False, smode: bool = False, planes: PlanesT = 0,
     edgemask: EdgeDetectT = PrewittStd
 ) -> vs.VideoNode:
-    assert clip.format
+    assert check_variable(clip, edge_cleaner)
 
-    if clip.format.color_family not in {vs.YUV, vs.GRAY}:
-        raise ValueError('edge_cleaner: format not supported')
+    InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), edge_cleaner)
 
     edgemask = EdgeDetect.ensure_obj(edgemask, edge_cleaner)
 
@@ -103,15 +100,12 @@ def edge_cleaner(
     return final
 
 
-@disallow_variable_format
-@disallow_variable_resolution
 def YAHR(
     clip: vs.VideoNode, blur: int = 2, depth: int | Sequence[int] = 32, expand: float = 5, planes: PlanesT = 0
 ) -> vs.VideoNode:
-    assert clip.format
+    assert check_variable(clip, edge_cleaner)
 
-    if clip.format.color_family not in {vs.YUV, vs.GRAY}:
-        raise ValueError('YAHR: format not supported')
+    InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), YAHR)
 
     planes = normalize_planes(clip, planes)
 
