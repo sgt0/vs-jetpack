@@ -7,7 +7,7 @@ import vapoursynth as vs
 from jetpytools import fallback, mod_x
 
 from ..exceptions import UnsupportedSubsamplingError
-from ..functions import depth, disallow_variable_format
+from ..functions import depth, check_variable_format
 from ..types import HoldsVideoFormatT, VideoFormatT
 
 __all__ = [
@@ -38,7 +38,6 @@ def get_var_infos(frame: vs.VideoNode | vs.VideoFrame) -> tuple[vs.VideoFormat, 
     return frame.format, frame.width, frame.height
 
 
-@disallow_variable_format
 def get_video_format(
     value: int | VideoFormatT | HoldsVideoFormatT, /, *, sample_type: int | vs.SampleType | None = None
 ) -> vs.VideoFormat:
@@ -64,7 +63,8 @@ def get_video_format(
 
         return vs.core.query_video_format(vs.YUV, sample_type, value)
 
-    assert value.format
+    if isinstance(value, vs.VideoNode):
+        assert check_variable_format(value, get_video_format)
 
     if sample_type is not None:
         return value.format.replace(sample_type=sample_type)
