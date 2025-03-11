@@ -150,18 +150,16 @@ class NodesPropsCache(vs_object, dict[tuple[NodeT, int], MutableMapping[str, _Va
 
 def cache_clip(_clip: NodeT, cache_size: int = 10) -> NodeT:
     if isinstance(_clip, vs.VideoNode):
-        clip: vs.VideoNode = _clip
 
-        cache = FramesCache[vs.VideoNode, vs.VideoFrame](clip, cache_size)
+        cache = FramesCache[vs.VideoNode, vs.VideoFrame](_clip, cache_size)
 
-        blank = clip.std.BlankClip()
+        blank = vs.core.std.BlankClip(_clip)
 
-        _to_cache_node = blank.std.ModifyFrame(clip, cache.add_frame)
-        _from_cache_node = blank.std.ModifyFrame(blank, cache.get_frame)
+        _to_cache_node = vs.core.std.ModifyFrame(blank, _clip, cache.add_frame)
+        _from_cache_node = vs.core.std.ModifyFrame(blank, blank, cache.get_frame)
 
-        return blank.std.FrameEval(  # type: ignore
-            lambda n: _from_cache_node if n in cache else _to_cache_node
-        )
+        return cast(NodeT, vs.core.std.FrameEval(blank, lambda n: _from_cache_node if n in cache else _to_cache_node))
+
     # elif isinstance(_clip, vs.AudioNode):
     #     ...
 
