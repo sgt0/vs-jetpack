@@ -40,6 +40,7 @@ class vs_object(ABC, metaclass=ABCMeta):
     in this object as you need to remove it for the VapourSynth core to be freed correctly.
     """
 
+    __vsdel_partial_register: Callable[..., None]
     __vsdel_register: Callable[[int], None] | None = None
 
     def __new__(cls: type[VSObjSelf], *args: Any, **kwargs: Any) -> VSObjSelf:
@@ -52,8 +53,8 @@ class vs_object(ABC, metaclass=ABCMeta):
 
         if hasattr(self, '__vs_del__'):
             def _register(core_id: int) -> None:
-                self.__vsdel_partial_register = partial(self.__vs_del__, core_id)  # type: ignore[attr-defined]
-                core.register_on_destroy(self.__vsdel_partial_register)  # type: ignore[attr-defined]
+                self.__vsdel_partial_register = partial(self.__vs_del__, core_id)
+                core.register_on_destroy(self.__vsdel_partial_register)
 
             # [un]register_on_creation/destroy will only hold a weakref to the object
             self.__vsdel_register = _register
