@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, MutableMapping, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, MutableMapping, TypeVar, overload
 
 import vapoursynth as vs
 
@@ -8,7 +8,8 @@ from jetpytools import MISSING, FileWasNotFoundError, FuncExceptT, MissingT, SPa
 
 from ..enums import PropEnum
 from ..exceptions import FramePropError
-from ..types import BoundVSMapValue, HoldsPropValueT
+from ..types import BoundVSMapValue, ConstantFormatVideoNode, HoldsPropValueT
+from ..types.generic import BoundVSMapValue_0, BoundVSMapValue_1
 from .cache import NodesPropsCache
 
 __all__ = [
@@ -26,21 +27,48 @@ class _get_prop:
 
     @overload
     def __call__(
-        self, obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue],
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: type[BoundVSMapValue],
         cast: None = None, default: MissingT = ..., func: FuncExceptT | None = None
     ) -> BoundVSMapValue:
         ...
 
     @overload
     def __call__(
-        self, obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue],
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: tuple[type[BoundVSMapValue], type[BoundVSMapValue_0]],
+        cast: None = None, default: MissingT = ..., func: FuncExceptT | None = None
+    ) -> BoundVSMapValue | BoundVSMapValue_0:
+        ...
+
+    @overload
+    def __call__(
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: tuple[type[BoundVSMapValue], type[BoundVSMapValue_0], type[BoundVSMapValue_1]],
+        cast: None = None, default: MissingT = ..., func: FuncExceptT | None = None
+    ) -> BoundVSMapValue | BoundVSMapValue_0 | BoundVSMapValue_1:
+        ...
+
+    @overload
+    def __call__(
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: tuple[type[BoundVSMapValue], ...],
+        cast: None = None, default: MissingT = ..., func: FuncExceptT | None = None
+    ) -> Any:
+        ...
+
+    @overload
+    def __call__(
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
         cast: type[CT], default: MissingT = ..., func: FuncExceptT | None = None
     ) -> CT:
         ...
 
     @overload
     def __call__(
-        self, obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue],
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
         cast: None = None, default: DT | MissingT = ...,
         func: FuncExceptT | None = None
     ) -> BoundVSMapValue | DT:
@@ -48,14 +76,16 @@ class _get_prop:
 
     @overload
     def __call__(
-        self, obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue],
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
         cast: type[CT] | Callable[[BoundVSMapValue], CT], default: DT | MissingT = ...,
         func: FuncExceptT | None = None
     ) -> CT | DT:
         ...
 
     def __call__(
-        self, obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue],
+        self, obj: HoldsPropValueT, key: SupportsString | PropEnum,
+        t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
         cast: type[CT] | Callable[[BoundVSMapValue], CT] | None = None, default: DT | MissingT = MISSING,
         func: FuncExceptT | None = None
     ) -> BoundVSMapValue | CT | DT:
@@ -108,7 +138,9 @@ class _get_prop:
             prop = props[key]
 
             if not isinstance(prop, t):
-                if issubclass(t, str) and isinstance(prop, bytes):
+                ts: tuple[type[BoundVSMapValue], ...] = (t, ) if not isinstance(t, tuple) else t
+
+                if all(issubclass(ty, str) for ty in ts) and isinstance(prop, bytes):
                     return prop.decode('utf-8')  # type: ignore[return-value]
                 raise TypeError
 
