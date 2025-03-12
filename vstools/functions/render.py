@@ -192,7 +192,7 @@ def clip_async_render(
                 rend_clip = blankclip.std.ModifyFrame(clip, _cb)
         else:
             if outfile:
-                raise CustomValueError('You cannot have and output file with multi async request!')
+                raise CustomValueError('You cannot have and output file with multi async request!', clip_async_render)
 
             chunk = floor(clip.num_frames / async_conf.n)
             cl = chunk * async_conf.n
@@ -230,7 +230,7 @@ def clip_async_render(
 
     if outfile is None:
         if y4m:
-            raise CustomValueError('You cannot have y4m=False without any output file!')
+            raise CustomValueError('You cannot have y4m=False without any output file!', clip_async_render)
 
         clip_it = rend_clip.frames(prefetch, backlog, True)
 
@@ -257,7 +257,9 @@ def clip_async_render(
 
         if y4m:
             if rend_clip.format is None:
-                raise CustomValueError('You cannot have y4m=True when rendering a variable resolution clip!')
+                raise CustomValueError(
+                    'You cannot have y4m=True when rendering a variable resolution clip!', clip_async_render
+                )
             else:
                 InvalidColorFamilyError.check(
                     rend_clip, (vs.YUV, vs.GRAY), clip_async_render,
@@ -276,7 +278,10 @@ def clip_async_render(
         try:
             return [result[i] for i in range(clip.num_frames)]
         except KeyError:
-            raise CustomRuntimeError('There was an error with the rendering and one frame request was rejected!')
+            raise CustomRuntimeError(
+                'There was an error with the rendering and one frame request was rejected!',
+                clip_async_render
+            )
 
     return None
 
