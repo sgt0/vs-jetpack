@@ -62,29 +62,29 @@ HoldsPropValueT = vs.FrameProps | vs.VideoFrame | vs.AudioFrame | vs.VideoNode |
 
 
 class VSFunctionNoArgs(Protocol):
-    def __call__(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def __call__(self, clip: VideoNodeT) -> VideoNodeT:
         ...
 
 
 class VSFunctionArgs(Protocol):
-    def __call__(self, clip: vs.VideoNode, *args: Any) -> vs.VideoNode:
+    def __call__(self, clip: VideoNodeT, *args: Any) -> VideoNodeT:
         ...
 
 
 class VSFunctionKwArgs(Protocol):
-    def __call__(self, clip: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+    def __call__(self, clip: VideoNodeT, **kwargs: Any) -> VideoNodeT:
         ...
 
 
 class VSFunctionAllArgs(Protocol):
-    def __call__(self, clip: vs.VideoNode, *args: Any, **kwargs: Any) -> vs.VideoNode:
+    def __call__(self, clip: VideoNodeT, *args: Any, **kwargs: Any) -> VideoNodeT:
         ...
 
 
 VSFunction = VSFunctionNoArgs | VSFunctionArgs | VSFunctionKwArgs | VSFunctionAllArgs
 """Function that takes a :py:attr:`vs.VideoNode` as its first argument and returns a :py:attr:`vs.VideoNode`."""
 
-GenericVSFunction = Callable[..., vs.VideoNode]
+GenericVSFunction = Callable[..., VideoNodeT]
 
 if TYPE_CHECKING:
     class ConstantFormatVideoNode(vs.VideoNode):
