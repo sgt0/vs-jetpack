@@ -586,30 +586,38 @@ class LWIndex:
 
         sinfomatch = LWIndex.Regex.streaminfo.match(data[indexstart - 2])
 
+        assert sinfomatch
+
         timebase_num, timebase_den = [
-            int(i) for i in sinfomatch.group("TimeBase").split("/")  # type: ignore
+            int(i) for i in sinfomatch.group("TimeBase").split("/")
         ]
 
         streaminfo = LWIndex.StreamInfo(
-            int(sinfomatch.group("Codec")),  # type: ignore
+            int(sinfomatch.group("Codec")),
             Fraction(timebase_num, timebase_den),
-            int(sinfomatch.group("Width")),  # type: ignore
-            int(sinfomatch.group("Height")),  # type: ignore
-            sinfomatch.group("Format"),  # type: ignore
-            Matrix(int(sinfomatch.group("ColorSpace"))),  # type: ignore
+            int(sinfomatch.group("Width")),
+            int(sinfomatch.group("Height")),
+            sinfomatch.group("Format"),
+            Matrix(int(sinfomatch.group("ColorSpace"))),
         )
 
-        frames = sorted([
-            LWIndex.Frame(*(
-                int(x) for x in (
-                    match[0].group(key) for match in [  # type: ignore
-                        (LWIndex.Regex.frame_first.match(data[i]), ['Index', 'POS', 'PTS', 'DTS', 'EDI']),
-                        (LWIndex.Regex.frame_second.match(data[i + 1]), ['Key', 'Pic', 'POC', 'Repeat', 'Field'])
-                    ] for key in match[1]
+        frames = list[LWIndex.Frame]()
+
+        for i in range(indexstart, indexend, 2):
+            match_first = LWIndex.Regex.frame_first.match(data[i])
+            match_second = LWIndex.Regex.frame_second.match(data[i + 1])
+
+            for match, keys in [
+                (match_first, ['Index', 'POS', 'PTS', 'DTS', 'EDI']),
+                (match_second, ['Key', 'Pic', 'POC', 'Repeat', 'Field'])
+            ]:
+                assert match
+
+                frames.append(
+                    LWIndex.Frame(*(int(match.group(x)) for x in keys))
                 )
-            ))
-            for i in range(indexstart, indexend, 2)
-        ], key=lambda x: x.pts)
+
+        frames = sorted(frames, key=lambda x: x.pts)
 
         keyframes = Keyframes(i for i, f in enumerate(frames) if f.key)
 
