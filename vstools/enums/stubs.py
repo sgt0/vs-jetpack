@@ -8,6 +8,8 @@ import vapoursynth as vs
 from jetpytools import CustomError, CustomIntEnum, FuncExceptT, classproperty
 from typing_extensions import Self
 
+from ..types import VideoNodeT
+
 __all__ = [
     'PropEnum',
 
@@ -115,29 +117,29 @@ class PropEnum(CustomIntEnum):
 
     @classmethod
     def ensure_presence(
-        cls, clip: vs.VideoNode, value: int | Self | None, func: FuncExceptT | None = None
-    ) -> vs.VideoNode:
+        cls, clip: VideoNodeT, value: int | Self | None, func: FuncExceptT | None = None
+    ) -> VideoNodeT:
         """Ensure the presence of the property in the VideoNode."""
 
         enum_value = cls.from_param_or_video(value, clip, True, func)
 
-        return clip.std.SetFrameProp(enum_value.prop_key, enum_value.value)
+        return vs.core.std.SetFrameProp(clip, enum_value.prop_key, enum_value.value)
 
-    def apply(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def apply(self, clip: VideoNodeT) -> VideoNodeT:
         """Applies the property to the VideoNode."""
 
-        return clip.std.SetFrameProp(self.prop_key, self.value)
+        return vs.core.std.SetFrameProp(clip, self.prop_key, self.value)
 
     @staticmethod
     def ensure_presences(
-        clip: vs.VideoNode, prop_enums: Iterable[type[PropEnumT] | PropEnumT], func: FuncExceptT | None = None
-    ) -> vs.VideoNode:
+        clip: VideoNodeT, prop_enums: Iterable[type[PropEnumT] | PropEnumT], func: FuncExceptT | None = None
+    ) -> VideoNodeT:
         """Ensure the presence of multiple PropEnums at once."""
 
-        return clip.std.SetFrameProps(**{
+        return vs.core.std.SetFrameProps(clip, **{
             value.prop_key: value.value
             for value in [
-                cls if isinstance(cls, PropEnum) else cls.from_video(clip, True)
+                cls if isinstance(cls, PropEnum) else cls.from_video(clip, True, func)
                 for cls in prop_enums
             ]
         })
@@ -464,8 +466,8 @@ if TYPE_CHECKING:
 
         @classmethod
         def ensure_presence(
-            cls, clip: vs.VideoNode, tff: bool | int | FieldBasedT | None, func: FuncExceptT | None = None
-        ) -> vs.VideoNode:
+            cls, clip: VideoNodeT, tff: bool | int | FieldBasedT | None, func: FuncExceptT | None = None
+        ) -> VideoNodeT:
             ...
 else:
     _MatrixMeta = _TransferMeta = _PrimariesMeta = _ColorRangeMeta = _ChromaLocationMeta = PropEnum
@@ -473,8 +475,8 @@ else:
     class _FieldBasedMeta(PropEnum):
         @classmethod
         def ensure_presence(
-            cls, clip: vs.VideoNode, tff: int | FieldBasedT | bool | None, func: FuncExceptT | None = None
-        ) -> vs.VideoNode:
+            cls, clip: VideoNodeT, tff: int | FieldBasedT | bool | None, func: FuncExceptT | None = None
+        ) -> VideoNodeT:
             field_based = cls.from_param_or_video(tff, clip, True, func)
 
-            return clip.std.SetFieldBased(field_based.value)
+            return vs.core.std.SetFieldBased(clip, field_based.value)

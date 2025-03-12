@@ -8,11 +8,11 @@ from typing import Any, Callable, Literal, cast, overload
 from jetpytools import CustomValueError, FuncExceptT, KwargsT, T
 
 from ..enums import (
-    ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix,
-    MatrixT, Primaries, PrimariesT, PropEnum, Transfer, TransferT
+    ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix, MatrixT, Primaries,
+    PrimariesT, PropEnum, Transfer, TransferT
 )
-from ..functions import DitherType, check_variable, depth
-from ..types import F_VD, HoldsVideoFormatT, VideoFormatT
+from ..functions import DitherType, check_variable_format, depth
+from ..types import F_VD, ConstantFormatVideoNode, HoldsVideoFormatT, VideoFormatT
 from . import vs_proxy as vs
 from .cache import DynamicClipsCache
 from .info import get_depth
@@ -36,7 +36,7 @@ def finalize_clip(
     clamp_tv_range: bool | None = None,
     dither_type: DitherType = DitherType.AUTO,
     *, func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Finalize a clip for output to the encoder.
 
@@ -51,7 +51,7 @@ def finalize_clip(
     """
     from ..functions import limiter
 
-    assert check_variable(clip, func or finalize_clip)
+    assert check_variable_format(clip, func or finalize_clip)
 
     if bits:
         clip = depth(clip, bits, dither_type=dither_type)

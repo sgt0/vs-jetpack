@@ -694,7 +694,7 @@ def dehalomicron(
     if dampen_rev is None:
         dampen_rev = not pre_ss
 
-    dampen_amt = func.norm_seq(dampen_amt)
+    dampen_amt = func.norm_seq(dampen_amt, 0)
 
     if max(dampen_amt) > 0.0:
         dehalo_ref0 = dehalo.std.Merge(dehalo_ref0, dampen_amt)

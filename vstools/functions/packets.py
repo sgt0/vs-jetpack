@@ -17,6 +17,8 @@ from typing_extensions import Self
 from .file import PackageStorage
 from .timecodes import Keyframes
 
+from..types import VideoNodeT
+
 __all__ = [
     'VideoPackets',
     'ScenePacketStats',
@@ -213,10 +215,10 @@ class VideoPackets(list[int]):
         return stats
 
     def apply_props(
-        self, clip: vs.VideoNode,
+        self, clip: VideoNodeT,
         keyframes: Keyframes | None = None,
         *, func: FuncExceptT | None = None
-    ) -> vs.VideoNode:
+    ) -> VideoNodeT:
         """
         Apply packet size properties to a clip.
 
@@ -239,7 +241,7 @@ class VideoPackets(list[int]):
             return clip.std.SetFrameProps(PktSize=pkt_size)
 
         if not keyframes:
-            return clip.std.FrameEval(_set_sizes_props)
+            return vs.core.std.FrameEval(clip, _set_sizes_props)
 
         def _set_scene_stats(n: int, keyframes: Keyframes) -> vs.VideoNode:
             if (pkt_size := self[n]) < 0:
@@ -259,4 +261,4 @@ class VideoPackets(list[int]):
 
         scenestats = self.get_scenestats(keyframes)
 
-        return clip.std.FrameEval(lambda n: _set_scene_stats(n, keyframes))
+        return vs.core.std.FrameEval(clip, lambda n: _set_scene_stats(n, keyframes))

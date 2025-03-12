@@ -525,7 +525,7 @@ class Transfer(_TransferMeta):  # type: ignore[misc]
         return _primaries_transfer_map[primaries]
 
     @classmethod
-    def from_libplacebo(self, val: int) -> int:
+    def from_libplacebo(cls, val: int) -> int:
         """Obtain the transfer from libplacebo."""
 
         return _placebo_transfer_map[val]
@@ -883,7 +883,7 @@ class Primaries(_PrimariesMeta):  # type: ignore[misc]
         return _transfer_primaries_map[transfer]
 
     @classmethod
-    def from_libplacebo(self, val: int) -> int:
+    def from_libplacebo(cls, val: int) -> int:
         """Obtain the primaries from libplacebo."""
 
         return _placebo_primaries_map[val]

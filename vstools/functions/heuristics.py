@@ -20,7 +20,7 @@ __all__ = [
 def video_heuristics(
     clip: vs.VideoNode, props: vs.FrameProps | bool | None = None,
     prop_in: bool = True, assumed_return: Literal[False] = ...
-) -> dict[str, int]:
+) -> dict[str, PropEnum]:
     ...
 
 
@@ -28,14 +28,14 @@ def video_heuristics(
 def video_heuristics(
     clip: vs.VideoNode, props: vs.FrameProps | bool | None = None,
     prop_in: bool = True, assumed_return: Literal[True] = ...
-) -> tuple[dict[str, int], list[str]]:
+) -> tuple[dict[str, PropEnum], list[str]]:
     ...
 
 
 def video_heuristics(
     clip: vs.VideoNode, props: vs.FrameProps | bool | None = None,
     prop_in: bool = True, assumed_return: bool = False
-) -> dict[str, int] | tuple[dict[str, int], list[str]]:
+) -> dict[str, PropEnum] | tuple[dict[str, PropEnum], list[str]]:
     """
     Determine the video heuristics from the frame properties.
 
@@ -92,9 +92,9 @@ def video_heuristics(
     out_props = {f'{k}_in' if prop_in else k: v for k, v in heuristics.items()}
 
     if assumed_return:
-        return (out_props, assumed_props)  # type: ignore
+        return out_props, assumed_props
 
-    return out_props  # type: ignore
+    return out_props
 
 
 def video_resample_heuristics(clip: vs.VideoNode, kwargs: KwargsT | None = None, **fmt_kwargs: Any) -> KwargsT:

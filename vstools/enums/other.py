@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Callable, Iterable, NamedTuple
+from typing import Callable, Iterator, Literal, NamedTuple
 
 import vapoursynth as vs
 
 from jetpytools import Coordinate, CustomIntEnum, CustomStrEnum, Position, Sentinel, SentinelT, Size
 from typing_extensions import Self
 
-from ..types import HoldsPropValueT
+from ..types import ConstantFormatVideoNode, HoldsPropValueT, VideoNodeT
 
 __all__ = [
     'Direction',
@@ -61,7 +61,7 @@ class Dar(Fraction):
     """
 
     @classmethod
-    def from_res(cls, width: int, height: int, sar: Sar | None = None) -> Dar:
+    def from_res(cls, width: int, height: int, sar: Sar | None = None) -> Self:
         """
         Get the DAR from the specified dimensions and SAR.
 
@@ -83,7 +83,7 @@ class Dar(Fraction):
         return cls(dar)
 
     @classmethod
-    def from_clip(cls, clip: vs.VideoNode, sar: bool = True) -> Dar:
+    def from_clip(cls, clip: vs.VideoNode, sar: bool = True) -> Self:
         """
         Get the DAR from the specified clip and SAR.
 
@@ -93,7 +93,7 @@ class Dar(Fraction):
         :return:         A DAR object created using the specified clip and SAR.
         """
 
-        return Dar.from_res(clip.width, clip.height, Sar.from_clip(clip) if sar else None)
+        return cls.from_res(clip.width, clip.height, Sar.from_clip(clip) if sar else None)
 
     def to_sar(self, active_area: int | Fraction, height: int) -> Sar:
         """
@@ -152,10 +152,10 @@ class Sar(Fraction):
 
         return cls(dar / (Fraction(active_area) / height))
 
-    def apply(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def apply(self, clip: VideoNodeT) -> VideoNodeT:
         """Apply the SAR values as _SARNum and _SARDen frame properties to a clip."""
 
-        return clip.std.SetFrameProps(_SARNum=self.numerator, _SARDen=self.denominator)
+        return vs.core.std.SetFrameProps(clip, _SARNum=self.numerator, _SARDen=self.denominator)
 
 
 class Region(CustomStrEnum):
@@ -198,22 +198,22 @@ class Region(CustomStrEnum):
         return _region_framerate_map[self]
 
     @classmethod
-    def from_framerate(cls, framerate: float | Fraction, strict: bool = False) -> Region:
+    def from_framerate(cls, framerate: float | Fraction, strict: bool = False) -> Self:
         """Determine the Region using a given framerate."""
 
         key = Fraction(framerate)
 
         if strict:
-            return _framerate_region_map[key]
+            return cls(_framerate_region_map[key])
 
         if key not in _framerate_region_map:
             diffs = [(k, abs(float(key) - float(v))) for k, v in _region_framerate_map.items()]
 
             diffs.sort(key=lambda x: x[1])
 
-            return diffs[0][0]
+            return cls(diffs[0][0])
 
-        return _framerate_region_map[key]
+        return cls(_framerate_region_map[key])
 
 
 _region_framerate_map = {
@@ -236,19 +236,19 @@ class Resolution(NamedTuple):
     height: int
 
     @classmethod
-    def from_video(cls, clip: vs.VideoNode) -> Resolution:
+    def from_video(cls, clip: vs.VideoNode) -> Self:
         """Create a Resolution object using a given clip's dimensions."""
 
         from ..functions import check_variable_resolution
 
         assert check_variable_resolution(clip, cls.from_video)
 
-        return Resolution(clip.width, clip.height)
+        return cls(clip.width, clip.height)
 
-    def transpose(self) -> Resolution:
+    def transpose(self) -> Self:
         """Flip the Resolution matrix over its diagonal."""
 
-        return Resolution(self.height, self.width)
+        return self.__class__(self.height, self.width)
 
     def __str__(self) -> str:
         return f'{self.width}x{self.height}'
@@ -287,12 +287,15 @@ class SceneChangeMode(CustomIntEnum):
             SceneChangeMode.WWXD_SCXVID_INTERSECTION
         )
 
-    def ensure_presence(self, clip: vs.VideoNode, akarin: bool | None = None) -> vs.VideoNode:
+    def ensure_presence(self, clip: vs.VideoNode, akarin: bool | None = None) -> ConstantFormatVideoNode:
         """Ensures all the frame properties necessary for scene change detection are created."""
 
         from ..exceptions import CustomRuntimeError
+        from ..functions import check_variable_format
 
-        stats_clip = list[vs.VideoNode]()
+        assert check_variable_format(clip, self.ensure_presence)
+
+        stats_clip = list[ConstantFormatVideoNode]()
 
         if self.is_SCXVID:
             if not hasattr(vs.core, 'scxvid'):
@@ -313,7 +316,7 @@ class SceneChangeMode(CustomIntEnum):
         return self._prepare_akarin(clip, stats_clip, akarin)
 
     @property
-    def prop_keys(self) -> Iterable[str]:
+    def prop_keys(self) -> Iterator[str]:
         if self.is_WWXD:
             yield 'Scenechange'
 
@@ -342,7 +345,7 @@ class SceneChangeMode(CustomIntEnum):
         callback = self.check_cb(akarin)
         return (lambda n, f: Sentinel.check(n, callback(f)))
 
-    def prepare_clip(self, clip: vs.VideoNode, height: int | None = 360, akarin: bool | None = None) -> vs.VideoNode:
+    def prepare_clip(self, clip: vs.VideoNode, height: int | Literal[False] = 360, akarin: bool | None = None) -> ConstantFormatVideoNode:
         """
         Prepare a clip for scene change metric calculations.
 
@@ -352,7 +355,7 @@ class SceneChangeMode(CustomIntEnum):
         :param clip:        Clip to process.
         :param height:      Output height of the clip. Smaller frame sizes are faster to process,
                             but may miss more scene changes or introduce more false positives.
-                            Width is automatically calculated. `None` means no resizing operation is performed.
+                            Width is automatically calculated. `False` means no resizing operation is performed.
                             Default: 360.
         :param akarin:      Use the akarin plugin for speed optimizations. `None` means it will check if its available,
                             and if it is, use it. Default: None.
@@ -361,7 +364,7 @@ class SceneChangeMode(CustomIntEnum):
         """
         from ..utils import get_w
 
-        if height is not None:
+        if height:
             clip = clip.resize.Bilinear(get_w(height, clip), height, vs.YUV420P8)
         elif not clip.format or (clip.format and clip.format.id != vs.YUV420P8):
             clip = clip.resize.Bilinear(format=vs.YUV420P8)
@@ -369,8 +372,8 @@ class SceneChangeMode(CustomIntEnum):
         return self.ensure_presence(clip, akarin)
 
     def _prepare_akarin(
-        self, clip: vs.VideoNode, stats_clip: list[vs.VideoNode], akarin: bool | None = None
-    ) -> vs.VideoNode:
+        self, clip: ConstantFormatVideoNode, stats_clip: list[ConstantFormatVideoNode], akarin: bool | None = None
+    ) -> ConstantFormatVideoNode:
         from ..utils import merge_clip_props
 
         if akarin is None:

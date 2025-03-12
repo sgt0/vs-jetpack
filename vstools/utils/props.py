@@ -170,6 +170,16 @@ class _get_prop:
 get_prop = _get_prop()
 
 
+@overload
+def merge_clip_props(*clips: ConstantFormatVideoNode, main_idx: int = 0) -> ConstantFormatVideoNode:
+    ...
+
+
+@overload
+def merge_clip_props(*clips: vs.VideoNode, main_idx: int = 0) -> vs.VideoNode:
+    ...
+
+
 def merge_clip_props(*clips: vs.VideoNode, main_idx: int = 0) -> vs.VideoNode:
     """
     Merge frame properties from all provided clips.

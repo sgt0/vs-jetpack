@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
-from typing import Any, ClassVar, Iterable, NamedTuple, TypeVar, overload
+from typing import Any, ClassVar, Iterable, Literal, NamedTuple, TypeVar, overload
 
 import vapoursynth as vs
 
@@ -14,6 +14,7 @@ from typing_extensions import Self
 
 from ..enums import Matrix, SceneChangeMode
 from ..exceptions import FramesLengthError, InvalidTimecodeVersionError
+from ..types import VideoNodeT
 from .file import PackageStorage
 from .render import clip_async_render
 
@@ -254,7 +255,7 @@ class Timecodes(list[Timecode]):
             Timecode(i, f.numerator, f.denominator) for i, f in enumerate(norm_timecodes)
         )
 
-    def assume_vfr(self, clip: vs.VideoNode, func: FuncExceptT | None = None) -> vs.VideoNode:
+    def assume_vfr(self, clip: VideoNodeT, func: FuncExceptT | None = None) -> VideoNodeT:
         """
         Force the given clip to be assumed to be vfr by other applications.
 
@@ -270,11 +271,11 @@ class Timecodes(list[Timecode]):
 
         major_time, minor_fps = self.accumulate_norm_timecodes(self)
 
-        assumed_clip = clip.std.AssumeFPS(None, major_time.numerator, major_time.denominator)
+        assumed_clip = vs.core.std.AssumeFPS(clip, None, major_time.numerator, major_time.denominator)
 
         for other_fps, fps_ranges in minor_fps.items():
             assumed_clip = replace_ranges(
-                assumed_clip, clip.std.AssumeFPS(None, other_fps.numerator, other_fps.denominator),
+                assumed_clip, vs.core.std.AssumeFPS(clip, None, other_fps.numerator, other_fps.denominator),
                 fps_ranges, mismatch=True
             )
 
@@ -382,7 +383,7 @@ class Keyframes(list[int]):
 
     @classmethod
     def from_clip(
-        cls: type[KeyframesBoundT], clip: vs.VideoNode, mode: SceneChangeMode | int = WWXD, height: int | None = 360,
+        cls: type[KeyframesBoundT], clip: vs.VideoNode, mode: SceneChangeMode | int = WWXD, height: int | Literal[False] = 360,
         **kwargs: Any
     ) -> KeyframesBoundT:
 
@@ -396,7 +397,7 @@ class Keyframes(list[int]):
 
     @inject_self.with_args(_dummy=True)
     def to_clip(
-        self, clip: vs.VideoNode, *, mode: SceneChangeMode | int = WWXD, height: int | None = 360,
+        self, clip: vs.VideoNode, *, mode: SceneChangeMode | int = WWXD, height: int | Literal[False] = 360,
         prop_key: str = next(iter(SceneChangeMode.SCXVID.prop_keys)), scene_idx_prop: bool = False
     ) -> vs.VideoNode:
         from ..utils import replace_ranges

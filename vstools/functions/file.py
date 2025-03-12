@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from jetpytools import CustomRuntimeError, SPath, SPathLike, get_script_path
@@ -16,7 +15,7 @@ class PackageStorage:
     BASE_FOLDER = SPath('.vsjet')
 
     def __init__(
-        self, cwd: str | Path | SPath | None = None, *, mode: int = 0o777, package_name: str | None = None
+        self, cwd: SPathLike | None = None, *, mode: int = 0o777, package_name: str | None = None
     ) -> None:
         if not package_name:
             frame = inspect.stack()[1]

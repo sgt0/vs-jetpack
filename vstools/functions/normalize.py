@@ -12,7 +12,7 @@ from jetpytools import (
     normalize_seq as jetp_normalize_seq
 )
 
-from ..types import FrameRangeN, FrameRangesN, PlanesT, VideoNodeIterable
+from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, PlanesT, VideoNodeIterable
 
 __all__ = [
     'normalize_seq',
@@ -90,9 +90,7 @@ def flatten(items: Any) -> Iterator[Any]:
         yield from jetp_flatten(items)
 
 
-def flatten_vnodes(
-    *clips: VideoNodeIterable | tuple[VideoNodeIterable, ...], split_planes: bool = False
-) -> list[vs.VideoNode]:
+def flatten_vnodes(*clips: VideoNodeIterable, split_planes: bool = False) -> Sequence[vs.VideoNode]:
     """
     Flatten an array of VideoNodes.
 
@@ -110,7 +108,7 @@ def flatten_vnodes(
     if not split_planes:
         return nodes
 
-    return sum(map(split, nodes), list[vs.VideoNode]())
+    return sum(map(split, nodes), list[ConstantFormatVideoNode]())
 
 
 def normalize_ranges(clip: vs.VideoNode, ranges: FrameRangeN | FrameRangesN) -> list[tuple[int, int]]:

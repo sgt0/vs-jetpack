@@ -406,7 +406,7 @@ class AbstractBM3D(vs_object):
     ) -> vs.VideoNode:
         func = FunctionUtil(clip, cls.denoise, planes)
 
-        sigma = func.norm_seq(sigma)
+        sigma = func.norm_seq(sigma, 0)
 
         ref = get_y(ref) if func.luma_only and ref else ref
 

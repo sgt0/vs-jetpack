@@ -3,7 +3,7 @@ from __future__ import annotations
 import vapoursynth as vs
 
 from ..exceptions import FramesLengthError
-from ..types import F_VD, FrameRange
+from ..types import FrameRange, VideoNodeT, VSFunction
 from .normalize import normalize_franges
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 
-def shift_clip(clip: vs.VideoNode, offset: int) -> vs.VideoNode:
+def shift_clip(clip: VideoNodeT, offset: int) -> VideoNodeT:
     """
     Shift a clip forwards or backwards by *N* frames.
 
@@ -44,7 +44,7 @@ def shift_clip(clip: vs.VideoNode, offset: int) -> vs.VideoNode:
     return clip
 
 
-def shift_clip_multi(clip: vs.VideoNode, offsets: FrameRange = (-1, 1)) -> list[vs.VideoNode]:
+def shift_clip_multi(clip: VideoNodeT, offsets: FrameRange = (-1, 1)) -> list[VideoNodeT]:
     """
     Shift a clip forwards or backwards multiple times by a varying amount of frames.
 
@@ -72,7 +72,7 @@ def shift_clip_multi(clip: vs.VideoNode, offsets: FrameRange = (-1, 1)) -> list[
     return [shift_clip(clip, x) for x in ranges]
 
 
-def process_var_clip(clip: vs.VideoNode, function: F_VD) -> vs.VideoNode:
+def process_var_clip(clip: VideoNodeT, function: VSFunction) -> VideoNodeT:
     """
     Process variable format/resolution clips with a given function.
 
@@ -87,16 +87,16 @@ def process_var_clip(clip: vs.VideoNode, function: F_VD) -> vs.VideoNode:
     :return:            Processed variable clip.
     """
 
-    _cached_clips = dict[str, vs.VideoNode]()
+    _cached_clips = dict[str, VideoNodeT]()
 
     def _eval_scale(f: vs.VideoFrame, n: int) -> vs.VideoNode:
         key = f'{f.width}_{f.height}'
 
         if key not in _cached_clips:
-            const_clip = clip.resize.Point(f.width, f.height)
+            const_clip = vs.core.resize.Point(clip, f.width, f.height)
 
             _cached_clips[key] = function(const_clip)
 
         return _cached_clips[key]
 
-    return clip.std.FrameEval(_eval_scale, clip, clip)
+    return vs.core.std.FrameEval(clip, _eval_scale, clip, clip)

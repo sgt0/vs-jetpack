@@ -7,16 +7,16 @@ from dataclasses import dataclass
 from math import floor
 from os import PathLike
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Literal, overload
+from typing import Any, BinaryIO, Callable, Literal, Union, overload
 
 import vapoursynth as vs
 
 from jetpytools import (
-    CustomRuntimeError, CustomValueError, Sentinel, SentinelT, SPath, SPathLike, T,
-    normalize_list_to_ranges
+    CustomRuntimeError, CustomValueError, Sentinel, SentinelT, SPath, SPathLike, T, normalize_list_to_ranges
 )
 
 from ..exceptions import InvalidColorFamilyError
+from ..types import VideoNodeT
 from .progress import get_render_progress
 
 __all__ = [
@@ -291,7 +291,7 @@ def clip_data_gather(
     return list(Sentinel.filter(frames))
 
 
-_operators: dict[str, tuple[Callable[[Any, Any], Any], str]] = {
+_operators: dict[str, tuple[Callable[[Any, Any], bool], str]] = {
     "<": (operator.lt, '<'),
     "<=": (operator.le, '<='),
     "==": (operator.eq, '='),
@@ -303,27 +303,27 @@ _operators: dict[str, tuple[Callable[[Any, Any], Any], str]] = {
 
 @overload
 def prop_compare_cb(
-    src: vs.VideoNode, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
+    src: VideoNodeT, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
     return_frame_n: Literal[False] = ...
-) -> tuple[vs.VideoNode, Callable[[int, vs.VideoFrame], bool]]:
+) -> tuple[VideoNodeT, Callable[[int, vs.VideoFrame], bool]]:
     ...
 
 
 @overload
 def prop_compare_cb(
-    src: vs.VideoNode, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
+    src: VideoNodeT, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
     return_frame_n: Literal[True] = ...
-) -> tuple[vs.VideoNode, Callable[[int, vs.VideoFrame], int | SentinelT]]:
+) -> tuple[VideoNodeT, Callable[[int, vs.VideoFrame], int | SentinelT]]:
     ...
 
 
 def prop_compare_cb(
-    src: vs.VideoNode, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
+    src: VideoNodeT, prop: str, op: str | Callable[[float, float], bool] | None, ref: float | bool,
     return_frame_n: bool = False
-) -> (
-    tuple[vs.VideoNode, Callable[[int, vs.VideoFrame], bool]]  # noqa
-    | tuple[vs.VideoNode, Callable[[int, vs.VideoFrame], int | SentinelT]]
-):
+) -> Union[
+     tuple[VideoNodeT, Callable[[int, vs.VideoFrame], bool]],
+     tuple[VideoNodeT, Callable[[int, vs.VideoFrame], int | SentinelT]]
+]:
     bool_check = isinstance(ref, bool)
     one_pix = hasattr(vs.core, 'akarin') and not (callable(op) or ' ' in prop)
     assert (op is None) if bool_check else (op is not None)

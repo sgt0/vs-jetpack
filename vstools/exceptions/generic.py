@@ -196,7 +196,7 @@ class FormatsMismatchError(MismatchError):
     if TYPE_CHECKING:
         @classmethod
         def check(
-            cls, func: FuncExceptT, *formats: VideoFormatT | HoldsVideoFormatT, **kwargs: Any
+            cls, func: FuncExceptT, /, *formats: VideoFormatT | HoldsVideoFormatT, **kwargs: Any
         ) -> None:
             ...
 
@@ -237,7 +237,7 @@ class ResolutionsMismatchError(MismatchError):
     if TYPE_CHECKING:
         @classmethod
         def check(
-            cls, func: FuncExceptT, *resolutions: Resolution | vs.VideoNode, **kwargs: Any
+            cls, func: FuncExceptT, /, *resolutions: Resolution | vs.VideoNode, **kwargs: Any
         ) -> None:
             ...
 
@@ -277,7 +277,7 @@ class LengthMismatchError(MismatchError):
     if TYPE_CHECKING:
         @classmethod
         def check(
-            cls, func: FuncExceptT, *lengths: int | Sized, **kwargs: Any
+            cls, func: FuncExceptT, /, *lengths: int | Sized, **kwargs: Any
         ) -> None:
             ...
 
@@ -307,7 +307,7 @@ class FramerateMismatchError(MismatchError):
     def _item_to_name(cls, item: vs.VideoNode | Fraction | tuple[int, int] | float) -> str:
         from ..utils import get_framerate
 
-        return get_framerate(item)  # type: ignore
+        return str(get_framerate(item))
 
     def __init__(
         self, func: FuncExceptT, framerates: Iterable[vs.VideoNode | Fraction | tuple[int, int] | float],
@@ -316,8 +316,9 @@ class FramerateMismatchError(MismatchError):
         super().__init__(func, framerates, message, **kwargs)
 
     if TYPE_CHECKING:
-        def check(  # type: ignore[override]
-            cls, func: FuncExceptT, *framerates: vs.VideoNode | Fraction | tuple[int, int] | float, **kwargs: Any
+        @classmethod
+        def check(
+            cls, func: FuncExceptT, /, *framerates: vs.VideoNode | Fraction | tuple[int, int] | float, **kwargs: Any
         ) -> None:
             ...
 

@@ -117,7 +117,7 @@ def wnnm(
 
     func = FunctionUtil(clip, wnnm, planes, bitdepth=32)
 
-    sigma = func.norm_seq(sigma)
+    sigma = func.norm_seq(sigma, 0)
 
     if isinstance(ref, Prefilter):
         ref = ref(func.work_clip, planes)
@@ -202,7 +202,7 @@ def bmdegrain(
 
     func = FunctionUtil(clip, bmdegrain, planes, bitdepth=32)
 
-    sigma = func.norm_seq(sigma)
+    sigma = func.norm_seq(sigma, 0)
 
     if isinstance(ref, Prefilter):
         ref = ref(func.work_clip, planes)

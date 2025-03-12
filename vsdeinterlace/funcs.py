@@ -190,7 +190,7 @@ class FixInterlacedFades(CustomEnum):
             [f.work_clip, fields[::2], fields[1::2]], lambda: {  # type: ignore[misc]
                 f'f{t}Avg{i}': f'{c}.P{i}Average {color} -'  # type: ignore[has-type]
                 for t, c in ['ty', 'bz']
-                for i, color in zip(f.norm_planes, f.norm_seq(colors))
+                for i, color in zip(f.norm_planes, f.norm_seq(colors, 0))
             }
         )
 

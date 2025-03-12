@@ -3,7 +3,7 @@ from __future__ import annotations
 import string
 
 from functools import partial, wraps
-from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, cast, overload
+from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, overload
 from weakref import WeakValueDictionary
 
 import vapoursynth as vs
@@ -12,8 +12,8 @@ from jetpytools import CustomIndexError, CustomStrEnum, CustomValueError, FuncEx
 
 from ..enums import ColorRange, ColorRangeT, Matrix
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
-from ..types import F_VD, ConstantFormatVideoNode, HoldsVideoFormatT, PlanesT, VideoFormatT
-from .check import check_variable, check_variable_format, disallow_variable_format
+from ..types import ConstantFormatVideoNode, HoldsVideoFormatT, PlanesT, VideoFormatT, VideoNodeT
+from .check import check_variable, check_variable_format
 
 __all__ = [
     'EXPR_VARS',
@@ -101,7 +101,7 @@ class DitherType(CustomStrEnum):
 
     def apply(
         self, clip: vs.VideoNode, fmt_out: vs.VideoFormat, range_in: ColorRange, range_out: ColorRange
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """Apply the given DitherType to a clip."""
 
         from ..utils import get_video_format
@@ -246,13 +246,12 @@ _dither_fmtc_types: dict[DitherType, int] = {
 }
 
 
-@disallow_variable_format
 def depth(
     clip: vs.VideoNode, bitdepth: VideoFormatT | HoldsVideoFormatT | int | None = None, /,
     sample_type: int | vs.SampleType | None = None, *,
     range_in: ColorRangeT | None = None, range_out: ColorRangeT | None = None,
     dither_type: str | DitherType = DitherType.AUTO,
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     A convenience bitdepth conversion function using only internal plugins if possible.
 
@@ -294,6 +293,8 @@ def depth(
     """
 
     from ..utils import get_video_format
+
+    assert check_variable_format(clip, depth)
 
     in_fmt = get_video_format(clip)
     out_fmt = get_video_format(bitdepth or clip, sample_type=sample_type)
@@ -355,7 +356,7 @@ def frame2clip(frame: vs.VideoFrame) -> ConstantFormatVideoNode:
     return vs.core.std.ModifyFrame(blank_clip, blank_clip, lambda n, f: frame_cp)
 
 
-def get_y(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_y(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the luma (Y) plane of the given clip.
 
@@ -371,7 +372,7 @@ def get_y(clip: vs.VideoNode, /) -> vs.VideoNode:
     return plane(clip, 0)
 
 
-def get_u(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_u(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the first chroma (U) plane of the given clip.
 
@@ -387,7 +388,7 @@ def get_u(clip: vs.VideoNode, /) -> vs.VideoNode:
     return plane(clip, 1)
 
 
-def get_v(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_v(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the second chroma (V) plane of the given clip.
 
@@ -403,7 +404,7 @@ def get_v(clip: vs.VideoNode, /) -> vs.VideoNode:
     return plane(clip, 2)
 
 
-def get_r(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_r(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the red plane of the given clip.
 
@@ -419,7 +420,7 @@ def get_r(clip: vs.VideoNode, /) -> vs.VideoNode:
     return plane(clip, 0)
 
 
-def get_g(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_g(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the green plane of the given clip.
 
@@ -435,7 +436,7 @@ def get_g(clip: vs.VideoNode, /) -> vs.VideoNode:
     return plane(clip, 1)
 
 
-def get_b(clip: vs.VideoNode, /) -> vs.VideoNode:
+def get_b(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     """
     Extract the blue plane of the given clip.
 
@@ -493,7 +494,7 @@ def insert_clip(clip: vs.VideoNode, /, insert: vs.VideoNode, start_frame: int, s
 
 
 @overload
-def join(luma: vs.VideoNode, chroma: vs.VideoNode, family: vs.ColorFamily | None = None) -> vs.VideoNode:
+def join(luma: vs.VideoNode, chroma: vs.VideoNode, family: vs.ColorFamily | None = None) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single YUV clip.
 
@@ -505,7 +506,7 @@ def join(luma: vs.VideoNode, chroma: vs.VideoNode, family: vs.ColorFamily | None
 
 
 @overload
-def join(y: vs.VideoNode, u: vs.VideoNode, v: vs.VideoNode, family: Literal[vs.ColorFamily.YUV]) -> vs.VideoNode:
+def join(y: vs.VideoNode, u: vs.VideoNode, v: vs.VideoNode, family: Literal[vs.ColorFamily.YUV]) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single YUV clip.
 
@@ -520,7 +521,7 @@ def join(y: vs.VideoNode, u: vs.VideoNode, v: vs.VideoNode, family: Literal[vs.C
 @overload
 def join(
     y: vs.VideoNode, u: vs.VideoNode, v: vs.VideoNode, alpha: vs.VideoNode, family: Literal[vs.ColorFamily.YUV]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single YUV clip.
 
@@ -536,7 +537,7 @@ def join(
 @overload
 def join(
     r: vs.VideoNode, g: vs.VideoNode, b: vs.VideoNode, family: Literal[vs.ColorFamily.RGB]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single RGB clip.
 
@@ -551,7 +552,7 @@ def join(
 @overload
 def join(
     r: vs.VideoNode, g: vs.VideoNode, b: vs.VideoNode, alpha: vs.VideoNode, family: Literal[vs.ColorFamily.RGB]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single RGB clip.
 
@@ -565,7 +566,7 @@ def join(
 
 
 @overload
-def join(*planes: vs.VideoNode, family: vs.ColorFamily | None = None) -> vs.VideoNode:
+def join(*planes: vs.VideoNode, family: vs.ColorFamily | None = None) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single clip.
 
@@ -578,7 +579,7 @@ def join(*planes: vs.VideoNode, family: vs.ColorFamily | None = None) -> vs.Vide
 
 
 @overload
-def join(planes: Iterable[vs.VideoNode], family: vs.ColorFamily | None = None) -> vs.VideoNode:
+def join(planes: Iterable[vs.VideoNode], family: vs.ColorFamily | None = None) -> ConstantFormatVideoNode:
     """
     Join a list of planes together to form a single clip.
 
@@ -591,7 +592,7 @@ def join(planes: Iterable[vs.VideoNode], family: vs.ColorFamily | None = None) -
 
 
 @overload
-def join(planes: Mapping[PlanesT, vs.VideoNode | None], family: vs.ColorFamily | None = None) -> vs.VideoNode:
+def join(planes: Mapping[PlanesT, vs.VideoNode | None], family: vs.ColorFamily | None = None) -> ConstantFormatVideoNode:
     """
     Join a map of planes together to form a single clip.
 
@@ -677,7 +678,7 @@ def join(*_planes: Any, **kwargs: Any) -> vs.VideoNode:
     raise CustomValueError('Not enough clips or planes passed!', join)
 
 
-def plane(clip: vs.VideoNode, index: int, /, strict: bool = True) -> vs.VideoNode:
+def plane(clip: vs.VideoNode, index: int, /, strict: bool = True) -> ConstantFormatVideoNode:
     """
     Extract a plane from the given clip.
 
@@ -694,12 +695,12 @@ def plane(clip: vs.VideoNode, index: int, /, strict: bool = True) -> vs.VideoNod
 
     if not strict:
         if clip.format.color_family is vs.RGB:
-            clip = clip.std.RemoveFrameProps('_Matrix')
+            clip = vs.core.std.RemoveFrameProps(clip, '_Matrix')
 
     return vs.core.std.ShufflePlanes(clip, index, vs.GRAY)
 
 
-def split(clip: vs.VideoNode, /) -> list[vs.VideoNode]:
+def split(clip: vs.VideoNode, /) -> list[ConstantFormatVideoNode]:
     """
     Split a clip into a list of individual planes.
 
@@ -741,6 +742,7 @@ def stack_clips(
         for inner_clips in clips
     ])
 
+
 @overload
 def limiter(
     clip: vs.VideoNode,
@@ -750,19 +752,19 @@ def limiter(
     *,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 @overload
 def limiter(
-    _func: F_VD,
+    _func: Callable[..., VideoNodeT],
     /,
     min_val: float | Sequence[float] | None = None,
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> F_VD:
+) -> Callable[..., VideoNodeT]:
     ...
 
 @overload
@@ -772,18 +774,18 @@ def limiter(
     max_val: float | Sequence[float] | None = None,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> Callable[[F_VD], F_VD]:
+) -> Callable[[Callable[..., VideoNodeT]], Callable[..., VideoNodeT]]:
     ...
 
 def limiter(
-    clip: vs.VideoNode | F_VD | None = None,
+    clip: vs.VideoNode | Callable[..., VideoNodeT] | None = None,
     /,
     min_val: float | Sequence[float] | None = None,
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> vs.VideoNode | F_VD | Callable[[F_VD], F_VD]:
+) -> Any:
     """
     Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
     if clip format is not integer, a min/max val is specified or tv_range is True.
@@ -803,15 +805,12 @@ def limiter(
         def _wrapper(*args: Any, **kwargs: Any) -> vs.VideoNode:
             return limiter(clip(*args, **kwargs), min_val, max_val, tv_range=tv_range, func=func or clip)
 
-        return cast(F_VD, _wrapper)
+        return _wrapper
 
     func = func or limiter
 
     if clip is None:
-        return cast(
-            Callable[[F_VD], F_VD],
-            partial(limiter, min_val=min_val, max_val=max_val, tv_range=tv_range, func=func)
-        )
+        return partial(limiter, min_val=min_val, max_val=max_val, tv_range=tv_range, func=func)
 
     assert check_variable(clip, func)
 
