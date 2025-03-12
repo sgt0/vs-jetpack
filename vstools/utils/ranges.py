@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Callable, Sequence, Union, overload
+from functools import partial
+from typing import Any, Callable, Literal, Protocol, Sequence, TypeVar, Union, overload
 
 import vapoursynth as vs
+
 from jetpytools import CustomValueError, flatten, interleave_arr, ranges_product
 
 from ..functions import check_ref_clip
-from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN
+from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, VideoNodeT
 
 __all__ = [
     'replace_ranges',
@@ -21,46 +23,70 @@ __all__ = [
 ]
 
 
-_gc_func_gigacope = []
+_gc_func_gigacope = list[Any]()
 
-RangesCallback = Union[
-    Callable[[int], bool],
-    Callable[[vs.VideoFrame], bool],
-    Callable[[list[vs.VideoFrame]], bool],
-    Callable[[vs.VideoFrame | list[vs.VideoFrame]], bool],
-    Callable[[int, vs.VideoFrame], bool],
-    Callable[[int, list[vs.VideoFrame]], bool],
-    Callable[[int, vs.VideoFrame | list[vs.VideoFrame]], bool]
+_VideoFrameT_contra = TypeVar(
+    "_VideoFrameT_contra",
+    vs.VideoFrame, Sequence[vs.VideoFrame], vs.VideoFrame | Sequence[vs.VideoFrame],
+    contravariant=True
+)
+
+
+class RangesCallBack(Protocol):
+    def __call__(self, n: int, /) -> bool:
+        ...
+
+class RangesCallBackF(Protocol[_VideoFrameT_contra]):
+    def __call__(self, f: _VideoFrameT_contra, /) -> bool:
+        ...
+
+
+class RangesCallBackNF(Protocol[_VideoFrameT_contra]):
+    def __call__(self, n: int, f: _VideoFrameT_contra, /) -> bool:
+        ...
+
+
+RangesCallBackT = Union[
+    RangesCallBack,
+    RangesCallBackF[vs.VideoFrame],
+    RangesCallBackNF[vs.VideoFrame],
+    RangesCallBackF[Sequence[vs.VideoFrame]],
+    RangesCallBackNF[Sequence[vs.VideoFrame]],
 ]
 
 
 @overload
 def replace_ranges(
-    clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | Callable[[vs.VideoFrame], bool] | Callable[[int, vs.VideoFrame], bool] | None,
-    exclusive: bool = False, mismatch: bool = False,
-    *, prop_src: vs.VideoNode
+    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: FrameRangeN | FrameRangesN,
+    exclusive: bool = False, mismatch: Literal[False] = ...
+) -> ConstantFormatVideoNode:
+    ...
+
+
+@overload
+def replace_ranges(
+    clip_a: VideoNodeT, clip_b: VideoNodeT, ranges: FrameRangeN | FrameRangesN,
+    exclusive: bool = False, mismatch: Literal[True] | bool = ...
+) -> VideoNodeT:
+    ...
+
+
+@overload
+def replace_ranges(
+    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: RangesCallBack,
+    *,
+    mismatch: bool = False
 ) -> vs.VideoNode:
     ...
 
 
 @overload
 def replace_ranges(
-    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: FrameRangeN | FrameRangesN | Callable[
-        [list[vs.VideoFrame]], bool
-    ] | Callable[[int, list[vs.VideoFrame]], bool] | None, exclusive: bool = False,
+    clip_a: vs.VideoNode, clip_b: vs.VideoNode,
+    ranges: RangesCallBackF[vs.VideoFrame] | RangesCallBackNF[vs.VideoFrame],
+    *,
     mismatch: bool = False,
-    *, prop_src: list[vs.VideoNode]
-) -> vs.VideoNode:
-    ...
-
-
-@overload
-def replace_ranges(
-    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: FrameRangeN | FrameRangesN | Callable[
-        [vs.VideoFrame | list[vs.VideoFrame]], bool
-    ] | Callable[[int, vs.VideoFrame | list[vs.VideoFrame]], bool] | None, exclusive: bool = False,
-    mismatch: bool = False, *, prop_src: vs.VideoNode | list[vs.VideoNode] | None = None
+    prop_src: vs.VideoNode
 ) -> vs.VideoNode:
     ...
 
@@ -68,8 +94,10 @@ def replace_ranges(
 @overload
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | Callable[[int], bool] | None,
-    exclusive: bool = False, mismatch: bool = False, *, prop_src: None = None
+    ranges: RangesCallBackF[Sequence[vs.VideoFrame]] | RangesCallBackNF[Sequence[vs.VideoFrame]],
+    *,
+    mismatch: bool = False,
+    prop_src: Sequence[vs.VideoNode]
 ) -> vs.VideoNode:
     ...
 
@@ -77,18 +105,19 @@ def replace_ranges(
 @overload
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | RangesCallback | None,
+    ranges: FrameRangeN | FrameRangesN | RangesCallBackT | None,
     exclusive: bool = False, mismatch: bool = False,
-    *, prop_src: vs.VideoNode | list[vs.VideoNode] | None = None
+    *,
+    prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None
 ) -> vs.VideoNode:
     ...
 
 
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | RangesCallback | None,
+    ranges: FrameRangeN | FrameRangesN | RangesCallBackT | None,
     exclusive: bool = False, mismatch: bool = False,
-    *, prop_src: vs.VideoNode | list[vs.VideoNode] | None = None
+    *, prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None
 ) -> vs.VideoNode:
     """
     Replaces frames in a clip, either with pre-calculated indices or on-the-fly with a callback.
