@@ -176,12 +176,9 @@ def replace_ranges(
 
         params = set(signature.parameters.keys())
 
-        base_clip = clip_a.std.BlankClip(
-            keep=True, varformat=(clip_a.format != clip_b.format),
-            varsize=(clip_a.width, clip_a.height) != (clip_b.width, clip_b.height)
-        )
+        base_clip = clip_a.std.BlankClip(keep=True, varformat=mismatch, varsize=mismatch)
 
-        callback: RangesCallback = ranges
+        callback = ranges
 
         if 'f' in params and not prop_src:
             raise CustomValueError(
@@ -190,22 +187,40 @@ def replace_ranges(
                 replace_ranges
             )
 
-        if 'f' in params and 'n' in params:
-            def _func(n: int, f: vs.VideoFrame) -> vs.VideoNode:
-                return clip_b if callback(n, f) else clip_a  # type: ignore
-        elif 'f' in params:
-            def _func(n: int, f: vs.VideoFrame) -> vs.VideoNode:
-                return clip_b if callback(f) else clip_a  # type: ignore
-        elif 'n' in params:
-            def _func(n: int) -> vs.VideoNode:  # type: ignore
-                return clip_b if callback(n) else clip_a  # type: ignore
-        else:
-            raise CustomValueError('Callback must have signature ((n, f) | (n) | (f)) -> bool!')
+        def _func_nf(
+            n: int, f: vs.VideoFrame | Sequence[vs.VideoFrame],
+            callback: RangesCallBackNF[vs.VideoFrame | Sequence[vs.VideoFrame]]
+        ) -> vs.VideoNode:
+            return clip_b if callback(n, f) else clip_a
 
-        _func.__callback = callback  # type: ignore
+        def _func_f(
+            n: int, f: vs.VideoFrame | Sequence[vs.VideoFrame],
+            callback: RangesCallBackF[vs.VideoFrame | Sequence[vs.VideoFrame]]
+        ) -> vs.VideoNode:
+            return clip_b if callback(f) else clip_a
+
+        def _func_n(n: int, callback: RangesCallBack) -> vs.VideoNode:
+            return clip_b if callback(n) else clip_a
+
+        _func: Callable[..., vs.VideoNode]
+
+        if 'f' in params and 'n' in params:
+            _func = _func_nf
+        elif 'f' in params:
+            _func = _func_f
+        elif 'n' in params:
+            _func = _func_n
+        else:
+            raise CustomValueError(
+                'Callback must have signature ((n, f) | (n) | (f)) -> bool!', replace_ranges, callback
+            )
+
+        _func.__callback = callback  # type: ignore[attr-defined]
         _gc_func_gigacope.append(_func)
 
-        return base_clip.std.FrameEval(_func, prop_src if 'f' in params else None, [clip_a, clip_b])
+        return vs.core.std.FrameEval(
+            base_clip, partial(_func, callback=callback), prop_src if 'f' in params else None, [clip_a, clip_b]
+        )
 
     shift = 1 - exclusive
     b_ranges = normalize_ranges(clip_b, ranges)
