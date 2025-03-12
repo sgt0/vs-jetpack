@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, Union
 
 import vapoursynth as vs
 
-from jetpytools import MISSING, DataType, FuncExceptT, MissingT, PassthroughC, SingleOrArr, StrArr, StrArrOpt
+from jetpytools import MISSING, DataType, FuncExceptT, MissingT, PassthroughC, SingleOrSeq, StrArr, StrArrOpt
 
 __all__ = [
     'MissingT', 'MISSING',
@@ -31,17 +31,17 @@ VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
 
 
 _VSMapValue = Union[
-    SingleOrArr[int],
-    SingleOrArr[float],
-    SingleOrArr[DataType],
-    SingleOrArr[vs.VideoNode],
-    SingleOrArr[vs.VideoFrame],
-    SingleOrArr[vs.AudioNode],
-    SingleOrArr[vs.AudioFrame]
+    SingleOrSeq[int],
+    SingleOrSeq[float],
+    SingleOrSeq[DataType],
+    SingleOrSeq[vs.VideoNode],
+    SingleOrSeq[vs.VideoFrame],
+    SingleOrSeq[vs.AudioNode],
+    SingleOrSeq[vs.AudioFrame]
 ]
 VSMapValue = Union[
     _VSMapValue,
-    SingleOrArr[Callable[..., _VSMapValue]]
+    SingleOrSeq[Callable[..., _VSMapValue]]
 ]
 """Values that a VSMap can hold, so all that a :py:attr:`vs.Function`` can accept in args and can return."""
 
