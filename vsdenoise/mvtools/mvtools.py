@@ -1078,7 +1078,7 @@ class MVTools:
             analysis_props = dict[str, Any]()
 
             for prop in props_list:
-                analysis_props[prop] = get_prop(vect, prop, int | list)  # type: ignore
+                analysis_props[prop] = get_prop(vect, prop, (int, list))
 
             vectors.analysis_data = analysis_props
 
