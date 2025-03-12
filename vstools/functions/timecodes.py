@@ -492,13 +492,17 @@ class Keyframes(list[int]):
             ]
         elif format == Keyframes.XVID:
             lut_self = set(self)
-            out_text = [
-                *(['# XviD 2pass stat file', '',] if header else []),
-                *(
-                    (lut_self.remove(i) or 'i') if i in lut_self else 'b'  # type: ignore
-                    for i in range(max(self))
-                )
-            ]
+            out_text = list[str]()
+
+            if header:
+                out_text.extend(['# XviD 2pass stat file', ''])
+
+            for i in range(max(self)):
+                if i in lut_self:
+                    out_text.append('i')
+                    lut_self.remove(i)
+                else:
+                    out_text.append('b')
 
         out_path.unlink(True)
         out_path.touch()
