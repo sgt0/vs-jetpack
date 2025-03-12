@@ -26,6 +26,10 @@ __all__ = [
     'ConstantFormatVideoNode', 'VideoNodeT'
 ]
 
+
+VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
+
+
 _VSMapValue = Union[
     SingleOrArr[int],
     SingleOrArr[float],
@@ -88,6 +92,3 @@ if TYPE_CHECKING:
 
 else:
     ConstantFormatVideoNode = vs.VideoNode
-
-
-VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
