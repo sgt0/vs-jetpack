@@ -89,7 +89,7 @@ def process_var_clip(clip: VideoNodeT, function: VSFunction) -> VideoNodeT:
 
     _cached_clips = dict[str, VideoNodeT]()
 
-    def _eval_scale(f: vs.VideoFrame, n: int) -> vs.VideoNode:
+    def _eval_scale(n: int, f: vs.VideoFrame) -> vs.VideoNode:
         key = f'{f.width}_{f.height}'
 
         if key not in _cached_clips:
