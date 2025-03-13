@@ -1045,8 +1045,6 @@ class MVTools:
 
         clip = fallback(clip, self.clip)
 
-        vectors = fallback(vectors, self.vectors)
-
         vect = self.get_vector(vectors, direction=direction, delta=delta)
 
         return clip.manipmv.ShowVect(vect, scenechange)
