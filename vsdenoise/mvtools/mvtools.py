@@ -422,17 +422,6 @@ class MVTools:
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
         interleave: Literal[True] = True, temporal_func: None = None
-    ) -> vs.VideoNode:
-        ...
-
-    @overload
-    def compensate(
-        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
-        tr: int | None = None, scbehavior: bool | None = None,
-        thsad: int | None = None, thsad2: int | None = None,
-        time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
-        interleave: Literal[True] = True, temporal_func: VSFunction = ...
     ) -> tuple[vs.VideoNode, tuple[int, int]]:
         ...
 
@@ -443,7 +432,18 @@ class MVTools:
         tr: int | None = None, scbehavior: bool | None = None,
         thsad: int | None = None, thsad2: int | None = None,
         time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
-        interleave: Literal[False] = False
+        interleave: Literal[True] = True, temporal_func: VSFunction = ...
+    ) -> vs.VideoNode:
+        ...
+
+    @overload
+    def compensate(
+        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
+        tr: int | None = None, scbehavior: bool | None = None,
+        thsad: int | None = None, thsad2: int | None = None,
+        time: float | None = None, thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: Literal[False] = False, temporal_func: None = None
     ) -> tuple[list[vs.VideoNode], list[vs.VideoNode]]:
         ...
 
@@ -530,16 +530,6 @@ class MVTools:
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
         interleave: Literal[True] = True, temporal_func: None = None
-    ) -> vs.VideoNode:
-        ...
-
-    @overload
-    def flow(
-        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
-        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
-        tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
-        thscd: int | tuple[int | None, int | None] | None = None,
-        interleave: Literal[True] = True, temporal_func: VSFunction = ...
     ) -> tuple[vs.VideoNode, tuple[int, int]]:
         ...
 
@@ -549,7 +539,17 @@ class MVTools:
         vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | None] | None = None,
-        interleave: Literal[False] = False
+        interleave: Literal[True] = True, temporal_func: VSFunction = ...
+    ) -> vs.VideoNode:
+        ...
+
+    @overload
+    def flow(
+        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
+        vectors: MotionVectors | None = None, direction: MVDirection = MVDirection.BOTH,
+        tr: int | None = None, time: float | None = None, mode: FlowMode | None = None,
+        thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: Literal[False] = False, temporal_func: None = None
     ) -> tuple[list[vs.VideoNode], list[vs.VideoNode]]:
         ...
 
