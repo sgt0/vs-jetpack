@@ -185,8 +185,8 @@ class LinearLight:
 
             return wclip
 
-        @linear.setter  # type: ignore
-        def linear(self, processed: vs.VideoNode) -> None:
+        @linear.setter
+        def linear_setter(self, processed: vs.VideoNode) -> None:
             if self.ll._exited:
                 raise CustomRuntimeError(
                     'You can\'t set .linear after going out of the context manager!', func=self.__class__
@@ -203,7 +203,7 @@ class LinearLight:
             if not hasattr(self, '_linear'):
                 raise CustomValueError('You need to set .linear before getting .out!', self.__class__)
 
-            processed = self._linear  # type: ignore
+            processed = self._linear
 
             if self.ll.sigmoid:
                 processed = norm_expr(

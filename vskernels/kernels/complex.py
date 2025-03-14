@@ -49,7 +49,6 @@ class _BaseLinearOperation:
         @inject_kwargs_params
         def func(
             self: _BaseLinearOperation, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-
             shift: tuple[TopShift, LeftShift] = (0, 0), *,
             linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
         ) -> vs.VideoNode:
@@ -70,7 +69,7 @@ class _BaseLinearOperation:
             resampler: Resampler | None = self if isinstance(self, Resampler) else None
 
             with LinearLight(clip, linear, sigmoid, resampler, kwargs.pop('format', None)) as ll:
-                ll.linear = operation(ll.linear, width, height, shift, **kwargs)  # type: ignore
+                ll.linear = operation(ll.linear, width, height, shift, **kwargs)
 
             return ll.out
 
