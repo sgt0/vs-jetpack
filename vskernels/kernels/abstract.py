@@ -3,15 +3,15 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import Signature
 from math import ceil
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
+from typing import Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
 
 from jetpytools import inject_kwargs_params
 
 from vstools import (
-    ConstantFormatVideoNode, CustomIndexError, CustomRuntimeError, CustomValueError, FieldBased, FuncExceptT,
-    HoldsVideoFormatT, KwargsT, Matrix, MatrixT, VideoFormatT, VideoNodeT, check_correct_subsampling,
-    check_variable_format, check_variable_resolution, core, depth, expect_bits, fallback, get_subclasses,
-    get_video_format, inject_self, split, vs, vs_object
+    ConstantFormatVideoNode, CustomIndexError, CustomNotImplementedError, CustomRuntimeError, CustomValueError,
+    FieldBased, FuncExceptT, HoldsVideoFormatT, KwargsT, Matrix, MatrixT, VideoFormatT, VideoNodeT,
+    check_correct_subsampling, check_variable_format, check_variable_resolution, core, depth, expect_bits, fallback,
+    get_subclasses, get_video_format, inject_self, split, vs, vs_object
 )
 from vstools.enums.color import _norm_props_enums
 
@@ -29,13 +29,6 @@ __all__ = [
 ]
 
 _finished_loading_abstract = False
-
-
-def _default_kernel_radius(cls: Any, self: Any) -> int:
-    if hasattr(self, '_static_kernel_radius'):
-        return ceil(self._static_kernel_radius)
-
-    return super(cls, self).kernel_radius
 
 
 @lru_cache
@@ -195,10 +188,9 @@ class BaseScaler(vs_object):
 
     @inject_self.cached.property
     def kernel_radius(self) -> int:
-        if TYPE_CHECKING:
-            __class__: Any = object()
-
-        return _default_kernel_radius(__class__, self)
+        if hasattr(self, '_static_kernel_radius'):
+            return ceil(self._static_kernel_radius)
+        raise CustomNotImplementedError('kernel_radius is not implemented!', self.__class__)
 
     def get_clean_kwargs(self, *funcs: Callable[..., Any] | None) -> KwargsT:
         return _clean_self_kwargs(funcs, self)
