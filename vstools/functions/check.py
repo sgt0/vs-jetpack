@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import inspect
+
 from functools import partial, wraps
 from typing import Any, Callable, Literal, TypeGuard, cast, overload
 
 import vapoursynth as vs
+
 from jetpytools import CustomError, F, FuncExceptT
 
 from ..exceptions import (
     FormatsRefClipMismatchError, ResolutionsRefClipMismatchError, VariableFormatError, VariableResolutionError
 )
-from ..types import ConstantFormatVideoNode
+from ..types import ConstantFormatVideoNode, VideoNodeT
 
 __all__ = [
     'disallow_variable_format',
@@ -153,7 +155,7 @@ def check_variable_format(clip: vs.VideoNode, func: FuncExceptT) -> TypeGuard[Co
     return True
 
 
-def check_variable_resolution(clip: vs.VideoNode, func: FuncExceptT) -> TypeGuard[vs.VideoNode]:
+def check_variable_resolution(clip: VideoNodeT, func: FuncExceptT) -> TypeGuard[VideoNodeT]:
     """
     Check for variable width or height and return an error if found.
 
