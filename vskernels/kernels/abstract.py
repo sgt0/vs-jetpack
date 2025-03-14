@@ -46,20 +46,17 @@ def _get_keywords(_methods: tuple[Callable[..., Any] | None, ...], self: Any) ->
         if hasattr(cls, 'get_implemented_funcs'):
             methods_list.extend(cls.get_implemented_funcs(self))
 
-    methods = {*methods_list} - {None}
+    methods = {m for m in methods_list if m}
 
     keywords = set[str]()
 
     for method in methods:
         try:
-            try:
-                signature = method.__signature__  # type: ignore
-            except Exception:
-                signature = Signature.from_callable(method)  # type: ignore
-
-            keywords.update(signature.parameters.keys())
+            signature = method.__signature__  # type: ignore[attr-defined]
         except Exception:
-            ...
+            signature = Signature.from_callable(method)
+
+        keywords.update(signature.parameters.keys())
 
     return keywords
 
