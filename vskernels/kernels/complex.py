@@ -4,8 +4,9 @@ from math import ceil
 from typing import TYPE_CHECKING, Any, SupportsFloat, TypeVar, Union, cast
 
 from jetpytools import inject_kwargs_params
+
 from vstools import (
-    Dar, KwargsT, Resolution, Sar, VSFunctionAllArgs, check_correct_subsampling, fallback, inject_self, vs
+    Dar, KwargsT, Resolution, Sar, VideoNodeT, VSFunctionAllArgs, check_correct_subsampling, fallback, inject_self, vs
 )
 
 from ..types import BorderHandling, Center, LeftShift, SampleGridModel, Slope, TopShift
@@ -81,10 +82,10 @@ class LinearScaler(_BaseLinearOperation, Scaler):
         @inject_self.cached
         @inject_kwargs_params
         def scale(  # type: ignore[override]
-            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] = (0, 0),
-            *, linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
-        ) -> vs.VideoNode:
+            self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] = (0, 0), *,
+            linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
+        ) -> VideoNodeT:
             ...
     else:
         scale = inject_self.cached(_BaseLinearOperation._linear_op('scale'))
@@ -95,10 +96,10 @@ class LinearDescaler(_BaseLinearOperation, Descaler):
         @inject_self.cached
         @inject_kwargs_params
         def descale(  # type: ignore[override]
-            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] = (0, 0),
-            *, linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
-        ) -> vs.VideoNode:
+            self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] = (0, 0), *,
+            linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
+        ) -> VideoNodeT:
             ...
     else:
         descale = inject_self.cached(_BaseLinearOperation._linear_op('descale'))
