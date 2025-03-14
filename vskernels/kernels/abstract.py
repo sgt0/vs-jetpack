@@ -3,15 +3,15 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import Signature
 from math import ceil
-from typing import Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
 
 from jetpytools import inject_kwargs_params
 
 from vstools import (
     ConstantFormatVideoNode, CustomIndexError, CustomRuntimeError, CustomValueError, FieldBased, FuncExceptT,
-    GenericVSFunction, HoldsVideoFormatT, KwargsT, Matrix, MatrixT, T, VideoFormatT, check_correct_subsampling,
-    check_variable_resolution, core, depth, expect_bits, fallback, get_subclasses, get_video_format, inject_self, vs,
-    vs_object
+    HoldsVideoFormatT, KwargsT, Matrix, MatrixT, VideoFormatT, VideoNodeT, check_correct_subsampling,
+    check_variable_format, check_variable_resolution, core, depth, expect_bits, fallback, get_subclasses,
+    get_video_format, inject_self, split, vs, vs_object
 )
 from vstools.enums.color import _norm_props_enums
 
@@ -31,11 +31,11 @@ __all__ = [
 _finished_loading_abstract = False
 
 
-def _default_kernel_radius(cls: type[T], self: T) -> int:
+def _default_kernel_radius(cls: Any, self: Any) -> int:
     if hasattr(self, '_static_kernel_radius'):
         return ceil(self._static_kernel_radius)
 
-    return super(cls, self).kernel_radius  # type: ignore
+    return super(cls, self).kernel_radius
 
 
 @lru_cache
@@ -69,22 +69,22 @@ def _clean_self_kwargs(methods: tuple[Callable[..., Any] | None, ...], self: Any
 
 
 def _base_from_param(
-    cls: type[T],
-    basecls: type[T],
-    value: str | type[T] | T | None,
+    cls: type[BaseScalerT],
+    basecls: type[BaseScalerT],
+    value: str | type[BaseScalerT] | BaseScalerT | None,
     exception_cls: type[CustomValueError],
-    excluded: Sequence[type[T]] = [],
+    excluded: Sequence[type[BaseScalerT]] = [],
     func_except: FuncExceptT | None = None
-) -> type[T]:
+) -> type[BaseScalerT]:
     if isinstance(value, str):
-        all_scalers = get_subclasses(Kernel, excluded)
+        all_scalers = get_subclasses(BaseScaler, excluded)
         search_str = value.lower().strip()
 
         for scaler_cls in all_scalers:
             if scaler_cls.__name__.lower() == search_str:
-                return scaler_cls  # type: ignore
+                return cast(type[BaseScalerT], scaler_cls)
 
-        raise exception_cls(func_except or cls.from_param, value)  # type: ignore
+        raise exception_cls(func_except or cls.from_param, value)
 
     if isinstance(value, type) and issubclass(value, basecls):
         return value
@@ -103,8 +103,6 @@ def _base_ensure_obj(
     excluded: Sequence[type] = [],
     func_except: FuncExceptT | None = None
 ) -> BaseScalerT:
-    new_scaler: BaseScalerT
-
     if value is None:
         new_scaler = cls()
     elif isinstance(value, cls) or isinstance(value, basecls):
@@ -151,7 +149,7 @@ class BaseScaler(vs_object):
 
         if hasattr(module, '__abstract__'):
             if cls.__name__ in module.__abstract__:
-                abstract_kernels.append(cls)  # type: ignore
+                abstract_kernels.append(cls)
                 return
 
         if 'kernel_radius' in cls.__dict__.keys():
@@ -196,7 +194,10 @@ class BaseScaler(vs_object):
 
     @inject_self.cached.property
     def kernel_radius(self) -> int:
-        return _default_kernel_radius(__class__, self)  # type: ignore
+        if TYPE_CHECKING:
+            __class__: Any = object()
+
+        return _default_kernel_radius(__class__, self)
 
     def get_clean_kwargs(self, *funcs: Callable[..., Any] | None) -> KwargsT:
         return _clean_self_kwargs(funcs, self)
@@ -215,6 +216,7 @@ class BaseScaler(vs_object):
 
         return f"{self.__class__.__name__}{' (' + ', '.join(f'{k}={v}' for k, v in attrs.items()) + ')' if attrs else ''}"
 
+
 BaseScalerT = TypeVar('BaseScalerT', bound=BaseScaler)
 
 
@@ -225,23 +227,25 @@ class Scaler(BaseScaler):
 
     _err_class = UnknownScalerError
 
-    scale_function: GenericVSFunction
+    scale_function: Callable[..., vs.VideoNode]
     """Scale function called internally when scaling"""
 
     @inject_self.cached
     @inject_kwargs_params
     def scale(
-        self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+        self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
         shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> VideoNodeT:
         width, height = Scaler._wh_norm(clip, width, height)
         check_correct_subsampling(clip, width, height)
-        return self.scale_function(clip, **_norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs)))
+        return cast(VideoNodeT, self.scale_function(
+            clip, **_norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs))
+        ))
 
     @inject_self.cached
     def multi(
-        self, clip: vs.VideoNode, multi: float = 2, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> vs.VideoNode:
+        self, clip: VideoNodeT, multi: float = 2, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
+    ) -> VideoNodeT:
         assert check_variable_resolution(clip, self.multi)
 
         dst_width, dst_height = ceil(clip.width * multi), ceil(clip.height * multi)
@@ -295,7 +299,7 @@ class Descaler(BaseScaler):
         sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
         field_based: FieldBased | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         width, height = self._wh_norm(clip, width, height)
 
         check_correct_subsampling(clip, width, height)
@@ -337,7 +341,7 @@ class Descaler(BaseScaler):
             if any(isinstance(sh, tuple) for sh in shift):
                 raise CustomValueError('You can\'t descale per-field when the input is progressive!', self.descale)
 
-            kwargs, shift = sample_grid_model.for_src(clip, width, height, shift, **kwargs)  # type: ignore
+            kwargs, shift = sample_grid_model.for_src(clip, width, height, cast(tuple[float, float], shift), **kwargs)
 
             de_kwargs = self.get_descale_args(clip, shift, *de_base_args, **kwargs)
 
@@ -380,7 +384,7 @@ class Resampler(BaseScaler):
     def resample(
         self, clip: vs.VideoNode, format: int | VideoFormatT | HoldsVideoFormatT,
         matrix: MatrixT | None = None, matrix_in: MatrixT | None = None, **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         return self.resample_function(
             clip, **_norm_props_enums(self.get_resample_args(clip, format, matrix, matrix_in, **kwargs))
         )
@@ -409,42 +413,53 @@ class Kernel(Scaler, Descaler, Resampler):
     Abstract kernel interface.
     """
 
-    _err_class = UnknownKernelError  # type: ignore
+    _err_class = UnknownKernelError  # type: ignore[assignment]
 
     @overload
     @inject_self.cached
     @inject_kwargs_params
-    def shift(self, clip: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any) -> vs.VideoNode:
+    def shift(
+        self, clip: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0), /, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         ...
 
     @overload
     @inject_self.cached
     @inject_kwargs_params
     def shift(
-        self, clip: vs.VideoNode,
-        shift_top: float | list[float] = 0.0, shift_left: float | list[float] = 0.0, **kwargs: Any
-    ) -> vs.VideoNode:
+        self,
+        clip: vs.VideoNode,
+        shift_top: float | list[float] = 0.0,
+        shift_left: float | list[float] = 0.0,
+        /,
+        **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         ...
 
-    @inject_self.cached  # type: ignore
+    @inject_self.cached
     @inject_kwargs_params
     def shift(
-        self, clip: vs.VideoNode,
+        self,
+        clip: vs.VideoNode,
         shifts_or_top: float | tuple[float, float] | list[float] | None = None,
-        shift_left: float | list[float] | None = None, **kwargs: Any
-    ) -> vs.VideoNode:
-        assert clip.format
+        shift_left: float | list[float] | None = None,
+        /,
+        **kwargs: Any
+    ) -> ConstantFormatVideoNode:
+        assert check_variable_format(clip, self.shift)  # type: ignore[misc]
 
         n_planes = clip.format.num_planes
 
-        def _shift(src: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0)) -> vs.VideoNode:
-            return Scaler.scale(self, src, src.width, src.height, shift, **kwargs)
+        def _shift(src: VideoNodeT, shift: tuple[TopShift, LeftShift] = (0, 0)) -> VideoNodeT:
+            return self.scale(src, src.width, src.height, shift, **kwargs)
 
         if not shifts_or_top and not shift_left:
             return _shift(clip)
-        elif isinstance(shifts_or_top, tuple):
+
+        if isinstance(shifts_or_top, tuple):
             return _shift(clip, shifts_or_top)
-        elif isinstance(shifts_or_top, float) and isinstance(shift_left, float):
+
+        if isinstance(shifts_or_top, float) and isinstance(shift_left, float):
             return _shift(clip, (shifts_or_top, shift_left))
 
         if shifts_or_top is None:
@@ -472,7 +487,7 @@ class Kernel(Scaler, Descaler, Resampler):
         if len(set(shifts_top)) == len(set(shifts_left)) == 1 or n_planes == 1:
             return _shift(clip, (shifts_top[0], shifts_left[0]))
 
-        planes = cast(list[vs.VideoNode], clip.std.SplitPlanes())
+        planes = split(clip)
 
         shifted_planes = [
             plane if top == left == 0 else _shift(plane, (top, left))
@@ -484,36 +499,35 @@ class Kernel(Scaler, Descaler, Resampler):
     @overload
     @classmethod
     def from_param(
-        cls: type[Kernel], kernel: KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> type[Kernel]:
         ...
 
     @overload
     @classmethod
     def from_param(
-        cls: type[Kernel], kernel: ScalerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: ScalerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> type[Scaler]:
         ...
 
     @overload
     @classmethod
     def from_param(
-        cls: type[Kernel], kernel: DescalerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: DescalerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> type[Descaler]:
         ...
 
     @overload
     @classmethod
     def from_param(
-        cls: type[Kernel], kernel: ResamplerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: ResamplerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> type[Resampler]:
         ...
 
     @classmethod
     def from_param(
-        cls: type[Kernel], kernel: ScalerT | DescalerT | ResamplerT | KernelT | None = None,
-        func_except: FuncExceptT | None = None
-    ) -> type[Scaler] | type[Descaler] | type[Resampler] | type[Kernel]:
+        cls, kernel: str | type[BaseScaler] | BaseScaler | None = None, /, func_except: FuncExceptT | None = None
+    ) -> type[BaseScaler]:
         from ..util import abstract_kernels
         return _base_from_param(
             cls, Kernel, kernel, UnknownKernelError, abstract_kernels, func_except
@@ -522,38 +536,38 @@ class Kernel(Scaler, Descaler, Resampler):
     @overload
     @classmethod
     def ensure_obj(
-        cls: type[Kernel], kernel: KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> Kernel:
         ...
 
     @overload
     @classmethod
     def ensure_obj(
-        cls: type[Kernel], kernel: ScalerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: ScalerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> Scaler:
         ...
 
     @overload
     @classmethod
     def ensure_obj(
-        cls: type[Kernel], kernel: DescalerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: DescalerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> Descaler:
         ...
 
     @overload
     @classmethod
     def ensure_obj(
-        cls: type[Kernel], kernel: ResamplerT | KernelT | None = None, func_except: FuncExceptT | None = None
+        cls: type[Kernel], kernel: ResamplerT | KernelT | None = ..., /, func_except: FuncExceptT | None = None
     ) -> Resampler:
         ...
 
     @classmethod
     def ensure_obj(
-        cls: type[Kernel], kernel: ScalerT | DescalerT | ResamplerT | KernelT | None = None,
+        cls: type[Kernel], kernel: str | type[BaseScaler] | BaseScaler | None = None, /,
         func_except: FuncExceptT | None = None
-    ) -> Scaler | Descaler | Resampler | Kernel:
+    ) -> BaseScaler:
         from ..util import abstract_kernels
-        return _base_ensure_obj(  # type: ignore
+        return _base_ensure_obj(
             cls, Kernel, kernel, UnknownKernelError, abstract_kernels, func_except
         )
 
@@ -603,7 +617,7 @@ class Kernel(Scaler, Descaler, Resampler):
         )
 
     def get_implemented_funcs(self) -> tuple[Callable[..., Any], ...]:
-        return (self.shift, )  # type: ignore
+        return (self.shift, )  # type: ignore[misc]
 
 
 ScalerT = Union[str, type[Scaler], Scaler]
