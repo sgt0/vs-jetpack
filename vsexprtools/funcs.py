@@ -132,7 +132,7 @@ def norm_expr(
                     "When passing a TupleExprList you need at least one expr in it!", func, expr
                 )
 
-            nclips: list[vs.VideoNode] | vs.VideoNode = clips
+            nclips: Sequence[vs.VideoNode] | vs.VideoNode = clips
 
             for e in expr:
                 nclips = norm_expr(
