@@ -2,17 +2,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from jetpytools import inject_kwargs_params
+
 from vsexprtools import norm_expr
 from vstools import (
     ConstantFormatVideoNode, CustomRuntimeError, CustomValueError, HoldsVideoFormatT, InvalidTransferError, Matrix,
     MatrixT, Transfer, cachedproperty, depth, get_video_format, inject_self, to_singleton, vs
 )
 
+if TYPE_CHECKING:
+    from .kernels.abstract import BaseScaler
+else:
+    BaseScaler = Any
+
 from .kernels import (
-    Bicubic, BicubicAuto, Catrom, ComplexKernel, CustomComplexKernel, Descaler, Kernel, KernelT, LinearDescaler,
+    Bicubic, BicubicAuto, Catrom, ComplexKernel, CustomComplexKernel, Kernel, KernelT, LinearDescaler,
     Placebo, Point, Resampler, ResamplerT, Scaler
 )
 from .types import Center, LeftShift, Slope, TopShift
@@ -110,7 +116,7 @@ class NoScale(NoScaleBase, Bicubic):  # type: ignore
         return inner_no_scale
 
 
-abstract_kernels = list[type[Scaler | Descaler | Resampler | Kernel]]([
+abstract_kernels = list[type[BaseScaler]]([
     Kernel, Placebo, ComplexKernel, CustomComplexKernel, LinearDescaler
 ])
 
