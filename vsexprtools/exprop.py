@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from itertools import cycle
 from math import isqrt
-from typing import Any, Iterable, Iterator, Literal, SupportsFloat, SupportsIndex, overload
+from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, overload
 
 from vstools import (
     ColorRange, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT,
@@ -130,7 +130,7 @@ class TupleExprList(tuple[ExprList, ...]):
         boundary: bool = True, force_akarin: Literal[False] | FuncExceptT = False,
         func: FuncExceptT | None = None, split_planes: bool = False, **kwargs: Any
     ) -> vs.VideoNode:
-        clip: list[vs.VideoNode] | vs.VideoNode = flatten_vnodes(clips)
+        clip: Sequence[vs.VideoNode] | vs.VideoNode = flatten_vnodes(*clips)
 
         for exprlist in self:
             clip = exprlist(
@@ -138,7 +138,7 @@ class TupleExprList(tuple[ExprList, ...]):
                 force_akarin=force_akarin, func=func, split_planes=split_planes, **kwargs
             )
 
-        return clip[0] if isinstance(clip, list) else clip
+        return clip[0] if isinstance(clip, Sequence) else clip
 
     def __str__(self) -> str:
         return str(tuple(str(e) for e in self))
