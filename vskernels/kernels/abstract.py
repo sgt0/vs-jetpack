@@ -168,7 +168,11 @@ class BaseScaler(vs_object):
                 ...
         else:
             if mro:
-                raise CustomRuntimeError('You must implement kernel_radius when inheriting BaseScaler!', reason=cls)
+                raise CustomRuntimeError(
+                    'When inheriting from BaseScaler, you must implement the kernel radius by either adding '
+                    'the `kernel_radius` property or setting the class variable `_static_kernel_radius`.',
+                    reason=cls
+                )
 
     @staticmethod
     def _wh_norm(clip: vs.VideoNode, width: int | None = None, height: int | None = None) -> tuple[int, int]:
