@@ -6,14 +6,11 @@ from typing import TYPE_CHECKING, Any, SupportsFloat, TypeVar, Union, cast
 from jetpytools import inject_kwargs_params
 
 from vstools import (
-    ConstantFormatVideoNode, Dar, FieldBased, KwargsT, Resolution, Sar, VSFunctionAllArgs, check_correct_subsampling, fallback,
-    inject_self, vs
+    ConstantFormatVideoNode, Dar, FieldBased, KwargsT, Resolution, Sar, VSFunctionAllArgs, check_correct_subsampling,
+    fallback, inject_self, vs
 )
 
-from ..types import (
-    BorderHandling, BotFieldLeftShift, BotFieldTopShift, Center, LeftShift, SampleGridModel, Slope, TopFieldLeftShift,
-    TopFieldTopShift, TopShift
-)
+from ..types import BorderHandling, Center, LeftShift, SampleGridModel, ShiftT, Slope, TopShift
 from .abstract import Descaler, Kernel, Resampler, Scaler
 from .custom import CustomKernel
 
@@ -103,10 +100,7 @@ class LinearDescaler(_BaseLinearOperation, Descaler):
         @inject_kwargs_params
         def descale(
             self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] | tuple[
-            TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
-            LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
-            ] = (0, 0),
+            shift: ShiftT = (0, 0),
             *,
             # `border_handling`, `sample_grid_model` and `field_based` from Descaler
             border_handling: BorderHandling = BorderHandling.MIRROR,
@@ -270,10 +264,7 @@ class CustomComplexKernel(CustomKernel, ComplexKernel):
         @inject_kwargs_params
         def descale(
             self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] | tuple[
-            TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
-            LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
-            ] = (0, 0),
+            shift: ShiftT = (0, 0),
             *,
             # `border_handling`, `sample_grid_model` and `field_based` from Descaler
             border_handling: BorderHandling = BorderHandling.MIRROR,

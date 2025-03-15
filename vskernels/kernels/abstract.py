@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import Signature
 from math import ceil
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Literal, Sequence, TypeVar, Union, cast, overload
 
 from jetpytools import inject_kwargs_params
 
@@ -17,7 +17,7 @@ from vstools.enums.color import _norm_props_enums
 
 from ..exceptions import UnknownDescalerError, UnknownKernelError, UnknownResamplerError, UnknownScalerError
 from ..types import (
-    BorderHandling, BotFieldLeftShift, BotFieldTopShift, LeftShift, SampleGridModel, TopFieldLeftShift,
+    BorderHandling, BotFieldLeftShift, BotFieldTopShift, LeftShift, SampleGridModel, ShiftT, TopFieldLeftShift,
     TopFieldTopShift, TopShift
 )
 
@@ -286,10 +286,8 @@ class Descaler(BaseScaler):
     @inject_kwargs_params
     def descale(
         self, clip: vs.VideoNode, width: int | None, height: int | None,
-        shift: tuple[TopShift, LeftShift] | tuple[
-            TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
-            LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
-        ] = (0, 0), *,
+        shift: ShiftT = (0, 0),
+        *,
         border_handling: BorderHandling = BorderHandling.MIRROR,
         sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
         field_based: FieldBased | None = None,

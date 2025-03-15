@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, Union
 
 from vstools import CustomIntEnum, KwargsT, padder, vs
 
 __all__ = [
-    'BorderHandling', 'SampleGridModel'
+    'BorderHandling', 'SampleGridModel',
+    'TopShift', 'LeftShift',
+    'TopFieldTopShift', 'TopFieldLeftShift', 'BotFieldTopShift', 'BotFieldLeftShift',
+    'ShiftT',
+    'Slope', 'Center'
 ]
 
 
@@ -83,5 +87,13 @@ TopFieldTopShift: TypeAlias = float
 TopFieldLeftShift: TypeAlias = float
 BotFieldTopShift: TypeAlias = float
 BotFieldLeftShift: TypeAlias = float
+ShiftT = Union[
+    tuple[TopShift, LeftShift],
+    tuple[
+        TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
+        LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
+    ]
+]
+
 Slope: TypeAlias = float
 Center: TypeAlias = float
