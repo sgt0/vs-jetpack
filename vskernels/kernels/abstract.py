@@ -483,8 +483,13 @@ class Kernel(Scaler, Descaler, Resampler):
         ) -> ConstantFormatVideoNode:
             ...
 
+        @overload
         @inject_kwargs_params
-        def shift(*args: Any, **kwargs: Any) -> Any:
+        def shift(self, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
+            ...
+
+        @inject_kwargs_params
+        def shift(*args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
             ...
     else:
         @inject_self.cached
