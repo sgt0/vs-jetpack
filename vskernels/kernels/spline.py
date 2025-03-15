@@ -22,11 +22,7 @@ class Spline(CustomComplexTapsKernel):
 
     def __init__(self, taps: float = 2, **kwargs: Any) -> None:
         super().__init__(taps, **kwargs)
-
-        if hasattr(self, '_static_coeffs'):
-            self._coefs = self._static_coeffs
-        else:
-            self._coefs = self._splineKernelCoeff()
+        self._coefs = self._splineKernelCoeff()
 
     def _naturalCubicSpline(self, values: list[int]) -> list[float]:
         import numpy as np
