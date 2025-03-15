@@ -7,7 +7,7 @@ from jetpytools import inject_kwargs_params
 from vstools import core, fallback, inject_self, vs
 
 from ..types import LeftShift, TopShift
-from .complex import LinearScaler
+from .complex import ComplexScaler
 
 __all__ = [
     'Placebo',
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class Placebo(LinearScaler):
+class Placebo(ComplexScaler):
     """
     Abstract Placebo scaler.
 
