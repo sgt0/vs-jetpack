@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from inspect import Signature
 from math import ceil
-from typing import Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence, TypeVar, Union, cast, overload
 
 from jetpytools import inject_kwargs_params
 
@@ -410,86 +410,109 @@ class Kernel(Scaler, Descaler, Resampler):
 
     _err_class = UnknownKernelError  # type: ignore[assignment]
 
-    @overload
-    @inject_self.cached
-    @inject_kwargs_params
-    def shift(
-        self, clip: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0), /, **kwargs: Any
-    ) -> ConstantFormatVideoNode:
-        ...
+    if TYPE_CHECKING:
+        @overload  # type: ignore[misc]
+        @inject_kwargs_params
+        @staticmethod
+        def shift(
+            clip: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0), /, **kwargs: Any
+        ) -> ConstantFormatVideoNode:
+            ...
 
-    @overload
-    @inject_self.cached
-    @inject_kwargs_params
-    def shift(
-        self,
-        clip: vs.VideoNode,
-        shift_top: float | list[float] = 0.0,
-        shift_left: float | list[float] = 0.0,
-        /,
-        **kwargs: Any
-    ) -> ConstantFormatVideoNode:
-        ...
+        @overload
+        @inject_kwargs_params
+        def shift(
+            self, clip: vs.VideoNode, shift: tuple[TopShift, LeftShift] = (0, 0), /, **kwargs: Any
+        ) -> ConstantFormatVideoNode:
+            ...
 
-    @inject_self.cached
-    @inject_kwargs_params
-    def shift(
-        self,
-        clip: vs.VideoNode,
-        shifts_or_top: float | tuple[float, float] | list[float] | None = None,
-        shift_left: float | list[float] | None = None,
-        /,
-        **kwargs: Any
-    ) -> ConstantFormatVideoNode:
-        assert check_variable_format(clip, self.shift)  # type: ignore[misc]
+        @overload
+        @inject_kwargs_params
+        @staticmethod
+        def shift(
+            clip: vs.VideoNode,
+            shift_top: float | list[float] = 0.0,
+            shift_left: float | list[float] = 0.0,
+            /,
+            **kwargs: Any
+        ) -> ConstantFormatVideoNode:
+            ...
 
-        n_planes = clip.format.num_planes
+        @overload
+        @inject_kwargs_params
+        def shift(
+            self,
+            clip: vs.VideoNode,
+            shift_top: float | list[float] = 0.0,
+            shift_left: float | list[float] = 0.0,
+            /,
+            **kwargs: Any
+        ) -> ConstantFormatVideoNode:
+            ...
 
-        def _shift(src: VideoNodeT, shift: tuple[TopShift, LeftShift] = (0, 0)) -> VideoNodeT:
-            return self.scale(src, src.width, src.height, shift, **kwargs)
+        @inject_kwargs_params
+        def shift(*args: Any, **kwargs: Any) -> Any:
+            ...
+    else:
+        @inject_self.cached
+        @inject_kwargs_params
+        def shift(
+            self,
+            clip: vs.VideoNode,
+            shifts_or_top: float | tuple[float, float] | list[float] | None = None,
+            shift_left: float | list[float] | None = None,
+            /,
+            **kwargs: Any
+        ) -> ConstantFormatVideoNode:
+            assert check_variable_format(clip, self.shift)
 
-        if not shifts_or_top and not shift_left:
-            return _shift(clip)
+            n_planes = clip.format.num_planes
 
-        if isinstance(shifts_or_top, tuple):
-            return _shift(clip, shifts_or_top)
+            def _shift(src: VideoNodeT, shift: tuple[TopShift, LeftShift] = (0, 0)) -> VideoNodeT:
+                return self.scale(src, src.width, src.height, shift, **kwargs)
 
-        if isinstance(shifts_or_top, float) and isinstance(shift_left, float):
-            return _shift(clip, (shifts_or_top, shift_left))
+            if not shifts_or_top and not shift_left:
+                return _shift(clip)
 
-        if shifts_or_top is None:
-            shifts_or_top = 0.0
-        if shift_left is None:
-            shift_left = 0.0
+            if isinstance(shifts_or_top, tuple):
+                return _shift(clip, shifts_or_top)
 
-        shifts_top = shifts_or_top if isinstance(shifts_or_top, list) else [shifts_or_top]
-        shifts_left = shift_left if isinstance(shift_left, list) else [shift_left]
+            if isinstance(shifts_or_top, float) and isinstance(shift_left, float):
+                return _shift(clip, (shifts_or_top, shift_left))
 
-        if not shifts_top:
-            shifts_top = [0.0] * n_planes
-        elif (ltop := len(shifts_top)) > n_planes:
-            shifts_top = shifts_top[:n_planes]
-        else:
-            shifts_top += shifts_top[-1:] * (n_planes - ltop)
+            if shifts_or_top is None:
+                shifts_or_top = 0.0
+            if shift_left is None:
+                shift_left = 0.0
 
-        if not shifts_left:
-            shifts_left = [0.0] * n_planes
-        elif (lleft := len(shifts_left)) > n_planes:
-            shifts_left = shifts_left[:n_planes]
-        else:
-            shifts_left += shifts_left[-1:] * (n_planes - lleft)
+            shifts_top = shifts_or_top if isinstance(shifts_or_top, list) else [shifts_or_top]
+            shifts_left = shift_left if isinstance(shift_left, list) else [shift_left]
 
-        if len(set(shifts_top)) == len(set(shifts_left)) == 1 or n_planes == 1:
-            return _shift(clip, (shifts_top[0], shifts_left[0]))
+            if not shifts_top:
+                shifts_top = [0.0] * n_planes
+            elif (ltop := len(shifts_top)) > n_planes:
+                shifts_top = shifts_top[:n_planes]
+            else:
+                shifts_top += shifts_top[-1:] * (n_planes - ltop)
 
-        planes = split(clip)
+            if not shifts_left:
+                shifts_left = [0.0] * n_planes
+            elif (lleft := len(shifts_left)) > n_planes:
+                shifts_left = shifts_left[:n_planes]
+            else:
+                shifts_left += shifts_left[-1:] * (n_planes - lleft)
 
-        shifted_planes = [
-            plane if top == left == 0 else _shift(plane, (top, left))
-            for plane, top, left in zip(planes, shifts_top, shifts_left)
-        ]
+            if len(set(shifts_top)) == len(set(shifts_left)) == 1 or n_planes == 1:
+                return _shift(clip, (shifts_top[0], shifts_left[0]))
 
-        return core.std.ShufflePlanes(shifted_planes, [0, 0, 0], clip.format.color_family)
+            planes = split(clip)
+
+            shifted_planes = [
+                plane if top == left == 0 else _shift(plane, (top, left))
+                for plane, top, left in zip(planes, shifts_top, shifts_left)
+            ]
+
+            return core.std.ShufflePlanes(shifted_planes, [0, 0, 0], clip.format.color_family)
 
     @overload
     @classmethod
