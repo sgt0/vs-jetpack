@@ -226,19 +226,21 @@ class Scaler(BaseScaler):
     @inject_self.cached
     @inject_kwargs_params
     def scale(
-        self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
-        shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> VideoNodeT:
+        self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+        shift: tuple[TopShift, LeftShift] = (0, 0),
+        **kwargs: Any
+    ) -> vs.VideoNode:
         width, height = Scaler._wh_norm(clip, width, height)
         check_correct_subsampling(clip, width, height)
-        return cast(VideoNodeT, self.scale_function(
+
+        return self.scale_function(
             clip, **_norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs))
-        ))
+        )
 
     @inject_self.cached
     def multi(
-        self, clip: VideoNodeT, multi: float = 2, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> VideoNodeT:
+        self, clip: vs.VideoNode, multi: float = 2, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
+    ) -> vs.VideoNode:
         assert check_variable_resolution(clip, self.multi)
 
         dst_width, dst_height = ceil(clip.width * multi), ceil(clip.height * multi)
