@@ -305,9 +305,7 @@ class Descaler(BaseScaler):
         kwargs |= dict(border_handling=BorderHandling.from_param(border_handling, self.descale))
 
         if field_based.is_inter:
-            shift_y, shift_x = tuple[tuple[float, float], ...](
-                sh if isinstance(sh, tuple) else (sh, sh) for sh in shift
-            )
+            shift_y, shift_x = self._shift_norm(shift, False, self.descale)
 
             kwargs_tf, shift = sample_grid_model.for_src(clip, width, height, (shift_y[0], shift_x[0]), **kwargs)
             kwargs_bf, shift = sample_grid_model.for_src(clip, width, height, (shift_y[1], shift_x[1]), **kwargs)
@@ -331,16 +329,53 @@ class Descaler(BaseScaler):
 
             descaled = interleaved.std.DoubleWeave(field_based.is_tff)[::2]
         else:
-            if any(isinstance(sh, tuple) for sh in shift):
-                raise CustomValueError('You can\'t descale per-field when the input is progressive!', self.descale)
+            shift = self._shift_norm(shift, True, self.descale)
 
-            kwargs, shift = sample_grid_model.for_src(clip, width, height, cast(tuple[float, float], shift), **kwargs)
+            kwargs, shift = sample_grid_model.for_src(clip, width, height, shift, **kwargs)
 
             de_kwargs = self.get_descale_args(clip, shift, *de_base_args, **kwargs)
 
             descaled = self.descale_function(clip, **_norm_props_enums(de_kwargs))
 
         return depth(descaled, bits)
+
+    @overload
+    def _shift_norm(
+        self,
+        shift: ShiftT,
+        assume_progressive: Literal[True] = ...,
+        func: FuncExceptT | None = None
+        ) -> tuple[TopShift, LeftShift]:
+        ...
+
+    @overload
+    def _shift_norm(
+        self,
+        shift: ShiftT,
+        assume_progressive: Literal[False] = ...,
+        func: FuncExceptT | None = None
+        ) -> tuple[
+            tuple[TopFieldTopShift, BotFieldTopShift],
+            tuple[TopFieldLeftShift, BotFieldLeftShift]
+        ]:
+        ...
+
+    def _shift_norm(
+        self,
+        shift: ShiftT,
+        assume_progressive: bool = True,
+        func: FuncExceptT | None = None
+        ) -> Any:
+        if assume_progressive:
+            if any(isinstance(sh, tuple) for sh in shift):
+                raise CustomValueError("You can't descale per-field when the input is progressive!", func, shift)
+        else:
+            shift_y, shift_x = tuple[tuple[float, float], ...](
+                sh if isinstance(sh, tuple) else (sh, sh) for sh in shift
+            )
+            shift = shift_y, shift_x
+
+        return shift
 
     @inject_kwargs_params
     def get_descale_args(
