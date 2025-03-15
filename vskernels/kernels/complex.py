@@ -6,10 +6,14 @@ from typing import TYPE_CHECKING, Any, SupportsFloat, TypeVar, Union, cast
 from jetpytools import inject_kwargs_params
 
 from vstools import (
-    Dar, KwargsT, Resolution, Sar, VideoNodeT, VSFunctionAllArgs, check_correct_subsampling, fallback, inject_self, vs
+    ConstantFormatVideoNode, Dar, FieldBased, KwargsT, Resolution, Sar, VSFunctionAllArgs, check_correct_subsampling, fallback,
+    inject_self, vs
 )
 
-from ..types import BorderHandling, Center, LeftShift, SampleGridModel, Slope, TopShift
+from ..types import (
+    BorderHandling, BotFieldLeftShift, BotFieldTopShift, Center, LeftShift, SampleGridModel, Slope, TopFieldLeftShift,
+    TopFieldTopShift, TopShift
+)
 from .abstract import Descaler, Kernel, Resampler, Scaler
 from .custom import CustomKernel
 
@@ -81,11 +85,13 @@ class LinearScaler(_BaseLinearOperation, Scaler):
     if TYPE_CHECKING:
         @inject_self.cached
         @inject_kwargs_params
-        def scale(  # type: ignore[override]
-            self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] = (0, 0), *,
+        def scale(
+            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] = (0, 0),
+            *,
+            # LinearScaler adds `linear` and `sigmoid` parameters
             linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
-        ) -> VideoNodeT:
+        ) -> vs.VideoNode:
             ...
     else:
         scale = inject_self.cached(_BaseLinearOperation._linear_op('scale'))
@@ -95,11 +101,20 @@ class LinearDescaler(_BaseLinearOperation, Descaler):
     if TYPE_CHECKING:
         @inject_self.cached
         @inject_kwargs_params
-        def descale(  # type: ignore[override]
-            self, clip: VideoNodeT, width: int | None = None, height: int | None = None,
-            shift: tuple[TopShift, LeftShift] = (0, 0), *,
+        def descale(
+            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] | tuple[
+            TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
+            LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
+            ] = (0, 0),
+            *,
+            # `border_handling`, `sample_grid_model` and `field_based` from Descaler
+            border_handling: BorderHandling = BorderHandling.MIRROR,
+            sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
+            field_based: FieldBased | None = None,
+            # LinearDescaler adds `linear` and `sigmoid` parameters
             linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
-        ) -> VideoNodeT:
+        ) -> ConstantFormatVideoNode:
             ...
     else:
         descale = inject_self.cached(_BaseLinearOperation._linear_op('descale'))
@@ -176,9 +191,11 @@ class KeepArScaler(Scaler):
 
     @inject_self.cached
     @inject_kwargs_params
-    def scale(  # type: ignore[override]
+    def scale(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-        shift: tuple[TopShift, LeftShift] = (0, 0), *,
+        shift: tuple[TopShift, LeftShift] = (0, 0),
+        *,
+        # KeepArScaler adds `border_handling`, `sample_grid_model`, `sar`, `dar`, `dar_in` and `keep_ar`
         border_handling: BorderHandling = BorderHandling.MIRROR,
         sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
         sar: Sar | float | bool | None = None, dar: Dar | float | bool | None = None,
@@ -220,21 +237,26 @@ class KeepArScaler(Scaler):
 class ComplexScaler(LinearScaler, KeepArScaler):
     @inject_self.cached
     @inject_kwargs_params
-    def scale(  # type: ignore[override]
+    def scale(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
         shift: tuple[TopShift, LeftShift] = (0, 0),
         *,
+        # `border_handling`, `sample_grid_model`, `sar`, `dar`, `dar_in` and `keep_ar` from KeepArScaler
         border_handling: BorderHandling = BorderHandling.MIRROR,
         sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
-        sar: Sar | bool | float | None = None, dar: Dar | bool | float | None = None, keep_ar: bool | None = None,
+        sar: Sar | float | bool | None = None, dar: Dar | float | bool | None = None,
+        dar_in: Dar | bool | float | None = None, keep_ar: bool | None = None,
+        # `linear` and `sigmoid` from LinearScaler
         linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False,
         **kwargs: Any
     ) -> vs.VideoNode:
         width, height = Scaler._wh_norm(clip, width, height)
         return super().scale(
-            clip, width, height, shift, sar=sar, dar=dar, keep_ar=keep_ar,
-            linear=linear, sigmoid=sigmoid, border_handling=border_handling,
-            sample_grid_model=sample_grid_model, **kwargs
+            clip, width, height, shift,
+            border_handling=border_handling, sample_grid_model=sample_grid_model,
+            sar=sar, dar=dar, dar_in=dar_in, keep_ar=keep_ar,
+            linear=linear, sigmoid=sigmoid,
+            **kwargs
         )
 
 
@@ -246,13 +268,23 @@ class CustomComplexKernel(CustomKernel, ComplexKernel):
     if TYPE_CHECKING:
         @inject_self.cached
         @inject_kwargs_params
-        def descale(  # type: ignore[override]
-            self, clip: vs.VideoNode, width: int, height: int, shift: tuple[TopShift, LeftShift] = (0, 0),
-            *, blur: float = 1.0, border_handling: BorderHandling,
+        def descale(
+            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] | tuple[
+            TopShift | tuple[TopFieldTopShift, BotFieldTopShift],
+            LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
+            ] = (0, 0),
+            *,
+            # `border_handling`, `sample_grid_model` and `field_based` from Descaler
+            border_handling: BorderHandling = BorderHandling.MIRROR,
             sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
-            ignore_mask: vs.VideoNode | None = None, linear: bool = False,
-            sigmoid: bool | tuple[Slope, Center] = False, **kwargs: Any
-        ) -> vs.VideoNode:
+            field_based: FieldBased | None = None,
+            # `linear` and `sigmoid` parameters from LinearDescaler
+            linear: bool = False, sigmoid: bool | tuple[Slope, Center] = False,
+            # `blur` and `ignore_mask` from CustomKernel
+            blur: float = 1.0, ignore_mask: vs.VideoNode | None = None,
+            **kwargs: Any
+        ) -> ConstantFormatVideoNode:
             ...
 
 
