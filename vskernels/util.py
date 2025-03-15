@@ -91,9 +91,10 @@ class NoShift(Bicubic, NoShiftBase):
 class NoScaleBase(Scaler):
     @inject_self.cached
     @inject_kwargs_params
-    def scale(  # type: ignore
+    def scale(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
-        shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
+        shift: tuple[TopShift, LeftShift] = (0, 0),
+        **kwargs: Any
     ) -> vs.VideoNode:
         try:
             width, height = Scaler._wh_norm(clip, width, height)
@@ -102,7 +103,17 @@ class NoScaleBase(Scaler):
             return clip
 
 
-class NoScale(NoScaleBase, Bicubic):  # type: ignore
+class NoScale(NoScaleBase, Bicubic):
+    if TYPE_CHECKING:
+        @inject_self.cached
+        @inject_kwargs_params
+        def scale(
+            self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+            shift: tuple[TopShift, LeftShift] = (0, 0),
+            **kwargs: Any
+        ) -> vs.VideoNode:
+            ...
+
     def __class_getitem__(cls, kernel: KernelT) -> type[Kernel]:
         return cls.from_kernel(kernel)
 
