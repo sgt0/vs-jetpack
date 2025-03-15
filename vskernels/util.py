@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from jetpytools import inject_kwargs_params
+from typing_extensions import Self
 
 from vsexprtools import norm_expr
 from vstools import (
