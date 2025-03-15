@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, overload
+from typing import Any
 
-from vstools import HoldsVideoFormatT, MatrixT, VideoFormatT, core, depth, get_video_format, inject_self, vs
+from vstools import (
+    ConstantFormatVideoNode, HoldsVideoFormatT, Matrix, MatrixT, VideoFormatT, core, depth, get_video_format,
+    inject_self, vs
+)
 
+from ..types import ShiftT
 from .abstract import Kernel
 
 __all__ = [
@@ -42,10 +46,10 @@ class Example(Kernel):
         )
 
     @inject_self.cached
-    def descale(  # type: ignore[override]
-        self, clip: vs.VideoNode, width: int | None, height: int | None,
-        shift: tuple[float, float] = (0, 0), **kwargs: Any
-    ) -> vs.VideoNode:
+    def descale(
+        self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
+        shift: ShiftT = (0, 0), **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         """
         Perform a regular descaling operation.
 
@@ -55,18 +59,19 @@ class Example(Kernel):
         :param shift:       Shift clip during the operation.
                             Expects a tuple of (src_top, src_left).
 
-        :rtype:             ``VideoNode``
+        :rtype:             ``ConstantFormatVideoNode``
         """
         width, height = self._wh_norm(clip, width, height)
+        shift = self._shift_norm(shift, True)
         return depth(core.descale.Debicubic(
             depth(clip, 32), width, height, b=self.b, c=self.c, src_top=shift[0], src_left=shift[1], **kwargs
         ), clip)
 
     @inject_self.cached
-    def resample(  # type: ignore[override]
+    def resample(
         self, clip: vs.VideoNode, format: int | VideoFormatT | HoldsVideoFormatT,
         matrix: MatrixT | None = None, matrix_in: MatrixT | None = None, **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Perform a regular resampling operation.
 
@@ -75,21 +80,21 @@ class Example(Kernel):
         :param matrix:      Output matrix. If `None`, will take the matrix from the input clip's frameprops.
         :param matrix_in:   Input matrix. If `None`, will take the matrix from the input clip's frameprops.
 
-        :rtype:             ``VideoNode``
+        :rtype:             ``ConstantFormatVideoNode``
         """
         return core.resize.Bicubic(
             clip, format=get_video_format(format).id,
             filter_param_a=self.b, filter_param_b=self.c,
-            matrix=matrix, matrix_in=matrix_in, **self.kwargs, **kwargs  # type: ignore
+            matrix=Matrix.from_param(matrix),
+            matrix_in=Matrix.from_param(matrix_in), **self.kwargs | kwargs
         )
 
-    @overload  # type: ignore
-    def shift(self, clip: vs.VideoNode, shift: tuple[float, float] = (0, 0), **kwargs: Any) -> vs.VideoNode:
-        ...
-
-    def shift(  # type: ignore
-        self, clip: vs.VideoNode,
-        shift_top: float | list[float] = 0.0, shift_left: float | list[float] = 0.0, **kwargs: Any
+    def shift(  # type: ignore[override]
+        self,
+        clip: vs.VideoNode,
+        shifts_or_shift_top: tuple[float, float] | float | list[float] = 0.0,
+        shift_left: float | list[float] = 0.0, /,
+        **kwargs: Any
     ) -> vs.VideoNode:
         """
         Perform a regular shifting operation.
@@ -101,8 +106,4 @@ class Example(Kernel):
 
         :rtype:             ``VideoNode``
         """
-        return core.resize.Bicubic(
-            clip, src_top=shift_top, src_left=shift_left,  # type: ignore
-            filter_param_a=self.b, filter_param_b=self.c,
-            **self.kwargs, **kwargs
-        )
+        return super().shift(clip, shifts_or_shift_top, shift_left, **kwargs)
