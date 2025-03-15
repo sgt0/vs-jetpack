@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 from jetpytools import inject_kwargs_params
 
@@ -173,8 +173,7 @@ class LinearLight:
     class LinearLightProcessing(cachedproperty.baseclass):
         ll: LinearLight
 
-        @cachedproperty
-        def linear(self) -> vs.VideoNode:
+        def get_linear(self) -> vs.VideoNode:
             wclip: vs.VideoNode = self.ll._wclip
 
             if self.ll._wclip.format.color_family is vs.YUV:
@@ -202,13 +201,14 @@ class LinearLight:
 
             return wclip
 
-        @linear.setter
-        def linear_setter(self, processed: vs.VideoNode) -> None:
+        def set_linear(self, processed: vs.VideoNode) -> None:
             if self.ll._exited:
                 raise CustomRuntimeError(
                     'You can\'t set .linear after going out of the context manager!', func=self.__class__
                 )
             self._linear = processed
+
+        linear = cachedproperty[[Self], vs.VideoNode, Self, vs.VideoNode, ...](get_linear, set_linear)
 
         @cachedproperty
         def out(self) -> vs.VideoNode:
@@ -265,7 +265,7 @@ class LinearLight:
 
         self._exited = False
 
-        return LinearLight.LinearLightProcessing(self)
+        return self.LinearLightProcessing(self)
 
     def __exit__(self, *args: Any, **kwargs: Any) -> None:
         self._exited = True
