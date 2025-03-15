@@ -439,7 +439,7 @@ def mpeg2stinx(
     :return:           Clip with cross-field noise reduced.
     """
 
-    def crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
+    def _crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
         even, odd = bobbed[::2], bobbed[1::2]
 
         if sw == 1 and sh == 1:
@@ -457,7 +457,7 @@ def mpeg2stinx(
 
         return repaired.std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
 
-    def temporal_limit(src: vs.VideoNode, flt: vs.VideoNode) -> vs.VideoNode:
+    def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode) -> vs.VideoNode:
         if limit is None:
             return flt
 
@@ -465,9 +465,9 @@ def mpeg2stinx(
         diff = norm_expr([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))], 'x y min', func=mpeg2stinx)
         diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
 
-        return norm_expr([flt, src, diff], 'x y z {limit} * - y z {limit} * + clip', limit=limit, func=mpeg2stinx)
+        return norm_expr([flt, src, diff], 'z {limit} * LIM! x y LIM@ - y LIM@ + clip', limit=limit, func=mpeg2stinx)
 
-    def default_bob(clip: vs.VideoNode) -> vs.VideoNode:
+    def _default_bob(clip: vs.VideoNode) -> vs.VideoNode:
         bobbed = Nnedi3(field=3).interpolate(clip, double_y=False)
         return clip.bwdif.Bwdif(field=3, edeint=bobbed)
 
@@ -477,14 +477,14 @@ def mpeg2stinx(
     sw, sh = normalize_seq(radius, 2)
 
     if not bobber:
-        bobber = default_bob
+        bobber = _default_bob
 
     if limit is not None:
         adj = shift_clip_multi(clip)
         adj.pop(1)
         adj = core.std.Interleave(adj)
 
-    fixed1 = temporal_limit(clip, crossfield_repair(clip, bobber(clip)))
-    fixed2 = temporal_limit(fixed1, crossfield_repair(fixed1, bobber(fixed1)))
+    fixed1 = _temporal_limit(clip, _crossfield_repair(clip, bobber(clip)))
+    fixed2 = _temporal_limit(fixed1, _crossfield_repair(fixed1, bobber(fixed1)))
 
     return fixed1.std.Merge(fixed2).std.SetFieldBased(0)
