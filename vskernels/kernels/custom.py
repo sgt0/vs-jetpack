@@ -1,5 +1,5 @@
 from __future__ import annotations
-from jetpytools import CustomValueError, DependencyNotFoundError, KwargsT, inject_self
+from jetpytools import CustomValueError, DependencyNotFoundError, KwargsT
 from inspect import Signature
 from math import ceil
 
@@ -37,8 +37,7 @@ class CustomKernel(Kernel):
 
         return self.kernel, support
 
-    @inject_self
-    def scale_function(  # type: ignore[override]
+    def scale_function(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None, *args: Any, **kwargs: Any
     ) -> vs.VideoNode:
 
@@ -57,14 +56,12 @@ class CustomKernel(Kernel):
 
         return core.resize2.Custom(clip, kernel, ceil(support), width, height, *args, **clean_kwargs)
 
-    @inject_self
-    def resample_function(  # type: ignore[override]
+    def resample_function(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None, *args: Any, **kwargs: Any
     ) -> ConstantFormatVideoNode:
         return self.scale_function(clip, width, height, *args, **kwargs)  # type: ignore[return-value]
 
-    @inject_self
-    def descale_function(  # type: ignore[override]
+    def descale_function(
         self, clip: vs.VideoNode, width: int, height: int, *args: Any, **kwargs: Any
     ) -> ConstantFormatVideoNode:
         kernel, support = self._modify_kernel_func(kwargs)

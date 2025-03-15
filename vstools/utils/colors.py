@@ -101,7 +101,7 @@ class ResampleUtil:
 
 class ResampleRGBUtil(ResampleUtil):
     @inject_self
-    def yuv2csp(  # type: ignore[override]
+    def yuv2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.yuv2csp))
@@ -111,7 +111,7 @@ class ResampleRGBUtil(ResampleUtil):
         return self.rgb2csp(clip.resize.Bicubic(**_norm_props_enums(conv_args)), fp32, func)
 
     @inject_self
-    def csp2yuv(  # type: ignore[override]
+    def csp2yuv(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.csp2yuv))
@@ -125,7 +125,7 @@ class ResampleRGBUtil(ResampleUtil):
 
 class ResampleYUVUtil(ResampleUtil):
     @inject_self
-    def rgb2csp(  # type: ignore[override]
+    def rgb2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.rgb2csp))
@@ -135,7 +135,7 @@ class ResampleYUVUtil(ResampleUtil):
         return self.yuv2csp(clip.resize.Bicubic(**_norm_props_enums(conv_args)), fp32, func)
 
     @inject_self
-    def csp2rgb(  # type: ignore[override]
+    def csp2rgb(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.csp2yuv))
@@ -152,7 +152,7 @@ class ResampleRGBMatrixUtil(ResampleRGBUtil):
     matrix_csp2rgb: ClassVar[list[float]]
 
     @inject_self
-    def rgb2csp(  # type: ignore[override]
+    def rgb2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.rgb2csp))
@@ -164,7 +164,7 @@ class ResampleRGBMatrixUtil(ResampleRGBUtil):
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)
 
     @inject_self
-    def csp2rgb(  # type: ignore[override]
+    def csp2rgb(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         assert check_variable_format(clip, (func := func or self.csp2rgb))
@@ -178,13 +178,13 @@ class ResampleRGBMatrixUtil(ResampleRGBUtil):
 
 class ResampleRGB(ResampleRGBUtil):
     @inject_self
-    def rgb2csp(  # type: ignore[override]
+    def rgb2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)
 
     @inject_self
-    def csp2rgb(  # type: ignore[override]
+    def csp2rgb(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)
@@ -192,13 +192,13 @@ class ResampleRGB(ResampleRGBUtil):
 
 class ResampleYUV(ResampleYUVUtil):
     @inject_self
-    def yuv2csp(  # type: ignore[override]
+    def yuv2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)
 
     @inject_self
-    def csp2yuv(  # type: ignore[override]
+    def csp2yuv(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)
@@ -206,7 +206,7 @@ class ResampleYUV(ResampleYUVUtil):
 
 class ResampleGRAY(ResampleYUV):
     @inject_self
-    def yuv2csp(  # type: ignore[override]
+    def yuv2csp(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
 
@@ -218,7 +218,7 @@ class ResampleGRAY(ResampleYUV):
         return clip.resize.Point(format=vs.GRAYS if fp32 else vs.GRAY16)
 
     @inject_self
-    def csp2yuv(  # type: ignore[override]
+    def csp2yuv(
         self, clip: vs.VideoNode, fp32: bool | None = None, func: FuncExceptT | None = None, **kwargs: Any
     ) -> vs.VideoNode:
         return clip if fp32 is None else depth(clip, 32 if fp32 else 16)

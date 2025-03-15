@@ -20,7 +20,7 @@ class Example(Kernel):
         super().__init__(**kwargs)
 
     @inject_self.cached
-    def scale(  # type: ignore[override]
+    def scale(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None,
         shift: tuple[float, float] = (0, 0), **kwargs: Any
     ) -> vs.VideoNode:

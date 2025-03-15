@@ -673,7 +673,7 @@ class Kernel(Scaler, Descaler, Resampler):
         )
 
     def get_implemented_funcs(self) -> tuple[Callable[..., Any], ...]:
-        return (self.shift, )  # type: ignore[misc]
+        return (self.shift, )
 
 
 ScalerT = Union[str, type[Scaler], Scaler]

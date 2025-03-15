@@ -55,6 +55,6 @@ class Lanczos(ZimgComplexKernel):
             return args | dict(taps=self.taps)
         return args | dict(filter_param_a=self.taps)
 
-    @inject_self.property
-    def kernel_radius(self) -> int: # type: ignore[override]
+    @inject_self.cached.property
+    def kernel_radius(self) -> int:
         return ceil(self.taps)

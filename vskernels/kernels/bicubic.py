@@ -52,7 +52,7 @@ class Bicubic(ZimgComplexKernel):
         return args | dict(filter_param_a=self.b, filter_param_b=self.c)
 
     @inject_self.cached.property
-    def kernel_radius(self) -> int:  # type: ignore[override]
+    def kernel_radius(self) -> int:
         if (self.b, self.c) == (0, 0):
             return 1
         return 2
