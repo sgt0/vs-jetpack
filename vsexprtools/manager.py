@@ -48,7 +48,8 @@ class inline_expr(AbstractContextManager[InlineExpr]):
         return InlineExpr(self._clips_char_map, ExprOperators(), self)
 
     def __exit__(
-        self, __exc_type: type[BaseException] | None,
+        self,
+        __exc_type: type[BaseException] | None,
         __exc_value: BaseException | None,
         __traceback: TracebackType | None
     ) -> bool | None:
@@ -58,7 +59,7 @@ class inline_expr(AbstractContextManager[InlineExpr]):
 
         self._in_context = False
 
-        return super().__exit__(__exc_type, __exc_value, __traceback)
+        return None
 
     def _get_clip(self) -> vs.VideoNode:
         fmt = self._clips[0].format

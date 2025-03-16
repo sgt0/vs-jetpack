@@ -5,9 +5,9 @@ from math import isqrt
 from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, overload
 
 from vstools import (
-    ColorRange, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT,
-    HoldsVideoFormatT, PlanesT, StrArrOpt, StrList, VideoFormatT, VideoNodeIterable,
-    flatten, flatten_vnodes, get_lowest_value, get_neutral_value, get_peak_value, vs
+    ColorRange, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT, HoldsVideoFormatT, PlanesT,
+    StrArrOpt, StrList, VideoFormatT, VideoNodeIterableT, VideoNodeT, flatten, flatten_vnodes, get_lowest_value,
+    get_neutral_value, get_peak_value, vs
 )
 
 from .util import ExprVarRangeT, ExprVars, ExprVarsT, complexpr_available
@@ -112,25 +112,26 @@ class ExprToken(ExprTokenBase, CustomEnum):
 
 class ExprList(StrList):
     def __call__(
-        self, *clips: VideoNodeIterable, planes: PlanesT = None,
+        self, *clips: VideoNodeIterableT[VideoNodeT], planes: PlanesT = None,
         format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None,
         boundary: bool = True, force_akarin: Literal[False] | FuncExceptT = False,
         func: FuncExceptT | None = None, split_planes: bool = False, **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> VideoNodeT:
         from .funcs import norm_expr
 
         return norm_expr(
-            clips, self, planes, format, opt, boundary, force_akarin, func, split_planes, **kwargs  # type: ignore
+            flatten_vnodes(*clips), self, planes, format, opt, boundary, force_akarin, func, split_planes, **kwargs
         )
+
 
 class TupleExprList(tuple[ExprList, ...]):
     def __call__(
-        self, *clips: VideoNodeIterable, planes: PlanesT = None,
+        self, *clips: VideoNodeIterableT[VideoNodeT], planes: PlanesT = None,
         format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None,
         boundary: bool = True, force_akarin: Literal[False] | FuncExceptT = False,
         func: FuncExceptT | None = None, split_planes: bool = False, **kwargs: Any
-    ) -> vs.VideoNode:
-        clip: Sequence[vs.VideoNode] | vs.VideoNode = flatten_vnodes(*clips)
+    ) -> VideoNodeT:
+        clip: Sequence[VideoNodeT] | VideoNodeT = flatten_vnodes(*clips)
 
         for exprlist in self:
             clip = exprlist(
@@ -209,11 +210,11 @@ class ExprOp(ExprOpBase, CustomEnum):
 
     @overload
     def __call__(
-        self, *clips: VideoNodeIterable, suffix: StrArrOpt = None,
+        self, *clips: VideoNodeIterableT[VideoNodeT], suffix: StrArrOpt = None,
         prefix: StrArrOpt = None, expr_suffix: StrArrOpt = None,
         expr_prefix: StrArrOpt = None, planes: PlanesT = None,
         **expr_kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> VideoNodeT:
         """Call combine with this ExprOp."""
 
     @overload
