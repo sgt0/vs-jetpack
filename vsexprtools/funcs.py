@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from math import ceil
-from typing import Any, Literal, Sequence, cast
+from typing import Any, Sequence, cast
 
 from vstools import (
     ConstantFormatVideoNode, CustomRuntimeError, CustomValueError, FuncExceptT, HoldsVideoFormatT, PlanesT, ProcessVariableResClip, StrArr,
@@ -21,15 +21,15 @@ __all__ = [
 def expr_func(
     clips: VideoNodeT | Sequence[VideoNodeT], expr: str | Sequence[str],
     format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None, boundary: bool = True,
-    force_akarin: Literal[False] = False, func: FuncExceptT | None = None
+    func: FuncExceptT | None = None
 ) -> VideoNodeT:
-    func = func or force_akarin or expr_func
+    func = func or expr_func
 
     clips = list(clips) if isinstance(clips, Sequence) else [clips]
     over_clips = len(clips) > 26
 
     if not complexpr_available:
-        if force_akarin or over_clips:
+        if over_clips:
             raise ExprVars._get_akarin_err('This function only works with akarin plugin!')(func=func)
     elif over_clips and b'src26' not in vs.core.akarin.Version()['expr_features']:
         raise ExprVars._get_akarin_err('You need at least v0.96 of akarin plugin!')(func=func)
@@ -102,7 +102,7 @@ def norm_expr(
     expr: str | StrArr | ExprList | tuple[str | StrArr | ExprList, ...] | TupleExprList,
     planes: PlanesT = None, format: HoldsVideoFormatT | VideoFormatT | None = None,
     opt: bool | None = None, boundary: bool = True,
-    force_akarin: Literal[False] = False, func: FuncExceptT | None = None,
+    func: FuncExceptT | None = None,
     split_planes: bool = False,
     **kwargs: Any
 ) -> VideoNodeT:
@@ -139,7 +139,7 @@ def norm_expr(
 
             for e in expr:
                 nclips = norm_expr(
-                    nclips, e, planes, format, opt, boundary, force_akarin, func, split_planes, **kwargs
+                    nclips, e, planes, format, opt, boundary, func, split_planes, **kwargs
                 )
 
             return cast(VideoNodeT, nclips)
@@ -157,4 +157,4 @@ def norm_expr(
         for is_chroma, e in enumerate(normalized_expr)
     ]
 
-    return expr_func(clips, tokenized_expr, format, opt, boundary, force_akarin, func)
+    return expr_func(clips, tokenized_expr, format, opt, boundary, func)

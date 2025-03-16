@@ -114,13 +114,13 @@ class ExprList(StrList):
     def __call__(
         self, *clips: VideoNodeIterableT[VideoNodeT], planes: PlanesT = None,
         format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None,
-        boundary: bool = True, force_akarin: Literal[False] | FuncExceptT = False,
-        func: FuncExceptT | None = None, split_planes: bool = False, **kwargs: Any
+        boundary: bool = True, func: FuncExceptT | None = None,
+        split_planes: bool = False, **kwargs: Any
     ) -> VideoNodeT:
         from .funcs import norm_expr
 
         return norm_expr(
-            flatten_vnodes(*clips), self, planes, format, opt, boundary, force_akarin, func, split_planes, **kwargs
+            flatten_vnodes(*clips), self, planes, format, opt, boundary, func, split_planes, **kwargs
         )
 
 
@@ -128,15 +128,15 @@ class TupleExprList(tuple[ExprList, ...]):
     def __call__(
         self, *clips: VideoNodeIterableT[VideoNodeT], planes: PlanesT = None,
         format: HoldsVideoFormatT | VideoFormatT | None = None, opt: bool | None = None,
-        boundary: bool = True, force_akarin: Literal[False] | FuncExceptT = False,
-        func: FuncExceptT | None = None, split_planes: bool = False, **kwargs: Any
+        boundary: bool = True, func: FuncExceptT | None = None,
+        split_planes: bool = False, **kwargs: Any
     ) -> VideoNodeT:
         clip: Sequence[VideoNodeT] | VideoNodeT = flatten_vnodes(*clips)
 
         for exprlist in self:
             clip = exprlist(
                 clip, planes=planes, format=format, opt=opt, boundary=boundary,
-                force_akarin=force_akarin, func=func, split_planes=split_planes, **kwargs
+                func=func, split_planes=split_planes, **kwargs
             )
 
         return clip[0] if isinstance(clip, Sequence) else clip
