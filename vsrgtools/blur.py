@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from itertools import count
-from typing import Any, Literal, overload
+from typing import Any, Literal, Sequence, overload
 
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
@@ -318,14 +318,42 @@ def bilateral(
 
 
 def flux_smooth(
-    clip: vs.VideoNode, temporal_threshold: float = 7.0, spatial_threshold: float = 0.0,
-    scalep: bool = True, planes: PlanesT = None
+    clip: vs.VideoNode,
+    temporal_threshold: float | Sequence[float] = 7.0,
+    spatial_threshold: float | Sequence[float] | None = None,
+    scalep: bool = True,
 ) -> ConstantFormatVideoNode:
-    func = FunctionUtil(clip, flux_smooth, planes)
+    """
+    FluxSmoothT examines each pixel and compares it to the corresponding pixel in the previous and next frames.
+    Smoothing occurs if both the previous frame's value and the next frame's value are greater,
+    or if both are less than the value in the current frame.
+
+    Smoothing is done by averaging the pixel from the current frame with the pixels from the previous
+    and/or next frames, if they are within temporal_threshold.
+
+    FluxSmoothST does the same as FluxSmoothT, except the pixel's eight neighbours from the current frame
+    are also included in the average, if they are within spatial_threshold.
+
+    The first and last rows and the first and last columns are not processed by FluxSmoothST.
+
+    :param clip:                    Clip to process.
+    :param temporal_threshold:      Temporal neighbour pixels within this threshold from the current pixel
+                                    are included in the average. Can be specified as an array,
+                                    with values corresonding to each plane of the input clip.
+                                    A negative value (such as -1) indicates that the plane should not be processed
+                                    and will be copied from the input clip.
+    :param spatial_threshold:       Spatial neighbour pixels within this threshold from the current pixel
+                                    are included in the average. A negative value (such as -1) indicates that the plane
+                                    should not be processed and will be copied from the input clip.
+    :param scalep:                  Parameter scaling. If set to true, all threshold values
+                                    will be automatically scaled from 8-bit range (0-255) to the corresponding range
+                                    of the input clip's bit depth.
+    :return:                        Smoothed clip.
+    """
+
+    assert check_variable_format(clip, flux_smooth)
 
     if spatial_threshold:
-        smoothed = func.work_clip.zsmooth.FluxSmoothST(temporal_threshold, spatial_threshold, scalep)
-    else:
-        smoothed = func.work_clip.zsmooth.FluxSmoothT(temporal_threshold, scalep)
+        return core.zsmooth.FluxSmoothST(clip, temporal_threshold, spatial_threshold, scalep)
 
-    return func.return_clip(smoothed)
+    return core.zsmooth.FluxSmoothT(clip, temporal_threshold, scalep)
