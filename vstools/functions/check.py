@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 
 from functools import partial, wraps
-from typing import Any, Callable, Literal, TypeGuard, cast, overload
+from typing import Any, Callable, Literal, Sequence, TypeGuard, cast, overload
 
 import vapoursynth as vs
 
@@ -142,15 +142,29 @@ def check_ref_clip(src: vs.VideoNode, ref: vs.VideoNode | None, func: FuncExcept
     return ref
 
 
+@overload
 def check_variable_format(clip: vs.VideoNode, func: FuncExceptT) -> TypeGuard[ConstantFormatVideoNode]:
+    ...
+
+
+@overload
+def check_variable_format(clip: Sequence[vs.VideoNode], func: FuncExceptT) -> TypeGuard[Sequence[ConstantFormatVideoNode]]:
+    ...
+
+
+def check_variable_format(
+    clip: vs.VideoNode | Sequence[vs.VideoNode], func: FuncExceptT
+) -> TypeGuard[ConstantFormatVideoNode] | TypeGuard[Sequence[ConstantFormatVideoNode]]:
     """
     Check for variable format and return an error if found.
 
     :raises VariableFormatError:    The clip is of a variable format.
     """
+    clip = [clip] if isinstance(clip, vs.VideoNode) else clip
 
-    if clip.format is None:
-        raise VariableFormatError(func)
+    for c in clip:
+        if c.format is None:
+            raise VariableFormatError(func)
 
     return True
 
