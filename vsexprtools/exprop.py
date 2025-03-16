@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from itertools import cycle
 from math import isqrt
-from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, overload
+from typing import Any, Iterable, Iterator, Sequence, SupportsFloat, SupportsIndex, overload
 
 from vstools import (
     ColorRange, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT, HoldsVideoFormatT, PlanesT,
