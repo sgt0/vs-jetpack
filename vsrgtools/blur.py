@@ -293,9 +293,9 @@ def bilateral(
 ) -> ConstantFormatVideoNode:
     func = FunctionUtil(clip, bilateral)
 
-    if sigmaS:
+    if sigmaS is not None:
         sigmaS = func.norm_seq(sigmaS, 0)
-    if sigmaR:
+    if sigmaR is not None:
         sigmaR = func.norm_seq(sigmaR, 0)
 
     if backend == BilateralBackend.CPU:
