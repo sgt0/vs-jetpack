@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
-
 from scipy import interpolate
 
 from vsexprtools import norm_expr
@@ -101,6 +99,8 @@ def fine_sharp(
     clip: vs.VideoNode, mode: int = 1, sstr: float = 2.0, cstr: float | None = None, xstr: float = 0.19,
     lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
 ) -> ConstantFormatVideoNode:
+    from numpy import asarray
+
     func = FunctionUtil(clip, fine_sharp, planes)
 
     if cstr is None:
@@ -108,7 +108,7 @@ def fine_sharp(
             (0, 0.5, 1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 8.0, 255.0),
             (0, 0.1, 0.6, 0.9, 1.0, 1.09, 1.15, 1.19, 1.249, 1.5)
         )
-        cstr = float(cs(np.asarray(sstr)))
+        cstr = float(cs(asarray(sstr)))
 
     if ldmp is None:
         ldmp = sstr + 0.1
