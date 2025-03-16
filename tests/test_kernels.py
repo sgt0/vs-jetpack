@@ -10,6 +10,7 @@ from vskernels import (
     Bilinear,
     BorderHandling,
     Lanczos,
+    LinearLight,
     Point,
     Spline16,
     Spline36,
@@ -66,3 +67,12 @@ def test_scale_border_handling(kernel: type[ZimgComplexKernel], border_handling:
         kernel.scale(clip, 3840, 2160, border_handling=border_handling)
         mock_scale_function.assert_called_once()
         assert 'border_handling' not in mock_scale_function.call_args.kwargs
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_linear(kernel: type[ZimgComplexKernel]) -> None:
+
+    with LinearLight(clip, True, False, kernel, None) as ll:
+        ll.linear = ll.linear
+
+    ll.out
