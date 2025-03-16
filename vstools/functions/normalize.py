@@ -11,9 +11,8 @@ from jetpytools import (
     normalize_ranges as jetp_normalize_ranges,
     normalize_seq as jetp_normalize_seq
 )
-from vstools import VideoNodeT
 
-from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, PlanesT, VideoNodeIterableT
+from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, PlanesT, VideoNodeIterableT, VideoNodeT
 
 __all__ = [
     'normalize_seq',
