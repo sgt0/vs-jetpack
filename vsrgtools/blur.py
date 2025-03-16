@@ -31,10 +31,8 @@ def box_blur(
 ) -> ConstantFormatVideoNode:
     assert check_variable(clip, box_blur)
 
-    planes = normalize_planes(clip, planes)
-
     if isinstance(radius, list):
-        return normalize_radius(clip, box_blur, radius, planes, passes=passes)
+        return normalize_radius(clip, box_blur, radius, planes, passes=passes, mode=mode, **kwargs)
 
     if not radius:
         return clip
