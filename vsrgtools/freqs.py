@@ -4,7 +4,7 @@ from itertools import count
 from typing import Iterable
 
 from vsexprtools import ExprOp, ExprVars, combine, norm_expr
-from vstools import CustomIntEnum, CustomNotImplementedError, FuncExceptT, PlanesT, StrList, flatten_vnodes, vs
+from vstools import ConstantFormatVideoNode, CustomIntEnum, CustomNotImplementedError, FuncExceptT, PlanesT, StrList, check_variable_format, flatten_vnodes, vs
 
 __all__ = [
     'MeanMode'
@@ -31,10 +31,12 @@ class MeanMode(CustomIntEnum):
 
     def __call__(
         self, *_clips: vs.VideoNode | Iterable[vs.VideoNode], planes: PlanesT = None, func: FuncExceptT | None = None
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         func = func or self.__class__
 
         clips = flatten_vnodes(_clips)
+
+        assert check_variable_format(clips, func)
 
         n_clips = len(clips)
         n_op = n_clips - 1

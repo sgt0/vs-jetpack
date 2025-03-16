@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Sequence, TypeVar, cast
+from typing import Any, Sequence, TypeVar
 
 from vstools import (
-    GenericVSFunction, KwargsT, Nb, PlanesT, check_variable, check_variable_format,
+    ConstantFormatVideoNode, GenericVSFunction, KwargsT, Nb, PlanesT, check_variable, check_variable_format,
     join, normalize_planes, normalize_seq, plane, vs
 )
 
@@ -26,20 +26,20 @@ def norm_rmode_planes(
 
     planes = normalize_planes(clip, planes)
 
-    return [
-        cast(RModeT, rep if i in planes else 0) for i, rep in enumerate(modes_array, 0)
-    ]
+    return [rep if i in planes else 0 for i, rep in enumerate(modes_array, 0)]
 
 
 def normalize_radius(
-    clip: vs.VideoNode, func: GenericVSFunction, radius: list[Nb] | tuple[str, list[Nb]],
-    planes: list[int], **kwargs: Any
-) -> vs.VideoNode:
+    clip: vs.VideoNode, func: GenericVSFunction[ConstantFormatVideoNode], radius: list[Nb] | tuple[str, list[Nb]],
+    planes: PlanesT, **kwargs: Any
+) -> ConstantFormatVideoNode:
     assert check_variable_format(clip, normalize_radius)
 
     name, radius = radius if isinstance(radius, tuple) else ('radius', radius)
 
     radius = normalize_seq(radius, clip.format.num_planes)
+
+    planes = normalize_planes(clip, planes)
 
     def _get_kwargs(rad: Nb) -> KwargsT:
         return kwargs | {name: rad, 'planes': planes}

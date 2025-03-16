@@ -7,11 +7,12 @@ from typing import Any, Literal, overload
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
 from vstools import (
-    ConvMode, CustomValueError, FunctionUtil, OneDimConvModeT, PlanesT, SpatialConvModeT, KwargsNotNone,
-    TempConvModeT, check_variable, core, join, normalize_planes, normalize_seq, split, to_arr, vs
+    ConstantFormatVideoNode, ConvMode, CustomValueError, FunctionUtil, KwargsNotNone, OneDimConvModeT, PlanesT,
+    SpatialConvModeT, TempConvModeT, check_variable, check_variable_format, core, join, normalize_planes, normalize_seq,
+    split, to_arr, vs
 )
 
-from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode, BilateralBackend
+from .enum import BilateralBackend, BlurMatrix, BlurMatrixBase, LimitFilterMode
 from .freqs import MeanMode
 from .limit import limit_filter
 from .util import normalize_radius
@@ -27,7 +28,7 @@ __all__ = [
 def box_blur(
     clip: vs.VideoNode, radius: int | list[int] = 1, passes: int = 1,
     mode: OneDimConvModeT | TempConvModeT = ConvMode.HV, planes: PlanesT = None, **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(clip, box_blur)
 
     planes = normalize_planes(clip, planes)
@@ -53,7 +54,9 @@ def box_blur(
 def side_box_blur(
     clip: vs.VideoNode, radius: int | list[int] = 1, planes: PlanesT = None,
     inverse: bool = False
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+    assert check_variable_format(clip, side_box_blur)
+
     planes = normalize_planes(clip, planes)
 
     if isinstance(radius, list):
@@ -65,14 +68,14 @@ def side_box_blur(
     conv_m2 = partial(core.std.Convolution, matrix=half_kernel[::-1], planes=planes)
     blur_pt = partial(box_blur, planes=planes)
 
-    vrt_filters, hrz_filters = [
+    vrt_filters, hrz_filters = list[list[partial[ConstantFormatVideoNode]]](
         [
             partial(conv_m1, mode=mode), partial(conv_m2, mode=mode),
             partial(blur_pt, hradius=hr, vradius=vr, hpasses=h, vpasses=v)
         ] for h, hr, v, vr, mode in [
             (0, None, 1, radius, ConvMode.VERTICAL), (1, radius, 0, None, ConvMode.HORIZONTAL)
         ]
-    ]
+    )
 
     vrt_intermediates = (vrt_flt(clip) for vrt_flt in vrt_filters)
     intermediates = list(
@@ -125,7 +128,7 @@ def gauss_blur(
     clip: vs.VideoNode, sigma: float | list[float] = 0.5, taps: int | None = None,
     mode: ConvMode = ConvMode.HV, planes: PlanesT = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(clip, gauss_blur)
 
     planes = normalize_planes(clip, planes)
@@ -139,7 +142,7 @@ def gauss_blur(
     taps = BlurMatrix.GAUSS.get_taps(sigma_constant, taps)
 
     if not mode.is_temporal:
-        def _resize2_blur(plane: vs.VideoNode, sigma: float, taps: int) -> vs.VideoNode:
+        def _resize2_blur(plane: ConstantFormatVideoNode, sigma: float, taps: int) -> ConstantFormatVideoNode:
             resize_kwargs = dict[str, Any]()
 
             # Downscale approximation can be used by specifying _fast=True
@@ -155,12 +158,12 @@ def gauss_blur(
 
                 resize_kwargs.update(width=plane.width, height=plane.height)
 
-                plane = Bilinear.scale(plane, wdown, hdown)
+                plane = Bilinear.scale(plane, wdown, hdown)  # type: ignore[assignment]
                 sigma = sigma_constant
             else:
                 resize_kwargs.update({f'force_{k}': k in mode for k in 'hv'})
 
-            return Gaussian(sigma, taps).scale(plane, **resize_kwargs | kwargs)
+            return Gaussian(sigma, taps).scale(plane, **resize_kwargs | kwargs)  # type: ignore[return-value]
 
         if not {*range(clip.format.num_planes)} - {*planes}:
             return _resize2_blur(clip, sigma, taps)
@@ -181,7 +184,7 @@ def min_blur(
     clip: vs.VideoNode, radius: int | list[int] = 1,
     mode: tuple[ConvMode, ConvMode] = (ConvMode.HV, ConvMode.SQUARE), planes: PlanesT = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     MinBlur by Didée (http://avisynth.nl/index.php/MinBlur)
     Nifty Gauss/Median combination
@@ -205,7 +208,7 @@ def sbr(
     clip: vs.VideoNode, radius: int | list[int] = 1,
     mode: ConvMode = ConvMode.HV, planes: PlanesT = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(clip, sbr)
 
     planes = normalize_planes(clip, planes)
@@ -227,27 +230,29 @@ def sbr(
 @overload
 def median_blur(
     clip: vs.VideoNode, radius: int = ..., mode: Literal[ConvMode.TEMPORAL] = ..., planes: PlanesT = ...
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def median_blur(
     clip: vs.VideoNode, radius: int | list[int] = ..., mode: SpatialConvModeT = ..., planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def median_blur(
     clip: vs.VideoNode, radius: int | list[int] = ..., mode: ConvMode = ..., planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 def median_blur(
     clip: vs.VideoNode, radius: int | list[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+    assert check_variable(clip, median_blur)
+
     if mode == ConvMode.TEMPORAL:
         if isinstance(radius, int):
             return clip.zsmooth.TemporalMedian(radius, planes)
@@ -286,7 +291,7 @@ def bilateral(
     radius: int | list[int] | None = None, device_id: int | None = None, num_streams: int | None = None,
     use_shared_memory: bool | None = None, block_size: int | tuple[int, int] | None = None,
     backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = None,
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = FunctionUtil(clip, bilateral, planes)
 
     if backend == BilateralBackend.CPU:
@@ -315,7 +320,7 @@ def bilateral(
 def flux_smooth(
     clip: vs.VideoNode, temporal_threshold: float = 7.0, spatial_threshold: float = 0.0,
     scalep: bool = True, planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = FunctionUtil(clip, flux_smooth, planes)
 
     if spatial_threshold:

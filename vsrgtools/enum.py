@@ -5,12 +5,14 @@ import operator
 from enum import auto
 from itertools import accumulate
 from math import ceil, exp, log2, pi, sqrt
-from typing import Any, Iterable, Literal, Self, Sequence, overload
+from typing import Any, Iterable, Literal, Sequence, TypeVar, overload
+
+from typing_extensions import Self
 
 from vsexprtools import ExprList, ExprOp, ExprToken, ExprVars
 from vstools import (
-    ConvMode, CustomIntEnum, CustomStrEnum, CustomValueError, KwargsT, Nb, PlanesT, check_variable, core, fallback,
-    iterate, shift_clip_multi, to_singleton, vs
+    ConstantFormatVideoNode, ConvMode, CustomIntEnum, CustomStrEnum, CustomValueError, KwargsT, PlanesT, check_variable,
+    core, fallback, iterate, shift_clip_multi, to_singleton, vs
 )
 
 __all__ = [
@@ -43,7 +45,7 @@ class LimitFilterMode(LimitFilterModeMeta, CustomIntEnum):
     def op(self) -> str:
         return '<' if 'MIN' in self._name_ else '>'
 
-    def __call__(self, force_expr: bool = True) -> LimitFilterMode:
+    def __call__(self, force_expr: bool = True) -> Self:
         self.force_expr = force_expr
 
         return self
@@ -80,7 +82,7 @@ class RemoveGrainMode(CustomIntEnum):
     SMART_RGCL = 27
     SMART_RGCL2 = 28
 
-    def __call__(self, clip: vs.VideoNode, planes: PlanesT = None) -> vs.VideoNode:
+    def __call__(self, clip: vs.VideoNode, planes: PlanesT = None) -> ConstantFormatVideoNode:
         from .rgtools import remove_grain
         from .util import norm_rmode_planes
         return remove_grain(clip, norm_rmode_planes(clip, self, planes))
@@ -119,7 +121,7 @@ class RepairMode(CustomIntEnum):
     CLIP_REF_RG27 = 27
     CLIP_REF_RG28 = 28
 
-    def __call__(self, clip: vs.VideoNode, repairclip: vs.VideoNode, planes: PlanesT = None) -> vs.VideoNode:
+    def __call__(self, clip: vs.VideoNode, repairclip: vs.VideoNode, planes: PlanesT = None) -> ConstantFormatVideoNode:
         from .rgtools import repair
         from .util import norm_rmode_planes
         return repair(clip, repairclip, norm_rmode_planes(clip, self, planes))
@@ -133,7 +135,7 @@ class VerticalCleanerMode(CustomIntEnum):
     MEDIAN = 1
     PRESERVING = 2
 
-    def __call__(self, clip: vs.VideoNode, planes: PlanesT = None) -> vs.VideoNode:
+    def __call__(self, clip: vs.VideoNode, planes: PlanesT = None) -> ConstantFormatVideoNode:
         from .rgtools import vertical_cleaner
         from .util import norm_rmode_planes
         return vertical_cleaner(clip, norm_rmode_planes(clip, self, planes))
@@ -149,28 +151,33 @@ class ClenseMode(CustomStrEnum):
     BOTH = 'Clense'
 
     def __call__(
-            self, clip: vs.VideoNode, previous_clip: vs.VideoNode | None = None,
-            next_clip: vs.VideoNode | None = None, planes: PlanesT = None
-        ) -> vs.VideoNode:
+        self,
+        clip: vs.VideoNode,
+        previous_clip: vs.VideoNode | None = None,
+        next_clip: vs.VideoNode | None = None,
+        planes: PlanesT = None
+    ) -> ConstantFormatVideoNode:
         from .rgtools import clense
         return clense(clip, previous_clip, next_clip, self, planes)
 
 
 ClenseModeT = str | ClenseMode
 
+_Nb = TypeVar('_Nb', bound=float | int)
 
-class BlurMatrixBase(list[Nb]):
+
+class BlurMatrixBase(list[_Nb]):
     def __init__(
-        self, __iterable: Iterable[Nb], /, mode: ConvMode = ConvMode.SQUARE,
+        self, __iterable: Iterable[_Nb], /, mode: ConvMode = ConvMode.SQUARE,
     ) -> None:
         self.mode = mode
-        super().__init__(__iterable)  # type: ignore[arg-type]
+        super().__init__(__iterable)
 
     def __call__(
         self, clip: vs.VideoNode, planes: PlanesT = None,
         bias: float | None = None, divisor: float | None = None, saturate: bool = True,
         passes: int = 1, expr_kwargs: KwargsT | None = None, **conv_kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Performs a spatial or temporal convolution.
         It will either calls std.Convolution, std.AverageFrames or ExprOp.convolution
@@ -190,10 +197,10 @@ class BlurMatrixBase(list[Nb]):
 
         :return:                Processed clip.
         """
+        assert check_variable(clip, self)
+
         if len(self) <= 1:
             return clip
-
-        assert (check_variable(clip, self))
 
         expr_kwargs = expr_kwargs or KwargsT()
 
@@ -222,7 +229,7 @@ class BlurMatrixBase(list[Nb]):
 
         return self._averageframes_akarin(clip, planes, bias, divisor, saturate, passes, expr_kwargs, **conv_kwargs)
 
-    def _averageframes_akarin(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
+    def _averageframes_akarin(self, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
         clip, planes, bias, divisor, saturate, passes, expr_kwargs = args
         conv_kwargs = kwargs
 
@@ -328,7 +335,7 @@ class BlurMatrixBase(list[Nb]):
     def outer(self) -> Self:
         from numpy import outer
 
-        return self.__class__(outer(self, self).flatten().tolist(), self.mode)
+        return self.__class__(list[_Nb](outer(self, self).flatten()), self.mode)
 
 
 class BlurMatrix(CustomIntEnum):

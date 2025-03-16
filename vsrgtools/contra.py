@@ -5,7 +5,7 @@ from typing import Callable
 
 from vsexprtools import norm_expr
 from vstools import (
-    CustomValueError, GenericVSFunction, PlanesT, check_ref_clip,
+    ConstantFormatVideoNode, CustomValueError, GenericVSFunction, PlanesT, check_ref_clip,
     check_variable, iterate, normalize_planes, vs, core
 )
 
@@ -23,9 +23,9 @@ __all__ = [
 
 def contrasharpening(
     flt: vs.VideoNode, src: vs.VideoNode, radius: int | list[int] = 1,
-    sharp: vs.VideoNode | GenericVSFunction | None = None,
+    sharp: vs.VideoNode | GenericVSFunction[vs.VideoNode] | None = None,
     mode: RepairModeT = RepairMode.MINMAX_SQUARE3, planes: PlanesT = 0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     contra-sharpening: sharpen the denoised clip, but don't add more to any pixel than what was previously removed.
     Script by Didée, at the VERY GRAINY thread (http://forum.doom9.org/showthread.php?p=1076491#post1076491)
@@ -77,7 +77,7 @@ def contrasharpening(
 
 def contrasharpening_dehalo(
     flt: vs.VideoNode, src: vs.VideoNode, level: float = 1.4, alpha: float = 2.49, planes: PlanesT = 0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     :param dehaloed:    Dehaloed clip
     :param src:         Source clip
@@ -105,9 +105,9 @@ def contrasharpening_dehalo(
 
 def contrasharpening_median(
     flt: vs.VideoNode, src: vs.VideoNode,
-    mode: RemoveGrainModeT | Callable[..., vs.VideoNode] = box_blur,
+    mode: RemoveGrainModeT | Callable[..., ConstantFormatVideoNode] = box_blur,
     planes: PlanesT = 0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     :param flt:         Filtered clip
     :param src:         Source clip

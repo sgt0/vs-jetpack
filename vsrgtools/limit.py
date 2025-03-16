@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from vsexprtools import ExprVars, complexpr_available, norm_expr
 from vstools import (
-    CustomIndexError, CustomValueError, PlanesT, check_ref_clip, check_variable, core, get_neutral_value,
-    get_peak_value, normalize_planes, vs
+    ConstantFormatVideoNode, CustomIndexError, CustomValueError, PlanesT, check_ref_clip, check_variable, core,
+    get_neutral_value, get_peak_value, normalize_planes, vs
 )
 
 from .enum import LimitFilterMode
@@ -17,7 +17,7 @@ def limit_filter(
     flt: vs.VideoNode, src: vs.VideoNode, ref: vs.VideoNode | None = None,
     mode: LimitFilterMode = LimitFilterMode.CLAMPING, planes: PlanesT = None,
     thr: int | tuple[int, int] = 1, elast: float = 2.0, bright_thr: int | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(src, limit_filter)
     assert check_variable(flt, limit_filter)
     check_ref_clip(src, flt, limit_filter)
@@ -90,7 +90,7 @@ def limit_filter(
 
 def _limit_filter_lut(
     diff: vs.VideoNode, elast: float, thr: float, largen_thr: float, planes: list[int]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(diff, limit_filter)
 
     neutral = get_neutral_value(diff)
@@ -100,7 +100,7 @@ def _limit_filter_lut(
     largen_thr = int(largen_thr * peak / 255)
 
     if thr >= peak / 2 and largen_thr >= peak / 2:
-        neutral_clip = diff.std.BlankClip(color=neutral)
+        neutral_clip = core.std.BlankClip(diff, color=neutral)
 
         all_planes = list(range(diff.format.num_planes))
 
@@ -137,7 +137,7 @@ def _limit_filter_lut(
 
         return round(dif * (dif_abs - thr_1) * thr_slope + neutral)
 
-    return diff.std.Lut(planes, function=limitLut)
+    return core.std.Lut(diff, planes, function=limitLut)
 
 
 def _limit_filter_expr(

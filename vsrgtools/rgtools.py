@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 import warnings
 
-from typing import cast
-
 from vsexprtools import norm_expr
-from vstools import PlanesT, check_variable, core, normalize_seq, pick_func_stype, vs, KwargsNotNone
+from vstools import (
+    ConstantFormatVideoNode, KwargsNotNone, PlanesT, check_variable, core, normalize_seq, pick_func_stype, vs
+)
 
 from .aka_expr import removegrain_aka_exprs, repair_aka_exprs
 from .enum import (
-    RemoveGrainMode, RemoveGrainModeT, RepairModeT, VerticalCleanerMode, VerticalCleanerModeT, ClenseMode, ClenseModeT
+    ClenseMode, ClenseModeT, RemoveGrainMode, RemoveGrainModeT, RepairModeT, VerticalCleanerMode, VerticalCleanerModeT
 )
 
 __all__ = [
@@ -17,7 +18,7 @@ __all__ = [
 ]
 
 
-def repair(clip: vs.VideoNode, repairclip: vs.VideoNode, mode: RepairModeT) -> vs.VideoNode:
+def repair(clip: vs.VideoNode, repairclip: vs.VideoNode, mode: RepairModeT) -> ConstantFormatVideoNode:
     assert check_variable(clip, repair)
     assert check_variable(repairclip, repair)
 
@@ -32,7 +33,7 @@ def repair(clip: vs.VideoNode, repairclip: vs.VideoNode, mode: RepairModeT) -> v
     return norm_expr([clip, repairclip], tuple([repair_aka_exprs[m]() for m in mode]), func=repair)
 
 
-def remove_grain(clip: vs.VideoNode, mode: RemoveGrainModeT) -> vs.VideoNode:
+def remove_grain(clip: vs.VideoNode, mode: RemoveGrainModeT) -> ConstantFormatVideoNode:
     assert check_variable(clip, remove_grain)
 
     mode = normalize_seq(mode, clip.format.num_planes)
@@ -60,7 +61,9 @@ def remove_grain(clip: vs.VideoNode, mode: RemoveGrainModeT) -> vs.VideoNode:
 def clense(
     clip: vs.VideoNode, previous_clip: vs.VideoNode | None = None, next_clip: vs.VideoNode | None = None,
     mode: ClenseModeT = ClenseMode.NONE, planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+    assert check_variable(clip, clense)
+
     warnings.warn('clense is deprecated! Use MeanMode instead!', DeprecationWarning)
 
     kwargs = KwargsNotNone(previous=previous_clip, next=next_clip)
@@ -68,15 +71,12 @@ def clense(
     if mode == ClenseMode.NONE:
         return clip
 
-    return cast(
-        vs.VideoNode,
-        pick_func_stype(clip, getattr(core.lazy.rgvs, mode), getattr(core.lazy.rgsf, mode))(
-            clip, planes=planes, **kwargs
-        ),
+    return pick_func_stype(clip, getattr(core.lazy.rgvs, mode), getattr(core.lazy.rgsf, mode))(
+        clip, planes=planes, **kwargs
     )
 
 
-def vertical_cleaner(clip: vs.VideoNode, mode: VerticalCleanerModeT) -> vs.VideoNode:
+def vertical_cleaner(clip: vs.VideoNode, mode: VerticalCleanerModeT) -> ConstantFormatVideoNode:
     assert check_variable(clip, vertical_cleaner)
 
     mode = normalize_seq(mode, clip.format.num_planes)

@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 from typing import Any
+
+import numpy as np
+
 from scipy import interpolate
 
 from vsexprtools import norm_expr
 from vstools import (
-    CustomTypeError, PlanesT, VSFunction, check_ref_clip, check_variable, FunctionUtil, normalize_planes, vs, ConvMode
+    ConstantFormatVideoNode, ConvMode, CustomTypeError, FunctionUtil, GenericVSFunction, PlanesT, VSFunction, check_ref_clip,
+    check_variable, normalize_planes, vs
 )
 
-from .blur import gauss_blur, min_blur, box_blur, median_blur
+from .blur import box_blur, gauss_blur, median_blur, min_blur
 from .enum import BlurMatrix
 from .limit import limit_filter
 from .rgtools import repair
@@ -26,14 +30,23 @@ __all__ = [
 def unsharpen(
     clip: vs.VideoNode, strength: float = 1.0, sigma: float | list[float] = 1.5,
     prefilter: vs.VideoNode | VSFunction | None = None, **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+
     assert check_variable(clip, unsharpen)
 
-    ref = prefilter(clip) if callable(prefilter) else prefilter
+    if prefilter is None:
+        den, ref = clip, None
+    else:
+        if callable(prefilter):
+            den = prefilter(clip)
+        else:
+            assert check_variable(prefilter, unsharpen)
+            den = prefilter
+
+        ref = den
 
     check_ref_clip(clip, ref)
 
-    den = ref or clip
     blur = gauss_blur(den, sigma, **kwargs)
 
     unsharp = norm_expr([den, blur], f'x y - {strength} * x +', 0, func=unsharpen)
@@ -46,7 +59,10 @@ def unsharpen(
 
 def unsharp_masked(
     clip: vs.VideoNode, radius: int | list[int] = 1, strength: float = 100.0, planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+
+    assert check_variable(clip, unsharp_masked)
+
     planes = normalize_planes(clip, planes)
 
     if isinstance(radius, list):
@@ -60,7 +76,7 @@ def unsharp_masked(
 def limit_usm(
     clip: vs.VideoNode, blur: int | vs.VideoNode | VSFunction = 1, thr: int | tuple[int, int] = 3,
     elast: float = 4.0, bright_thr: int | None = None, planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """Limited unsharp_masked."""
 
     if callable(blur):
@@ -84,20 +100,21 @@ def limit_usm(
 def fine_sharp(
     clip: vs.VideoNode, mode: int = 1, sstr: float = 2.0, cstr: float | None = None, xstr: float = 0.19,
     lstr: float = 1.49, pstr: float = 1.272, ldmp: float | None = None, planes: PlanesT = 0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = FunctionUtil(clip, fine_sharp, planes)
 
     if cstr is None:
-        cstr = interpolate.CubicSpline(
-            x=(0, 0.5, 1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 8.0, 255.0),
-            y=(0, 0.1, 0.6, 0.9, 1.0, 1.09, 1.15, 1.19, 1.249, 1.5)
-        )(sstr)
+        cs = interpolate.CubicSpline(
+            (0, 0.5, 1.0, 2.0, 2.5, 3.0, 3.5, 4.0, 8.0, 255.0),
+            (0, 0.1, 0.6, 0.9, 1.0, 1.09, 1.15, 1.19, 1.249, 1.5)
+        )
+        cstr = float(cs(np.asarray(sstr)))
 
     if ldmp is None:
         ldmp = sstr + 0.1
 
     blur_kernel = BlurMatrix.BINOMIAL()
-    blur_kernel2 = blur_kernel
+    blur_kernel2: GenericVSFunction[ConstantFormatVideoNode] = blur_kernel
 
     if mode < 0:
         cstr **= 0.8
@@ -139,9 +156,12 @@ def fine_sharp(
 
 
 def soothe(
-    flt: vs.VideoNode, src: vs.VideoNode, spatial_strength: int = 0, temporal_strength: int = 25,
-    spatial_radius: int = 1, temporal_radius: int = 1, scenechange: bool = False, planes: PlanesT = 0
-) -> vs.VideoNode:
+    flt: vs.VideoNode, src: vs.VideoNode,
+    spatial_strength: int = 0, temporal_strength: int = 25,
+    spatial_radius: int = 1, temporal_radius: int = 1,
+    scenechange: bool = False,
+    planes: PlanesT = 0
+) -> ConstantFormatVideoNode:
     sharp_diff = src.std.MakeDiff(flt, planes)
 
     expr = (
