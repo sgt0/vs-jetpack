@@ -288,33 +288,22 @@ def median_blur(
 
 
 def bilateral(
-    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | list[float] | None = None,
-    sigmaR: float | list[float] | None = None, algorithm: int | None = None, pbfic_num: int | list[int] | None = None,
-    radius: int | list[int] | None = None, device_id: int | None = None, num_streams: int | None = None,
-    use_shared_memory: bool | None = None, block_size: int | tuple[int, int] | None = None,
-    backend: BilateralBackend = BilateralBackend.CPU, planes: PlanesT = None,
+    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | Sequence[float] | None = None,
+    sigmaR: float | Sequence[float] | None = None, backend: BilateralBackend = BilateralBackend.CPU, **kwargs: Any
 ) -> ConstantFormatVideoNode:
-    func = FunctionUtil(clip, bilateral, planes)
+    func = FunctionUtil(clip, bilateral)
+
+    if sigmaS:
+        sigmaS = func.norm_seq(sigmaS, 0)
+    if sigmaR:
+        sigmaR = func.norm_seq(sigmaR, 0)
 
     if backend == BilateralBackend.CPU:
-        bilateral_args = KwargsNotNone(
-            ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=func.norm_planes, algorithm=algorithm, PBFICnum=pbfic_num
-        )
+        bilateral_args = KwargsNotNone(ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=func.norm_planes)
     else:
-        bilateral_args = KwargsNotNone(
-            sigma_spatial=sigmaS,
-            sigma_color=sigmaR,
-            radius=radius,
-            device_id=device_id,
-            num_streams=num_streams,
-            use_shared_memory=use_shared_memory,
-            ref=ref,
-        )
+        bilateral_args = KwargsNotNone(sigma_spatial=sigmaS, sigma_color=sigmaR, ref=ref)
 
-        if backend == BilateralBackend.GPU_RTC:
-            block_x, block_y = normalize_seq(block_size, 2)
-
-            bilateral_args |= KwargsNotNone(block_x=block_x, block_y=block_y)
+    bilateral_args |= kwargs
 
     return func.return_clip(getattr(func.work_clip, backend).Bilateral(**bilateral_args))
 
