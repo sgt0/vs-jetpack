@@ -4,7 +4,10 @@ from itertools import count
 from typing import Iterable
 
 from vsexprtools import ExprOp, ExprVars, combine, norm_expr
-from vstools import ConstantFormatVideoNode, CustomIntEnum, CustomNotImplementedError, FuncExceptT, PlanesT, StrList, check_variable_format, flatten_vnodes, vs
+from vstools import (
+    ConstantFormatVideoNode, CustomIntEnum, CustomNotImplementedError, FuncExceptT, PlanesT, StrList,
+    check_variable_format, flatten_vnodes, vs
+)
 
 __all__ = [
     'MeanMode'
