@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable, Sequence, TypeAlias, TypeVar
+from typing import Sequence, TypeAlias
 
-import vapoursynth as vs
 from jetpytools import (
     F0, F1, F2, P0, P1, P2, R0, R1, R2, T0, T1, T2, ByteData, ComparatorFunc, F, KwargsT, Nb, P, R, R_contra,
     SimpleByteData, SimpleByteDataArray, SingleOrArr, SingleOrArrOpt, SingleOrSeq, SingleOrSeqOpt, SoftRange,
@@ -14,14 +13,14 @@ from jetpytools import (
 __all__ = [
     'T', 'T0', 'T1', 'T2', 'T_contra',
 
-    'F', 'F0', 'F1', 'F2', 'F_VD',
+    'F', 'F0', 'F1', 'F2',
 
     'P', 'P0', 'P1', 'P2',
     'R', 'R0', 'R1', 'R2', 'R_contra',
 
     'Nb',
 
-    'PlanesT', 'VideoNodeIterable',
+    'PlanesT',
 
     'FrameRange', 'FrameRangeN', 'FrameRangesN',
 
@@ -50,15 +49,9 @@ __all__ = [
     'ComparatorFunc'
 ]
 
-F_VD = TypeVar('F_VD', bound=Callable[..., vs.VideoNode])
 
 PlanesT: TypeAlias = int | Sequence[int] | None
 
 FrameRange: TypeAlias = SoftRange
 FrameRangeN: TypeAlias = SoftRangeN
 FrameRangesN: TypeAlias = SoftRangesN
-
-
-VideoNodeIterable: TypeAlias = vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]] | Iterable[
-    vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]]
-]

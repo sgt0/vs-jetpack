@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Protocol, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Protocol, TypeVar, Union
 
 import vapoursynth as vs
 
@@ -10,6 +10,8 @@ __all__ = [
     'MissingT', 'MISSING',
 
     'FuncExceptT',
+
+    'VideoNodeT', 'VideoNodeIterableT',
 
     'DataType', 'VSMapValue', 'BoundVSMapValue', 'VSMapValueCallback',
 
@@ -23,11 +25,17 @@ __all__ = [
 
     'PassthroughC',
 
-    'ConstantFormatVideoNode', 'VideoNodeT'
+    'ConstantFormatVideoNode',
 ]
 
 
 VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
+
+VideoNodeIterableT = Union[
+    VideoNodeT,
+    Iterable[VideoNodeT | Iterable[VideoNodeT]],
+    Iterable[VideoNodeT | Iterable[VideoNodeT | Iterable[VideoNodeT]]]
+]
 
 
 _VSMapValue = Union[
