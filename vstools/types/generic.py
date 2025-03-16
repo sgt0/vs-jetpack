@@ -26,6 +26,8 @@ __all__ = [
     'PassthroughC',
 
     'ConstantFormatVideoNode',
+
+    'F_VD'
 ]
 
 
@@ -70,6 +72,9 @@ HoldsVideoFormatT = vs.VideoNode | vs.VideoFrame | vs.VideoFormat
 
 HoldsPropValueT = vs.FrameProps | vs.VideoFrame | vs.AudioFrame | vs.VideoNode | vs.AudioNode
 """Types that can hold :py:attr:`vs.FrameProps`."""
+
+
+F_VD = TypeVar("F_VD", bound=Callable[..., vs.VideoNode])
 
 
 class VSFunctionNoArgs(Protocol):
