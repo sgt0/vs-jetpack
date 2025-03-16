@@ -3,12 +3,12 @@ from __future__ import annotations
 import string
 
 from functools import partial, wraps
-from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, overload
+from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, Union, overload
 from weakref import WeakValueDictionary
 
 import vapoursynth as vs
 
-from jetpytools import CustomIndexError, CustomStrEnum, CustomValueError, FuncExceptT, normalize_seq
+from jetpytools import P, CustomIndexError, CustomStrEnum, CustomValueError, FuncExceptT, normalize_seq
 
 from ..enums import ColorRange, ColorRangeT, Matrix
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
@@ -757,14 +757,14 @@ def limiter(
 
 @overload
 def limiter(
-    _func: Callable[..., VideoNodeT],
+    _func: Callable[P, ConstantFormatVideoNode],
     /,
     min_val: float | Sequence[float] | None = None,
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> Callable[..., VideoNodeT]:
+) -> Callable[P, ConstantFormatVideoNode]:
     ...
 
 @overload
@@ -774,18 +774,22 @@ def limiter(
     max_val: float | Sequence[float] | None = None,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> Callable[[Callable[..., VideoNodeT]], Callable[..., VideoNodeT]]:
+) -> Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]:
     ...
 
 def limiter(
-    clip: vs.VideoNode | Callable[..., VideoNodeT] | None = None,
+    clip_or_func: vs.VideoNode | Callable[P, ConstantFormatVideoNode] | None = None,
     /,
     min_val: float | Sequence[float] | None = None,
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
     func: FuncExceptT | None = None
-) -> Any:
+) -> Union[
+    ConstantFormatVideoNode,
+    Callable[P, ConstantFormatVideoNode],
+    Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]
+]:
     """
     Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
     if clip format is not integer, a min/max val is specified or tv_range is True.
@@ -800,14 +804,17 @@ def limiter(
                         This should only be set by VS package developers.
     :return:            Clamped clip.
     """
-    if callable(clip):
-        @wraps(clip)
-        def _wrapper(*args: Any, **kwargs: Any) -> vs.VideoNode:
-            return limiter(clip(*args, **kwargs), min_val, max_val, tv_range=tv_range, func=func or clip)
+    if callable(clip_or_func):
+        _func = clip_or_func
+
+        @wraps(_func)
+        def _wrapper(*args: P.args, **kwargs: P.kwargs) -> ConstantFormatVideoNode:
+            return limiter(_func(*args, **kwargs), min_val, max_val, tv_range=tv_range, func=func or _func)
 
         return _wrapper
 
     func = func or limiter
+    clip = clip_or_func
 
     if clip is None:
         return partial(limiter, min_val=min_val, max_val=max_val, tv_range=tv_range, func=func)

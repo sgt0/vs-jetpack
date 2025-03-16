@@ -3,16 +3,16 @@ from __future__ import annotations
 import inspect
 
 from functools import partial, wraps
-from typing import Any, Callable, Literal, cast, overload
+from typing import Any, Callable, Literal, Union, overload
 
-from jetpytools import CustomValueError, FuncExceptT, KwargsT, T
+from jetpytools import P, CustomValueError, FuncExceptT, KwargsT, T
 
 from ..enums import (
     ChromaLocation, ChromaLocationT, ColorRange, ColorRangeT, FieldBased, FieldBasedT, Matrix, MatrixT, Primaries,
     PrimariesT, PropEnum, Transfer, TransferT
 )
 from ..functions import DitherType, check_variable_format, depth
-from ..types import F_VD, ConstantFormatVideoNode, HoldsVideoFormatT, VideoFormatT
+from ..types import ConstantFormatVideoNode, HoldsVideoFormatT, VideoFormatT, VideoNodeT
 from . import vs_proxy as vs
 from .cache import DynamicClipsCache
 from .info import get_depth
@@ -70,38 +70,40 @@ def finalize_clip(
 
 @overload
 def finalize_output(
-    function: None = None, /, *, bits: int | None = 10,
+    function: Callable[P, vs.VideoNode], /, *, bits: int | None = 10,
     clamp_tv_range: bool = True, dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
-) -> Callable[[F_VD], F_VD] | F_VD:
+) -> Callable[P, ConstantFormatVideoNode]:
     ...
 
 
 @overload
 def finalize_output(
-    function: F_VD, /, *, bits: int | None = 10,
+    *,
+    bits: int | None = 10,
     clamp_tv_range: bool = True, dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
-) -> F_VD:
+) -> Callable[[Callable[P, vs.VideoNode]], Callable[P, ConstantFormatVideoNode]]:
     ...
 
 
 def finalize_output(
-    function: F_VD | None = None, /, *, bits: int | None = 10,
+    function: Callable[P, vs.VideoNode] | None = None,
+    /, *,
+    bits: int | None = 10,
     clamp_tv_range: bool = True, dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
-) -> Callable[[F_VD], F_VD] | F_VD:
+) -> Union[
+    Callable[P, vs.VideoNode],
+    Callable[[Callable[P, vs.VideoNode]], Callable[P, ConstantFormatVideoNode]]
+]:
     """Decorator implementation of finalize_clip."""
 
     if function is None:
-        return cast(
-            Callable[[F_VD], F_VD],
-            partial(finalize_output, bits=bits, clamp_tv_range=clamp_tv_range, dither_type=dither_type, func=func)
-        )
+        return partial(finalize_output, bits=bits, clamp_tv_range=clamp_tv_range, dither_type=dither_type, func=func)
 
     @wraps(function)
-    def _wrapper(*args: Any, **kwargs: Any) -> vs.VideoNode:
-        assert function
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> ConstantFormatVideoNode:
         return finalize_clip(function(*args, **kwargs), bits, clamp_tv_range, dither_type, func=func)
 
-    return cast(F_VD, _wrapper)
+    return _wrapper
 
 
 def initialize_clip(
@@ -114,7 +116,7 @@ def initialize_clip(
     field_based: FieldBasedT | None = None,
     strict: bool = False,
     dither_type: DitherType = DitherType.AUTO, *, func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Initialize a clip with default props.
 
@@ -148,6 +150,8 @@ def initialize_clip(
 
     func = func or initialize_clip
 
+    assert check_variable_format(clip, func)
+
     values: list[tuple[type[PropEnum], Any]] = [
         (Matrix, matrix),
         (Transfer, transfer),
@@ -172,7 +176,25 @@ def initialize_clip(
 
 @overload
 def initialize_input(
-    function: None = None, /, *, bits: int | None = 16,
+    function: Callable[P, VideoNodeT],
+    /, *,
+    bits: int | None = 16,
+    matrix: MatrixT | None = None,
+    transfer: TransferT | None = None,
+    primaries: PrimariesT | None = None,
+    chroma_location: ChromaLocationT | None = None,
+    color_range: ColorRangeT | None = None,
+    field_based: FieldBasedT | None = None,
+    strict: bool = False,
+    dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
+) -> Callable[P, VideoNodeT]:
+    ...
+
+
+@overload
+def initialize_input(
+    *,
+    bits: int | None = 16,
     matrix: MatrixT | None = None,
     transfer: TransferT | None = None,
     primaries: PrimariesT | None = None,
@@ -181,13 +203,14 @@ def initialize_input(
     field_based: FieldBasedT | None = None,
     dither_type: DitherType = DitherType.AUTO,
     func: FuncExceptT | None = None
-) -> Callable[[F_VD], F_VD]:
+) -> Callable[[Callable[P, VideoNodeT]], Callable[P, VideoNodeT]]:
     ...
 
 
-@overload
 def initialize_input(
-    function: F_VD, /, *, bits: int | None = 16,
+    function: Callable[P, vs.VideoNode] | None = None,
+    /, *,
+    bits: int | None = 16,
     matrix: MatrixT | None = None,
     transfer: TransferT | None = None,
     primaries: PrimariesT | None = None,
@@ -196,24 +219,22 @@ def initialize_input(
     field_based: FieldBasedT | None = None,
     strict: bool = False,
     dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
-) -> F_VD:
-    ...
-
-
-def initialize_input(
-    function: F_VD | None = None, /, *, bits: int | None = 16,
-    matrix: MatrixT | None = None,
-    transfer: TransferT | None = None,
-    primaries: PrimariesT | None = None,
-    chroma_location: ChromaLocationT | None = None,
-    color_range: ColorRangeT | None = None,
-    field_based: FieldBasedT | None = None,
-    strict: bool = False,
-    dither_type: DitherType = DitherType.AUTO, func: FuncExceptT | None = None
-) -> Callable[[F_VD], F_VD] | F_VD:
+) -> Union[
+    Callable[P, VideoNodeT],
+    Callable[[Callable[P, VideoNodeT]], Callable[P, VideoNodeT]]
+]:
     """
     Decorator implementation of ``initialize_clip``
     """
+
+    if function is None:
+        return partial(
+            initialize_input,
+            bits=bits,
+            matrix=matrix, transfer=transfer, primaries=primaries,
+            chroma_location=chroma_location, color_range=color_range,
+            field_based=field_based, strict=strict, dither_type=dither_type, func=func
+        )
 
     init_args = dict[str, Any](
         bits=bits,
@@ -222,34 +243,31 @@ def initialize_input(
         field_based=field_based, strict=strict, dither_type=dither_type, func=func
     )
 
-    if function is None:
-        return cast(Callable[[F_VD], F_VD], partial(initialize_input, **init_args))
-
     @wraps(function)
-    def _wrapper(*args: Any, **kwargs: Any) -> vs.VideoNode:
-        assert function
-
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> VideoNodeT:
         args_l = list(args)
+
         for i, obj in enumerate(args_l):
             if isinstance(obj, vs.VideoNode):
                 args_l[i] = initialize_clip(obj, **init_args)
-                return function(*args_l, **kwargs)
+                return function(*args_l, **kwargs)  # type: ignore
 
         kwargs2 = kwargs.copy()
+
         for name, obj in kwargs2.items():
             if isinstance(obj, vs.VideoNode):
                 kwargs2[name] = initialize_clip(obj, **init_args)
-                return function(*args, **kwargs2)
+                return function(*args, **kwargs2)  # type: ignore
 
         for name, param in inspect.signature(function).parameters.items():
             if param.default is not inspect.Parameter.empty and isinstance(param.default, vs.VideoNode):
-                return function(*args, **kwargs2 | {name: initialize_clip(param.default, **init_args)})
+                return function(*args, **kwargs2 | {name: initialize_clip(param.default, **init_args)})  # type: ignore
 
         raise CustomValueError(
             'No VideoNode found in positional, keyword, nor default arguments!', func or initialize_input
         )
 
-    return cast(F_VD, _wrapper)
+    return _wrapper
 
 
 class ProcessVariableClip(DynamicClipsCache[T]):

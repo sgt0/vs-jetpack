@@ -3,16 +3,16 @@ from __future__ import annotations
 from fractions import Fraction
 from math import floor
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast, overload
 
 import vapoursynth as vs
 
-from jetpytools import MISSING, MissingT
+from jetpytools import MISSING, MissingT, P
 
 from ..enums import Align, BaseAlign
 from ..exceptions import InvalidSubsamplingError
-from ..functions.render import clip_data_gather
-from ..functions.timecodes import Keyframes
+from ..functions import Keyframes, check_variable_format, clip_data_gather
+from ..types import VideoNodeT
 from ..utils.cache import SceneBasedDynamicCache
 from .info import get_video_format
 
@@ -378,11 +378,10 @@ class _padder:
 
 padder = _padder()
 
-FINT = TypeVar('FINT', bound=Callable[..., vs.VideoNode])
-FFLOAT = TypeVar('FFLOAT', bound=Callable[..., vs.VideoNode])
 
-
-def pick_func_stype(clip: vs.VideoNode, func_int: FINT, func_float: FFLOAT) -> FINT | FFLOAT:
+def pick_func_stype(
+    clip: vs.VideoNode, func_int: Callable[P, VideoNodeT], func_float: Callable[P, VideoNodeT]
+) -> Callable[P, VideoNodeT]:
     """
     Pick the function matching the sample type of the clip's format.
 
@@ -393,7 +392,7 @@ def pick_func_stype(clip: vs.VideoNode, func_int: FINT, func_float: FFLOAT) -> F
     :return:            Function matching the sample type of your clip's format.
     """
 
-    assert clip.format
+    assert check_variable_format(clip, pick_func_stype)
 
     return func_float if clip.format.sample_type == vs.FLOAT else func_int
 
