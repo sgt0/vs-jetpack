@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 from itertools import count
-from typing import Any, Literal, Sequence, overload
+from typing import TYPE_CHECKING, Any, Literal, Sequence, overload
 
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
@@ -41,6 +41,10 @@ def box_blur(
 
     if mode == ConvMode.TEMPORAL:
         return BlurMatrix.MEAN(radius, mode=mode)(clip, planes, passes=passes, **kwargs)
+
+    if not TYPE_CHECKING:
+        if mode == ConvMode.SQUARE:
+            raise CustomValueError("Invalid mode specified", box_blur, mode)
 
     box_args = (
         planes,
