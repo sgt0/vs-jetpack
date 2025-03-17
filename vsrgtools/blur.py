@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal, Sequence, overload
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
 from vstools import (
-    ConstantFormatVideoNode, ConvMode, CustomValueError, FunctionUtil, KwargsT, OneDimConvModeT, PlanesT,
+    ConstantFormatVideoNode, ConvMode, CustomValueError, KwargsT, OneDimConvModeT, PlanesT,
     SpatialConvModeT, TempConvModeT, check_variable, check_variable_format, core, join, normalize_planes, normalize_seq,
     split, to_arr, vs
 )
@@ -291,19 +291,14 @@ def bilateral(
     clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | Sequence[float] | None = None,
     sigmaR: float | Sequence[float] | None = None, backend: BilateralBackend = BilateralBackend.CPU, **kwargs: Any
 ) -> ConstantFormatVideoNode:
-    func = FunctionUtil(clip, bilateral)
-
-    if sigmaS is not None:
-        sigmaS = func.norm_seq(sigmaS, 0)
-    if sigmaR is not None:
-        sigmaR = func.norm_seq(sigmaR, 0)
+    assert check_variable_format(clip, bilateral)
 
     if backend == BilateralBackend.CPU:
-        bilateral_args = KwargsT(ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=func.norm_planes)
+        bilateral_args = KwargsT(ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=normalize_planes(clip))
     else:
         bilateral_args = KwargsT(ref=ref, sigma_spatial=sigmaS, sigma_color=sigmaR)
 
-    return func.return_clip(getattr(func.work_clip, backend).Bilateral(**bilateral_args, **kwargs))
+    return getattr(clip, backend).Bilateral(**bilateral_args, **kwargs)
 
 
 def flux_smooth(
