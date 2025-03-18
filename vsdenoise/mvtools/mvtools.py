@@ -803,7 +803,9 @@ class MVTools:
             interpolated.append(self.mvtools.FlowInter(clip, super_clip, vect_b, vect_f, **flow_interpolate_args))
 
         if interleave:
-            interpolated = core.std.Interleave([clip, *interpolated])  # type: ignore
+            interpolated.insert(0, clip)
+
+            return core.std.Interleave(interpolated)
 
         return interpolated
 
