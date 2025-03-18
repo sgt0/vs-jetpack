@@ -170,16 +170,23 @@ class HardsubSignFades(HardsubMask):
     expand_mode: XxpandMode
 
     def __init__(
-        self, *args: Any, highpass: float = 0.0763, expand: int = 8, edgemask: GenericMaskT = SobelStd,
+        self,
+        ranges: FrameRangeN | FrameRangesN | None = None,
+        bound: BoundingBox | None = None,
+        highpass: float = 0.0763,
+        expand: int = 8,
+        edgemask: GenericMaskT = SobelStd,
         expand_mode: XxpandMode = XxpandMode.RECTANGLE,
-        **kwargs: Any
+        *,
+        blur: bool = False,
+        refframes: int | list[int | None] | None = None
     ) -> None:
         self.highpass = highpass
         self.expand = expand
         self.edgemask = edgemask
         self.expand_mode = expand_mode
 
-        super().__init__(*args, **kwargs)
+        super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         clipedge, refedge = (
@@ -214,16 +221,24 @@ class HardsubSign(HardsubMask):
     expand_mode: XxpandMode
 
     def __init__(
-        self, *args: Any, thr: float = 0.06, minimum: int = 1, expand: int = 8, inflate: int = 7,
+        self,
+        ranges: FrameRangeN | FrameRangesN | None = None,
+        bound: BoundingBox | None = None,
+        thr: float = 0.06,
+        minimum: int = 1,
+        expand: int = 8,
+        inflate: int = 7,
         expand_mode: XxpandMode = XxpandMode.RECTANGLE,
-        **kwargs: Any
+        *,
+        blur: bool = False,
+        refframes: int | list[int | None] | None = None
     ) -> None:
         self.thr = thr
         self.minimum = minimum
         self.expand = expand
         self.inflate = inflate
         self.expand_mode = expand_mode
-        super().__init__(*args, **kwargs)
+        super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
     @limiter
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -245,10 +260,18 @@ class HardsubSign(HardsubMask):
 class HardsubLine(HardsubMask):
     expand: int | None
 
-    def __init__(self, *args: Any, expand: int | None = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        ranges: FrameRangeN | FrameRangesN | None = None,
+        bound: BoundingBox | None = None,
+        expand: int | None = None,
+        *,
+        blur: bool = False,
+        refframes: int | list[int | None] | None = None
+    ) -> None:
         self.expand = expand
 
-        super().__init__(*args, **kwargs)
+        super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         assert check_variable(clip, self.__class__)
@@ -294,13 +317,23 @@ class HardsubLine(HardsubMask):
 
 
 class HardsubLineFade(HardsubLine):
-    def __init__(self, *args: Any, refframe: float = 0.5, **kwargs: Any) -> None:
+    ref_float: float
+
+    def __init__(
+        self,
+        ranges: FrameRangeN | FrameRangesN | None = None,
+        bound: BoundingBox | None = None,
+        expand: int | None = None,
+        refframe: float = 0.5,
+        *,
+        blur: bool = False,
+    ) -> None:
         if refframe < 0 or refframe > 1:
             raise CustomOverflowError('"refframe" must be between 0 and 1!', self.__class__)
 
         self.ref_float = refframe
 
-        super().__init__(*args, refframes=None, **kwargs)
+        super().__init__(ranges, bound, expand, blur=blur, refframes=None)
 
     def get_mask(self, clip: vs.VideoNode, /, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         self.refframes = [
@@ -317,12 +350,19 @@ class HardsubASS(HardsubMask):
     shift: int | None
 
     def __init__(
-        self, filename: str, *args: Any, fontdir: str | None = None, shift: int | None = None, **kwargs: Any
+        self,
+        filename: FilePathType,
+        ranges: FrameRangeN | FrameRangesN | None = None,
+        bound: BoundingBox | None = None,
+        *,
+        fontdir: str | None = None,
+        blur: bool = False,
+        refframes: int | list[int | None] | None = None
     ) -> None:
-        self.filename = filename
+        self.filename = str(filename)
         self.fontdir = fontdir
         self.shift = shift
-        super().__init__(*args, **kwargs)
+        super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
     @limiter
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
