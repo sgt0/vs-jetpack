@@ -231,7 +231,7 @@ class DitherType(CustomStrEnum):
 
         if in_bits > out_bits:
             return True
-
+        
         return in_range == ColorRange.FULL and bool(out_bits % in_bits)
 
 
