@@ -69,6 +69,9 @@ jobs:
       - name: Running mypy on vsrgtools
         run: uv run mypy vsrgtools
 
+      - name: Running mypy on vsmasktools
+        run: uv run mypy vsmasktools
+
       - name: Post webhook for failure
         if: failure()
         uses: tsickert/discord-webhook@v6.0.0
