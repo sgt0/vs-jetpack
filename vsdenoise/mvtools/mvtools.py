@@ -703,13 +703,44 @@ class MVTools:
             )
 
         return output
+    
+    @overload
+    def flow_interpolate(
+        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
+        vectors: MotionVectors | None = None, time: float | None = None,
+        ml: float | None = None, blend: bool | None = None,
+        thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: Literal[True] = ..., multi: int | None = None
+    ) -> vs.VideoNode:
+        ...
+
+    @overload
+    def flow_interpolate(
+        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
+        vectors: MotionVectors | None = None, time: float | None = None,
+        ml: float | None = None, blend: bool | None = None,
+        thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: Literal[False] = ..., multi: int | None = None
+    ) -> list[vs.VideoNode]:
+        ...
+
+    @overload
+    def flow_interpolate(
+        self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
+        vectors: MotionVectors | None = None, time: float | None = None,
+        ml: float | None = None, blend: bool | None = None,
+        thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: bool = ..., multi: int | None = None
+    ) -> vs.VideoNode | list[vs.VideoNode]:
+        ...
 
     def flow_interpolate(
         self, clip: vs.VideoNode | None = None, super: vs.VideoNode | None = None,
         vectors: MotionVectors | None = None, time: float | None = None,
         ml: float | None = None, blend: bool | None = None,
-        thscd: int | tuple[int | None, int | None] | None = None, interleave: bool = True
-    ) -> vs.VideoNode:
+        thscd: int | tuple[int | None, int | None] | None = None,
+        interleave: bool = True, multi: int | None = None
+    ) -> vs.VideoNode | list[vs.VideoNode]:
         """
         Motion interpolation function that creates an intermediate frame between two frames.
 
@@ -724,6 +755,7 @@ class MVTools:
                               If None, uses the vectors from this instance.
         :param time:          Time position between frames as a percentage (0.0-100.0).
                               Controls the interpolation position between frames.
+                              Does nothing if multi is specified.
         :param ml:            Mask scale parameter that controls occlusion mask strength.
                               Higher values produce weaker occlusion masks.
                               Used in MakeVectorOcclusionMaskTime for modes 3-5.
@@ -734,9 +766,10 @@ class MVTools:
                               First value is the block change threshold between frames.
                               Second value is the number of changed blocks needed for a scene change.
         :param interleave:    Whether to interleave the interpolated frames with the source clip.
+        :param multi:         Framerate multiplier.
 
-        :return:              Motion interpolated clip with frames created
-                              at the specified time position between input frames.
+        :return:              List of the motion interpolated frames if interleave=False else
+                              a motion interpolated clip.
         """
 
         clip = fallback(clip, self.clip)
@@ -750,10 +783,27 @@ class MVTools:
             time=time, ml=ml, blend=blend, thscd1=thscd1, thscd2=thscd2
         )
 
-        interpolated = self.mvtools.FlowInter(clip, super_clip, vect_b, vect_f, **flow_interpolate_args)
+        interpolated = list[vs.VideoNode]()
+
+        if multi:
+            if multi < 2:
+                raise CustomRuntimeError(
+                    'Invalid framerate multiplier specified!', self.flow_interpolate, f'{multi} < 2'
+                )
+
+            flow_interpolate_args.pop(time, None)  # type: ignore
+
+            for pos in range(1, multi):
+                time = pos / multi * 100
+
+                interpolated.append(
+                    self.mvtools.FlowInter(clip, super_clip, vect_b, vect_f, time=time, **flow_interpolate_args)
+                )
+        else:
+            interpolated.append(self.mvtools.FlowInter(clip, super_clip, vect_b, vect_f, **flow_interpolate_args))
 
         if interleave:
-            interpolated = core.std.Interleave([clip, interpolated])
+            interpolated = core.std.Interleave([clip, *interpolated])  # type: ignore
 
         return interpolated
 
