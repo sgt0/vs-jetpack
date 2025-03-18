@@ -21,6 +21,19 @@ __all__ = [
 ]
 
 
+# implementation: adg
+
+class _Plugin_adg_Core_Bound(Plugin):
+    """This class implements the module definitions for the "adg" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Mask(self, clip: VideoNode, luma_scaling: float | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_adg_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "adg" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Mask(self, luma_scaling: float | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
 # implementation: akarin
 
 _ReturnDict_akarin_Version = TypedDict(
@@ -203,6 +216,19 @@ class _Plugin_fmtc_VideoNode_Bound(Plugin):
     def resample(self, w: int | None = None, h: int | None = None, sx: _SingleAndSequence[float] | None = None, sy: _SingleAndSequence[float] | None = None, sw: _SingleAndSequence[float] | None = None, sh: _SingleAndSequence[float] | None = None, scale: float | None = None, scaleh: float | None = None, scalev: float | None = None, kernel: _SingleAndSequence[_DataType] | None = None, kernelh: _SingleAndSequence[_DataType] | None = None, kernelv: _SingleAndSequence[_DataType] | None = None, impulse: _SingleAndSequence[float] | None = None, impulseh: _SingleAndSequence[float] | None = None, impulsev: _SingleAndSequence[float] | None = None, taps: _SingleAndSequence[int] | None = None, tapsh: _SingleAndSequence[int] | None = None, tapsv: _SingleAndSequence[int] | None = None, a1: _SingleAndSequence[float] | None = None, a2: _SingleAndSequence[float] | None = None, a3: _SingleAndSequence[float] | None = None, a1h: _SingleAndSequence[float] | None = None, a2h: _SingleAndSequence[float] | None = None, a3h: _SingleAndSequence[float] | None = None, a1v: _SingleAndSequence[float] | None = None, a2v: _SingleAndSequence[float] | None = None, a3v: _SingleAndSequence[float] | None = None, kovrspl: _SingleAndSequence[int] | None = None, fh: _SingleAndSequence[float] | None = None, fv: _SingleAndSequence[float] | None = None, cnorm: _SingleAndSequence[int] | None = None, total: _SingleAndSequence[float] | None = None, totalh: _SingleAndSequence[float] | None = None, totalv: _SingleAndSequence[float] | None = None, invks: _SingleAndSequence[int] | None = None, invksh: _SingleAndSequence[int] | None = None, invksv: _SingleAndSequence[int] | None = None, invkstaps: _SingleAndSequence[int] | None = None, invkstapsh: _SingleAndSequence[int] | None = None, invkstapsv: _SingleAndSequence[int] | None = None, csp: int | None = None, css: _DataType | None = None, planes: _SingleAndSequence[float] | None = None, fulls: int | None = None, fulld: int | None = None, center: _SingleAndSequence[int] | None = None, cplace: _DataType | None = None, cplaces: _DataType | None = None, cplaced: _DataType | None = None, interlaced: int | None = None, interlacedd: int | None = None, tff: int | None = None, tffd: int | None = None, flt: int | None = None, cpuopt: int | None = None) -> ConstantFormatVideoNode: ...
     def stack16tonative(self) -> ConstantFormatVideoNode: ...
     def transfer(self, transs: _SingleAndSequence[_DataType] | None = None, transd: _SingleAndSequence[_DataType] | None = None, cont: float | None = None, gcor: float | None = None, bits: int | None = None, flt: int | None = None, fulls: int | None = None, fulld: int | None = None, logceis: int | None = None, logceid: int | None = None, cpuopt: int | None = None, blacklvl: float | None = None, sceneref: int | None = None, lb: float | None = None, lw: float | None = None, lws: float | None = None, lwd: float | None = None, ambient: float | None = None, match: int | None = None, gy: int | None = None, debug: int | None = None, sig_c: float | None = None, sig_t: float | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+# implementation: hysteresis
+
+class _Plugin_hysteresis_Core_Bound(Plugin):
+    """This class implements the module definitions for the "hysteresis" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Hysteresis(self, clipa: VideoNode, clipb: VideoNode, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_hysteresis_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "hysteresis" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Hysteresis(self, clipb: VideoNode, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
 
 # end implementation
 
@@ -618,8 +644,8 @@ class _Plugin_std_Core_Bound(Plugin):
 
     def SplitChannels(self, clip: AudioNode) -> _SingleAndSequence[AudioNode]: ...
     def SplitPlanes(self, clip: VideoNode) -> _SingleAndSequence[ConstantFormatVideoNode]: ...
-    def StackHorizontal(self, clips: _SingleAndSequence[VideoNode]) -> VideoNode: ...
-    def StackVertical(self, clips: _SingleAndSequence[VideoNode]) -> VideoNode: ...
+    def StackHorizontal(self, clips: _SingleAndSequence[VideoNode]) -> ConstantFormatVideoNode: ...
+    def StackVertical(self, clips: _SingleAndSequence[VideoNode]) -> ConstantFormatVideoNode: ...
     def TestAudio(self, channels: _SingleAndSequence[int] | None = None, bits: int | None = None, isfloat: int | None = None, samplerate: int | None = None, length: int | None = None) -> AudioNode: ...
     def Transpose(self, clip: VideoNode) -> ConstantFormatVideoNode: ...
     def Trim(self, clip: VideoNodeT, first: int | None = None, last: int | None = None, length: int | None = None) -> VideoNodeT: ...
@@ -722,6 +748,72 @@ class _Plugin_std_AudioNode_Bound(Plugin):
 
 # end implementation
 
+
+# implementation: sub
+
+class _Plugin_sub_Core_Bound(Plugin):
+    """This class implements the module definitions for the "sub" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ImageFile(self, clip: VideoNode, file: _DataType, id: int | None = None, palette: _SingleAndSequence[int] | None = None, gray: int | None = None, info: int | None = None, flatten: int | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+    def Subtitle(self, clip: VideoNode, text: _DataType, start: int | None = None, end: int | None = None, debuglevel: int | None = None, fontdir: _DataType | None = None, linespacing: float | None = None, margins: _SingleAndSequence[int] | None = None, sar: float | None = None, style: _DataType | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+    def TextFile(self, clip: VideoNode, file: _DataType, charset: _DataType | None = None, scale: float | None = None, debuglevel: int | None = None, fontdir: _DataType | None = None, linespacing: float | None = None, margins: _SingleAndSequence[int] | None = None, sar: float | None = None, style: _DataType | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_sub_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "sub" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ImageFile(self, file: _DataType, id: int | None = None, palette: _SingleAndSequence[int] | None = None, gray: int | None = None, info: int | None = None, flatten: int | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+    def Subtitle(self, text: _DataType, start: int | None = None, end: int | None = None, debuglevel: int | None = None, fontdir: _DataType | None = None, linespacing: float | None = None, margins: _SingleAndSequence[int] | None = None, sar: float | None = None, style: _DataType | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+    def TextFile(self, file: _DataType, charset: _DataType | None = None, scale: float | None = None, debuglevel: int | None = None, fontdir: _DataType | None = None, linespacing: float | None = None, margins: _SingleAndSequence[int] | None = None, sar: float | None = None, style: _DataType | None = None, blend: int | None = None, matrix: int | None = None, matrix_s: _DataType | None = None, transfer: int | None = None, transfer_s: _DataType | None = None, primaries: int | None = None, primaries_s: _DataType | None = None, range: int | None = None) -> ConstantFormatVideoNode: ...
+
+
+# end implementation
+
+
+# implementation: tcanny
+
+class _Plugin_tcanny_Core_Bound(Plugin):
+    """This class implements the module definitions for the "tcanny" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def TCanny(self, clip: VideoNode, sigma: _SingleAndSequence[float] | None = None, sigma_v: _SingleAndSequence[float] | None = None, t_h: float | None = None, t_l: float | None = None, mode: int | None = None, op: int | None = None, scale: float | None = None, opt: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_tcanny_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "tcanny" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def TCanny(self, sigma: _SingleAndSequence[float] | None = None, sigma_v: _SingleAndSequence[float] | None = None, t_h: float | None = None, t_l: float | None = None, mode: int | None = None, op: int | None = None, scale: float | None = None, opt: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+# implementation: tedgemask
+
+class _Plugin_tedgemask_Core_Bound(Plugin):
+    """This class implements the module definitions for the "tedgemask" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def TEdgeMask(self, clip: VideoNode, threshold: _SingleAndSequence[float] | None = None, type: int | None = None, link: int | None = None, scale: float | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_tedgemask_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "tedgemask" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def TEdgeMask(self, threshold: _SingleAndSequence[float] | None = None, type: int | None = None, link: int | None = None, scale: float | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+# implementation: text
+
+class _Plugin_text_Core_Bound(Plugin):
+    """This class implements the module definitions for the "text" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ClipInfo(self, clip: VideoNode, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def CoreInfo(self, clip: VideoNode | None = None, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def FrameNum(self, clip: VideoNode, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def FrameProps(self, clip: VideoNode, props: _SingleAndSequence[_DataType] | None = None, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def Text(self, clip: VideoNode, text: _DataType, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_text_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "text" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ClipInfo(self, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def CoreInfo(self, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def FrameNum(self, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def FrameProps(self, props: _SingleAndSequence[_DataType] | None = None, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+    def Text(self, text: _DataType, alignment: int | None = None, scale: int | None = None) -> ConstantFormatVideoNode: ...
+
+
+# end implementation
+
     
 # implementation: vszip
 
@@ -754,6 +846,43 @@ class _Plugin_vszip_VideoNode_Bound(Plugin):
     def RFS(self, clipb: VideoNode, frames: _SingleAndSequence[int], mismatch: int | None = None, planes: _SingleAndSequence[int] | None = None) -> VideoNode: ...
 
 # end implementation
+
+
+## implementation: warp
+
+class _Plugin_warp_Core_Bound(Plugin):
+    """This class implements the module definitions for the "warp" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ABlur(self, clip: VideoNode, blur: int | None = None, type: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+    def ASobel(self, clip: VideoNode, thresh: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+    def AWarp(self, clip: VideoNode, mask: VideoNode, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None, cplace: _DataType | None = None) -> ConstantFormatVideoNode: ...
+    def AWarpSharp2(self, clip: VideoNode, thresh: int | None = None, blur: int | None = None, type: int | None = None, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None, cplace: _DataType | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_warp_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "warp" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ABlur(self, blur: int | None = None, type: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+    def ASobel(self, thresh: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+    def AWarp(self, mask: VideoNode, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None, cplace: _DataType | None = None) -> ConstantFormatVideoNode: ...
+    def AWarpSharp2(self, thresh: int | None = None, blur: int | None = None, type: int | None = None, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None, opt: int | None = None, cplace: _DataType | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+# implementation: warpsf
+
+class _Plugin_warpsf_Core_Bound(Plugin):
+    """This class implements the module definitions for the "warpsf" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ABlur(self, clip: VideoNode, blur: int | None = None, type: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+    def ASobel(self, clip: VideoNode, thresh: float | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+    def AWarp(self, clip: VideoNode, mask: VideoNode, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_warpsf_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "warpsf" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def ABlur(self, blur: int | None = None, type: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+    def ASobel(self, thresh: float | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+    def AWarp(self, mask: VideoNode, depth: _SingleAndSequence[int] | None = None, chroma: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
 
     
 # implementation: wwxd
@@ -883,6 +1012,11 @@ class VideoNode(RawNode):
         prefetch: int = 0, backlog: int = -1
     ) -> None: ...
 
+    # instance_bound_VideoNode: adg
+    @property
+    def adg(self) -> _Plugin_adg_VideoNode_Bound:
+        """Adaptive grain"""
+    # end instance
     # instance_bound_VideoNode: akarin
     @property
     def akarin(self) -> _Plugin_akarin_VideoNode_Bound:
@@ -902,6 +1036,11 @@ class VideoNode(RawNode):
     @property
     def fmtc(self) -> _Plugin_fmtc_VideoNode_Bound:
         """Format converter"""
+    # end instance
+    # instance_bound_VideoNode: hysteresis
+    @property
+    def hysteresis(self) -> _Plugin_hysteresis_VideoNode_Bound:
+        """Hysteresis filter."""
     # end instance
     # instance_bound_VideoNode: imwri
     @property
@@ -943,10 +1082,40 @@ class VideoNode(RawNode):
     def std(self) -> _Plugin_std_VideoNode_Bound[VideoNode]:
         """VapourSynth Core Functions"""
     # end instance
+    # instance_bound_VideoNode: sub
+    @property
+    def sub(self) -> _Plugin_sub_VideoNode_Bound:
+        """A subtitling filter based on libass and FFmpeg."""
+    # end instance
+    # instance_bound_VideoNode: tcanny
+    @property
+    def tcanny(self) -> _Plugin_tcanny_VideoNode_Bound:
+        """Build an edge map using canny edge detection"""
+    # end instance
+    # instance_bound_VideoNode: tedgemask
+    @property
+    def tedgemask(self) -> _Plugin_tedgemask_VideoNode_Bound:
+        """Edge detection plugin"""
+    # end instance
+    # instance_bound_VideoNode: text
+    @property
+    def text(self) -> _Plugin_text_VideoNode_Bound:
+        """VapourSynth Text"""
+    # end instance
     # instance_bound_VideoNode: vszip
     @property
     def vszip(self) -> _Plugin_vszip_VideoNode_Bound:
         """VapourSynth Zig Image Process"""
+    # end instance
+    # instance_bound_VideoNode: warp
+    @property
+    def warp(self) -> _Plugin_warp_VideoNode_Bound:
+        """Sharpen images by warping"""
+    # end instance
+    # instance_bound_VideoNode: warpsf
+    @property
+    def warpsf(self) -> _Plugin_warpsf_VideoNode_Bound:
+        """Warpsharp floating point version"""
     # end instance
     # instance_bound_VideoNode: wwxd
     @property
@@ -1037,6 +1206,11 @@ class Core:
 
     def version_number(self) -> int: ...
 
+    # instance_bound_Core: adg
+    @property
+    def adg(self) -> _Plugin_adg_Core_Bound:
+        """Adaptive grain"""
+    # end instance
     # instance_bound_Core: akarin
     @property
     def akarin(self) -> _Plugin_akarin_Core_Bound:
@@ -1081,6 +1255,11 @@ class Core:
     @property
     def fmtc(self) -> _Plugin_fmtc_Core_Bound:
         """Format converter"""
+    # end instance
+    # instance_bound_Core: hysteresis
+    @property
+    def hysteresis(self) -> _Plugin_hysteresis_Core_Bound:
+        """Hysteresis filter."""
     # end instance
     # instance_bound_Core: imwri
     @property
@@ -1127,12 +1306,41 @@ class Core:
     def std(self) -> _Plugin_std_Core_Bound:
         """VapourSynth Core Functions"""
     # end instance
+    # instance_bound_Core: sub
+    @property
+    def sub(self) -> _Plugin_sub_Core_Bound:
+        """A subtitling filter based on libass and FFmpeg."""
+    # end instance
+    @property
+    def tcanny(self) -> _Plugin_tcanny_Core_Bound:
+        """Build an edge map using canny edge detection"""
+    # end instance
+    # instance_bound_Core: tedgemask
+    @property
+    def tedgemask(self) -> _Plugin_tedgemask_Core_Bound:
+        """Edge detection plugin"""
+    # end instance
+    # instance_bound_Core: text
+    @property
+    def text(self) -> _Plugin_text_Core_Bound:
+        """VapourSynth Text"""
+    # end instance
     # instance_bound_Core: vszip
     @property
     def vszip(self) -> _Plugin_vszip_Core_Bound:
         """VapourSynth Zig Image Process"""
     # end instance
     # instance_bound_Core: wwxd
+    # instance_bound_Core: warp
+    @property
+    def warp(self) -> _Plugin_warp_Core_Bound:
+        """Sharpen images by warping"""
+    # end instance
+    # instance_bound_Core: warpsf
+    @property
+    def warpsf(self) -> _Plugin_warpsf_Core_Bound:
+        """Warpsharp floating point version"""
+    # end instance
     @property
     def wwxd(self) -> _Plugin_wwxd_Core_Bound:
         """Scene change detection approximately like Xvid's"""
