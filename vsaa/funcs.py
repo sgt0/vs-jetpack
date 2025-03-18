@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import partial
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from vsexprtools import norm_expr
@@ -9,8 +8,8 @@ from vskernels import Bilinear, Box, Catrom, NoScale, Scaler, ScalerT
 from vsmasktools import EdgeDetect, EdgeDetectT, Prewitt, ScharrTCanny
 from vsrgtools import MeanMode, bilateral, box_blur, unsharp_masked
 from vstools import (
-    MISSING, CustomRuntimeError, CustomValueError, FormatsMismatchError, FunctionUtil, KwargsT,
-    MissingT, PlanesT, VSFunction, fallback, get_peak_value, get_y, limiter, scale_mask, vs
+    CustomValueError, FunctionUtil, KwargsT, PlanesT, VSFunction,
+    fallback, get_peak_value, get_y, limiter, scale_mask, vs
 )
 
 from .abstract import Antialiaser
@@ -126,22 +125,21 @@ def clamp_aa(
             mask = box_blur(mask.std.Binarize(bin_thr).std.Maximum())
             mask = mask.std.Minimum().std.Deflate()
 
-        clamped = func.work_clip.std.MaskedMerge(clamped, mask, func.norm_planes)  # type: ignore
+        clamped = func.work_clip.std.MaskedMerge(clamped, mask, func.norm_planes)
 
     return func.return_clip(clamped)
 
 
 if TYPE_CHECKING:
-    from vsscale import ArtCNN, ShaderFile
+    from vsscale import ArtCNN
 
     def based_aa(
         clip: vs.VideoNode, rfactor: float = 2.0,
-        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60,
+        mask: vs.VideoNode | EdgeDetectT | None = Prewitt, mask_thr: int = 60,
         pscale: float = 0.0, downscaler: ScalerT | None = None,
-        supersampler: ScalerT | ShaderFile | Path | Literal[False] = ArtCNN,
-        double_rate: bool = False,
-        antialiaser: Antialiaser | None = None,
-        prefilter: vs.VideoNode | VSFunction | Literal[False] = False,
+        supersampler: ScalerT | Literal[False] | None = ArtCNN,
+        double_rate: bool = False, antialiaser: Antialiaser | None = None,
+        prefilter: vs.VideoNode | VSFunction | None = None,
         postfilter: VSFunction | Literal[False] | None = None,
         show_mask: bool = False, **aa_kwargs: Any
     ) -> vs.VideoNode:
@@ -196,7 +194,6 @@ if TYPE_CHECKING:
 
         :return:                Anti-aliased clip or edge detection mask if show_mask is True.
 
-        :raises CustomRuntimeError:     If required packages are missing.
         :raises CustomValueError:       If rfactor is not above 0.0, or invalid prefilter/postfilter is passed.
         """
 
@@ -204,12 +201,11 @@ if TYPE_CHECKING:
 else:
     def based_aa(
         clip: vs.VideoNode, rfactor: float = 2.0,
-        mask: vs.VideoNode | EdgeDetectT | Literal[False] = Prewitt, mask_thr: int = 60,
+        mask: vs.VideoNode | EdgeDetectT | None = Prewitt, mask_thr: int = 60,
         pscale: float = 0.0, downscaler: ScalerT | None = None,
-        supersampler: ScalerT | ShaderFile | Path | Literal[False] | MissingT = MISSING,
-        double_rate: bool = False,
-        antialiaser: Antialiaser | None = None,
-        prefilter: vs.VideoNode | VSFunction | Literal[False] = False,
+        supersampler: ScalerT | Literal[False] | None = None,
+        double_rate: bool = False, antialiaser: Antialiaser | None = None,
+        prefilter: vs.VideoNode | VSFunction | None = None,
         postfilter: VSFunction | Literal[False] | None = None,
         show_mask: bool = False, **aa_kwargs: Any
     ) -> vs.VideoNode:
@@ -218,32 +214,17 @@ else:
 
         if supersampler is False:
             supersampler = downscaler = NoScale
-        else:
-            if supersampler is MISSING:
-                try:
-                    from vsscale import ArtCNN  # noqa: F811
-                except ModuleNotFoundError:
-                    raise CustomRuntimeError(
-                        'You\'re missing the "vsscale" package! Install it with "pip install vsscale".', based_aa
-                    )
+        elif supersampler is None:
+            from vsscale import ArtCNN
 
-                supersampler = ArtCNN.C16F64()
-            elif isinstance(supersampler, (str, Path)):
-                try:
-                    from vsscale import PlaceboShader  # noqa: F811
-                except ModuleNotFoundError:
-                    raise CustomRuntimeError(
-                        'You\'re missing the "vsscale" package! Install it with "pip install vsscale".', based_aa
-                    )
-
-                supersampler = PlaceboShader(supersampler)
+            supersampler = ArtCNN()
 
         if rfactor <= 0.0:
             raise CustomValueError('rfactor must be greater than 0!', based_aa, rfactor)
 
-        aaw, aah = [(round(r * rfactor) + 1) & ~1 for r in (func.work_clip.width, func.work_clip.height)]
+        aaw, aah = [round(dimension * rfactor) for dimension in (func.work_clip.width, func.work_clip.height)]
 
-        if downscaler is None:
+        if not downscaler:
             downscaler = Box if (
                 max(aaw, func.work_clip.width) % min(aaw, func.work_clip.width) == 0
                 and max(aah, func.work_clip.height) % min(aah, func.work_clip.height) == 0
@@ -252,7 +233,7 @@ else:
         if rfactor < 1.0:
             downscaler, supersampler = supersampler, downscaler
 
-        if not isinstance(mask, vs.VideoNode) and mask is not False:
+        if mask and not isinstance(mask, vs.VideoNode):
             mask = EdgeDetect.ensure_obj(mask, based_aa).edgemask(func.work_clip, 0)
             mask = mask.std.Binarize(scale_mask(mask_thr, 8, func.work_clip))
 
@@ -260,31 +241,22 @@ else:
             mask = limiter(mask, func=based_aa)
 
         if show_mask:
-            if mask is False:
-                raise CustomValueError("Can't show mask when mask is False!", based_aa, mask)
+            if not mask:
+                raise CustomValueError("Can't show mask when no mask is used!", based_aa, mask)
             return mask
 
-        if callable(prefilter):
-            ss_clip = prefilter(func.work_clip)
-        elif isinstance(prefilter, vs.VideoNode):
-            FormatsMismatchError.check(based_aa, func.work_clip, prefilter)
-            ss_clip = prefilter
-        else:
-            ss_clip = func.work_clip
+        ss_clip = prefilter(func.work_clip) if callable(prefilter) else fallback(prefilter, func.work_clip)
 
         supersampler = Scaler.ensure_obj(supersampler, based_aa)
         downscaler = Scaler.ensure_obj(downscaler, based_aa)
 
         ss = supersampler.scale(ss_clip, aaw, aah)
 
-        if antialiaser is None:
+        if not antialiaser:
             antialiaser = Eedi3(mclip=Bilinear.scale(mask, ss.width, ss.height) if mask else None, sclip_aa=True)
             aa_kwargs = KwargsT(alpha=0.125, beta=0.25, vthresh0=12, vthresh1=24, field=1) | aa_kwargs
 
-        if double_rate:
-            aa = antialiaser.draa(ss, **aa_kwargs)
-        else:
-            aa = antialiaser.aa(ss, **aa_kwargs)
+        aa = getattr(antialiaser, 'draa' if double_rate else 'aa')(ss, **aa_kwargs)
 
         aa = downscaler.scale(aa, func.work_clip.width, func.work_clip.height)
 
@@ -292,10 +264,10 @@ else:
             no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
             aa = norm_expr([func.work_clip, aa, no_aa], 'x z x - {pscale} * + y z - +', pscale=pscale, func=func.func)
 
-        if postfilter is None:
-            aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa))
-        elif callable(postfilter):
+        if callable(postfilter):
             aa = postfilter(aa)
+        elif postfilter is None:
+            aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa))
 
         if mask:
             aa = func.work_clip.std.MaskedMerge(aa, mask)
