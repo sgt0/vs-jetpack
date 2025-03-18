@@ -10,13 +10,13 @@ from vskernels import Bilinear, Catrom, Point
 from vsrgtools import box_blur, median_blur
 from vssource import IMWRI, Indexer
 from vstools import (
-    ColorRange, CustomOverflowError, FileNotExistsError, FilePathType, FrameRangeN, FrameRangesN,
-    Matrix, VSFunction, check_variable, core, depth, fallback, get_lowest_value, get_neutral_value,
-    get_neutral_values, get_peak_value, get_y, iterate, limiter, normalize_ranges, replace_ranges,
-    scale_delta, scale_value, vs, vs_object
+    ColorRange, ConstantFormatVideoNode, CustomOverflowError, FileNotExistsError, FilePathType, FrameRangeN,
+    FrameRangesN, Matrix, VSFunctionNoArgs, check_variable, core, depth, fallback, get_lowest_value, get_neutral_value,
+    get_neutral_values, get_peak_value, get_y, iterate, limiter, normalize_ranges, replace_ranges, scale_delta,
+    scale_value, vs, vs_object
 )
 
-from .abstract import DeferredMask, GeneralMask
+from .abstract import BoundingBox, DeferredMask, GeneralMask
 from .edge import SobelStd
 from .morpho import Morpho
 from .types import GenericMaskT, XxpandMode
@@ -53,25 +53,29 @@ class _base_cmaskcar(vs_object):
 
 @dataclass
 class CustomMaskFromClipsAndRanges(GeneralMask, _base_cmaskcar):
-    processing: VSFunction = field(default=core.lazy.std.Binarize, kw_only=True)
+    processing: VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = field(
+        default=core.lazy.std.Binarize, kw_only=True
+    )
     idx: Indexer | Type[Indexer] = field(default=IMWRI, kw_only=True)
 
-    def get_mask(self, clip: vs.VideoNode, *args: Any, **kwargs: Any) -> vs.VideoNode:
-        assert check_variable(clip, self.get_mask)
+    def get_mask(self, ref: vs.VideoNode, /, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
+        assert check_variable(ref, self.get_mask)
 
-        mask = clip.std.BlankClip(
-            format=clip.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0).id,
+        mask = vs.core.std.BlankClip(
+            ref,
+            format=ref.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0).id,
             keep=True, color=0
         )
 
-        matrix = Matrix.from_video(clip)
+        matrix = Matrix.from_video(ref)
 
-        for maskclip, mask_ranges in zip(self.clips, self.frame_ranges(clip)):
+        for maskclip, mask_ranges in zip(self.clips, self.frame_ranges(ref)):
             maskclip = Point.resample(
-                maskclip.std.AssumeFPS(clip), mask, matrix,
+                maskclip.std.AssumeFPS(ref), mask, matrix,
                 range_in=ColorRange.FULL, range=ColorRange.FULL
             )
-            maskclip = self.processing(maskclip).std.Loop(mask.num_frames)
+            maskclip = self.processing(maskclip)
+            maskclip = vs.core.std.Loop(maskclip, mask.num_frames)
 
             mask = replace_ranges(mask, maskclip, mask_ranges, **kwargs)
 
@@ -113,7 +117,7 @@ class HardsubMask(DeferredMask):
 
     def get_progressive_dehardsub(
         self, hardsub: vs.VideoNode, ref: vs.VideoNode, partials: list[vs.VideoNode]
-    ) -> tuple[list[vs.VideoNode], list[vs.VideoNode]]:
+    ) -> tuple[list[ConstantFormatVideoNode], list[ConstantFormatVideoNode]]:
         """
         Dehardsub using multiple superior hardsubbed sources and one inferior non-subbed source.
 
@@ -123,13 +127,12 @@ class HardsubMask(DeferredMask):
 
         :return:         Dehardsub stages and masks used for progressive dehardsub.
         """
+        assert check_variable(hardsub, self.get_progressive_dehardsub)
 
         masks = [self.get_mask(hardsub, ref)]
         partials_dehardsubbed = [hardsub]
-        dehardsub_masks = []
+        dehardsub_masks = list[ConstantFormatVideoNode]()
         partials = partials + [ref]
-
-        assert masks[-1].format is not None
 
         thr = scale_value(self.bin_thr, 32, masks[-1])
 
@@ -138,7 +141,7 @@ class HardsubMask(DeferredMask):
                 ExprOp.SUB.combine(masks[-1], self.get_mask(p, ref))
             )
             dehardsub_masks.append(
-                iterate(expr_func([masks[-1]], f"x {thr} < 0 x ?"), core.std.Maximum, 4).std.Inflate()
+                iterate(expr_func([masks[-1]], f"x {thr} < 0 x ?"), core.lazy.std.Maximum, 4).std.Inflate()
             )
             partials_dehardsubbed.append(
                 partials_dehardsubbed[-1].std.MaskedMerge(p, dehardsub_masks[-1])
@@ -150,7 +153,7 @@ class HardsubMask(DeferredMask):
 
     def apply_dehardsub(
         self, hardsub: vs.VideoNode, ref: vs.VideoNode, partials: list[vs.VideoNode] | None = None
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         if partials:
             partials_dehardsubbed, _ = self.get_progressive_dehardsub(hardsub, ref, partials)
             dehardsub = partials_dehardsubbed[-1]
@@ -178,7 +181,7 @@ class HardsubSignFades(HardsubMask):
 
         super().__init__(*args, **kwargs)
 
-    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         clipedge, refedge = (
             box_blur(normalize_mask(self.edgemask, x, **kwargs))
             for x in (clip, ref)
@@ -223,8 +226,8 @@ class HardsubSign(HardsubMask):
         super().__init__(*args, **kwargs)
 
     @limiter
-    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
-        assert clip.format
+    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        assert check_variable(clip, self._mask)
 
         hsmf = norm_expr([clip, ref], 'x y - abs', func=self.__class__)
         hsmf = Bilinear.resample(hsmf, clip.format.replace(subsampling_w=0, subsampling_h=0))
@@ -247,8 +250,8 @@ class HardsubLine(HardsubMask):
 
         super().__init__(*args, **kwargs)
 
-    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
-        assert clip.format
+    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        assert check_variable(clip, self.__class__)
 
         expand_n = fallback(self.expand, clip.width // 200)
 
@@ -299,7 +302,7 @@ class HardsubLineFade(HardsubLine):
 
         super().__init__(*args, refframes=None, **kwargs)
 
-    def get_mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:  # type: ignore
+    def get_mask(self, clip: vs.VideoNode, /, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         self.refframes = [
             r[0] + round((r[1] - r[0]) * self.ref_float)
             for r in normalize_ranges(ref, self.ranges)
@@ -334,14 +337,15 @@ class HardsubASS(HardsubMask):
 
 def bounded_dehardsub(
     hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask], partials: list[vs.VideoNode] | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+    assert check_variable(hrdsb, bounded_dehardsub)
     for sign in signs:
         hrdsb = sign.apply_dehardsub(hrdsb, ref, partials)
 
     return hrdsb
 
 
-def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
     assert check_variable(a, diff_hardsub_mask)
     assert check_variable(b, diff_hardsub_mask)
 
@@ -351,12 +355,12 @@ def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> vs.Vid
 
 
 @limiter
-def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask]) -> vs.VideoNode:
+def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask]) -> ConstantFormatVideoNode:
     assert check_variable(hrdsb, get_all_sign_masks)
     assert check_variable(ref, get_all_sign_masks)
 
-    mask = ref.std.BlankClip(
-        format=ref.format.replace(color_family=vs.GRAY, subsampling_w=0, subsampling_h=0).id, keep=True
+    mask = core.std.BlankClip(
+        ref, format=ref.format.replace(color_family=vs.GRAY, subsampling_w=0, subsampling_h=0).id, keep=True
     )
 
     for sign in signs:

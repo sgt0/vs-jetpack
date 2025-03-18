@@ -7,9 +7,9 @@ from typing import Any, Literal, Sequence, cast
 from vsexprtools import ExprList, ExprOp, TupleExprList, complexpr_available, norm_expr
 from vsrgtools import BlurMatrix
 from vstools import (
-    ConvMode, CustomValueError, FuncExceptT, PlanesT, SpatialConvModeT, VSFunctionAllArgs,
-    copy_signature, core, fallback, inject_self, interleave_arr, iterate, scale_mask, scale_value,
-    to_arr, vs
+    ConstantFormatVideoNode, ConvMode, CustomValueError, FuncExceptT, GenericVSFunction, PlanesT, SpatialConvModeT,
+    check_variable_format, copy_signature, core, fallback, inject_self, interleave_arr, iterate, scale_mask,
+    scale_value, to_arr, vs
 )
 
 from .types import Coordinates, XxpandMode
@@ -35,7 +35,7 @@ def _morpho_method(
     *,
     func: FuncExceptT | None = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     raise NotImplementedError
 
 
@@ -49,7 +49,7 @@ def _xxpand_method(
     *,
     func: FuncExceptT | None = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     raise NotImplementedError
 
 
@@ -71,7 +71,7 @@ class Morpho:
         *,
         func: FuncExceptT | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the largest value in its 3x3 neighbourhood.
         This operation is also known as dilation with a radius of 1.
@@ -102,7 +102,7 @@ class Morpho:
         *,
         func: FuncExceptT | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the smallest value in its 3x3 neighbourhood.
         This operation is also known as erosion with a radius of 1.
@@ -122,7 +122,7 @@ class Morpho:
 
     @inject_self
     @copy_signature(_morpho_method)
-    def inflate(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def inflate(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the average of the (radius * 2 + 1) ** 2 - 1 pixels
         in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood, but only if that average
@@ -151,7 +151,7 @@ class Morpho:
 
     @inject_self
     @copy_signature(_morpho_method)
-    def deflate(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def deflate(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the average of the (radius * 2 + 1) ** 2 - 1 pixels
         in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood, but only if that average
@@ -180,7 +180,7 @@ class Morpho:
 
     @inject_self
     @copy_signature(_morpho_method)
-    def dilation(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def dilation(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the largest value in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood.
 
@@ -200,11 +200,11 @@ class Morpho:
         :param multiply:        Optional multiplier of the final value.
         :param planes:          Which plane to process.
         """
-        return self._mm_func(*args, func=func or self.dilation, mm_func=core.std.Maximum, op=ExprOp.MAX, **kwargs)
+        return self._mm_func(*args, func=func or self.dilation, mm_func=core.lazy.std.Maximum, op=ExprOp.MAX, **kwargs)
 
     @inject_self
     @copy_signature(_morpho_method)
-    def erosion(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def erosion(self, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Replaces each pixel with the smallest value in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood.
 
@@ -224,11 +224,13 @@ class Morpho:
         :param multiply:        Optional multiplier of the final value.
         :param planes:          Which plane to process.
         """
-        return self._mm_func(*args, func=func or self.erosion, mm_func=core.std.Minimum, op=ExprOp.MIN, **kwargs)
+        return self._mm_func(*args, func=func or self.erosion, mm_func=core.lazy.std.Minimum, op=ExprOp.MIN, **kwargs)
 
     @inject_self
     @copy_signature(_xxpand_method)
-    def expand(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def expand(
+        self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         """
         Replaces multiple times each pixel with the largest value in its 3x3 neighbourhood.
         Specifying a mode will allow custom growing mode.
@@ -242,11 +244,17 @@ class Morpho:
                                 The default is no limit.
         :param planes:          Which plane to process.
         """
-        return self._xxpand_transform(clip, *args, op=ExprOp.MAX, func=func or self.expand, **kwargs)
+        func = func or self.expand
+
+        assert check_variable_format(clip, func)
+
+        return self._xxpand_transform(clip, *args, op=ExprOp.MAX, func=func, **kwargs)
 
     @inject_self
     @copy_signature(_xxpand_method)
-    def inpand(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def inpand(
+        self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         """
         Replaces multiple times each pixel with the smallest value in its 3x3 neighbourhood.
         Specifying a mode will allow custom growing mode.
@@ -260,11 +268,17 @@ class Morpho:
                                 The default is no limit.
         :param planes:          Which plane to process.
         """
-        return self._xxpand_transform(clip, *args, op=ExprOp.MIN, func=func or self.inpand, **kwargs)
+        func = func or self.expand
+
+        assert check_variable_format(clip, func)
+
+        return self._xxpand_transform(clip, *args, op=ExprOp.MIN, func=func, **kwargs)
 
     @inject_self
     @copy_signature(_morpho_method)
-    def closing(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def closing(
+        self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         """
         A closing is an dilation followed by an erosion.
 
@@ -293,7 +307,9 @@ class Morpho:
 
     @inject_self
     @copy_signature(_morpho_method)
-    def opening(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def opening(
+        self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         """
         An opening is an erosion followed by an dilation.
 
@@ -333,7 +349,7 @@ class Morpho:
         *,
         func: FuncExceptT | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         A morphological gradient is the difference between a dilation and erosion.
 
@@ -354,6 +370,8 @@ class Morpho:
         :param planes:          Which plane to process.
         """
         func = func or self.gradient
+
+        assert check_variable_format(clip, func)
 
         if isinstance(radius, tuple):
             r, conv_mode = radius
@@ -379,7 +397,7 @@ class Morpho:
 
     @inject_self
     @copy_signature(_morpho_method)
-    def top_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def top_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         A top hat or a white hat is the difference of the original clip and the opening.
 
@@ -401,6 +419,8 @@ class Morpho:
         """
         func = func or self.top_hat
 
+        assert check_variable_format(clip, func)
+
         opened = self.opening(clip, *args, func=func, **kwargs)
 
         return norm_expr(
@@ -409,12 +429,12 @@ class Morpho:
 
     @copy_signature(top_hat)
     @inject_self
-    def white_hate(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
+    def white_hate(self, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
         return self.top_hat(*args, **dict(func=self.white_hate) | kwargs)
 
     @inject_self
     @copy_signature(_morpho_method)
-    def bottom_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+    def bottom_hat(self, clip: vs.VideoNode, *args: Any, func: FuncExceptT | None = None, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         A bottom hat or a black hat is the difference of the closing and the original clip.
 
@@ -436,6 +456,8 @@ class Morpho:
         """
         func = func or self.bottom_hat
 
+        assert check_variable_format(clip, func)
+
         closed = self.closing(clip, *args, func=func, **kwargs)
 
         return norm_expr(
@@ -444,7 +466,7 @@ class Morpho:
 
     @copy_signature(bottom_hat)
     @inject_self
-    def black_hat(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
+    def black_hat(self, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
         return self.top_hat(*args, **dict(func=self.black_hat) | kwargs)
 
     @inject_self
@@ -460,7 +482,7 @@ class Morpho:
         *,
         func: FuncExceptT | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         An outer hat is the difference of the dilation and the original clip.
 
@@ -481,6 +503,8 @@ class Morpho:
         :param planes:          Which plane to process.
         """
         func = func or self.outer_hat
+
+        assert check_variable_format(clip, func)
 
         if isinstance(radius, tuple):
             r, conv_mode = radius
@@ -513,7 +537,7 @@ class Morpho:
         *,
         func: FuncExceptT | None = None,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         An inner hat is the difference of the original clip and the erosion.
 
@@ -534,6 +558,8 @@ class Morpho:
         :param planes:          Which plane to process.
         """
         func = func or self.inner_hat
+
+        assert check_variable_format(clip, func)
 
         if isinstance(radius, tuple):
             r, conv_mode = radius
@@ -561,7 +587,7 @@ class Morpho:
         lowval: float | list[float] | None = None,
         highval: float | list[float] | None = None,
         planes: PlanesT = None
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Turns every pixel in the image into either lowval, if it's below midthr, or highval, otherwise.
 
@@ -590,7 +616,7 @@ class Morpho:
     @classmethod
     def _morpho_xx_imum(
         cls,
-        clip: vs.VideoNode,
+        clip: ConstantFormatVideoNode,
         radius: tuple[int, ConvMode],
         thr: float | None,
         coords: Sequence[int] | None,
@@ -627,7 +653,7 @@ class Morpho:
 
     def _mm_func(
         self,
-        clip: vs.VideoNode,
+        clip: ConstantFormatVideoNode,
         radius: RadiusT = 1,
         thr: float | None = None,
         iterations: int = 1,
@@ -636,10 +662,10 @@ class Morpho:
         planes: PlanesT = None,
         *,
         func: FuncExceptT,
-        mm_func: VSFunctionAllArgs,
+        mm_func: GenericVSFunction[ConstantFormatVideoNode],
         op: Literal[ExprOp.MIN, ExprOp.MAX],
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         if isinstance(radius, tuple):
             radius, conv_mode = radius
         else:
@@ -668,7 +694,7 @@ class Morpho:
             if multiply is not None:
                 mm_func = self._multiply_mm_func(mm_func, multiply)
         else:
-            mm_func = cast(VSFunctionAllArgs, norm_expr)
+            mm_func = norm_expr
             kwargs.update(
                 expr=self._morpho_xx_imum(clip, (radius, conv_mode), thr, coords, multiply, False, op=op, func=func)
             )
@@ -677,7 +703,7 @@ class Morpho:
 
     def _xxpand_transform(
         self,
-        clip: vs.VideoNode,
+        clip: ConstantFormatVideoNode,
         sw: int, sh: int | None = None,
         mode: XxpandMode = XxpandMode.RECTANGLE,
         thr: float | None = None,
@@ -686,7 +712,10 @@ class Morpho:
         op: Literal[ExprOp.MIN, ExprOp.MAX],
         func: FuncExceptT,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
+
+        assert check_variable_format(clip, func)
+
         sh = fallback(sh, sw)
 
         function = self.maximum if op is ExprOp.MAX else self.minimum
@@ -707,7 +736,7 @@ class Morpho:
 
     def _xxflate(
         self,
-        clip: vs.VideoNode,
+        clip: ConstantFormatVideoNode,
         radius: RadiusT = 1,
         thr: float | None = None,
         iterations: int = 1,
@@ -718,13 +747,13 @@ class Morpho:
         func: FuncExceptT,
         inflate: bool,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         if isinstance(radius, tuple):
             radius, conv_mode = radius
         else:
             conv_mode = ConvMode.SQUARE
 
-        xxflate_func: VSFunctionAllArgs
+        xxflate_func: GenericVSFunction[ConstantFormatVideoNode]
 
         if not complexpr_available:
             if radius > 1 or conv_mode != ConvMode.SQUARE:
@@ -765,12 +794,14 @@ class Morpho:
 
             kwargs.update(expr=expr)
 
-            xxflate_func = cast(VSFunctionAllArgs, norm_expr)
+            xxflate_func = cast(GenericVSFunction[ConstantFormatVideoNode], norm_expr)
 
         return iterate(clip, xxflate_func, iterations, **kwargs)
 
-    def _multiply_mm_func(self, func: VSFunctionAllArgs, multiply: float) -> VSFunctionAllArgs:
-        def mm_func(clip: vs.VideoNode, *args: Any, **kwargs: Any) -> vs.VideoNode:
+    def _multiply_mm_func(
+        self, func: GenericVSFunction[ConstantFormatVideoNode], multiply: float
+    ) -> GenericVSFunction[ConstantFormatVideoNode]:
+        def mm_func(clip: ConstantFormatVideoNode, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
             return norm_expr(func(clip, *args, **kwargs), 'x {multiply} *', multiply=multiply, func=self.__class__)
         return mm_func
 
@@ -810,7 +841,7 @@ def grow_mask(
     *,
     func: FuncExceptT | None = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = func or grow_mask
 
     morpho = Morpho()

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from vsexprtools import ExprOp
-from vstools import check_variable, join, limiter, normalize_seq, split, vs
+from vstools import ConstantFormatVideoNode, check_variable, join, limiter, normalize_seq, split, vs
 
 from .morpho import Morpho
 from .types import Coordinates
@@ -12,7 +12,7 @@ __all__ = [
 
 
 @limiter
-def range_mask(clip: vs.VideoNode, rad: int = 2, radc: int = 0) -> vs.VideoNode:
+def range_mask(clip: vs.VideoNode, rad: int = 2, radc: int = 0) -> ConstantFormatVideoNode:
     assert check_variable(clip, range_mask)
 
     def _minmax(clip: vs.VideoNode, iters: int, maxx: bool) -> vs.VideoNode:

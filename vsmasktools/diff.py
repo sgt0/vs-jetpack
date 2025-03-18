@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, TypeAlias, overload
+
+from typing import Any, TypeAlias, Union, overload
 
 from vsexprtools import ExprOp, norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelT, NoScale
 from vsrgtools import RemoveGrainMode, bilateral, gauss_blur, remove_grain
 from vstools import (
-    ColorRange, CustomValueError, FuncExceptT, KwargsT, VSFunction, check_variable, depth, get_w,
-    get_y, insert_clip, iterate, vs
+    ColorRange, ConstantFormatVideoNode, CustomValueError, FuncExceptT, KwargsT, VSFunctionNoArgs, check_variable,
+    depth, get_w, get_y, insert_clip, iterate, vs
 )
 
 from .edge import EdgeDetect, EdgeDetectT, ExLaplacian4
@@ -27,7 +28,7 @@ __all__ = [
 def diff_rescale(
     clip: vs.VideoNode, height: int, kernel: KernelT = Catrom,
     thr: float = 0.216, expand: int = 2, func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     return based_diff_mask(clip, height, kernel, thr, expand=2 + expand, func=func)
 
 
@@ -36,7 +37,8 @@ def diff_creditless(
     start_frame: int = 0, expand: int = 2, *, prefilter: bool | int = False,
     edgemask: EdgeDetectT = ExLaplacian4, ep_clip: vs.VideoNode | None = None,
     func: FuncExceptT | None = None, **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+
     mask = based_diff_mask(
         credit_clip, nc_clip, thr=thr, prefilter=prefilter,
         postfilter=0,
@@ -47,33 +49,37 @@ def diff_creditless(
     if not ep_clip or ep_clip.num_frames == mask.num_frames:
         return mask
 
-    assert mask.format
-
     return insert_clip(ep_clip.std.BlankClip(format=mask.format.id, keep=True), mask, start_frame)
 
 
 def diff_creditless_oped(
-    ep: vs.VideoNode, ncop: vs.VideoNode, nced: vs.VideoNode, thr: float = 0.1,
+    ep: vs.VideoNode, ncop: vs.VideoNode | None, nced: vs.VideoNode | None,
+    thr: float = 0.1,
     opstart: int | None = None, opend: int | None = None,
     edstart: int | None = None, edend: int | None = None,
-    func: FuncExceptT | None = None, **kwargs: Any
-) -> vs.VideoNode:
+    func: FuncExceptT | None = None,
+    **kwargs: Any
+) -> ConstantFormatVideoNode:
     func = func or diff_creditless_oped
 
     op_mask = ed_mask = None
 
     kwargs |= KwargsT(expand=4, prefilter=False, func=func, ep_clip=ep) | kwargs
 
-    if opstart is not None and opend is not None:
+    if opstart is not None and opend is not None and ncop is not None:
         op_mask = diff_creditless(ep[opstart:opend + 1], ncop[:opend - opstart + 1], thr, opstart, **kwargs)
 
-    if edstart is not None and edend is not None:
+    if edstart is not None and edend is not None and nced is not None:
         ed_mask = diff_creditless(ep[edstart:edend + 1], nced[:edend - edstart + 1], thr, edstart, **kwargs)
 
     if op_mask and ed_mask:
         return ExprOp.ADD.combine(op_mask, ed_mask)
-    elif op_mask or ed_mask:
-        return op_mask or ed_mask  # type: ignore
+
+    if op_mask:
+        return op_mask
+
+    if ed_mask:
+        return ed_mask
 
     raise CustomValueError(
         'You must specify one or both of ("opstart", "opend"), ("edstart", "edend")', func
@@ -84,8 +90,7 @@ def credit_mask(
     clip: vs.VideoNode, ref: vs.VideoNode, thr: float,
     blur: float | None = 1.65, prefilter: bool | int = 5,
     expand: int = 8
-) -> vs.VideoNode:
-    warnings.warn('credit_mask: Function is deprecated and will be removed in a later version! Use based_diff_mask')
+) -> ConstantFormatVideoNode:
 
     if blur is not None:
         clip, ref = gauss_blur(clip, blur), gauss_blur(ref, blur)
@@ -117,12 +122,16 @@ def based_diff_mask(
     /,
     *,
     thr: float = 0.216,
-    prefilter: int | KwargsT | bool | VSFunction = False,
-    postfilter: int | tuple[Count, RemoveGrainMode] | list[tuple[Count, RemoveGrainMode]] | VSFunction = 2,
+    prefilter: int | KwargsT | bool | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = False,
+    postfilter: Union[
+        int, tuple[Count, RemoveGrainMode],
+        list[tuple[Count, RemoveGrainMode]],
+        VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode]
+    ] = 2,
     ampl: str | type[EdgeDetect] | EdgeDetect = ...,
     expand: int = 4,
     func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Make a difference mask between a clean source and a reference clip with additionnal pre and post processing
 
@@ -145,12 +154,16 @@ def based_diff_mask(
     clip: vs.VideoNode, height: int, kernel: KernelT = ...,
     /,
     thr: float = 0.216,
-    prefilter: int | KwargsT | bool | VSFunction = False,
-    postfilter: int | tuple[Count, RemoveGrainMode] | list[tuple[Count, RemoveGrainMode]] | VSFunction = 2,
+    prefilter: int | KwargsT | bool | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = False,
+    postfilter: Union[
+        int, tuple[Count, RemoveGrainMode],
+        list[tuple[Count, RemoveGrainMode]],
+        VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode]
+    ] = 2,
     ampl: str | type[EdgeDetect] | EdgeDetect = ...,
     expand: int = 4,
     func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Make a difference mask between a clean source and a rescaled clip with additionnal pre and post processing
 
@@ -173,13 +186,18 @@ def based_diff_mask(
     clip: vs.VideoNode, ref_or_height: vs.VideoNode | int, kernel: KernelT = NoScale,
     /,
     thr: float = 0.216,
-    prefilter: int | KwargsT | bool | VSFunction = False,
-    postfilter: int | tuple[Count, RemoveGrainMode] | list[tuple[Count, RemoveGrainMode]] | VSFunction = 2,
+    prefilter: int | KwargsT | bool | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = False,
+    postfilter: Union[
+        int, tuple[Count, RemoveGrainMode],
+        list[tuple[Count, RemoveGrainMode]],
+        VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode]
+    ] = 2,
     ampl: str | type[EdgeDetect] | EdgeDetect = 'x yrange_max / 2 4 pow * {thr} < 0 1 ? yrange_max *',
     expand: int = 4,
     func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = func or based_diff_mask
+
     assert check_variable(clip, func)
 
     if isinstance(ref_or_height, vs.VideoNode):
@@ -192,8 +210,7 @@ def based_diff_mask(
         ref = kernel.descale(clip, get_w(ref_or_height), ref_or_height)
         ref = kernel.scale(ref, clip.width, clip.height)
 
-    assert clip.format
-    assert ref.format
+    assert check_variable(ref, func)
 
     if clip.format.num_planes != ref.format.num_planes:
         clip, ref = get_y(clip), get_y(ref)
@@ -211,7 +228,6 @@ def based_diff_mask(
             clip, ref = bilateral(clip, **kwargs), bilateral(ref, **kwargs)
 
     ref = depth(ref, clip)
-    assert clip.format
 
     dst_fmt = clip.format.replace(subsampling_w=0, subsampling_h=0)
     diff_fmt = dst_fmt.replace(color_family=vs.GRAY)

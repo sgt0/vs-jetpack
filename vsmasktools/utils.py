@@ -6,9 +6,9 @@ from vsexprtools import ExprOp, complexpr_available, norm_expr
 from vskernels import Bilinear, Kernel, KernelT
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
-    ColorRange, CustomValueError, FrameRangeN, FrameRangesN, FuncExceptT, P, check_ref_clip,
-    check_variable, check_variable_format, core, depth, flatten_vnodes, get_lowest_values, get_peak_values,
-    insert_clip, normalize_ranges, plane, replace_ranges, split, vs
+    ColorRange, ConstantFormatVideoNode, CustomValueError, FrameRangeN, FrameRangesN, FuncExceptT, P, check_ref_clip,
+    check_variable, check_variable_format, core, depth, flatten_vnodes, get_lowest_values, get_peak_values, insert_clip,
+    normalize_ranges, plane, replace_ranges, split, vs
 )
 
 from .abstract import GeneralMask
@@ -28,14 +28,14 @@ __all__ = [
 ]
 
 
-def max_planes(*_clips: vs.VideoNode | Iterable[vs.VideoNode], resizer: KernelT = Bilinear) -> vs.VideoNode:
+def max_planes(*_clips: vs.VideoNode | Iterable[vs.VideoNode], resizer: KernelT = Bilinear) -> ConstantFormatVideoNode:
     clips = flatten_vnodes(_clips)
 
-    assert check_variable_format((model := clips[0]), max_planes)
+    assert check_variable_format(clips, max_planes)
 
     resizer = Kernel.ensure_obj(resizer, max_planes)
 
-    width, height, fmt = model.width, model.height, model.format.replace(subsampling_w=0, subsampling_h=0)
+    width, height, fmt = clips[0].width, clips[0].height, clips[0].format.replace(subsampling_w=0, subsampling_h=0)
 
     return ExprOp.MAX.combine(
         split(resizer.scale(clip, width, height, format=fmt)) for clip in clips
@@ -57,19 +57,26 @@ def _get_region_expr(
     return f'X {left} < X {clip.width - right} > or Y {top} < Y {clip.height - bottom} > or or {replace} ?'
 
 
-def region_rel_mask(clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
+def region_rel_mask(clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> ConstantFormatVideoNode:
+    assert check_variable_format(clip, region_rel_mask)
+
     if complexpr_available:
         return norm_expr(
             clip, _get_region_expr(clip, left, right, top, bottom, 0), func=region_rel_mask
         )
 
-    return clip.std.Crop(left, right, top, bottom).std.AddBorders(left, right, top, bottom)
+    cropped = vs.core.std.Crop(clip, left, right, top, bottom)
+
+    return vs.core.std.AddBorders(cropped, left, right, top, bottom)
 
 
-def region_abs_mask(clip: vs.VideoNode, width: int, height: int, left: int = 0, top: int = 0) -> vs.VideoNode:
-    def _crop(w: int, h: int) -> vs.VideoNode:
-        return clip.std.CropAbs(width, height, left, top).std.AddBorders(
-            left, w - width - left, top, h - height - top
+def region_abs_mask(clip: vs.VideoNode, width: int, height: int, left: int = 0, top: int = 0) -> ConstantFormatVideoNode:
+    assert check_variable_format(clip, region_rel_mask)
+
+    def _crop(w: int, h: int) -> ConstantFormatVideoNode:
+        cropped = vs.core.std.CropAbs(clip, width, height, left, top)
+        return vs.core.std.AddBorders(
+            cropped, left, w - width - left, top, h - height - top
         )
 
     if 0 in {clip.width, clip.height}:
@@ -79,7 +86,7 @@ def region_abs_mask(clip: vs.VideoNode, width: int, height: int, left: int = 0, 
                 func=region_rel_mask
             )
 
-        return clip.std.FrameEval(lambda f, n: _crop(f.width, f.height), clip)
+        return vs.core.std.FrameEval(clip, lambda f, n: _crop(f.width, f.height), clip)
 
     return region_rel_mask(clip, left, clip.width - width - left, top, clip.height - height - top)
 
@@ -88,7 +95,7 @@ def squaremask(
     clip: vs.VideoNode, width: int, height: int, offset_x: int, offset_y: int, invert: bool = False,
     force_gray: bool = True,
     func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Create a square used for simple masking.
 
@@ -120,7 +127,8 @@ def squaremask(
         raise CustomValueError('mask exceeds clip size!', func)
 
     if complexpr_available:
-        base_clip = clip.std.BlankClip(
+        base_clip = vs.core.std.BlankClip(
+            clip,
             None, None, mask_format.id, 1,
             color=get_lowest_values(mask_format, ColorRange.FULL),
             keep=True
@@ -148,28 +156,28 @@ def squaremask(
 
         mask = norm_expr(base_clip, tuple(exprs), func=func)
     else:
-        base_clip = clip.std.BlankClip(
-            width, height, mask_format.id, 1, color=get_peak_values(mask_format, ColorRange.FULL), keep=True
+        base_clip = core.std.BlankClip(
+            clip, width, height, mask_format.id, 1, color=get_peak_values(mask_format, ColorRange.FULL), keep=True
         )
 
-        mask = base_clip.std.AddBorders(
-            offset_x, clip.width - width - offset_x, offset_y, clip.height - height - offset_y,
+        mask = core.std.AddBorders(
+            base_clip, offset_x, clip.width - width - offset_x, offset_y, clip.height - height - offset_y,
             [0] * mask_format.num_planes
         )
         if invert:
-            mask = mask.std.Invert()
+            mask = core.std.Invert(mask)
 
     if clip.num_frames == 1:
         return mask
 
-    return mask.std.Loop(clip.num_frames)
+    return core.std.Loop(mask, clip.num_frames)
 
 
 def replace_squaremask(
     clipa: vs.VideoNode, clipb: vs.VideoNode, mask_params: tuple[int, int, int, int],
     ranges: FrameRangeN | FrameRangesN | None = None, blur_sigma: int | float | None = None,
     invert: bool = False, func: FuncExceptT | None = None, show_mask: bool = False
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Replace an area of the frame with another clip using a simple square mask.
 
@@ -205,7 +213,7 @@ def replace_squaremask(
     elif isinstance(blur_sigma, float):
         mask = gauss_blur(mask, blur_sigma)
 
-    mask = mask.std.Loop(clipa.num_frames)
+    mask = core.std.Loop(mask, clipa.num_frames)
 
     if show_mask:
         return mask
@@ -223,7 +231,7 @@ def replace_squaremask(
 def freeze_replace_squaremask(
     mask: vs.VideoNode, insert: vs.VideoNode, mask_params: tuple[int, int, int, int],
     frame: int, frame_range: tuple[int, int]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     start, end = frame_range
 
     masked_insert = replace_squaremask(mask[frame], insert[frame], mask_params)
@@ -232,40 +240,40 @@ def freeze_replace_squaremask(
 
 
 @overload
-def normalize_mask(mask: vs.VideoNode, clip: vs.VideoNode) -> vs.VideoNode:
+def normalize_mask(mask: vs.VideoNode, clip: vs.VideoNode) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def normalize_mask(
     mask: Callable[[vs.VideoNode, vs.VideoNode], vs.VideoNode], clip: vs.VideoNode, ref: vs.VideoNode
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def normalize_mask(
     mask: EdgeDetectT | RidgeDetectT, clip: vs.VideoNode, *, ridge: bool = ..., **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
-def normalize_mask(mask: GeneralMask, clip: vs.VideoNode, ref: vs.VideoNode) -> vs.VideoNode:
+def normalize_mask(mask: GeneralMask, clip: vs.VideoNode, ref: vs.VideoNode) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def normalize_mask(
     mask: GenericMaskT, clip: vs.VideoNode, ref: vs.VideoNode | None = ..., *, ridge: bool = ..., **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 def normalize_mask(
     mask: GenericMaskT, clip: vs.VideoNode, ref: vs.VideoNode | None = None,
     *, ridge: bool = False, **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     if isinstance(mask, (str, type)):
         return normalize_mask(EdgeDetect.ensure_obj(mask, normalize_mask), clip, ref, ridge=ridge, **kwargs)
 
@@ -289,22 +297,28 @@ def normalize_mask(
 
 def rekt_partial(
     clip: vs.VideoNode, left: int = 0, top: int = 0, right: int = 0, bottom: int = 0,
-    func: Callable[Concatenate[vs.VideoNode, P], vs.VideoNode] = lambda clip, *args, **kwargs: clip,
+    func: Callable[Concatenate[vs.VideoNode, P], ConstantFormatVideoNode] | None = None,
     *args: P.args, **kwargs: P.kwargs
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
+
     assert check_variable(clip, rekt_partial)
 
     if left == top == right == bottom == 0:
-        return func(clip, *args, **kwargs)
+        if func:
+            return func(clip, *args, **kwargs)
+        return clip
 
     cropped = clip.std.Crop(left, right, top, bottom)
 
-    filtered = func(cropped, *args, **kwargs)
+    if func:
+        filtered = func(cropped, *args, **kwargs)
+    else:
+        filtered = cropped
 
     check_ref_clip(cropped, filtered, rekt_partial)
 
     if complexpr_available:
-        filtered = filtered.std.AddBorders(left, right, top, bottom)
+        filtered = core.std.AddBorders(filtered, left, right, top, bottom)
 
         ratio_w, ratio_h = 1 << clip.format.subsampling_w, 1 << clip.format.subsampling_h
 

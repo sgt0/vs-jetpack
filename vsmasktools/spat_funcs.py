@@ -5,8 +5,8 @@ from typing import Sequence, overload
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
-    ColorRange, CustomRuntimeError, DitherType, FuncExceptT, StrList, check_variable, core, depth, fallback,
-    get_lowest_value, get_peak_value, get_sample_type, get_y, plane, scale_value, to_arr, vs
+    ColorRange, ConstantFormatVideoNode, CustomRuntimeError, DitherType, FuncExceptT, StrList, check_variable, depth,
+    fallback, get_lowest_value, get_peak_value, get_sample_type, get_y, plane, scale_value, to_arr, vs
 )
 
 from .edge import MinMax
@@ -23,21 +23,21 @@ __all__ = [
 @overload
 def adg_mask(
     clip: vs.VideoNode, luma_scaling: float = 8.0, relative: bool = False, func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def adg_mask(
     clip: vs.VideoNode, luma_scaling: Sequence[float] = ..., relative: bool = False, func: FuncExceptT | None = None
-) -> list[vs.VideoNode]:
+) -> list[ConstantFormatVideoNode]:
     ...
 
 
 def adg_mask(
     clip: vs.VideoNode, luma_scaling: float | Sequence[float] = 8.0,
     relative: bool = False, func: FuncExceptT | None = None
-) -> vs.VideoNode | list[vs.VideoNode]:
+) -> ConstantFormatVideoNode | list[ConstantFormatVideoNode]:
     func = func or adg_mask
 
     assert check_variable(clip, func)
@@ -52,8 +52,6 @@ def adg_mask(
             "You don't have akarin plugin, you can't use this function!", func, 'relative=True'
         )
 
-    assert y.format
-
     if use_complex:
         peak = get_peak_value(y)
 
@@ -66,7 +64,7 @@ def adg_mask(
 
         x_string += '0 0.999 clamp X!'
 
-        def _adgfunc(luma: vs.VideoNode, ls: float) -> vs.VideoNode:
+        def _adgfunc(luma: ConstantFormatVideoNode, ls: float) -> ConstantFormatVideoNode:
             return norm_expr(
                 luma, f'{x_string} 1 X@ X@ X@ X@ X@ '
                 '18.188 * 45.47 - * 36.624 + * 9.466 - * 1.124 + * - '
@@ -74,7 +72,7 @@ def adg_mask(
                 func=func
             )
     else:
-        def _adgfunc(luma: vs.VideoNode, ls: float) -> vs.VideoNode:
+        def _adgfunc(luma: ConstantFormatVideoNode, ls: float) -> ConstantFormatVideoNode:
             return luma.adg.Mask(ls)
 
     scaled_clips = [_adgfunc(y_inv if ls < 0 else y, abs(ls)) for ls in to_arr(luma_scaling)]
@@ -89,7 +87,7 @@ def retinex(
     clip: vs.VideoNode, sigma: Sequence[float] = [25, 80, 250],
     lower_thr: float = 0.001, upper_thr: float = 0.001,
     fast: bool | None = None, func: FuncExceptT | None = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     func = func or retinex
 
     assert check_variable(clip, func)
@@ -133,7 +131,7 @@ def retinex(
     expr_msr.extend(ExprOp.ADD * slenm)
     expr_msr.append(f"log {slen} /")
 
-    msr = norm_expr([luma_float, (gauss_blur(luma_float, i, _fast=fast) for i in sigma)], expr_msr, func=func)
+    msr = norm_expr([luma_float, *(gauss_blur(luma_float, i, _fast=fast) for i in sigma)], expr_msr, func=func)
 
     msr_stats = msr.vszip.PlaneMinMax(lower_thr, upper_thr)
 
@@ -150,7 +148,7 @@ def retinex(
     )
 
 
-def flat_mask(src: vs.VideoNode, radius: int = 5, thr: float = 0.011, gauss: bool = False) -> vs.VideoNode:
+def flat_mask(src: vs.VideoNode, radius: int = 5, thr: float = 0.011, gauss: bool = False) -> ConstantFormatVideoNode:
     luma = get_y(src)
 
     blur = gauss_blur(luma, radius * 0.361083333) if gauss else box_blur(luma, radius)
@@ -167,7 +165,7 @@ def texture_mask(
     blur: int | float = 8, thr: float = 0.2,
     stages: list[tuple[int, int]] = [(60, 2), (40, 4), (20, 2)],
     points: list[tuple[bool, float]] = [(False, 1.75), (True, 2.5), (True, 5), (False, 10)]
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     levels = [x for x, _ in points]
     _points = [scale_value(x, 8, clip) for _, x in points]
     thr = scale_value(thr, 8, 32, ColorRange.FULL)

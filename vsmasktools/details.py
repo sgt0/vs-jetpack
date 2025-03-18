@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vsexprtools import ExprOp
 from vsrgtools import RemoveGrainMode, RemoveGrainModeT, bilateral, gauss_blur, remove_grain
-from vstools import check_variable, get_y, limiter, plane, vs
+from vstools import ConstantFormatVideoNode, check_variable, get_y, limiter, plane, vs
 
 from .edge import Kirsch, MinMax, Prewitt, PrewittTCanny
 from .masks import range_mask
@@ -23,7 +23,7 @@ def detail_mask(
     clip: vs.VideoNode, brz_mm: float, brz_ed: float,
     minmax: MinMax = MinMax(rady=3, radc=2),
     edge: GenericMaskT = Kirsch
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     assert check_variable(clip, detail_mask)
 
     range_mask = Morpho.binarize(minmax.edgemask(clip), brz_mm)
@@ -42,8 +42,8 @@ def detail_mask(
 def detail_mask_neo(
     clip: vs.VideoNode, sigma: float = 1.0, detail_brz: float = 0.05, lines_brz: float = 0.08,
     edgemask: GenericMaskT = Prewitt, rg_mode: RemoveGrainModeT = RemoveGrainMode.MINMAX_MEDIAN_OPP
-) -> vs.VideoNode:
-    assert check_variable(clip, "detail_mask_neo")
+) -> ConstantFormatVideoNode:
+    assert check_variable(clip, detail_mask_neo)
 
     clip_y = get_y(clip)
     blur_pf = gauss_blur(clip_y, sigma * 0.75)
@@ -68,7 +68,7 @@ def detail_mask_neo(
 @limiter
 def simple_detail_mask(
     clip: vs.VideoNode, sigma: float | None = None, rad: int = 3, brz_a: float = 0.025, brz_b: float = 0.045
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     y = plane(clip, 0)
 
     blur = gauss_blur(y, sigma) if sigma else y
@@ -82,7 +82,7 @@ def simple_detail_mask(
     return remove_grain(remove_grain(mask, 22), 11)
 
 
-def multi_detail_mask(clip: vs.VideoNode, thr: float = 0.015) -> vs.VideoNode:
+def multi_detail_mask(clip: vs.VideoNode, thr: float = 0.015) -> ConstantFormatVideoNode:
     general_mask = simple_detail_mask(clip, rad=1, brz_a=1, brz_b=24.3 * thr)
 
     return ExprOp.MIN.combine(
