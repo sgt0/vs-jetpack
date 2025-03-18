@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Type
+from typing import Any, Mapping, Type
 
 from vsexprtools import ExprOp, ExprToken, expr_func, norm_expr
 from vskernels import Bilinear, Catrom, Point
@@ -103,7 +103,7 @@ class CustomMaskFromFolder(CustomMaskFromClipsAndRanges):
 
 @dataclass
 class CustomMaskFromRanges(CustomMaskFromClipsAndRanges):
-    ranges: dict[FilePathType, FrameRangeN | FrameRangesN]
+    ranges: Mapping[FilePathType, FrameRangeN | FrameRangesN]
 
     def __post_init__(self) -> None:
         self.clips = [self.idx.source(str(file), bits=-1) for file in self.ranges.keys()]
