@@ -767,7 +767,7 @@ class Morpho:
                     "If akarin plugin is not available, you can't have custom coordinates", func, coords
                 )
 
-            xxflate_func = core.std.Inflate if inflate else core.std.Deflate
+            xxflate_func = core.lazy.std.Inflate if inflate else core.lazy.std.Deflate
             kwargs.update(planes=planes)
 
             if thr is not None:

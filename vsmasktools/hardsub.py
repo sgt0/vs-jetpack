@@ -330,8 +330,10 @@ class HardsubASS(HardsubMask):
         mask = ref.sub.TextFile(self.filename, fontdir=self.fontdir, blend=False).std.PropToClip('_Alpha')
         mask = mask[self.shift:] if self.shift else mask
         mask = mask.std.Binarize(1)
-        mask = iterate(mask, core.std.Maximum, 3)
-        mask = iterate(mask, core.std.Inflate, 3)
+
+        mask = iterate(mask, core.lazy.std.Maximum, 3)
+        mask = iterate(mask, core.lazy.std.Inflate, 3)
+
         return mask
 
 
