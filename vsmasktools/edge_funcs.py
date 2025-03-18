@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Sequence, cast, overload
+from typing import Any, Literal, Sequence, overload
+
+from jetpytools import CustomIntEnum
 
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
@@ -122,19 +124,19 @@ def limited_linemask(
     )
 
 
-class _dre_edgemask(CustomEnum):
+class _dre_edgemask(CustomIntEnum):
     """Edgemask with dynamic range enhancement prefiltering."""
 
-    RETINEX = cast(VSFunctionAllArgs, object())
-    CLAHE = cast(VSFunctionAllArgs, object())
+    RETINEX = 0
+    CLAHE = 1
 
     def _prefilter(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        if self is self.RETINEX:  # type: ignore
+        if self is self.RETINEX:
             sigmas = kwargs.get('sigmas', [50, 200, 350])
 
             return retinex(clip, sigmas, 0.001, 0.005)
 
-        if self is self.CLAHE:  # type: ignore
+        if self is self.CLAHE:
             limit, tile = kwargs.get('limit', 0.0305), kwargs.get('tile', 5)
 
             return depth(depth(clip, 16).vszip.CLAHE(int(scale_delta(limit, 32, 16)), tile), clip)
