@@ -417,7 +417,7 @@ def get_all_edge_detects(
         if s.__name__ not in {
             'MatrixEdgeDetect', 'RidgeDetect', 'SingleMatrix', 'EuclideanDistance', 'MagnitudeMatrix', 'Max',
             'Matrix1D', 'SavitzkyGolay', 'SavitzkyGolayNormalise',
-            'Matrix2x2', 'Matrix3x3', 'Matrix5x5'
+            'Matrix3x3', 'Matrix5x5'
         }
     }
     return [
@@ -449,7 +449,7 @@ def get_all_ridge_detect(
         if s.__name__ not in {
             'MatrixEdgeDetect', 'RidgeDetect', 'SingleMatrix', 'EuclideanDistance', 'MagnitudeMatrix', 'Max',
             'Matrix1D', 'SavitzkyGolay', 'SavitzkyGolayNormalise',
-            'Matrix2x2', 'Matrix3x3', 'Matrix5x5'
+            'Matrix3x3', 'Matrix5x5'
         }
     }
     return [
