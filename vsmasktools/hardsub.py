@@ -347,7 +347,6 @@ class HardsubLineFade(HardsubLine):
 class HardsubASS(HardsubMask):
     filename: str
     fontdir: str | None
-    shift: int | None
 
     def __init__(
         self,
@@ -361,14 +360,12 @@ class HardsubASS(HardsubMask):
     ) -> None:
         self.filename = str(filename)
         self.fontdir = fontdir
-        self.shift = shift
         super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
     @limiter
-    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
-        ref = ref[0] * self.shift + ref if self.shift else ref
-        mask = ref.sub.TextFile(self.filename, fontdir=self.fontdir, blend=False).std.PropToClip('_Alpha')
-        mask = mask[self.shift:] if self.shift else mask
+    def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        mask = core.sub.TextFile(ref, self.filename, fontdir=self.fontdir, blend=False).std.PropToClip('_Alpha')
+
         mask = mask.std.Binarize(1)
 
         mask = iterate(mask, core.lazy.std.Maximum, 3)
