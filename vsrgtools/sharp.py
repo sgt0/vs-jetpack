@@ -6,8 +6,8 @@ from scipy import interpolate
 
 from vsexprtools import norm_expr
 from vstools import (
-    ConstantFormatVideoNode, ConvMode, CustomTypeError, FunctionUtil, GenericVSFunction, PlanesT, VSFunction, check_ref_clip,
-    check_variable, normalize_planes, vs
+    ConstantFormatVideoNode, ConvMode, CustomTypeError, FunctionUtil, GenericVSFunction, PlanesT, VSFunctionNoArgs,
+    check_ref_clip, check_variable, normalize_planes, vs
 )
 
 from .blur import box_blur, gauss_blur, median_blur, min_blur
@@ -27,7 +27,8 @@ __all__ = [
 
 def unsharpen(
     clip: vs.VideoNode, strength: float = 1.0, sigma: float | list[float] = 1.5,
-    prefilter: vs.VideoNode | VSFunction | None = None, **kwargs: Any
+    prefilter: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | None = None,
+    **kwargs: Any
 ) -> ConstantFormatVideoNode:
 
     assert check_variable(clip, unsharpen)
@@ -72,8 +73,9 @@ def unsharp_masked(
 
 
 def limit_usm(
-    clip: vs.VideoNode, blur: int | vs.VideoNode | VSFunction = 1, thr: int | tuple[int, int] = 3,
-    elast: float = 4.0, bright_thr: int | None = None, planes: PlanesT = None
+    clip: vs.VideoNode, blur: int | vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] = 1,
+    thr: int | tuple[int, int] = 3, elast: float = 4.0, bright_thr: int | None = None,
+    planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     """Limited unsharp_masked."""
 

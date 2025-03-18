@@ -58,7 +58,7 @@ class _BaseLinearOperation:
 
             has_custom_op = hasattr(self, f'_linear_{op_name}')
             operation = cast(
-                VSFunctionAllArgs,
+                VSFunctionAllArgs[vs.VideoNode, vs.VideoNode],
                 getattr(self, f'_linear_{op_name}') if has_custom_op else getattr(super(), op_name)
             )
 

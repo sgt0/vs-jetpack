@@ -32,6 +32,8 @@ __all__ = [
 
 
 VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
+VideoNodeT_contra = TypeVar("VideoNodeT_contra", bound=vs.VideoNode, contravariant=True)
+VideoNodeT_co = TypeVar("VideoNodeT_co", bound=vs.VideoNode, covariant=True)
 
 VideoNodeIterableT = Union[
     VideoNodeT,
@@ -77,27 +79,32 @@ HoldsPropValueT = vs.FrameProps | vs.VideoFrame | vs.AudioFrame | vs.VideoNode |
 F_VD = TypeVar("F_VD", bound=Callable[..., vs.VideoNode])
 
 
-class VSFunctionNoArgs(Protocol):
-    def __call__(self, clip: VideoNodeT) -> VideoNodeT:
+class VSFunctionNoArgs(Protocol[VideoNodeT_contra, VideoNodeT_co]):
+    def __call__(self, clip: VideoNodeT_contra) -> VideoNodeT_co:
         ...
 
 
-class VSFunctionArgs(Protocol):
-    def __call__(self, clip: VideoNodeT, *args: Any) -> VideoNodeT:
+class VSFunctionArgs(Protocol[VideoNodeT_contra, VideoNodeT_co]):
+    def __call__(self, clip: VideoNodeT_contra, *args: Any) -> VideoNodeT_co:
         ...
 
 
-class VSFunctionKwArgs(Protocol):
-    def __call__(self, clip: VideoNodeT, **kwargs: Any) -> VideoNodeT:
+class VSFunctionKwArgs(Protocol[VideoNodeT_contra, VideoNodeT_co]):
+    def __call__(self, clip: VideoNodeT_contra, **kwargs: Any) -> VideoNodeT_co:
         ...
 
 
-class VSFunctionAllArgs(Protocol):
-    def __call__(self, clip: VideoNodeT, *args: Any, **kwargs: Any) -> VideoNodeT:
+class VSFunctionAllArgs(Protocol[VideoNodeT_contra, VideoNodeT_co]):
+    def __call__(self, clip: VideoNodeT_contra, *args: Any, **kwargs: Any) -> VideoNodeT_co:
         ...
 
 
-VSFunction = VSFunctionNoArgs | VSFunctionArgs | VSFunctionKwArgs | VSFunctionAllArgs
+VSFunction = Union[
+    VSFunctionNoArgs[VideoNodeT, VideoNodeT],
+    VSFunctionArgs[VideoNodeT, VideoNodeT],
+    VSFunctionKwArgs[VideoNodeT, VideoNodeT],
+    VSFunctionAllArgs[VideoNodeT, VideoNodeT]
+]
 """Function that takes a :py:attr:`vs.VideoNode` as its first argument and returns a :py:attr:`vs.VideoNode`."""
 
 GenericVSFunction = Callable[..., VideoNodeT]

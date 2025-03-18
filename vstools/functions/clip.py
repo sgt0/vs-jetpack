@@ -3,7 +3,7 @@ from __future__ import annotations
 import vapoursynth as vs
 
 from ..exceptions import FramesLengthError
-from ..types import FrameRange, VideoNodeT, VSFunction
+from ..types import FrameRange, VideoNodeT, VSFunctionNoArgs
 from .normalize import normalize_franges
 
 __all__ = [
@@ -72,7 +72,7 @@ def shift_clip_multi(clip: VideoNodeT, offsets: FrameRange = (-1, 1)) -> list[Vi
     return [shift_clip(clip, x) for x in ranges]
 
 
-def process_var_clip(clip: VideoNodeT, function: VSFunction) -> VideoNodeT:
+def process_var_clip(clip: VideoNodeT, function: VSFunctionNoArgs[VideoNodeT, VideoNodeT]) -> VideoNodeT:
     """
     Process variable format/resolution clips with a given function.
 
