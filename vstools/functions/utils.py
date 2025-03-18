@@ -452,7 +452,9 @@ def get_b(clip: vs.VideoNode, /) -> ConstantFormatVideoNode:
     return plane(clip, 2)
 
 
-def insert_clip(clip: vs.VideoNode, /, insert: vs.VideoNode, start_frame: int, strict: bool = True) -> vs.VideoNode:
+def insert_clip(
+    clip: vs.VideoNode, /, insert: vs.VideoNode, start_frame: int, strict: bool = True
+) -> ConstantFormatVideoNode:
     """
     Replace frames of a longer clip with those of a shorter one.
 
@@ -473,13 +475,13 @@ def insert_clip(clip: vs.VideoNode, /, insert: vs.VideoNode, start_frame: int, s
     """
 
     if start_frame == 0:
-        return insert + clip[insert.num_frames:]
+        return vs.core.std.Splice([insert, clip[insert.num_frames:]])
 
     pre = clip[:start_frame]
     insert_diff = (start_frame + insert.num_frames) - clip.num_frames
 
     if insert_diff == 0:
-        return pre + insert
+        return vs.core.std.Splice([pre, insert])
 
     if insert_diff < 0:
         return vs.core.std.Splice([pre, insert, clip[insert_diff:]])
@@ -490,7 +492,7 @@ def insert_clip(clip: vs.VideoNode, /, insert: vs.VideoNode, start_frame: int, s
             insert_clip, {'clip': clip.num_frames, 'diff': insert_diff}
         )
 
-    return pre + insert[:-insert_diff]
+    return vs.core.std.Splice([pre, insert[:-insert_diff]])
 
 
 @overload
