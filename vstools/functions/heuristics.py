@@ -109,7 +109,7 @@ def video_resample_heuristics(clip: vs.VideoNode, kwargs: KwargsT | None = None,
     :return:                Keyword arguments to pass on to the resize plugin or Kernel.resample.
     """
     from .check import check_variable_format
-    
+
     assert check_variable_format(clip, video_resample_heuristics)
 
     video_fmt = clip.format.replace(**fmt_kwargs)
