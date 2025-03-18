@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, auto
-from typing import Any, ClassVar, NoReturn, Sequence, TypeAlias
+from typing import Any, ClassVar, NoReturn, Sequence, TypeAlias, TypeVar, cast
 
-from jetpytools import inject_kwargs_params
+from jetpytools import CustomNotImplementedError, inject_kwargs_params
+from typing_extensions import TypeIs
+
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vstools import (
-    ColorRange, CustomRuntimeError, CustomValueError, DitherType, FuncExceptT, KwargsT, PlanesT, T,
-    check_variable, depth, get_lowest_values, get_peak_value, get_peak_values, get_subclasses,
-    inject_self, join, normalize_planes, plane, scale_mask, vs
+    ColorRange, ConstantFormatVideoNode, CustomRuntimeError, CustomValueError, DitherType, FuncExceptT, KwargsT,
+    PlanesT, T, check_variable, depth, get_lowest_values, get_peak_value, get_peak_values, get_subclasses, inject_self,
+    join, normalize_planes, plane, scale_mask, vs
 )
 
 from ..exceptions import UnknownEdgeDetectError, UnknownRidgeDetectError
@@ -69,62 +71,66 @@ class MagDirection(IntFlag):
         ]
 
 
-class BaseDetect:
-    @staticmethod
-    def from_param(
-        cls: type[T],
-        value: str | type[T] | T | None,
-        exception_cls: type[CustomValueError],
-        excluded: Sequence[type[T]] = [],
-        func_except: FuncExceptT | None = None
-    ) -> type[T]:
-        if isinstance(value, str):
-            all_edge_detects = get_subclasses(EdgeDetect, excluded)
-            search_str = value.lower().strip()
+def _base_from_param(
+    cls: type[EdgeDetectTypeVar],
+    value: str | type[EdgeDetectTypeVar] | EdgeDetectTypeVar | None,
+    exception_cls: type[CustomValueError],
+    excluded: Sequence[type[EdgeDetectTypeVar]] = [],
+    func_except: FuncExceptT | None = None
+) -> type[EdgeDetectTypeVar]:
+    if isinstance(value, str):
+        all_edge_detects = get_subclasses(EdgeDetect, excluded)
+        search_str = value.lower().strip()
 
-            for edge_detect_cls in all_edge_detects:
-                if edge_detect_cls.__name__.lower() == search_str:
-                    return edge_detect_cls  # type: ignore
+        for edge_detect_cls in all_edge_detects:
+            if edge_detect_cls.__name__.lower() == search_str:
+                return cast(type[EdgeDetectTypeVar], edge_detect_cls)
 
-            raise exception_cls(func_except or cls.from_param, value)  # type: ignore
+        raise exception_cls(func_except or cls.from_param, value)
 
-        if issubclass(value, cls):  # type: ignore
-            return value  # type: ignore
+    if isinstance(value, type) and issubclass(value, cls):
+        return value
 
-        if isinstance(value, cls):
-            return value.__class__
+    if isinstance(value, cls):
+        return value.__class__
 
-        return cls
+    return cls
 
-    @staticmethod
-    def ensure_obj(
-        cls: type[T],
-        value: str | type[T] | T | None,
-        exception_cls: type[CustomValueError],
-        excluded: Sequence[type[T]] = [],
-        func_except: FuncExceptT | None = None
-    ) -> T:
-        new_edge_detect: T | None = None
 
-        if not isinstance(value, cls):
-            try:
-                new_edge_detect = cls.from_param(value, func_except)()  # type: ignore
-            except Exception:
-                ...
-        else:
-            new_edge_detect = value
+def _base_ensure_obj(
+    cls: type[EdgeDetectTypeVar],
+    value: str | type[EdgeDetectTypeVar] | EdgeDetectTypeVar | None,
+    exception_cls: type[CustomValueError],
+    excluded: Sequence[type[EdgeDetectTypeVar]] = [],
+    func_except: FuncExceptT | None = None
+) -> EdgeDetectTypeVar:
+    if value is None:
+        new_edge_detect = cls()
+    elif isinstance(value, cls):
+        new_edge_detect = value
+    else:
+        new_edge_detect = cls.from_param(value, func_except)()
 
-        if new_edge_detect is None:
-            new_edge_detect = cls()
+    if new_edge_detect.__class__ in excluded:
+        raise exception_cls(
+            func_except or cls.ensure_obj, new_edge_detect.__class__,
+            'This {cls_name} can\'t be instantiated to be used!',
+            cls_name=new_edge_detect.__class__
+        )
 
-        if new_edge_detect.__class__ in excluded:
-            raise exception_cls(
-                func_except or cls.ensure_obj, new_edge_detect.__class__,  # type: ignore
-                'This {cls_name} can\'t be instantiated to be used!',
-                cls_name=new_edge_detect.__class__
-            )
+    return new_edge_detect
 
-        return new_edge_detect
+
+def _is_discard_planes_mode(planes: PlanesT | tuple[PlanesT, bool]) -> TypeIs[tuple[PlanesT, bool]]:
+    if (
+        isinstance(planes, tuple)
+        and len(planes) == 2
+        and (isinstance(planes[0], (int, Sequence)) or planes[0] is None)
+        and isinstance(planes[1], bool)
+    ):
+        return True
+
+    return False
 
 
 class EdgeDetect(ABC):
@@ -139,15 +145,19 @@ class EdgeDetect(ABC):
 
     @classmethod
     def from_param(
-        cls: type[EdgeDetect], edge_detect: EdgeDetectT | None = None, func_except: FuncExceptT | None = None
-    ) -> type[EdgeDetect]:
-        return BaseDetect.from_param(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
+        cls: type[EdgeDetectTypeVar],
+        edge_detect: type[EdgeDetectTypeVar] | EdgeDetectTypeVar | str | None = None, /,
+        func_except: FuncExceptT | None = None
+    ) -> type[EdgeDetectTypeVar]:
+        return _base_from_param(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
 
     @classmethod
     def ensure_obj(
-        cls: type[EdgeDetect], edge_detect: EdgeDetectT | None = None, func_except: FuncExceptT | None = None
-    ) -> EdgeDetect:
-        return BaseDetect.ensure_obj(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
+        cls: type[EdgeDetectTypeVar],
+        edge_detect: type[EdgeDetectTypeVar] | EdgeDetectTypeVar | str | None = None, /,
+        func_except: FuncExceptT | None = None
+    ) -> EdgeDetectTypeVar:
+        return _base_ensure_obj(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
 
     @inject_self
     @inject_kwargs_params
@@ -187,10 +197,10 @@ class EdgeDetect(ABC):
         hthr = scale_mask(hthr, 32, clip)
 
         discard_planes = False
-        if isinstance(planes, tuple):
+        if _is_discard_planes_mode(planes):
             planes, discard_planes = planes
 
-        planes = normalize_planes(clip, planes)  # type: ignore
+        planes = normalize_planes(clip, planes)
 
         wclip = plane(clip, planes[0]) if len(planes) == 1 else clip
 
@@ -312,16 +322,20 @@ class MagnitudeMatrix(MatrixEdgeDetect):
 
 class RidgeDetect(MatrixEdgeDetect):
     @classmethod
-    def from_param(  # type: ignore
-        cls: type[RidgeDetect], edge_detect: RidgeDetectT | None = None, func_except: FuncExceptT | None = None
-    ) -> type[RidgeDetect]:
-        return BaseDetect.from_param(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
+    def from_param(
+        cls: type[RidgeDetectTypeVar],
+        edge_detect: type[RidgeDetectTypeVar] | RidgeDetectTypeVar | str | None = None, /,
+        func_except: FuncExceptT | None = None
+    ) -> type[RidgeDetectTypeVar]:
+        return _base_from_param(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
 
     @classmethod
-    def ensure_obj(  # type: ignore
-        cls: type[RidgeDetect], edge_detect: RidgeDetectT | None = None, func_except: FuncExceptT | None = None
-    ) -> RidgeDetect:
-        return BaseDetect.ensure_obj(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
+    def ensure_obj(
+        cls: type[RidgeDetectTypeVar],
+        edge_detect: type[RidgeDetectTypeVar] | RidgeDetectTypeVar | str | None = None, /,
+        func_except: FuncExceptT | None = None
+    ) -> RidgeDetectTypeVar:
+        return _base_ensure_obj(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
 
     @inject_self
     def ridgemask(
@@ -390,6 +404,9 @@ class Max(MatrixEdgeDetect, ABC):
 
 EdgeDetectT: TypeAlias = type[EdgeDetect] | EdgeDetect | str
 RidgeDetectT: TypeAlias = type[RidgeDetect] | RidgeDetect | str
+
+EdgeDetectTypeVar = TypeVar("EdgeDetectTypeVar", bound=EdgeDetect)
+RidgeDetectTypeVar = TypeVar("RidgeDetectTypeVar", bound=RidgeDetect)
 
 
 def get_all_edge_detects(
