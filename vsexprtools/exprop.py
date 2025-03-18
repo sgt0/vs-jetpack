@@ -5,9 +5,9 @@ from math import isqrt
 from typing import Any, Iterable, Iterator, Sequence, SupportsFloat, SupportsIndex, overload
 
 from vstools import (
-    ColorRange, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT, HoldsVideoFormatT, PlanesT,
-    StrArrOpt, StrList, VideoFormatT, VideoNodeIterableT, VideoNodeT, flatten, flatten_vnodes, get_lowest_value,
-    get_neutral_value, get_peak_value, vs
+    ColorRange, ConstantFormatVideoNode, ConvMode, CustomEnum, CustomIndexError, CustomValueError, FuncExceptT,
+    HoldsVideoFormatT, PlanesT, StrArrOpt, StrList, VideoFormatT, VideoNodeIterableT, VideoNodeT, flatten,
+    flatten_vnodes, get_lowest_value, get_neutral_value, get_peak_value, vs
 )
 
 from .util import ExprVarRangeT, ExprVars, ExprVarsT, complexpr_available
@@ -159,7 +159,7 @@ class ExprOpBase(str):
         self, *clips: vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]],
         suffix: StrArrOpt = None, prefix: StrArrOpt = None, expr_suffix: StrArrOpt = None,
         expr_prefix: StrArrOpt = None, planes: PlanesT = None, **expr_kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         from .funcs import combine
 
         return combine(clips, self, suffix, prefix, expr_suffix, expr_prefix, planes, **expr_kwargs)
