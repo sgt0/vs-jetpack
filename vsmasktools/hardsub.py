@@ -43,10 +43,6 @@ __all__ = [
 class _base_cmaskcar(vs_object):
     clips: list[vs.VideoNode]
 
-    @abstractmethod
-    def frame_ranges(self, clip: vs.VideoNode) -> list[list[tuple[int, int]]]:
-        ...
-
     def __vs_del__(self, core_id: int) -> None:
         self.clips.clear()
 
@@ -80,6 +76,10 @@ class CustomMaskFromClipsAndRanges(GeneralMask, _base_cmaskcar):
             mask = replace_ranges(mask, maskclip, mask_ranges, **kwargs)
 
         return mask
+
+    @abstractmethod
+    def frame_ranges(self, clip: vs.VideoNode) -> list[list[tuple[int, int]]]:
+        ...
 
 
 @dataclass
