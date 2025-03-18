@@ -243,8 +243,8 @@ class FreyChen(MatrixEdgeDetect):
         return depth(clip, input_bits, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
 
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode]) -> ConstantFormatVideoNode:
-        M = 'x x * y y * + z z * + a a * +'
-        S = f'b b * c c * + d d * + e e * + f f * + {M} +'
+        M = 'x dup * y dup * + z dup * + a dup * +'
+        S = f'b dup * c dup * + d dup * + e dup * + f dup * + {M} +'
         return norm_expr(clips, f'{M} {S} / sqrt', func=self.__class__)
 
     def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode]) -> NoReturn:
