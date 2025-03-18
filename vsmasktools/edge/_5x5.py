@@ -6,7 +6,7 @@ from typing import Any, Sequence
 from vstools import ColorRange, ConstantFormatVideoNode, depth
 from vsexprtools import norm_expr
 
-from ._abstract import EdgeDetect, EuclideanDistance, Max, RidgeDetect, SingleMatrix
+from ._abstract import EdgeDetect, EuclideanDistance, MagnitudeMatrix, Max, RidgeDetect, SingleMatrix
 
 __all__ = [
     'Matrix5x5',
@@ -139,7 +139,7 @@ class Farid(RidgeDetect, EuclideanDistance, Matrix5x5):
 
 
 # Max
-class ExKirsch(Max):
+class ExKirsch(MagnitudeMatrix, Max):
     """Extended Russell Kirsch compass operator. 5x5 matrices."""
 
     matrices = [
