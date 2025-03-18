@@ -96,14 +96,14 @@ def retinex(
 
     y = get_y(clip)
 
-    if not complexpr_available or not hasattr(core, 'vszip'):
+    if not complexpr_available or not hasattr(vs.core, 'vszip'):
         if fast:
             raise CustomRuntimeError(
                 "You don't have {missing} plugin, you can't use this function!", func, 'fast=True',
-                missing=iter(x for x in ('akarin', 'vszip') if not hasattr(core, x))
+                missing=iter(x for x in ('akarin', 'vszip') if not hasattr(vs.core, x))
             )
 
-        return y.retinex.MSRCP(sigma, lower_thr, upper_thr)
+        return y.retinex.MSRCP(sigma, lower_thr, upper_thr)  # type: ignore
     elif fast is None:
         fast = True
 
