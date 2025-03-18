@@ -88,6 +88,6 @@ def multi_detail_mask(clip: vs.VideoNode, thr: float = 0.015) -> ConstantFormatV
     return ExprOp.MIN.combine(
         ExprOp.MIN.combine(
             simple_detail_mask(clip, brz_a=1, brz_b=2 * thr),
-            Morpho.maximum(general_mask, iterations=4) .std.Inflate()
+            Morpho.maximum(general_mask, iterations=4).std.Inflate()
         ), general_mask.std.Maximum()
     )
