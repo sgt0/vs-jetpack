@@ -91,6 +91,10 @@ def credit_mask(
     blur: float | None = 1.65, prefilter: bool | int = 5,
     expand: int = 8
 ) -> ConstantFormatVideoNode:
+    warnings.warn(
+        'credit_mask: Function is deprecated and will be removed in a later version! Use based_diff_mask',
+        DeprecationWarning
+    )
 
     if blur is not None:
         clip, ref = gauss_blur(clip, blur), gauss_blur(ref, blur)
