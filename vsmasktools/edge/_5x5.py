@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Sequence
 
-from vstools import ColorRange, depth, vs
+from vstools import ColorRange, ConstantFormatVideoNode, depth
 from vsexprtools import norm_expr
 
 from ._abstract import EdgeDetect, EuclideanDistance, Max, RidgeDetect, SingleMatrix
@@ -91,7 +91,7 @@ class FDoG(RidgeDetect, EuclideanDistance, Matrix5x5):
 class FDoGTCanny(Matrix5x5, EdgeDetect):
     """Flow-based Difference of Gaussian TCanny Vapoursynth plugin."""
 
-    def _compute_edge_mask(self, clip: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+    def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         return clip.tcanny.TCanny(kwargs.pop('sigma', 0), mode=1, op=6, scale=0.5, **kwargs)
 
 
@@ -104,13 +104,13 @@ class DoG(EuclideanDistance, Matrix5x5):
     ]
     divisors = [4, 6]
 
-    def _preprocess(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return depth(clip, 32)
 
-    def _postprocess(self, clip: vs.VideoNode, input_bits: int | None = None) -> vs.VideoNode:
+    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
         return depth(clip, input_bits, range_out=ColorRange.FULL, range_in=ColorRange.FULL)
 
-    def _merge_edge(self, clips: Sequence[vs.VideoNode]) -> vs.VideoNode:
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode]) -> ConstantFormatVideoNode:
         return norm_expr(clips, 'x y -', func=self.__class__)
 
 
@@ -131,10 +131,10 @@ class Farid(RidgeDetect, EuclideanDistance, Matrix5x5):
         -0.004127602875174862, -0.027308149775363867, -0.04673225765917656, -0.027308149775363867, -0.004127602875174862
     ]]
 
-    def _preprocess(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return depth(clip, 32)
 
-    def _postprocess(self, clip: vs.VideoNode, input_bits: int | None = None) -> vs.VideoNode:
+    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
         return depth(clip, input_bits, range_out=ColorRange.FULL, range_in=ColorRange.FULL)
 
 
