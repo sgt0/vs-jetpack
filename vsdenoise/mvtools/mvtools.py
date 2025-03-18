@@ -386,7 +386,9 @@ class MVTools:
         vectors = fallback(vectors, self.vectors)
 
         if not vectors.has_vectors:
-            raise CustomRuntimeError(f'You must run {self.analyze} before recalculating motion vectors!', self.recalculate)
+            raise CustomRuntimeError(
+                f'You must run {self.analyze} before recalculating motion vectors!', self.recalculate
+            )
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
@@ -791,10 +793,10 @@ class MVTools:
                     'Invalid framerate multiplier specified!', self.flow_interpolate, f'{multi} < 2'
                 )
 
-            flow_interpolate_args.pop(time, None)  # type: ignore
+            flow_interpolate_args.pop('time', None)
 
             for pos in range(1, multi):
-                time = pos / multi * 100
+                time = pos * 100 / multi
 
                 interpolated.append(
                     self.mvtools.FlowInter(clip, super_clip, vect_b, vect_f, time=time, **flow_interpolate_args)
