@@ -298,7 +298,7 @@ def bilateral(
     else:
         bilateral_args = KwargsT(ref=ref, sigma_spatial=sigmaS, sigma_color=sigmaR)
 
-    return getattr(clip, backend).Bilateral(**bilateral_args, **kwargs)
+    return getattr(clip, backend).Bilateral(**bilateral_args | kwargs)
 
 
 def flux_smooth(
