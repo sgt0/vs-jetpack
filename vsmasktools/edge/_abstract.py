@@ -206,17 +206,18 @@ class EdgeDetect(ABC):
 
         clip_p = self._preprocess(wclip)
 
-        try:
-            if feature == _Feature.EDGE:
-                mask = self._compute_edge_mask(clip_p, **kwargs)
-            elif feature == _Feature.RIDGE:
-                if not isinstance(self, RidgeDetect):
-                    raise RuntimeError
-                mask = self._compute_ridge_mask(clip_p, **kwargs)
-        except Exception as e:
-            raise CustomRuntimeError(
-                'There was an error processing the mask! Are you using an abstract class?', self.__class__
-            ) from e
+        if feature == _Feature.EDGE:
+            mask = self._compute_edge_mask(clip_p, **kwargs)
+        elif feature == _Feature.RIDGE:
+            if not isinstance(self, RidgeDetect):
+                raise CustomRuntimeError(
+                    f"Ridge feature has been requested but {self.__class__.__name__} is not a subclass of RidgeDetect",
+                    self.__class__
+                )
+
+            mask = self._compute_ridge_mask(clip_p, **kwargs)
+        else:
+            raise CustomNotImplementedError
 
         mask = self._postprocess(mask, clip.format.bits_per_sample)
 
@@ -232,17 +233,14 @@ class EdgeDetect(ABC):
         elif hthr < peak:
             mask = norm_expr(mask, f'x {hthr} > {ExprToken.RangeMax} x ?', planes, func=self.__class__)
 
-        if clamp:
-            if clamp is True:
-                crange = ColorRange.from_video(clip)
-                clamp = list(zip(get_lowest_values(mask, crange), get_peak_values(mask, crange)))
+        if clamp is True:
+            crange = ColorRange.from_video(clip)
+            clamp = list(zip(get_lowest_values(mask, crange), get_peak_values(mask, crange)))
 
-            if isinstance(clamp, list):
-                mask = norm_expr(mask, [ExprOp.clamp(*c, c='x') for c in clamp], planes, func=self.__class__)
-            elif isinstance(clamp, tuple):
-                mask = ExprOp.clamp(*clamp, c='x')(mask, planes=planes)
-
-        assert mask.format
+        if isinstance(clamp, list):
+            mask = norm_expr(mask, [ExprOp.clamp(*c, c='x') for c in clamp], planes, func=self.__class__)
+        elif isinstance(clamp, tuple):
+            mask = ExprOp.clamp(*clamp, c='x')(mask, planes=planes)
 
         if mask.format.num_planes != clip.format.num_planes and not discard_planes:
             return join({None: clip.std.BlankClip(color=[0] * clip.format.num_planes, keep=True), planes[0]: mask})
