@@ -4,7 +4,8 @@ from types import TracebackType
 from typing import overload
 
 from rich.console import Console
-from rich.progress import BarColumn, Progress, ProgressColumn, Task, TaskID, TextColumn, TimeRemainingColumn
+from rich.progress import (BarColumn, Progress, ProgressColumn, Task, TaskID,
+                           TextColumn, TimeElapsedColumn, TimeRemainingColumn)
 from rich.text import Text
 
 __all__ = [
@@ -81,6 +82,7 @@ def get_render_progress(title: str | None = None, total: int | None = None) -> R
         TextColumn("{task.completed}/{task.total}"),
         TextColumn("{task.percentage:>3.02f}%"),
         FPSColumn(),
+        TimeElapsedColumn(),
         TimeRemainingColumn(),
         console=Console(stderr=True),
     )
