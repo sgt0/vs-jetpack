@@ -9,7 +9,7 @@ from enum import auto
 from typing import TYPE_CHECKING, Any, Callable, Literal, NamedTuple, Sequence, overload
 
 from vstools import (
-    CustomEnum, CustomIntEnum, CustomValueError, FieldBased, KwargsT, PlanesT, UnsupportedFieldBasedError,
+    CustomEnum, CustomIntEnum, CustomValueError, KwargsT, PlanesT, check_progressive,
     check_variable, core, join, normalize_planes, normalize_seq, to_arr, vs
 )
 
@@ -125,14 +125,13 @@ class DeviceTypeWithInfo(str):
         channels: str | None = None, wmode: int | None = None, wref: float | None = None,
         ref: vs.VideoNode | None = None, **kwargs: Any
     ) -> vs.VideoNode:
+        assert check_progressive(clip, nl_means)
+
         if self == DeviceType.AUTO and hasattr(core, 'nlm_cuda'):
             self = DeviceType.CUDA
 
         if self == DeviceType.CUDA and not hasattr(core, 'nlm_cuda'):
             raise CustomValueError("You can't use cuda device type, you are missing the nlm_cuda plugin!")
-
-        if (fb := FieldBased.from_video(clip, False, nl_means)).is_inter:
-            raise UnsupportedFieldBasedError('Interlaced input is not supported!', nl_means, fb)
 
         funcs = list[Callable[..., vs.VideoNode]]()
 

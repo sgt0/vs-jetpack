@@ -10,10 +10,10 @@ from typing import Any, Literal, NamedTuple, final, overload
 
 from vstools import (
     MISSING, ColorRange, ColorRangeT, Colorspace, ConstantFormatVideoNode, CustomIndexError,
-    CustomRuntimeError, CustomStrEnum, CustomValueError, FieldBased, FuncExceptT, FunctionUtil,
-    KwargsT, Matrix, MatrixT, MissingT, PlanesT, SingleOrArr, UnsupportedFieldBasedError,
+    CustomRuntimeError, CustomStrEnum, CustomValueError, FuncExceptT, FunctionUtil,
+    KwargsT, Matrix, MatrixT, MissingT, PlanesT, SingleOrArr,
     check_variable, core, depth, get_video_format, get_y, is_gpu_available, join, normalize_seq, vs,
-    vs_object
+    vs_object, check_progressive
 )
 
 from .types import _Plugin_bm3dcpu_Core_Bound, _Plugin_bm3dcuda_Core_Bound, _Plugin_bm3dcuda_rtc_Core_Bound
@@ -336,7 +336,9 @@ class AbstractBM3D(vs_object):
                                 If not specified, gets the color from the "_ColorRange" prop of the clip.
                                 This check is not performed if the input clip is float.
         """
+
         assert check_variable(clip, self.__class__)
+        assert check_progressive(clip, self.__class__)
 
         self.sigma = self._Sigma(*normalize_seq(sigma, 3))
         self.tr = self._TemporalRadius(*normalize_seq(tr or 0, 2))
@@ -354,9 +356,6 @@ class AbstractBM3D(vs_object):
             colorspace = Colorspace.OPP_BM3D
 
         matrix = Matrix.from_param(matrix)
-
-        if (fb := FieldBased.from_video(clip, False, self.__class__)).is_inter:
-            raise UnsupportedFieldBasedError('Interlaced input is not supported!', self.__class__, fb)
 
         self.cspconfig = BM3DColorspaceConfig(colorspace, clip, matrix, self.sigma.y == 0, fp32)
 

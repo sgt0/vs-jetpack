@@ -3,9 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from vsexprtools import norm_expr
-from vstools import (
-    FieldBased, FunctionUtil, KwargsT, PlanesT, UnsupportedFieldBasedError, check_ref_clip, core, depth, get_y, vs
-)
+from vstools import FunctionUtil, KwargsT, PlanesT, check_ref_clip, core, depth, get_y, vs, check_progressive
 
 from .prefilters import Prefilter
 
@@ -112,8 +110,7 @@ def wnnm(
     :return:                        Denoised clip.
     """
 
-    if (fb := FieldBased.from_video(clip, False, wnnm)).is_inter:
-        raise UnsupportedFieldBasedError('Interlaced input is not supported!', wnnm, fb)
+    assert check_progressive(clip, wnnm)
 
     func = FunctionUtil(clip, wnnm, planes, bitdepth=32)
 
@@ -197,8 +194,7 @@ def bmdegrain(
     :return:                        Denoised clip.
     """
 
-    if (fb := FieldBased.from_video(clip, False, bmdegrain)).is_inter:
-        raise UnsupportedFieldBasedError('Interlaced input is not supported!', bmdegrain, fb)
+    assert check_progressive(clip, bmdegrain)
 
     func = FunctionUtil(clip, bmdegrain, planes, bitdepth=32)
 

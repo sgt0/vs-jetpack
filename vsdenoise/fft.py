@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 from vstools import (
     CustomEnum, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
     FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
-    UnsupportedFieldBasedError, check_variable, core, flatten, get_depth, get_sample_type, inject_self, vs
+    check_variable, core, flatten, get_depth, get_sample_type, inject_self, vs, check_progressive
 )
 
 __all__ = [
@@ -602,8 +602,7 @@ class DFTTest:
             if clip is None:
                 raise CustomValueError('You must pass a clip!', func)
 
-            if (fb := FieldBased.from_video(clip, False, func)).is_inter:
-                raise UnsupportedFieldBasedError('Interlaced input is not supported!', func, fb)
+            assert check_progressive(clip, func)
 
             return self.plugin(
                 clip, nsloc, func=func, **(self.default_args | dict(

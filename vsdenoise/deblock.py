@@ -11,11 +11,11 @@ from vskernels import Catrom, Kernel, KernelT
 from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask
 from vsrgtools import MeanMode, gauss_blur, repair
 from vstools import (
-    Align, CustomStrEnum, DependencyNotFoundError, FieldBased, FrameRangeN, FrameRangesN,
+    Align, CustomStrEnum, DependencyNotFoundError, FrameRangeN, FrameRangesN,
     FunctionUtil, InvalidColorFamilyError, KwargsT, LengthMismatchError, Matrix, MatrixT, PlanesT,
-    UnsupportedFieldBasedError, UnsupportedVideoFormatError, VSFunction, check_variable, core,
+    UnsupportedVideoFormatError, VSFunction, check_variable, core,
     depth, fallback, get_depth, get_nvidia_version, get_plane_sizes, get_y, join, limiter,
-    normalize_seq, padder, replace_ranges, shift_clip_multi, vs
+    normalize_seq, padder, replace_ranges, shift_clip_multi, vs, check_progressive
 )
 
 __all__ = [
@@ -470,9 +470,8 @@ def mpeg2stinx(
     def _default_bob(clip: vs.VideoNode) -> vs.VideoNode:
         bobbed = Nnedi3(field=3).interpolate(clip, double_y=False)
         return clip.bwdif.Bwdif(field=3, edeint=bobbed)
-
-    if (fb := FieldBased.from_video(clip, False, mpeg2stinx)).is_inter:
-        raise UnsupportedFieldBasedError('Interlaced input is not supported!', mpeg2stinx, fb)
+    
+    assert check_progressive(clip, mpeg2stinx)
 
     sw, sh = normalize_seq(radius, 2)
 
