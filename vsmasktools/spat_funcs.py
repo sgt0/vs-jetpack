@@ -131,8 +131,8 @@ def retinex(
 
     return norm_expr(
         msr_stats, expr_balance, None, y,
-        ymin=get_lowest_value(y, False, ColorRange.LIMITED),
-        ymax=get_peak_value(y, False, ColorRange.LIMITED),
+        ymin=get_lowest_value(y, False),
+        ymax=get_peak_value(y, False),
         func=func
     )
 
