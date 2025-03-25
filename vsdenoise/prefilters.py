@@ -30,10 +30,6 @@ __all__ = [
     'MultiPrefilter'
 ]
 
-__abstract__ = [
-    'CUSTOM'
-]
-
 
 class PrefilterMeta(EnumMeta):
     def __instancecheck__(cls: EnumMeta, instance: Any) -> bool:
