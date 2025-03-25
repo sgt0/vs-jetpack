@@ -6,7 +6,7 @@ from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
     ColorRange, ConstantFormatVideoNode, CustomRuntimeError, DitherType, FuncExceptT, StrList, check_variable, depth,
-    fallback, get_lowest_value, get_peak_value, get_sample_type, get_y, plane, scale_value, to_arr, vs
+    fallback, get_lowest_value, get_peak_value, get_sample_type, get_y, limiter, plane, scale_value, to_arr, vs
 )
 
 from .edge import MinMax
@@ -83,6 +83,7 @@ def adg_mask(
     return scaled_clips[0]
 
 
+@limiter
 def retinex(
     clip: vs.VideoNode, sigma: Sequence[float] = [25, 80, 250],
     lower_thr: float = 0.001, upper_thr: float = 0.001,
