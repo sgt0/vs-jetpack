@@ -124,6 +124,9 @@ class BaseScaler(vs_object):
     def __init__(self, **kwargs: Any) -> None:
         self.kwargs = kwargs
 
+    def __str__(self) -> str:
+        return self.pretty_string
+
     def __init_subclass__(cls) -> None:
         if not _finished_loading_abstract:
             return
@@ -196,19 +199,15 @@ class BaseScaler(vs_object):
     def get_clean_kwargs(self, *funcs: Callable[..., Any] | None) -> KwargsT:
         return _clean_self_kwargs(funcs, self)
 
+    def _pretty_string(self, **attrs: Any) -> str:
+        return (
+            f"{self.__class__.__name__}"
+            + '(' + ', '.join(f'{k}={v}' for k, v in (attrs | self.kwargs).items()) + ')'
+        )
+
     @inject_self.cached.property
     def pretty_string(self) -> str:
-        attrs = dict[str, Any]()
-
-        if hasattr(self, 'b') and hasattr(self, 'c'):
-            attrs.update(b=self.b, c=self.c)
-        elif hasattr(self, 'taps'):
-            attrs['taps'] = self.taps
-
-        if hasattr(self, 'kwargs'):
-            attrs.update(self.kwargs)
-
-        return f"{self.__class__.__name__}{' (' + ', '.join(f'{k}={v}' for k, v in attrs.items()) + ')' if attrs else ''}"
+        return self._pretty_string()
 
 
 BaseScalerT = TypeVar('BaseScalerT', bound=BaseScaler)

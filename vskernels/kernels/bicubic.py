@@ -57,6 +57,9 @@ class Bicubic(ZimgComplexKernel):
             return 1
         return 2
 
+    def _pretty_string(self, **attrs: Any) -> str:
+        return super()._pretty_string(**dict(b=self.b, c=self.c) | attrs)
+
 
 class BSpline(Bicubic):
     """Bicubic b=1, c=0"""
