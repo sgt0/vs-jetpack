@@ -629,7 +629,7 @@ class Morpho:
         if coords:
             _, expr = cls._get_matrix_from_coords(coords, func)
         else:
-            expr = ExprOp.matrix('x', *radius, [(0, 0)])
+            expr = ExprOp.matrix('x', *radius)
 
         nexpr = list(expr)
 
@@ -820,12 +820,12 @@ class Morpho:
             )
 
         matrix = list(coords)
-        matrix.insert(lc // 2, 0)
+        matrix.insert(lc // 2, 1)
 
         r = int(sq_lc // 2)
 
-        expr, = ExprOp.matrix("x", r, ConvMode.SQUARE, exclude=[(0, 0)])
-        expr = ExprList([x for x, coord in zip(expr, coords) if coord])
+        expr, = ExprOp.matrix("x", r, ConvMode.SQUARE)
+        expr = ExprList([x for x, coord in zip(expr, matrix) if coord])
 
         return r, TupleExprList([expr])
 
