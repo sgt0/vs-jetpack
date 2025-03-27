@@ -118,6 +118,7 @@ class BaseScaler(vs_object):
     kwargs: KwargsT
     """Arguments passed to the internal scale function"""
 
+    _static_kernel_radius: ClassVar[int]
     _err_class: ClassVar[type[CustomValueError]]
 
     def __init__(self, **kwargs: Any) -> None:

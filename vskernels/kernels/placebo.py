@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import ceil
-from typing import Any, Callable
+from typing import Any, Callable, ClassVar
 
 from jetpytools import inject_kwargs_params
 from vstools import core, fallback, inject_self, vs
@@ -30,7 +30,7 @@ class Placebo(ComplexScaler):
     * vs-placebo <https://github.com/sgt0/vs-placebo>`_
     """
 
-    _kernel: str
+    _kernel: ClassVar[str]
     """Name of the placebo kernel"""
 
     # Kernel settings
