@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
+from os import PathLike
 from typing import Any, Iterable, Literal, Protocol, Sequence, overload
 
 from vstools import (
@@ -18,7 +19,7 @@ __all__ = [
 
 
 def parse_video_filepath(filepath: SPathLike | Iterable[SPathLike]) -> tuple[SPath, ParsedFile]:
-    if isinstance(filepath, Iterable):
+    if not isinstance(filepath, (str, PathLike)):
         filepath = list(filepath)
 
     try:
