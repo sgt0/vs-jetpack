@@ -810,13 +810,13 @@ class Morpho:
         lc = len(coords)
 
         if lc < 8:
-            raise CustomValueError('coords must have more than 8 elements!', func, coords)
+            raise CustomValueError('`coords` must contain at least 8 elements!', func, coords)
 
         sq_lc = sqrt(lc + 1)
 
         if not (sq_lc.is_integer() and sq_lc % 2 != 0):
             raise CustomValueError(
-                'coords must contain exactly (radius * 2 + 1) ** 2 - 1 numbers.\neg. 8, 24, 48...', func, coords
+                '`coords` must contain exactly (radius * 2 + 1) ** 2 - 1 numbers.\neg. 8, 24, 48...', func, coords
             )
 
         matrix = list(coords)
