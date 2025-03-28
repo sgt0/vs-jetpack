@@ -94,8 +94,7 @@ markdown_extensions:
       permalink: "¶"
 
 nav:
-  - Home:
-      - Overview: index.md
+  - Home: index.md
   - API: api/
 
 validation:
