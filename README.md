@@ -34,13 +34,13 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 
 #### Dependencies
 
-| **Highly recommended regardless of usecase** |
+| **Essential** |
 | ------
 | [akarin](https://github.com/AkarinVS/vapoursynth-plugin) [^1] |
 | [resize2](https://github.com/Jaded-Encoding-Thaumaturgy/vapoursynth-resize2) [^1] | 
 | [vszip](https://github.com/dnjulek/vapoursynth-zip) |
 | [fmtconv](https://gitlab.com/EleonoreMizo/fmtconv/) |
-| **Entirely optional based on what filters you want to use** |
+| **Optional** |
 | [eedi2](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI2) / [eedi2cuda](https://github.com/hooke007/VapourSynth-EEDI2CUDA) |
 | [eedi3](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-EEDI3) |
 | [znedi3](https://github.com/sekrit-twc/znedi3) / [sneedif](https://github.com/Jaded-Encoding-Thaumaturgy/vapoursynth-SNEEDIF) |
@@ -73,7 +73,7 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 | [zsmooth](https://github.com/adworacz/zsmooth) |
 | [bilateralgpu](https://github.com/WolframRhodium/VapourSynth-BilateralGPU) |
 | [dpid](https://github.com/WolframRhodium/VapourSynth-dpid) |
-| **Sourcefilters** |
+| **Source filters** |
 | [bestsource](https://github.com/vapoursynth/bestsource) |
 | [dgdecnv](https://www.rationalqm.us/dgdecnv/dgdecnv.html) [^2] |
 | [d2vsource](https://github.com/dwbuiten/d2vsource) |
