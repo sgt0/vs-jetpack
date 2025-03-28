@@ -180,7 +180,7 @@ class Waifu2xScaleHelper(ProcessVariableResClip):
             if cast_to[0] > max_shapes[0] or cast_to[1] > max_shapes[1]:
                 self.backend_kwargs.update(max_shapes=cast_to)
 
-        return MlrtWaifu2x(  # type: ignore
+        return MlrtWaifu2x(
             super().normalize(clip, cast_to), backend=self.backend(**self.backend_kwargs), **self.kwargs
         )
 

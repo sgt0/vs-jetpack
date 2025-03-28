@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     class ShaderFileBase(ShaderFileCustomBase, CustomStrEnum):
         value: str
 
-    class ShaderFileCustom(ShaderFile):  # type: ignore
+    class ShaderFileCustom(ShaderFile):
         ...
 else:
     ShaderFileBase = CustomStrEnum

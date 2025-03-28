@@ -151,7 +151,7 @@ class ClampScaler(GenericScaler):
             smooth = self.reference
 
             if shift != (0, 0):
-                smooth = self._kernel.shift(smooth, shift)  # type: ignore
+                smooth = self._kernel.shift(smooth, shift)
         else:
             assert self._reference
             smooth = self._reference.scale(clip, width, height, shift)
@@ -241,7 +241,7 @@ class UnsharpLimitScaler(GenericScaler):
             smooth = self.reference
 
             if shift != (0, 0):
-                smooth = self._kernel.shift(smooth, shift)  # type: ignore
+                smooth = self._kernel.shift(smooth, shift)
         else:
             smooth = self._reference.scale(clip, width, height, shift)  # type: ignore
 
