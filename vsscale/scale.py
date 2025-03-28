@@ -9,8 +9,8 @@ from vsexprtools import complexpr_available, expr_func, norm_expr
 from vskernels import Catrom, Hermite, LinearScaler, Scaler, ScalerT
 from vsrgtools import box_blur, gauss_blur
 from vstools import (
-    KwargsT, Matrix, MatrixT, PlanesT, ProcessVariableClip,
-    ProcessVariableResClip, VSFunction, check_ref_clip, check_variable, check_variable_format,
+    ConstantFormatVideoNode, KwargsT, Matrix, MatrixT, PlanesT, ProcessVariableClip,
+    ProcessVariableResClip, VSFunctionNoArgs, check_ref_clip, check_variable, check_variable_format,
     clamp, core, depth, fallback, get_nvidia_version, get_prop, inject_self, limiter, padder, vs
 )
 
@@ -90,7 +90,10 @@ class SSIM(LinearScaler):
     """
 
     def __init__(
-        self, scaler: ScalerT = Hermite, smooth: int | float | VSFunction | None = None, **kwargs: Any
+        self,
+        scaler: ScalerT = Hermite,
+        smooth: int | float | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | None = None,
+        **kwargs: Any
     ) -> None:
         """
         :param scaler:      Scaler to be used for downscaling, defaults to Hermite.
@@ -153,7 +156,7 @@ class Waifu2xPadHelper(ProcessVariableResClip):
 
 
 class Waifu2xCropHelper(ProcessVariableClip[tuple[int, int, int, int, int, int]]):
-    def get_key(self, frame: vs.VideoFrame) -> tuple[int, int, int, int, int, int]:
+    def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> tuple[int, int, int, int, int, int]:
         return (frame.width, frame.height, *get_prop(frame, '_PadValues', list))
 
     def normalize(self, clip: vs.VideoNode, cast_to: tuple[int, int, int, int, int, int]) -> vs.VideoNode:
