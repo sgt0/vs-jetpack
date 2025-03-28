@@ -38,7 +38,8 @@ extra_css:
   - css/extra.css
 
 plugins:
-  - privacy
+  - privacy:
+      enabled: !ENV [PROD, false]
   - search
   - gen-files:
       scripts:
@@ -84,6 +85,7 @@ plugins:
 markdown_extensions:
   - footnotes
   - pymdownx.details
+  - pymdownx.snippets
   - pymdownx.highlight:
       pygments_lang_class: true
   - pymdownx.superfences
