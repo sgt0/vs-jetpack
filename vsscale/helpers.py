@@ -159,12 +159,6 @@ def scale_var_clip(
     shift: tuple[float, float] | Callable[[Resolution], tuple[float, float]] = (0, 0), debug: bool = False
 ) -> vs.VideoNode:
     """Scale a variable clip to constant or variable resolution."""
-    if not debug:
-        try:
-            return scaler.scale(clip, width, height, shift)  # type: ignore
-        except BaseException:
-            pass
-
     _cached_clips = dict[str, vs.VideoNode]()
 
     no_accepts_var = list[Scaler]()
