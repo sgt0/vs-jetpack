@@ -162,8 +162,11 @@ class Waifu2xCropHelper(ProcessVariableClip[tuple[int, int, int, int, int, int]]
     def normalize(self, clip: vs.VideoNode, cast_to: tuple[int, int, int, int, int, int]) -> vs.VideoNode:
         width, height, *padding = cast_to
 
-        return ProcessVariableResClip.normalize(
-            self, clip, (width, height)).std.Crop(*(p * 2 for p in padding)  # type: ignore[arg-type]
+        return (
+            clip.std.RemoveFrameProps()
+            .resize.Point(width, height)
+            .std.CopyFrameProps(clip)
+            .std.Crop(*(p * 2 for p in padding))
         )
 
 
