@@ -1,5 +1,6 @@
 site_name: vs-jetpack API docs
 site_url: https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/
+repo_url: https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack
 
 theme:
   direction: ltr
