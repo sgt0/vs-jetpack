@@ -41,6 +41,7 @@ class DPID(GenericScaler):
     """Sets which planes will be processed. Any unprocessed planes will be simply copied from ref."""
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         if isinstance(self.ref, vs.VideoNode):
             self._ref_scaler = self.ensure_scaler(self._scaler)
         else:
