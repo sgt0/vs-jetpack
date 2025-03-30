@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from typing import Any, Iterable, Iterator, MutableMapping, Self, TypedDict, overload
 
 from vstools import T1, T2, KwargsT, PlanesT, SupportsKeysAndGetItem, VSFunction, classproperty, vs, vs_object
@@ -173,29 +173,27 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
     sc_detection_args: ScDetectionArgs | KwargsT | None = None
 
     def __post_init__(self) -> None:
-        self._dict = dict[str, Any]()
-
-        for k in fields(self):
-            if (v := getattr(self, k.name)) is not None:
-                self._dict[k.name] = v
+        for k, v in self.__dict__.copy().items():
+            if v is None:
+                del self.__dict__[k]
 
     def __getitem__(self, key: str) -> Any:
-        return self._dict.__getitem__(key)
+        return self.__dict__.__getitem__(key)
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self._dict.__setitem__(key, value)
+        self.__dict__.__setitem__(key, value)
 
     def __delitem__(self, key: str) -> None:
-        self._dict.__delitem__(key)
+        self.__dict__.__delitem__(key)
 
     def __iter__(self) -> Iterator[str]:
-        return self._dict.__iter__()
+        return self.__dict__.__iter__()
 
     def __len__(self) -> int:
-        return self._dict.__len__()
+        return self.__dict__.__len__()
 
     def __or__(self, value: MutableMapping[str, Any], /) -> MVToolsPreset:
-        return self.__class__(**self._dict | dict(value))
+        return self.__class__(**self.__dict__ | dict(value))
 
     @overload
     def __ror__(self, value: MutableMapping[str, Any], /) -> dict[str, Any]:
@@ -206,7 +204,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
         ...
 
     def __ror__(self, value: Any, /) -> Any:
-        return self.__class__(**dict(value) | self._dict)
+        return self.__class__(**dict(value) | self.__dict__)
 
     @overload  # type: ignore[misc]
     def __ior__(self, value: SupportsKeysAndGetItem[str, Any], /) -> Self:
@@ -217,7 +215,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
         ...
 
     def __ior__(self, value: Any, /) -> Self:  # type: ignore[misc]
-        self._dict |= dict[str, Any](value)
+        self.__dict__ |= dict[str, Any](value)
         return self
 
     def __vs_del__(self, core_id: int) -> None:
