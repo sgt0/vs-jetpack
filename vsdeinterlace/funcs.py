@@ -104,7 +104,7 @@ class telop_resample(CustomIntEnum):
             mv.analyze()
             comp = mv.flow_interpolate(interleave=False)
 
-            out = intl([comp, clean], decimate, [0])
+            out = intl([*comp, clean], decimate, [0])
             offs = 3 if decimate else 2
 
             return out[invpos // offs:]
@@ -147,7 +147,7 @@ class telop_resample(CustomIntEnum):
         mv2.analyze()
         fix2 = mv2.flow_interpolate(interleave=False)
 
-        return intl([fix1, fix2], pattern == 0, [0, 1])
+        return intl([*fix1, *fix2], pattern == 0, [0, 1])
 
 
 class FixInterlacedFades(CustomEnum):
