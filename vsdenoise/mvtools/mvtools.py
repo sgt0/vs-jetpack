@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from fractions import Fraction
 from itertools import chain
-from typing import Any, Literal, cast, overload
+from typing import Any, Literal, MutableMapping, cast, overload
 
 from vstools import (
     ColorRange, ConstantFormatVideoNode, CustomRuntimeError, FieldBased, GenericVSFunction, InvalidColorFamilyError,
     KwargsNotNone, KwargsT, PlanesT, VSFunction, check_variable, core, depth, fallback, get_prop, normalize_planes,
-    normalize_seq, scale_delta, vs
+    normalize_seq, scale_delta, vs, vs_object
 )
 
 from .enums import (
@@ -22,7 +22,7 @@ __all__ = [
 ]
 
 
-class MVTools:
+class MVTools(vs_object):
     """MVTools wrapper for motion analysis, degraining, compensation, interpolation, etc."""
 
     super_args: KwargsT
@@ -1256,3 +1256,10 @@ class MVTools:
                 vectors_forward.append(self.get_vector(vectors, direction=MVDirection.FORWARD, delta=delta))
 
         return (vectors_backward, vectors_forward)
+
+    def __vs_del__(self, core_id: int) -> None:
+        for k, v in self.__dict__.items():
+            if isinstance(v, MutableMapping):
+                v.clear()
+
+            setattr(self, k, None)

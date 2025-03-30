@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable, Iterator, MutableMapping, Self, TypedDict, overload
 
-from vstools import T1, T2, KwargsT, PlanesT, SupportsKeysAndGetItem, VSFunction, classproperty, vs
+from vstools import T1, T2, KwargsT, PlanesT, SupportsKeysAndGetItem, VSFunction, classproperty, vs, vs_object
 
 from .enums import FlowMode, MaskMode, MotionMode, SmoothMode, PenaltyMode, RFilterMode, SADMode, SearchMode, SharpMode
 from ..prefilters import prefilter_to_full_range
@@ -153,7 +153,7 @@ class ScDetectionArgs(TypedDict, total=False):
 
 
 @dataclass(kw_only=True)
-class MVToolsPreset(MutableMapping[str, Any]):
+class MVToolsPreset(MutableMapping[str, Any], vs_object):
     search_clip: VSFunction | None
     tr: int | None = None
     pel: int | None = None
@@ -217,6 +217,10 @@ class MVToolsPreset(MutableMapping[str, Any]):
     def __ior__(self, value: Any, /) -> Self:  # type: ignore[misc]
         self.__dict__ |= dict[str, Any](value)
         return self
+
+    def __vs_del__(self, core_id: int) -> None:
+        if self.super_args:
+            self.super_args["pelclip"] = None
 
 
 class MVToolsPresets:

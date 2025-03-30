@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from vstools import vs
+from vstools import vs, vs_object
 
 from .enums import MVDirection
 
@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 
-class MotionVectors:
+class MotionVectors(vs_object):
     """Class for storing and managing motion vectors for a video clip."""
 
     motion_vectors: dict[MVDirection, dict[int, vs.VideoNode]]
@@ -38,6 +38,9 @@ class MotionVectors:
     def clear(self) -> None:
         """Clear all stored motion vectors and reset the instance."""
 
+        for v in self.motion_vectors.values():
+            v.clear()
+
         self.motion_vectors.clear()
         self.mv_multi = None
         self.analysis_data.clear()
@@ -62,3 +65,9 @@ class MotionVectors:
         """
 
         self.motion_vectors[direction][delta] = vector
+
+    def __vs_del__(self, core_id: int) -> None:
+        for v in self.motion_vectors.values():
+            v.clear()
+
+        self.mv_multi = None
