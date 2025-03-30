@@ -224,7 +224,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
 
 
 class MVToolsPresets:
-    """Presets for MVTools analyzing/refining."""
+    """Presets for arguments passed to MVTools functions."""
 
     @classproperty
     def HQ_COHERENCE(self) -> MVToolsPreset:
