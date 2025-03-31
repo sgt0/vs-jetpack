@@ -13,7 +13,7 @@ from jetpytools import P, CustomIndexError, CustomStrEnum, CustomValueError, Fun
 from ..enums import ColorRange, ColorRangeT, Matrix
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
 from ..types import ConstantFormatVideoNode, HoldsVideoFormatT, PlanesT, VideoFormatT
-from .check import check_variable, check_variable_format
+from .check import check_variable_format
 
 __all__ = [
     'EXPR_VARS',
@@ -821,7 +821,7 @@ def limiter(
     if clip is None:
         return partial(limiter, min_val=min_val, max_val=max_val, tv_range=tv_range, func=func)
 
-    assert check_variable(clip, func)
+    assert check_variable_format(clip, func)
 
     if all([
         clip.format.sample_type == vs.INTEGER,
