@@ -19,11 +19,17 @@ def telecine_patterns(clipa: vs.VideoNode, clipb: vs.VideoNode, length: int = 5)
     ]
 
 
-def get_field_difference(clip: vs.VideoNode, tff: FieldBasedT | None = None) -> vs.VideoNode:
-    tff = FieldBased.from_param_or_video(tff, clip, True, get_field_difference)
+def get_field_difference(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> vs.VideoNode:
+    tff = FieldBased.from_param_or_video(tff, clip, True, get_field_difference).field
 
-    stats = clip.std.SeparateFields(tff.is_tff).std.PlaneStats()
+    stats = clip.std.SeparateFields(tff).std.PlaneStats()
 
     return core.akarin.PropExpr(
         [clip, stats[::2], stats[1::2]], lambda: {'FieldDifference': 'y.PlaneStatsAverage z.PlaneStatsAverage - abs'}
     )
+
+
+def reinterlace(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> vs.VideoNode:
+    tff = FieldBased.from_param_or_video(tff, clip, True, reinterlace).field
+
+    return clip.std.SeparateFields(tff).std.SelectEvery(4, (0, 3)).std.DoubleWeave(tff)[::2]
