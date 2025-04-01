@@ -104,8 +104,6 @@ class MVTools(vs_object):
         :param search_clip:              Optional clip or callable to be used for motion vector gathering only.
         :param vectors:                  Motion vectors to use.
                                          If None, uses the vectors from this instance.
-        :param tr:                       The temporal radius. This determines how many frames are analyzed before/after the current frame.
-                                         Default: 1.
         :param pad:                      How much padding to add to the source frame.
                                          Small padding is added to help with motion estimation near frame borders.
         :param pel:                      Subpixel precision for motion estimation (1=pixel, 2=half-pixel, 4=quarter-pixel).
@@ -253,6 +251,8 @@ class MVTools(vs_object):
 
         :param super:          The multilevel super clip prepared by :py:attr:`super`.
                                If None, super will be obtained from clip.
+        :param tr:             The temporal radius. This determines how many frames are analyzed before/after the current frame.
+                               Default: 1.
         :param blksize:        Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
         :param levels:         Number of levels used in hierarchical motion vector analysis.
                                A positive value specifies how many levels to use.
