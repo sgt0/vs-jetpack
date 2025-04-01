@@ -4,7 +4,8 @@ from vstools import FieldBased, FieldBasedT, core, vs
 
 __all__ = [
     'telecine_patterns',
-    'get_field_difference'
+    'get_field_difference',
+    'reinterlace'
 ]
 
 
