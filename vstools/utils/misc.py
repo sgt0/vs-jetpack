@@ -12,7 +12,7 @@ from jetpytools import MISSING, MissingT, P
 from ..enums import Align, BaseAlign
 from ..exceptions import InvalidSubsamplingError
 from ..functions import Keyframes, check_variable_format, clip_data_gather
-from ..types import VideoNodeT
+from ..types import ConstantFormatVideoNode, VideoNodeT
 from ..utils.cache import SceneBasedDynamicCache
 from .info import get_video_format
 
@@ -87,7 +87,6 @@ def match_clip(
     clip = clip.resize.Bicubic(ref.width, ref.height) if dimensions else clip
 
     if vformat:
-        assert ref.format
         clip = clip.resize.Bicubic(format=ref.format.id, matrix=Matrix.from_video(ref))
 
     if matrices:
@@ -123,7 +122,7 @@ class _padder:
 
         return width, height, fmt, w_sub, h_sub
 
-    def MIRROR(self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
+    def MIRROR(self, clip: VideoNodeT, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> VideoNodeT:
         """
         Pad a clip with reflect mode. This will reflect the clip on each side.
 
@@ -148,13 +147,15 @@ class _padder:
 
         width, height, *_ = self._base(clip, left, right, top, bottom)
 
-        return core.resize.Point(
-            clip.std.CopyFrameProps(clip.std.BlankClip()), width, height,
+        padded = core.resize.Point(
+            core.std.CopyFrameProps(clip, clip.std.BlankClip()),
+            width, height,
             src_top=-top, src_left=-left,
             src_width=width, src_height=height
-        ).std.CopyFrameProps(clip)
+        )
+        return core.std.CopyFrameProps(padded, clip)
 
-    def REPEAT(self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
+    def REPEAT(self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> ConstantFormatVideoNode:
         """
         Pad a clip with repeat mode. This will simply repeat the last row/column till the end.
 
@@ -218,7 +219,7 @@ class _padder:
     def COLOR(
         self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0,
         color: int | float | bool | None | MissingT | Sequence[int | float | bool | None | MissingT] = (False, MISSING)
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Pad a clip with a constant color.
 
@@ -246,13 +247,13 @@ class _padder:
         """
 
         from ..functions import normalize_seq
-        from ..utils import get_lowest_values, get_neutral_values, get_peak_values
+        from ..utils import core, get_lowest_values, get_neutral_values, get_peak_values
+
+        assert check_variable_format(clip, "padder")
 
         self._base(clip, left, right, top, bottom)
 
         def _norm(colr: int | float | bool | None | MissingT) -> Sequence[int | float]:
-            assert clip.format
-
             if colr is MISSING:
                 colr = False if clip.format.color_family is vs.RGB else None
 
@@ -270,10 +271,9 @@ class _padder:
         if not isinstance(color, Sequence):
             norm_colors = _norm(color)
         else:
-            assert clip.format
             norm_colors = [_norm(c)[i] for i, c in enumerate(normalize_seq(color, clip.format.num_planes))]
 
-        return clip.std.AddBorders(left, right, top, bottom, norm_colors)
+        return core.std.AddBorders(clip, left, right, top, bottom, norm_colors)
 
     @classmethod
     def _get_sizes_crop_scale(
@@ -334,25 +334,25 @@ class _padder:
             def COLOR(
                 self, clip: vs.VideoNode,
                 color: int | float | bool | None | Sequence[int | float | bool | None] = (False, None)
-            ) -> vs.VideoNode:
+            ) -> ConstantFormatVideoNode:
                 padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
                 out = padder.COLOR(clip, *padding, color)
                 self.pad_ops.append((padding, (out.width, out.height)))
                 return out
 
-            def REPEAT(self, clip: vs.VideoNode) -> vs.VideoNode:
+            def REPEAT(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
                 padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
                 out = padder.REPEAT(clip, *padding)
                 self.pad_ops.append((padding, (out.width, out.height)))
                 return out
 
-            def MIRROR(self, clip: vs.VideoNode) -> vs.VideoNode:
+            def MIRROR(self, clip: VideoNodeT) -> VideoNodeT:
                 padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
                 out = padder.MIRROR(clip, *padding)
                 self.pad_ops.append((padding, (out.width, out.height)))
                 return out
 
-            def CROP(self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None) -> vs.VideoNode:
+            def CROP(self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None) -> ConstantFormatVideoNode:
                 (padding, sizes) = self.pad_ops.pop(0)
 
                 if crop_scale is None:
