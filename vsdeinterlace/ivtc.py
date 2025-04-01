@@ -130,7 +130,7 @@ def jivtc(
 
 
 def vfm(
-    clip: vs.VideoNode, tff: FieldBasedT | None = None,
+    clip: vs.VideoNode, tff: FieldBasedT | bool | None = None,
     mode: VFMMode = VFMMode.TWO_WAY_MATCH_THIRD_COMBED,
     postprocess: vs.VideoNode | VSFunctionNoArgs | None = None,
     **kwargs: Any
@@ -167,11 +167,9 @@ def vfm(
 
     func = FunctionUtil(clip, vfm, None, (vs.YUV, vs.GRAY), 8)
 
-    tff = FieldBased.from_param_or_video(tff, clip, True, func.func)
+    tff = FieldBased.from_param_or_video(tff, clip, True, func.func).field
 
-    vfm_kwargs = dict[str, Any](
-        order=tff.is_tff, mode=mode
-    )
+    vfm_kwargs = dict[str, Any](order=tff, mode=mode)
 
     if block := kwargs.pop('block', None):
         if isinstance(block, int):
