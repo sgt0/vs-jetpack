@@ -272,13 +272,21 @@ def initialize_input(
 
 
 class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
+    """A helper class for processing variable format/resolution clip"""
+
     def __init__(
         self, clip: VideoNodeT,
         out_dim: tuple[int, int] | Literal[False] | None = None,
         out_fmt: int | vs.VideoFormat | Literal[False] | None = None,
         cache_size: int = 10
     ) -> None:
-        bk_args = KwargsT(length=clip.num_frames, keep=True)
+        """
+        :param clip:            Clip to process
+        :param out_dim:         Ouput dimension.
+        :param out_fmt:         Output format.
+        :param cache_size:      The maximum number of items allowed in the cache. Defaults to 10
+        """
+        bk_args = KwargsT(length=clip.num_frames, keep=True, varformat=None)
 
         if out_dim is None:
             out_dim = (clip.width, clip.height)
@@ -321,6 +329,12 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
         cls,
         clip: VideoNodeT
     ) -> VideoNodeT:
+        """
+        Process a variable format/resolution clip.
+
+        :param clip:    Clip to process.
+        :return:        Processed clip.
+        """
         return cls(clip).eval_clip()
 
     @classmethod
@@ -332,6 +346,17 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
         out_fmt: int | vs.VideoFormat | Literal[False] | None = None,
         cache_size: int = 10
     ) -> VideoNodeT:
+
+        """
+        Process a variable format/resolution clip with a given function
+
+        :param clip:        Clip to process.
+        :param func:        Function that takes and returns a single VideoNode.
+        :param out_dim:     Ouput dimension.
+        :param out_fmt:     Output format.
+        :param cache_size:  The maximum number of VideoNode allowed in the cache. Defaults to 10
+        :return:            Processed variable clip.
+        """
         class _inner(cls):  # type: ignore
             process = staticmethod(func)
 
@@ -340,17 +365,36 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
 
     @abstractmethod
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> T:
-        ...
+        """
+        Generate a unique key based on the node or frame
+        This key will be used to temporarily assert a resolution and format for the clip to process.
+
+        :param frame:       Node or frame from which the unique key is generated.
+        :return:            Unique identifier.
+        """
 
     @abstractmethod
     def normalize(self, clip: VideoNodeT, cast_to: T) -> VideoNodeT:
-        ...
+        """
+        Normalize the given node to the format/resolution specified by the unique key `cast_to`
+
+        :param clip:        Clip to normalize.
+        :param cast_to:     The target resolution or format to which the clip should be cast or normalized. 
+        :return:            Normalized clip.
+        """
 
     def process(self, clip: VideoNodeT) -> VideoNodeT:
+        """
+        Process the given clip.
+
+        :param clip:        Clip to process
+        :return:            Processed clip
+        """
         return clip
 
 
 class ProcessVariableResClip(ProcessVariableClip[tuple[int, int], VideoNodeT]):
+    """A helper class for processing variable resolution clip"""
 
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> tuple[int, int]:
         return (frame.width, frame.height)
@@ -361,6 +405,8 @@ class ProcessVariableResClip(ProcessVariableClip[tuple[int, int], VideoNodeT]):
 
 
 class ProcessVariableFormatClip(ProcessVariableClip[vs.VideoFormat, vs.VideoNode]):
+    """A helper class for processing variable format clip"""
+
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> vs.VideoFormat:
         assert frame.format
         return frame.format
@@ -371,6 +417,8 @@ class ProcessVariableFormatClip(ProcessVariableClip[vs.VideoFormat, vs.VideoNode
 
 
 class ProcessVariableResFormatClip(ProcessVariableClip[tuple[int, int, vs.VideoFormat], vs.VideoNode]):
+    """A helper class for processing variable format and resolution clip"""
+
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> tuple[int, int, vs.VideoFormat]:
         assert frame.format
         return (frame.width, frame.height, frame.format)
