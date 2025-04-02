@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Generic, MutableMapping, TypeVar, cast
 
 from jetpytools import T
 
 from ..functions import Keyframes
-from ..types import vs_object
+from ..types import vs_object, VideoNodeT
 from . import vs_proxy as vs
 
 if TYPE_CHECKING:
@@ -48,14 +49,15 @@ class ClipsCache(vs_object, dict[vs.VideoNode, vs.VideoNode]):
         self.clear()
 
 
-class DynamicClipsCache(vs_object, dict[T, vs.VideoNode]):
+class DynamicClipsCache(vs_object, dict[T, VideoNodeT]):
     def __init__(self, cache_size: int = 2) -> None:
         self.cache_size = cache_size
 
-    def get_clip(self, key: T) -> vs.VideoNode:
-        raise NotImplementedError
+    @abstractmethod
+    def get_clip(self, key: T) -> VideoNodeT:
+        ...
 
-    def __getitem__(self, __key: T) -> vs.VideoNode:
+    def __getitem__(self, __key: T) -> VideoNodeT:
         if __key not in self:
             self[__key] = self.get_clip(__key)
 
@@ -119,15 +121,16 @@ class ClipFramesCache(NodeFramesCache[vs.VideoNode, vs.VideoFrame]):
     ...
 
 
-class SceneBasedDynamicCache(DynamicClipsCache[int]):
+class SceneBasedDynamicCache(DynamicClipsCache[int, vs.VideoNode]):
     def __init__(self, clip: vs.VideoNode, keyframes: Keyframes | str, cache_size: int = 5) -> None:
         super().__init__(cache_size)
 
         self.clip = clip
         self.keyframes = Keyframes.from_param(clip, keyframes)
 
+    @abstractmethod
     def get_clip(self, key: int) -> vs.VideoNode:
-        raise NotImplementedError
+        ...
 
     def get_eval(self) -> vs.VideoNode:
         return self.clip.std.FrameEval(lambda n: self[self.keyframes.scenes.indices[n]])
