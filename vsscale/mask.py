@@ -4,7 +4,7 @@ from vsexprtools import ExprOp, norm_expr
 from vskernels import Catrom
 from vsmasktools import Morpho, XxpandMode
 from vsrgtools import BlurMatrix, box_blur, gauss_blur
-from vstools import core, ConvMode, get_y, iterate, shift_clip_multi, split, vs, limiter
+from vstools import ConstantFormatVideoNode, core, ConvMode, get_y, iterate, shift_clip_multi, split, vs, limiter
 
 __all__ = [
     'descale_detail_mask', 'descale_error_mask'
@@ -15,7 +15,7 @@ __all__ = [
 def descale_detail_mask(
     clip: vs.VideoNode, rescaled: vs.VideoNode, thr: float = 0.05,
     inflate: int = 2, xxpand: tuple[int, int] = (4, 0)
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Mask non-native resolution detail to prevent detail loss and artifacting.
 
@@ -56,7 +56,7 @@ def descale_error_mask(
     thr: float | list[float] = 0.038,
     expands: int | tuple[int, int, int] = (2, 2, 3),
     blur: int | float = 3, bwbias: int = 1, tr: int = 0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Create an error mask from the original and rescaled clip.
 
@@ -70,15 +70,13 @@ def descale_error_mask(
 
     :return:            Descale error mask.
     """
-    assert clip.format and rescaled.format
-
     y, *chroma = split(clip)
 
     error = norm_expr([y, rescaled], 'x y - abs', func=descale_error_mask)
 
     if bwbias > 1 and chroma:
         chroma_abs = norm_expr(chroma, 'x neutral - abs y neutral - abs max')
-        chroma_abs = Catrom.scale(chroma_abs, y.width, y.height)
+        chroma_abs = Catrom.scale(chroma_abs, y.width, y.height)  # type: ignore[assignment]
 
         bias = norm_expr([y, chroma_abs], f'x ymax >= x ymin <= or y 0 = and {bwbias} 1 ?', func=descale_error_mask)
         bias = Morpho.expand(bias, 2, func=descale_error_mask)
