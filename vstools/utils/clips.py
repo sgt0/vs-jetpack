@@ -341,12 +341,11 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
     def from_func(
         cls,
         clip: VideoNodeT,
-        func: Callable[[vs.VideoNode], VideoNodeT],
+        func: Callable[[VideoNodeT], VideoNodeT],
         out_dim: tuple[int, int] | Literal[False] | None = None,
         out_fmt: int | vs.VideoFormat | Literal[False] | None = None,
         cache_size: int = 10
     ) -> VideoNodeT:
-
         """
         Process a variable format/resolution clip with a given function
 
