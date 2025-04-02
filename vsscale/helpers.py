@@ -394,7 +394,15 @@ def descale_args(
     crop_left: int = 0, crop_right: int = 0,
     mode: str = 'hw'
 ) -> ScalingArgs:
-    # warnings
+    from warnings import warn
+
+    # TODO: Delete this
+    warn(
+        "`descale_args` is deprecated and will be removed in a future version! \n"
+        "Use ScalingArgs instead.",
+        DeprecationWarning
+    )
+
     return ScalingArgs.from_args(
         clip.std.AddBorders(crop_left, crop_right, crop_top, crop_bottom),
         src_height, src_width,
@@ -411,6 +419,15 @@ def fdescale_args(
     src_top: float | None = None, src_left: float | None = None,
     src_width: float | None = None, mode: str = 'hw', up_rate: float = 2.0
 ) -> tuple[KwargsT, KwargsT]:
+    from warnings import warn
+
+    # TODO: Delete this
+    warn(
+        "`fdescale_args` is deprecated and will be removed in a future version! \n"
+        "Use ScalingArgs instead.",
+        DeprecationWarning
+    )
+
     base_height = fallback(base_height, mod2(ceil(src_height)))
     base_width = fallback(base_width, get_w(base_height, clip, 2))
 
