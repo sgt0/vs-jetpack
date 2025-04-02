@@ -341,7 +341,7 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
     def from_func(
         cls,
         clip: VideoNodeT,
-        func: Callable[[VideoNodeT], VideoNodeT],
+        func: Callable[[vs.VideoNode], VideoNodeT],
         out_dim: tuple[int, int] | Literal[False] | None = None,
         out_fmt: int | vs.VideoFormat | Literal[False] | None = None,
         cache_size: int = 10
@@ -357,11 +357,9 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
         :param cache_size:  The maximum number of VideoNode allowed in the cache. Defaults to 10
         :return:            Processed variable clip.
         """
-        class _inner(cls):  # type: ignore
-            process = staticmethod(func)
+        setattr(cls, "process", lambda self, clip: func(clip))
 
-
-        return _inner(clip, out_dim, out_fmt, cache_size).eval_clip()
+        return cls(clip, out_dim, out_fmt, cache_size).eval_clip()
 
     @abstractmethod
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> T:
