@@ -72,7 +72,9 @@ def shift_clip_multi(clip: VideoNodeT, offsets: FrameRange = (-1, 1)) -> list[Vi
     return [shift_clip(clip, x) for x in ranges]
 
 
-def process_var_clip(clip: VideoNodeT, function: VSFunctionNoArgs[VideoNodeT, VideoNodeT]) -> VideoNodeT:
+def process_var_clip(
+    clip: vs.VideoNode, function: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode], cache_size: int | None = None
+) -> vs.VideoNode:
     """
     Process variable format/resolution clips with a given function.
 
@@ -83,11 +85,24 @@ def process_var_clip(clip: VideoNodeT, function: VSFunctionNoArgs[VideoNodeT, Vi
 
     :param clip:        Input clip.
     :param function:    Function that takes and returns a single VideoNode.
+    :param cache_size   The maximum number of VideoNode allowed in the cache.
 
     :return:            Processed variable clip.
     """
+    from warnings import warn
 
-    _cached_clips = dict[str, VideoNodeT]()
+    from ..utils import ProcessVariableResFormatClip
+
+    warn(
+        "`process_var_clip` is deprecated and will be removed in a future version!\n"
+        "Use `ProcessVariableResFormatClip.from_func` instead.",
+        DeprecationWarning
+    )
+
+    if cache_size is not None:
+        return ProcessVariableResFormatClip.from_func(clip, function, cache_size=cache_size)
+
+    _cached_clips = dict[str, vs.VideoNode]()
 
     def _eval_scale(n: int, f: vs.VideoFrame) -> vs.VideoNode:
         key = f'{f.width}_{f.height}'
