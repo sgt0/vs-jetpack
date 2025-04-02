@@ -52,7 +52,7 @@ def expr_func(
 
     if got_var_res:
         if len(clips) == 1:
-            return cast(VideoNodeT, ProcessVariableResClip.from_func(clips[0], func_impl, None, clips[0].format))
+            return ProcessVariableResClip[VideoNodeT].from_func(clips[0], func_impl, None, clips[0].format)  # type: ignore
 
         raise CustomValueError('You can run only one var res clip!')
 
