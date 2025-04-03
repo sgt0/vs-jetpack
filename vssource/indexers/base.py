@@ -57,8 +57,8 @@ class Indexer(ABC):
 
     @classmethod
     def get_videos_hash(cls, files: list[SPath]) -> str:
-        lenght = sum(file.stat().st_size for file in files)
-        to_hash = lenght.to_bytes(32, 'little') + cls.get_joined_names(files).encode()
+        length = sum(file.stat().st_size for file in files)
+        to_hash = length.to_bytes(32, 'little') + cls.get_joined_names(files).encode()
         return md5(to_hash).hexdigest()
 
     @classmethod
