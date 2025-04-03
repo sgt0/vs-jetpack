@@ -34,6 +34,9 @@ def smooth_dering(
     pre_downscaler: ScalerT = Point, planes: PlanesT = 0, show_mask: bool = False
 ) -> vs.VideoNode:
     """
+    Applies deringing by using a smart smoother near edges (where ringing
+    occurs) only. Formerly known as HQDeringmod.
+
     :param clip:        Clip to process.
     :param smooth:      Already smoothed clip, or a Prefilter, tuple for [luma, chroma] prefilter.
     :param ringmask:    Custom ringing mask.
@@ -166,6 +169,8 @@ def vine_dehalo(
     supersampler: ScalerT = Nnedi3, downscaler: ScalerT = Catrom, planes: PlanesT = 0, **kwargs: Any
 ) -> vs.VideoNode:
     """
+    Dehalo via non-local errors filtering.
+
     :param clip:            Clip to process.
     :param strength:        Strength of nl_means filtering.
     :param sharp:           Weight to blend supersampled clip.
