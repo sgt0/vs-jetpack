@@ -9,8 +9,8 @@ from vskernels.types import LeftShift, TopShift
 from vsmasktools import KirschTCanny, based_diff_mask
 from vsmasktools.utils import _get_region_expr
 from vstools import (
-    ColorRange, DitherType, FieldBased, FieldBasedT, FrameRangeN, FrameRangesN, check_variable,
-    core, depth, get_peak_value, get_y, join, limiter, replace_ranges, split, vs
+    ColorRange, ConstantFormatVideoNode, DitherType, FieldBased, FieldBasedT, FrameRangeN, FrameRangesN, VideoNodeT,
+    check_variable, core, depth, get_peak_value, get_y, join, limiter, replace_ranges, split, vs
 )
 
 from .helpers import BottomCrop, CropRel, LeftCrop, RightCrop, ScalingArgs, TopCrop
@@ -72,10 +72,10 @@ class RescaleBase:
 
     @staticmethod
     def _apply_field_based(
-        function: Callable[[RescaleT, vs.VideoNode], vs.VideoNode]
-    ) -> Callable[[RescaleT, vs.VideoNode], vs.VideoNode]:
+        function: Callable[[RescaleT, VideoNodeT], VideoNodeT]
+    ) -> Callable[[RescaleT, VideoNodeT], VideoNodeT]:
         @wraps(function)
-        def wrap(self: RescaleT, clip: vs.VideoNode) -> vs.VideoNode:
+        def wrap(self: RescaleT, clip: VideoNodeT) -> VideoNodeT:
             if self.field_based:
                 clip = self.field_based.apply(clip)
                 clip = function(self, clip)
@@ -86,15 +86,16 @@ class RescaleBase:
 
     @staticmethod
     def _add_props(
-        function: Callable[[RescaleT, vs.VideoNode], vs.VideoNode]
-    ) -> Callable[[RescaleT, vs.VideoNode], vs.VideoNode]:
+        function: Callable[[RescaleT, VideoNodeT], VideoNodeT]
+    ) -> Callable[[RescaleT, VideoNodeT], VideoNodeT]:
         @wraps(function)
-        def wrap(self: RescaleT, clip: vs.VideoNode) -> vs.VideoNode:
+        def wrap(self: RescaleT, clip: VideoNodeT) -> VideoNodeT:
             w, h = (
                 f"{int(d)}" if d.is_integer() else f"{d:.2f}"
                 for d in [self.descale_args.src_width, self.descale_args.src_height]
             )
-            return function(self, clip).std.SetFrameProp(
+            return core.std.SetFrameProp(
+                function(self, clip),
                 "Rescale" + function.__name__.split('_')[-1].capitalize() + 'From',
                 data=f'{self.kernel.__class__.__name__} - {w} x {h}'
             )
@@ -102,7 +103,7 @@ class RescaleBase:
 
     @_add_props
     @_apply_field_based
-    def _generate_descale(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def _generate_descale(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return self.kernel.descale(
             clip,
             self.descale_args.width, self.descale_args.height,
@@ -112,8 +113,8 @@ class RescaleBase:
 
     @_add_props
     @_apply_field_based
-    def _generate_rescale(self, clip: vs.VideoNode) -> vs.VideoNode:
-        return self.kernel.scale(
+    def _generate_rescale(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+        return self.kernel.scale(  # type: ignore[return-value]
             clip,
             self.clipy.width, self.clipy.height,
             **self.descale_args.kwargs(),
@@ -121,36 +122,37 @@ class RescaleBase:
         )
 
     @_add_props
-    def _generate_doubled(self, clip: vs.VideoNode) -> vs.VideoNode:
-        return self.upscaler.multi(clip, 2)
+    def _generate_doubled(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+        return self.upscaler.multi(clip, 2)  # type: ignore[return-value]
 
     @_add_props
-    def _generate_upscale(self, clip: vs.VideoNode) -> vs.VideoNode:
-        return self.downscaler.scale(
+    def _generate_upscale(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+        return self.downscaler.scale(  # type: ignore[return-value]
             clip,
             self.clipy.width, self.clipy.height,
             **self.descale_args.kwargs(clip)
         )
 
     @cached_property
-    def descale(self) -> vs.VideoNode:
+    def descale(self) -> ConstantFormatVideoNode:
         return self._generate_descale(self.clipy)
 
     @cached_property
-    def rescale(self) -> vs.VideoNode:
+    def rescale(self) -> ConstantFormatVideoNode:
         return self._generate_rescale(self.descale)
 
     @cached_property
-    def doubled(self) -> vs.VideoNode:
+    def doubled(self) -> ConstantFormatVideoNode:
         return self._generate_doubled(self.descale)
 
     @cached_property
-    def upscale(self) -> vs.VideoNode:
+    def upscale(self) -> ConstantFormatVideoNode:
         """Returns the upscaled clip"""
-        return join(
+        upscaled = join(
             self._generate_upscale(self.doubled),
             *self.chroma
-        ).std.CopyFrameProps(self.clipy, '_ChromaLocation')
+        )
+        return core.std.CopyFrameProps(upscaled, self.clipy, '_ChromaLocation')
 
 
 class Rescale(RescaleBase):
@@ -276,9 +278,9 @@ class Rescale(RescaleBase):
                                            where the outermost row was extended infinitely far.
                                     Defaults to 0
         """
-        self._line_mask: vs.VideoNode | None = None
-        self._credit_mask: vs.VideoNode | None = None
-        self._ignore_mask: vs.VideoNode | None = None
+        self._line_mask: ConstantFormatVideoNode | None = None
+        self._credit_mask: ConstantFormatVideoNode | None = None
+        self._ignore_mask: ConstantFormatVideoNode | None = None
         self._crop = crop
         self._pre = clip
 
@@ -291,13 +293,13 @@ class Rescale(RescaleBase):
         if self._crop > (0, 0, 0, 0):
             self.clipy = self.clipy.std.Crop(*self._crop)
 
-    def _generate_descale(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def _generate_descale(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         if not self._ignore_mask:
             return super()._generate_descale(clip)
 
         @self._add_props
         @self._apply_field_based
-        def _generate_descale_ignore_mask(self: Rescale, clip: vs.VideoNode) -> vs.VideoNode:
+        def _generate_descale_ignore_mask(self: Rescale, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
             assert self._ignore_mask
 
             self.descale_args.mode = 'h'
@@ -326,12 +328,12 @@ class Rescale(RescaleBase):
 
         return _generate_descale_ignore_mask(self, clip)
 
-    def _generate_upscale(self, clip: vs.VideoNode) -> vs.VideoNode:
+    def _generate_upscale(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         upscale = super()._generate_upscale(clip)
 
         merged_mask = norm_expr([self.line_mask, self.credit_mask], "x y - 0 yrange_max clamp", func=self.__class__)
 
-        upscale = core.std.MaskedMerge(self.clipy, upscale, merged_mask).std.CopyFrameProps(upscale)
+        upscale = core.std.CopyFrameProps(core.std.MaskedMerge(self.clipy, upscale, merged_mask), upscale)
 
         if self._crop > (0, 0, 0, 0):
             pre_y = get_y(self._pre)
@@ -347,15 +349,17 @@ class Rescale(RescaleBase):
         return upscale
 
     @property
-    def line_mask(self) -> vs.VideoNode:
-        lm = self._line_mask or self.clipy.std.BlankClip(
+    def line_mask(self) -> ConstantFormatVideoNode:
+        lm = self._line_mask or core.std.BlankClip(
+            self.clipy,
             color=get_peak_value(self.clipy, False, ColorRange.FULL)
         )
 
         if self.border_handling:
             px = (self.kernel.kernel_radius, ) * 4
             lm = norm_expr(
-                lm, _get_region_expr(lm, *px, replace=f'{get_peak_value(lm, False, ColorRange.FULL)} x'), func=self.__class__
+                lm, _get_region_expr(lm, *px, replace=f'{get_peak_value(lm, False, ColorRange.FULL)} x'),
+                func=self.__class__
             )
 
         self._line_mask = lm
@@ -364,50 +368,54 @@ class Rescale(RescaleBase):
 
     @line_mask.setter
     def line_mask(self, mask: vs.VideoNode | None) -> None:
-        self._line_mask = (
-            limiter(depth(
-                mask, self.clipy, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL
-            ))
-            if mask else mask
-        )
+        if mask is not None:
+            self._line_mask = limiter(
+                depth(mask, self.clipy, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
+            )
+        else:
+            self._line_mask = None
 
     @line_mask.deleter
     def line_mask(self) -> None:
         self._line_mask = None
 
     @property
-    def credit_mask(self) -> vs.VideoNode:
+    def credit_mask(self) -> ConstantFormatVideoNode:
         if self._credit_mask:
             return self._credit_mask
-        self.credit_mask = self.clipy.std.BlankClip()
+
+        self.credit_mask = core.std.BlankClip(self.clipy)
+
         return self.credit_mask
 
     @credit_mask.setter
     def credit_mask(self, mask: vs.VideoNode | None) -> None:
-        self._credit_mask = (
-            limiter(depth(
-                mask, self.clipy, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL
-            ))
-            if mask else mask
-        )
+        if mask is not None:
+            self._credit_mask = limiter(
+                depth(mask, self.clipy, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
+            )
+        else:
+            self._credit_mask = None
 
     @credit_mask.deleter
     def credit_mask(self) -> None:
         self._credit_mask = None
 
     @property
-    def ignore_mask(self) -> vs.VideoNode:
+    def ignore_mask(self) -> ConstantFormatVideoNode:
         if self._ignore_mask:
             return self._ignore_mask
-        self.ignore_mask = self.clipy.std.BlankClip(format=vs.GRAY8)
+        self.ignore_mask = core.std.BlankClip(self.clipy, format=vs.GRAY8)
         return self.ignore_mask
 
     @ignore_mask.setter
     def ignore_mask(self, mask: vs.VideoNode | None) -> None:
-        self._ignore_mask = (
-            depth(mask, 8, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
-            if mask else mask
-        )
+        if mask is not None:
+            self._ignore_mask = depth(
+                mask, 8, dither_type=DitherType.NONE, range_in=ColorRange.FULL, range_out=ColorRange.FULL
+            )
+        else:
+            self._ignore_mask = None
 
     @ignore_mask.deleter
     def ignore_mask(self) -> None:
@@ -415,7 +423,7 @@ class Rescale(RescaleBase):
 
     def default_line_mask(
         self, clip: vs.VideoNode | None = None, scaler: ScalerT = Bilinear, **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Load a default Kirsch line mask in the class instance. Additionnaly, it is returned.
 
@@ -429,7 +437,9 @@ class Rescale(RescaleBase):
         clip = clip if clip else self.doubled
 
         line_mask = KirschTCanny.edgemask(clip, **kwargs).std.Maximum().std.Minimum()
-        line_mask = scaler.scale(line_mask, self.clipy.width, self.clipy.height, format=self.clipy.format, **scale_kwargs)
+        line_mask = scaler.scale(  # type: ignore[assignment]
+            line_mask, self.clipy.width, self.clipy.height, format=self.clipy.format, **scale_kwargs
+        )
 
         self.line_mask = line_mask
 
@@ -440,7 +450,7 @@ class Rescale(RescaleBase):
         thr: float = 0.216, expand: int = 4,
         ranges: FrameRangeN | FrameRangesN | None = None, exclusive: bool = False,
         **kwargs: Any
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Load a credit mask by making a difference mask between src and rescaled clips
 
