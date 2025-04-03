@@ -155,7 +155,8 @@ class RescaleBase:
 
 class Rescale(RescaleBase):
     """
-    Rescale wrapper
+    Rescale wrapper supporting everything you need for (fractional) descaling,
+    re-upscaling and masking-out details.
 
     Examples usage:
     Basic 720p rescale:
@@ -190,12 +191,12 @@ class Rescale(RescaleBase):
     rs.credit_mask = ExprOp.ADD.combine(oped_credit_mask, credit_mask)
     ```
 
-    Fractionnal rescale:
+    Fractional rescale:
     ```py
     from vsscale import Rescale
     from vskernels import Bilinear
 
-    # Forcing the height to a float will ensure a fractionnal descale
+    # Forcing the height to a float will ensure a fractional descale
     rs = Rescale(clip, 800.0, Bilinear)
     >>> rs.descale_args
     ScalingArgs(
@@ -222,7 +223,7 @@ class Rescale(RescaleBase):
         src_top=0.4703703703703752, src_left=0.0, mode='hw'
     )
 
-    # Same thing but ensuring the width is fractionnal descaled
+    # Same thing but ensuring the width is fractional descaled
     rs = Rescale(clip, 874.0, Bilinear, crop=(0, 0, 202, 202))
     >>> rs.descale_args
     ScalingArgs(
@@ -252,7 +253,7 @@ class Rescale(RescaleBase):
 
         :param clip:                Clip to be rescaled
         :param height:              Height to be descaled to.
-                                    Forcing the value to float will ensure a fractionnal descale
+                                    Forcing the value to float will ensure a fractional descale
         :param kernel:              Kernel used for descaling
         :param upscaler:            Scaler that supports doubling, defaults to ArtCNN
         :param downscaler:          Scaler used for downscaling the upscaled clip back to input res,
