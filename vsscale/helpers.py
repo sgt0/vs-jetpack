@@ -297,7 +297,21 @@ class ScalingArgs:
         src_top: float = ..., src_left: float = ...,
         mode: str = 'hw'
     ) -> Self:
-        ...
+        """
+        Get (de)scaling arguments for integer scaling.
+
+        :param base_clip:       Source clip.
+        :param height:          Target (de)scaling height.
+        :param width:           Target (de)scaling width.
+                                If None, it will be calculated from the height and the aspect ratio of the base_clip.
+        :param src_top:         Vertical offset.
+        :param src_left:        Horizontal offset.
+        :param mode:            Scaling mode:
+                                - "w" means only the width is calculated.
+                                - "h" means only the height is calculated.
+                                - "hw or "wh" mean both width and height are calculated.
+        :return:                ScalingArgs object suitable for scaling functions.
+        """
 
     @overload
     @classmethod
@@ -311,7 +325,24 @@ class ScalingArgs:
         crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | CropRel | CropAbs = ...,
         mode: str = 'hw'
     ) -> Self:
-        ...
+        """
+        Get (de)scaling arguments for fractional scaling.
+
+        :param base_clip:       Source clip.
+        :param height:          Target (de)scaling height. Casting to float will ensure fractional calculations.
+        :param width:           Target (de)scaling width. Casting to float will ensure fractional calculations.
+                                If None, it will be calculated from the height and the aspect ratio of the base_clip.
+        :param base_height:     The height from which to contain the clip. If None, it will be calculated from the height.
+        :param base_width:      The width from which to contain the clip. If None, it will be calculated from the width.
+        :param src_top:         Vertical offset.
+        :param src_left:        Horizontal offset.
+        :param crop:            Tuple of cropping values, or relative/absolute crop specification.
+        :param mode:            Scaling mode:
+                                - "w" means only the width is calculated.
+                                - "h" means only the height is calculated.
+                                - "hw or "wh" mean both width and height are calculated.
+        :return:                ScalingArgs object suitable for scaling functions.
+        """
 
     @classmethod
     def from_args(
