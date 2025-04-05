@@ -102,7 +102,7 @@ def masked_deband(
 
 def pfdeband(
     clip: vs.VideoNode, radius: int = 16, thr: float | list[float] = 96,
-    lthr: int | tuple[int, int] = 0.5, elast: float = 1.5,
+    lthr: float | tuple[float, float] = 0.5, elast: float = 1.5,
     bright_thr: int | None = None, prefilter: Prefilter | VSFunction = gauss_blur,
     debander: type[Debander] | Debander = F3kdb, planes: PlanesT = None,
     **kwargs: Any

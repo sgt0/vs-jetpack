@@ -16,7 +16,7 @@ __all__ = [
 def limit_filter(
     flt: vs.VideoNode, src: vs.VideoNode, ref: vs.VideoNode | None = None,
     mode: LimitFilterMode = LimitFilterMode.CLAMPING, planes: PlanesT = None,
-    thr: int | tuple[int, int] = 1, elast: float = 2.0, bright_thr: int | None = None
+    thr: float | tuple[float, float] = 1, elast: float = 2.0, bright_thr: float | None = None
 ) -> ConstantFormatVideoNode:
     assert check_variable(src, limit_filter)
     assert check_variable(flt, limit_filter)
