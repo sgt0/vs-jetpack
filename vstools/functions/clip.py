@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import vapoursynth as vs
-
 from ..exceptions import FramesLengthError
-from ..types import FrameRange, VideoNodeT, VSFunctionNoArgs
+from ..types import FrameRange, VideoNodeT
 from .normalize import normalize_franges
 
 __all__ = [
     'shift_clip', 'shift_clip_multi',
-
-    'process_var_clip'
 ]
 
 
@@ -70,48 +66,3 @@ def shift_clip_multi(clip: VideoNodeT, offsets: FrameRange = (-1, 1)) -> list[Vi
     ranges = normalize_franges(offsets)
 
     return [shift_clip(clip, x) for x in ranges]
-
-
-def process_var_clip(
-    clip: vs.VideoNode, function: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode], cache_size: int | None = None
-) -> vs.VideoNode:
-    """
-    Process variable format/resolution clips with a given function.
-
-    This function will temporarily assert a resolution and format for a variable clip,
-    run the given function, and then return a variable format clip back.
-
-    The function must accept a VideoNode and return a VideoNode.
-
-    :param clip:        Input clip.
-    :param function:    Function that takes and returns a single VideoNode.
-    :param cache_size   The maximum number of VideoNode allowed in the cache.
-
-    :return:            Processed variable clip.
-    """
-    from warnings import warn
-
-    from ..utils import ProcessVariableResFormatClip
-
-    warn(
-        "`process_var_clip` is deprecated and will be removed in a future version!\n"
-        "Use `ProcessVariableResFormatClip.from_func` instead.",
-        DeprecationWarning
-    )
-
-    if cache_size is not None:
-        return ProcessVariableResFormatClip.from_func(clip, function, cache_size=cache_size)
-
-    _cached_clips = dict[str, vs.VideoNode]()
-
-    def _eval_scale(n: int, f: vs.VideoFrame) -> vs.VideoNode:
-        key = f'{f.width}_{f.height}'
-
-        if key not in _cached_clips:
-            const_clip = vs.core.resize.Point(clip, f.width, f.height)
-
-            _cached_clips[key] = function(const_clip)
-
-        return _cached_clips[key]
-
-    return vs.core.std.FrameEval(clip, _eval_scale, clip, clip)
