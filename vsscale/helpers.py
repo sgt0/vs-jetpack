@@ -356,13 +356,15 @@ class ScalingArgs:
         else:
             crop = CropRel()
 
-        ratio = height / base_clip.height
+        ratio_height = height / base_clip.height
 
         if width is None:
             if isinstance(height, int):
                 width = get_w(height, base_clip, 2)
             else:
-                width = ratio * base_clip.width
+                width = ratio_height * base_clip.width
+            
+        ratio_width = width / base_clip.width
 
         if all([
             isinstance(height, int),
@@ -379,25 +381,25 @@ class ScalingArgs:
         if base_width is None:
             base_width = mod2(ceil(width))
 
-        margin_left = (base_width - width) / 2 + ratio * crop.left
-        margin_right = (base_width - width) / 2 + ratio * crop.right
+        margin_left = (base_width - width) / 2 + ratio_width * crop.left
+        margin_right = (base_width - width) / 2 + ratio_width * crop.right
         cropped_width = base_width - floor(margin_left) - floor(margin_right)
 
-        margin_top = (base_height - height) / 2 + ratio * crop.top
-        margin_bottom = (base_height - height) / 2 + ratio * crop.bottom
+        margin_top = (base_height - height) / 2 + ratio_height * crop.top
+        margin_bottom = (base_height - height) / 2 + ratio_height * crop.bottom
         cropped_height = base_height - floor(margin_top) - floor(margin_bottom)
 
         if isinstance(width, int) and crop.left == crop.right == 0:
             cropped_src_width = float(cropped_width)
         else:
-            cropped_src_width = ratio * (base_clip.width - crop.left - crop.right)
+            cropped_src_width = ratio_width * (base_clip.width - crop.left - crop.right)
 
         cropped_src_left = margin_left - floor(margin_left) + src_left
 
         if isinstance(height, int) and crop.top == crop.bottom == 0:
             cropped_src_height = float(cropped_height)
         else:
-            cropped_src_height = ratio * (base_clip.height - crop.top - crop.bottom)
+            cropped_src_height = ratio_height * (base_clip.height - crop.top - crop.bottom)
 
         cropped_src_top = margin_top - floor(margin_top) + src_top
 
