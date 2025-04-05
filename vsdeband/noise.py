@@ -393,22 +393,6 @@ class AddNoise(AddNoiseBase):
         _noise_type = 4
 
 
-class AddGrain(AddNoise.GAUSS):
-    """
-    Built-in grain.Add plugin. https://github.com/HomeOfVapourSynthEvolution/VapourSynth-AddGrain
-    DEPRECATED: Use AddNoise.GAUSS instead.
-    """
-
-    def _perform_graining(
-        self, clip: vs.VideoNode, strength: tuple[float, float], dynamic: bool = True, **kwargs: Any
-    ) -> vs.VideoNode:
-        import warnings
-
-        warnings.warn('AddGrain is deprecated, use AddNoise.GAUSS instead.', DeprecationWarning)
-
-        return super()._perform_graining(clip, strength, dynamic, **kwargs)
-
-
 class F3kdbGrain(AddNoise.GAUSS):
     """
     Built-in f3kdb.Deband plugin. https://github.com/HomeOfAviSynthPlusEvolution/neo_f3kdb
