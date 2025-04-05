@@ -4,16 +4,14 @@ from math import ceil
 from typing import Any
 
 from vsdenoise import Prefilter, frequency_merge
-from vsexprtools import ExprOp
+from vsexprtools import ExprOp, norm_expr
 from vsmasktools import FDoG, Morpho, flat_mask, texture_mask
 from vsrgtools import (
-    BlurMatrix, MeanMode, RemoveGrainMode, RemoveGrainModeT,
-    box_blur, gauss_blur, limit_filter, remove_grain
+    BlurMatrix, MeanMode, RemoveGrainMode, RemoveGrainModeT, box_blur, gauss_blur, limit_filter, remove_grain
 )
-from vsexprtools import norm_expr
 from vstools import (
-    ColorRange, PlanesT, VSFunction, FunctionUtil, check_ref_clip, check_variable, depth,
-     expect_bits, fallback, normalize_planes, normalize_seq, scale_value, to_arr, vs
+    ColorRange, FunctionUtil, PlanesT, VSFunctionKwArgs, check_ref_clip, check_variable, depth, expect_bits, fallback,
+    normalize_planes, normalize_seq, scale_value, to_arr, vs
 )
 
 from .abstract import Debander
@@ -103,7 +101,7 @@ def masked_deband(
 def pfdeband(
     clip: vs.VideoNode, radius: int = 16, thr: float | list[float] = 96,
     lthr: float | tuple[float, float] = 0.5, elast: float = 1.5,
-    bright_thr: int | None = None, prefilter: Prefilter | VSFunction = gauss_blur,
+    bright_thr: int | None = None, prefilter: Prefilter | VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] = gauss_blur,
     debander: type[Debander] | Debander = F3kdb, planes: PlanesT = None,
     **kwargs: Any
 ) -> vs.VideoNode:
