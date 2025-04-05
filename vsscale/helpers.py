@@ -14,7 +14,6 @@ __all__ = [
     'GenericScaler',
     'scale_var_clip',
     'fdescale_args',
-    'descale_args',
 
     'CropRel',
     'CropAbs',
@@ -411,33 +410,6 @@ class ScalingArgs:
             cropped_src_top, cropped_src_left,
             mode
         )
-
-
-def descale_args(
-    clip: vs.VideoNode,
-    src_height: float, src_width: float | None = None,
-    base_height: int | None = None, base_width: int | None = None,
-    crop_top: int = 0, crop_bottom: int = 0,
-    crop_left: int = 0, crop_right: int = 0,
-    mode: str = 'hw'
-) -> ScalingArgs:
-    from warnings import warn
-
-    # TODO: Delete this
-    warn(
-        "`descale_args` is deprecated and will be removed in a future version! \n"
-        "Use ScalingArgs instead.",
-        DeprecationWarning
-    )
-
-    return ScalingArgs.from_args(
-        clip.std.AddBorders(crop_left, crop_right, crop_top, crop_bottom),
-        src_height, src_width,
-        base_height, base_width,
-        0, 0,
-        CropRel(crop_left, crop_right, crop_top, crop_bottom),
-        mode
-    )
 
 
 def fdescale_args(
