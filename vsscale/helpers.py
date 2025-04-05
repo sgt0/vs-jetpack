@@ -7,13 +7,12 @@ from types import NoneType
 from typing import Any, Callable, NamedTuple, Protocol, Self, TypeAlias, overload
 
 from vskernels import Catrom, Kernel, KernelT, Scaler, ScalerT
-from vstools import KwargsT, MatrixT, Resolution, fallback, get_w, mod2, plane, vs
+from vstools import KwargsT, MatrixT, Resolution, get_w, mod2, plane, vs
 
 
 __all__ = [
     'GenericScaler',
     'scale_var_clip',
-    'fdescale_args',
 
     'CropRel',
     'CropAbs',
@@ -410,49 +409,3 @@ class ScalingArgs:
             cropped_src_top, cropped_src_left,
             mode
         )
-
-
-def fdescale_args(
-    clip: vs.VideoNode, src_height: float,
-    base_height: int | None = None, base_width: int | None = None,
-    src_top: float | None = None, src_left: float | None = None,
-    src_width: float | None = None, mode: str = 'hw', up_rate: float = 2.0
-) -> tuple[KwargsT, KwargsT]:
-    from warnings import warn
-
-    # TODO: Delete this
-    warn(
-        "`fdescale_args` is deprecated and will be removed in a future version! \n"
-        "Use ScalingArgs instead.",
-        DeprecationWarning
-    )
-
-    base_height = fallback(base_height, mod2(ceil(src_height)))
-    base_width = fallback(base_width, get_w(base_height, clip, 2))
-
-    src_width = fallback(src_width, src_height * clip.width / clip.height)
-
-    cropped_width = base_width - 2 * floor((base_width - src_width) / 2)
-    cropped_height = base_height - 2 * floor((base_height - src_height) / 2)
-
-    do_h, do_w = 'h' in mode.lower(), 'w' in mode.lower()
-
-    de_args = dict[str, Any](
-        width=cropped_width if do_w else clip.width,
-        height=cropped_height if do_h else clip.height
-    )
-
-    up_args = dict[str, Any]()
-
-    src_top = fallback(src_top, (cropped_height - src_height) / 2)
-    src_left = fallback(src_left, (cropped_width - src_width) / 2)
-
-    if do_h:
-        de_args.update(src_height=src_height, src_top=src_top)
-        up_args.update(src_height=src_height * up_rate, src_top=src_top * up_rate)
-
-    if do_w:
-        de_args.update(src_width=src_width, src_left=src_left)
-        up_args.update(src_width=src_width * up_rate, src_left=src_left * up_rate)
-
-    return de_args, up_args
