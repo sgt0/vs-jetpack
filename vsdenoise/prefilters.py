@@ -211,16 +211,15 @@ class Prefilter(PrefilterBase):
         from .prefilters import Prefilter
 
         @overload  # type: ignore
-        def __call__(
+        def __call__(  # type: ignore
             self: Literal[Prefilter.FLUXSMOOTHST], clip: vs.VideoNode, /,
-            planes: PlanesT = None, full_range: bool | float = False,
-            *, temp_thr: int = 2, spat_thr: int = 2
+            *, full_range: bool | float = False,
+            temp_thr: float | Sequence[float] = 2.0, spat_thr: float | Sequence[float] | None = 2.0
         ) -> vs.VideoNode:
             """
             Perform smoothing using `zsmooth.FluxSmoothST`
 
             :param clip:        Clip to be preprocessed.
-            :param planes:      Planes to be preprocessed.
             :param full_range:  Whether to return a prefiltered clip in full range.
             :param temp_thr:    Temporal threshold for the temporal median function.
             :param spat_thr:    Spatial threshold for the temporal median function.
@@ -348,15 +347,15 @@ class Prefilter(PrefilterBase):
             :return:            Preprocessed clip.
             """
 
-        @overload  # type: ignore
-        def __call__(
+        @overload
+        def __call__(  # type: ignore
             self: Literal[Prefilter.FLUXSMOOTHST], *,
-            planes: PlanesT = None, full_range: bool | float = False, temp_thr: int = 2, spat_thr: int = 2
+            full_range: bool | float = False,
+            temp_thr: float | Sequence[float] = 2.0, spat_thr: float | Sequence[float] | None = 2.0
         ) -> PrefilterPartial:
             """
             Perform smoothing using `zsmooth.FluxSmoothST`
 
-            :param planes:      Planes to be preprocessed.
             :param full_range:  Whether to return a prefiltered clip in full range.
             :param temp_thr:    Temporal threshold for the temporal median function.
             :param spat_thr:    Spatial threshold for the temporal median function.
