@@ -287,10 +287,6 @@ class MVToolsPresets:
     def HQ_COHERENCE(self) -> MVToolsPreset:
         return MVToolsPreset(
             search_clip=prefilter_to_full_range,
-            pel=2,
-            super_args=SuperArgs(
-                sharp=SharpMode.WIENER,
-            ),
             analyze_args=AnalyzeArgs(
                 blksize=16,
                 overlap=8,
@@ -309,10 +305,6 @@ class MVToolsPresets:
     def HQ_SAD(self) -> MVToolsPreset:
         return MVToolsPreset(
             search_clip=prefilter_to_full_range,
-            pel=2,
-            super_args=SuperArgs(
-                sharp=SharpMode.WIENER,
-            ),
             analyze_args=AnalyzeArgs(
                 blksize=16,
                 overlap=8,
