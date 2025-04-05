@@ -286,7 +286,6 @@ class ScalingArgs:
         cls,
         base_clip: vs.VideoNode,
         height: int, width: int | None = None,
-        /,
         *,
         src_top: float = ..., src_left: float = ...,
         mode: str = 'hw'
@@ -313,7 +312,6 @@ class ScalingArgs:
         cls,
         base_clip: vs.VideoNode,
         height: float, width: float | None = ...,
-        /,
         base_height: int | None = ..., base_width: int | None = ...,
         src_top: float = ..., src_left: float = ...,
         crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | CropRel | CropAbs = ...,
