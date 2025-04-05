@@ -25,7 +25,7 @@ __all__ = [
 
 def smooth_dering(
     clip: vs.VideoNode,
-    smooth: vs.VideoNode | Prefilter = Prefilter.MINBLUR1,
+    smooth: vs.VideoNode | Prefilter = Prefilter.MINBLUR(radius=1),
     ringmask: vs.VideoNode | None = None,
     mrad: int = 1, msmooth: int = 1, minp: int = 1, mthr: float = 0.24, incedge: bool = False,
     thr: int = 12, elast: float = 2.0, darkthr: int | None = None,
