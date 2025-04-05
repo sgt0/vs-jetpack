@@ -62,7 +62,6 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 |                                        |                                        | [tcanny](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-TCanny) |
 |                                        |                                        | [tedgemask](https://github.com/dubhater/vapoursynth-tedgemask) |
 |                                        |                                        | [hysteresis](https://github.com/sgt0/vapoursynth-hysteresis) |
-|                                        |                                        | [retinex](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Retinex) |
 |                                        |                                        | [adaptivegrain](https://github.com/Irrational-Encoding-Wizardry/adaptivegrain) |
 |                                        |                                        | [rgvs](https://github.com/vapoursynth/vs-removegrain) / [rgsf](https://github.com/IFeelBloated/RGSF) |
 |                                        |                                        | [zsmooth](https://github.com/adworacz/zsmooth) |
