@@ -8,7 +8,7 @@ from vsaa import Eedi3, Nnedi3, SangNom
 from vsexprtools import ExprOp, complexpr_available, norm_expr
 from vskernels import Catrom, Kernel, KernelT, Point, Scaler, ScalerT
 from vsrgtools import box_blur, gauss_blur, limit_filter
-from vsscale import descale_args
+from vsscale import ScalingArgs
 from vstools import (
     P1, CustomIntEnum, CustomOverflowError, CustomStrEnum, FuncExceptT, InvalidColorFamilyError,
     InvalidSubsamplingError, P, VSFunction, complex_hash, depth, flatten, get_plane_sizes, get_subsampling, inject_self,
@@ -630,7 +630,7 @@ class GenericChromaRecon(ChromaReconstruct):
         if self.native_res is None:
             return self._kernel.resample(clip, vs.YUV444PS)
 
-        de_args = descale_args(clip, self.native_res)
+        de_args = ScalingArgs.from_args(clip, self.native_res)
 
         descale = self._native_kernel.descale(
             clip, de_args.width, de_args.height, **de_args.kwargs()
