@@ -527,7 +527,7 @@ class MultiPrefilter(PrefBase):  # type: ignore
         return clip
 
 
-def prefilter_to_full_range(clip: vs.VideoNode, range_conversion: float = 5.0, planes: PlanesT = None) -> vs.VideoNode:
+def prefilter_to_full_range(clip: vs.VideoNode, range_conversion: float = 5.0, amp: float = 0.0625, planes: PlanesT = None) -> vs.VideoNode:
     """
     Convert a limited range clip to full range.\n
     Useful for expanding prefiltered clip's ranges to give motion estimation additional information to work with.
@@ -537,6 +537,7 @@ def prefilter_to_full_range(clip: vs.VideoNode, range_conversion: float = 5.0, p
                                  * >= 1.0 - Expansion with expr based on this coefficient.
                                  * >  0.0 - Expansion with retinex.
                                  * <= 0.0 - Simple conversion with resize plugin.
+    :param amp:                 Amplitude of the conversion.
     :param planes:              Planes to be processed.
 
     :return:                    Full range clip.
@@ -554,7 +555,7 @@ def prefilter_to_full_range(clip: vs.VideoNode, range_conversion: float = 5.0, p
         neutral = get_neutral_value(work_clip)
         max_val = get_peak_value(work_clip)
 
-        c = sin(0.0625)
+        c = sin(amp)
         k = (range_conversion - 1) * c
 
         if is_integer:
