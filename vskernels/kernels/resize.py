@@ -17,7 +17,8 @@ __all__ = [
 class Point(ZimgComplexKernel):
     """Built-in point resizer."""
 
-    scale_function = resample_function = descale_function = core.lazy.resize2.Point
+    scale_function = resample_function = core.lazy.resize2.Point
+    descale_function = core.lazy.descale.Depoint
     _static_kernel_radius = 1
 
 
