@@ -271,15 +271,14 @@ class Scaler(BaseScaler):
 
     @inject_self.cached
     def multi(
-        self, clip: vs.VideoNode, rfactor: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
+        self, clip: vs.VideoNode, multi: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
     ) -> vs.VideoNode:
 
         import warnings
 
         warnings.warn('The "multi" method is deprecated. Use "supersample" instead.', DeprecationWarning)
 
-        return self.supersample(clip, rfactor, shift, **kwargs)
-
+        return self.supersample(clip, multi, shift, **kwargs)
 
     @inject_kwargs_params
     def get_scale_args(
