@@ -233,13 +233,13 @@ class SADMode(CustomIntEnum):
     """Use Sum of Absolute Transformed Differences (SATD) instead of SAD for luma comparison."""
 
     MIXED_SATD_DCT = 6
-    """Like MIXED_SPATIAL_DCT but uses SATD instead of SAD."""
+    """Use both SATD and DCT data, weighted based on the average luma difference between frames."""
 
     ADAPTIVE_SATD_MIXED = 7
-    """Like ADAPTIVE_SPATIAL_MIXED but uses SATD instead of SAD."""
+    """Adaptively choose between SATD data or an equal mix of SATD and DCT data for each block."""
 
     ADAPTIVE_SATD_DCT = 8
-    """Like ADAPTIVE_SPATIAL_DCT but uses SATD instead of SAD."""
+    """Adaptively choose between SATD data or DCT-weighted mixed mode for each block."""
 
     MIXED_SADEQSATD_DCT = 9
     """Mix of SAD, SATD and DCT data. Weight varies from SAD-only to equal SAD/SATD mix."""
