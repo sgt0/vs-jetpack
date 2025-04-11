@@ -212,7 +212,7 @@ class MVTools(vs_object):
             sharp=sharp, rfilter=rfilter, pelclip=pelclip
         )
         
-        if (levels := super_args.pop('levels', None)) is None and clip is not self.search_clip:
+        if levels := super_args.pop('levels', None) is None and clip is not self.search_clip:
             levels = 1
 
         super_clip = self.mvtools.Super(clip, levels=levels, **super_args)

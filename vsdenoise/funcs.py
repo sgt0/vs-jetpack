@@ -8,9 +8,9 @@ from typing import Any, Literal, overload
 
 from vsscale import Waifu2x
 from vsscale.scale import BaseWaifu2x
-from vstools import CustomIndexError, KwargsNotNone, PlanesT, VSFunction, fallback, normalize_seq, vs
+from vstools import CustomIndexError, KwargsNotNone, PlanesT, VSFunction, fallback, vs
 
-from .mvtools import MotionVectors, MVTools, MVToolsPreset, MVToolsPresets, RFilterMode
+from .mvtools import MotionVectors, MVTools, MVToolsPreset, MVToolsPresets
 from .prefilters import PrefilterPartial
 
 __all__ = [
@@ -25,7 +25,6 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
-    rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -40,7 +39,6 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
-    rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -55,7 +53,6 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
-    rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -69,7 +66,6 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunction | None = None, mfilter: vs.VideoNode | VSFunction | None = None,
     preset: MVToolsPreset = MVToolsPresets.HQ_SAD, tr: int = 1,
-    rfilter: RFilterMode | tuple[RFilterMode, RFilterMode] = (RFilterMode.CUBIC, RFilterMode.TRIANGLE),
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -88,7 +84,6 @@ def mc_degrain(
     :param mfilter:           Filter or clip to use where degrain couldn't find a matching block.
     :param preset:            MVTools preset defining base values for the MVTools object.
     :param tr:                The temporal radius. This determines how many frames are analyzed before/after the current frame.
-    :param rfilter:           Hierarchical levels smoothing and reducing (halving) filter.
     :param blksize:           Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
     :param refine:            Number of times to recalculate motion vectors with halved block size.
     :param thsad:             Defines the soft threshold of block sum absolute differences.
@@ -116,19 +111,12 @@ def mc_degrain(
 
     mv_args = preset | KwargsNotNone(search_clip=prefilter)
 
-    rfilter_search, rfilter_render = normalize_seq(rfilter, 2)
-
     blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
     thsad = thsad if isinstance(thsad, tuple) else (thsad, thsad)
 
     mfilter = mfilter(clip) if callable(mfilter) else fallback(mfilter, clip)
 
     mv = MVTools(clip, vectors=vectors, planes=planes, **mv_args)
-
-    if mv.search_clip != mv.clip or rfilter_render != rfilter_search:
-        mv.super(mv.clip, rfilter=rfilter_render)
-
-    mv.super(mv.search_clip, rfilter=rfilter_search)
 
     if not vectors:
         mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize))
