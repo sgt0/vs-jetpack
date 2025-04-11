@@ -233,7 +233,7 @@ class MVTools(vs_object):
         pnew: int | None = None, pzero: int | None = None, pglobal: int | None = None,
         overlap: int | tuple[int | None, int | None] | None = None, divide: bool | None = None,
         badsad: int | None = None, badrange: int | None = None, meander: bool | None = None,
-        trymany: bool | None = None, dct: SADMode | None = None
+        trymany: bool | None = None, dct: SADMode | None = None, scale_lambda: bool = True
     ) -> None:
         """
         Analyze motion vectors in a clip using block matching.
@@ -303,6 +303,9 @@ class MVTools(vs_object):
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
 
+        if scale_lambda and lambda_ and blksize:
+            lambda_ = lambda_ * blksize * fallback(blksizev, blksize) // 64
+
         analyze_args = self.analyze_args | KwargsNotNone(
             blksize=blksize, blksizev=blksizev, levels=levels,
             search=search, searchparam=searchparam, pelsearch=pelsearch,
@@ -340,7 +343,7 @@ class MVTools(vs_object):
         blksize: int | tuple[int | None, int | None] | None = None, search: SearchMode | None = None,
         searchparam: int | None = None, lambda_: int | None = None, truemotion: MotionMode | None = None,
         pnew: int | None = None, overlap: int | tuple[int | None, int | None] | None = None,
-        divide: bool | None = None, meander: bool | None = None, dct: SADMode | None = None
+        divide: bool | None = None, meander: bool | None = None, dct: SADMode | None = None, scale_lambda: bool = True
     ) -> None:
         """
         Refines and recalculates motion vectors that were previously estimated, optionally using a different super clip or parameters.
@@ -391,6 +394,9 @@ class MVTools(vs_object):
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
+
+        if scale_lambda and lambda_ and blksize:
+            lambda_ = lambda_ * blksize * fallback(blksizev, blksize) // 64
 
         recalculate_args = self.recalculate_args | KwargsNotNone(
             thsad=thsad, smooth=smooth, blksize=blksize, blksizev=blksizev, search=search, searchparam=searchparam,
