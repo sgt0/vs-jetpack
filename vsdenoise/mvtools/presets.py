@@ -288,12 +288,14 @@ class MVToolsPresets:
                 blksize=16,
                 overlap=8,
                 search=SearchMode.HEXAGON,
+                searchparam=24,
                 dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
             ),
             recalculate_args=RecalculateArgs(
                 blksize=8,
                 overlap=4,
                 search=SearchMode.HEXAGON,
+                searchparam=24,
                 dct=SADMode.ADAPTIVE_SATD_MIXED,
             )
         )
@@ -306,6 +308,7 @@ class MVToolsPresets:
                 blksize=16,
                 overlap=8,
                 search=SearchMode.HEXAGON,
+                searchparam=24,
                 dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
                 truemotion=MotionMode.SAD,
             ),
@@ -313,6 +316,7 @@ class MVToolsPresets:
                 blksize=8,
                 overlap=4,
                 search=SearchMode.HEXAGON,
+                searchparam=24,
                 dct=SADMode.ADAPTIVE_SATD_MIXED,
                 truemotion=MotionMode.SAD,
             )
