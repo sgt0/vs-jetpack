@@ -30,7 +30,7 @@ def mc_degrain(
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None, export_globals: Literal[False] = ...,
-    planes: PlanesT = None, **kwargs: Any
+    planes: PlanesT = None
 ) -> vs.VideoNode:
     ...
 
@@ -45,7 +45,7 @@ def mc_degrain(
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None, export_globals: Literal[True] = ...,
-    planes: PlanesT = None, **kwargs: Any
+    planes: PlanesT = None
 ) -> tuple[vs.VideoNode, MVTools]:
     ...
 
@@ -60,7 +60,7 @@ def mc_degrain(
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None, export_globals: bool = ...,
-    planes: PlanesT = None, **kwargs: Any
+    planes: PlanesT = None
 ) -> vs.VideoNode | tuple[vs.VideoNode, MVTools]:
     ...
 
@@ -74,7 +74,7 @@ def mc_degrain(
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None, export_globals: bool = False,
-    planes: PlanesT = None, **kwargs: Any
+    planes: PlanesT = None
 ) -> vs.VideoNode | tuple[vs.VideoNode, MVTools]:
     """
     Perform temporal denoising using motion compensation.
@@ -114,7 +114,7 @@ def mc_degrain(
     def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
         return (x[0] // 2, x[1] // 2)
 
-    mv_args = preset | kwargs | KwargsNotNone(search_clip=prefilter)
+    mv_args = preset | KwargsNotNone(search_clip=prefilter)
 
     rfilter_search, rfilter_render = normalize_seq(rfilter, 2)
 
