@@ -211,8 +211,11 @@ class MVTools(vs_object):
             hpad=hpad, vpad=vpad, pel=self.pel, levels=levels, chroma=self.chroma,
             sharp=sharp, rfilter=rfilter, pelclip=pelclip
         )
+        
+        if (levels := super_args.pop('levels', None)) is None and clip is not self.search_clip:
+            levels = 1
 
-        super_clip = self.mvtools.Super(clip, **super_args)
+        super_clip = self.mvtools.Super(clip, levels=levels, **super_args)
 
         super_clip = clip.std.ClipToProp(super_clip, prop='MSuper')
 
