@@ -49,6 +49,7 @@ plugins:
       nav_file: SUMMARY.md
   - mkdocstrings:
       custom_templates: docs/templates
+      enable_inventory: true
       handlers:
         python:
           inventories:
