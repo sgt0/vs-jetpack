@@ -296,6 +296,7 @@ class MVTools(vs_object):
                                Enabling this can find better vectors but increases processing time.
         :param dct:            SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
                                For more information, see :py:class:`SADMode`.
+        :param scale_lambda    Whether to scale lambda_ value according to truemotion's default value formula.
 
         :return:               A :py:class:`MotionVectors` object containing the analyzed motion vectors for each frame.
                                These vectors describe the estimated motion between frames and can be used for motion compensation.
@@ -387,6 +388,7 @@ class MVTools(vs_object):
                                If True, alternates between left-to-right and right-to-left scanning between rows to improve motion coherence.
         :param dct:            SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
                                For more information, see :py:class:`SADMode`.
+        :param scale_lambda    Whether to scale lambda_ value according to truemotion's default value formula.
         """
 
         super_clip = self.get_super(fallback(super, self.search_clip))
