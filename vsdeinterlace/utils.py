@@ -34,3 +34,9 @@ def reinterlace(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> vs
     tff = FieldBased.from_param_or_video(tff, clip, True, reinterlace).is_tff
 
     return clip.std.SeparateFields(tff).std.SelectEvery(4, (0, 3)).std.DoubleWeave(tff)[::2]
+
+
+def reweave(clipa: vs.VideoNode, clipb: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> vs.VideoNode:
+    tff = FieldBased.from_param_or_video(tff, clipa, True, reweave).is_tff
+
+    return core.std.Interleave([clipa, clipb]).std.SelectEvery(4, (0, 1, 3, 2)).std.DoubleWeave(tff)[::2]
