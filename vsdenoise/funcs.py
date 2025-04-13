@@ -8,13 +8,20 @@ from typing import Any, Literal, overload
 
 from vsscale import Waifu2x
 from vsscale.scale import BaseWaifu2x
-from vstools import CustomIndexError, KwargsNotNone, PlanesT, VSFunction, fallback, vs
+from vstools import (
+    CustomIndexError, ConstantFormatVideoNode, KwargsNotNone,
+    PlanesT, VSFunction, check_variable, check_ref_clip,
+    fallback, scale_delta, vs,
+)
+from vsexprtools import norm_expr
+from vsrgtools import MeanMode
 
 from .mvtools import MotionVectors, MVTools, MVToolsPreset, MVToolsPresets
 from .prefilters import PrefilterPartial
 
 __all__ = [
     'mc_degrain',
+    'mc_sharplimit',
 
     'waifu2x_denoise'
 ]
@@ -134,6 +141,31 @@ def mc_degrain(
     den = mv.degrain(mfilter, mv.clip, None, tr, thsad, thsad2, limit, thscd)
 
     return (den, mv) if export_globals else den
+
+
+def mc_sharplimit(
+    flt: vs.VideoNode, src: vs.VideoNode, mv_obj: MVTools, ref: vs.VideoNode | None = None,
+    limit: tuple[int | float, int | float] = (0, 0), **kwargs: Any,
+) -> ConstantFormatVideoNode:
+    assert check_variable(flt, mc_sharplimit)
+    assert check_variable(src, mc_sharplimit)
+    check_ref_clip(src, flt, mc_sharplimit)
+
+    ref = fallback(ref, src)
+
+    undershoot, overshoot = limit
+
+    backward_comp, forward_comp = mv_obj.compensate(ref, interleave=False, **kwargs)
+
+    comp_min = MeanMode.MINIMUM([ref, *backward_comp, *forward_comp])
+    comp_max = MeanMode.MAXIMUM([ref, *backward_comp, *forward_comp])
+
+    return norm_expr(
+        [flt, comp_min, comp_max],
+        'x y {undershoot} - z {overshoot} + clip',
+        undershoot=scale_delta(undershoot, 8, flt),
+        overshoot=scale_delta(overshoot, 8, flt),
+    )
 
 
 def waifu2x_denoise(
