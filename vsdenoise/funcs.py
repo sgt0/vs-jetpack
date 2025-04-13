@@ -11,7 +11,7 @@ from vsscale.scale import BaseWaifu2x
 from vstools import (
     CustomIndexError, ConstantFormatVideoNode, KwargsNotNone,
     PlanesT, VSFunction, check_variable, check_ref_clip,
-    fallback, scale_delta, vs,
+    fallback, scale_delta, normalize_seq, vs,
 )
 from vsexprtools import norm_expr
 from vsrgtools import MeanMode
@@ -145,7 +145,7 @@ def mc_degrain(
 
 def mc_sharplimit(
     flt: vs.VideoNode, src: vs.VideoNode, mv_obj: MVTools, ref: vs.VideoNode | None = None,
-    limit: tuple[int | float, int | float] = (0, 0), **kwargs: Any,
+    limit: int | float | tuple[int | float, int | float] = 0, **kwargs: Any,
 ) -> ConstantFormatVideoNode:
     assert check_variable(flt, mc_sharplimit)
     assert check_variable(src, mc_sharplimit)
@@ -153,7 +153,7 @@ def mc_sharplimit(
 
     ref = fallback(ref, src)
 
-    undershoot, overshoot = limit
+    undershoot, overshoot = normalize_seq(limit, 2)
 
     backward_comp, forward_comp = mv_obj.compensate(ref, interleave=False, **kwargs)
 
