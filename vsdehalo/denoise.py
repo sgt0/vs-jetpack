@@ -216,7 +216,7 @@ def vine_dehalo(
     )
 
     refined = func.work_clip.std.MakeDiff(highpassed)
-    refined = nl_means(refined, h_refine, tr=0, simr=simr, **kwargs)
+    refined = nl_means(refined, h_refine, tr=0, simr=simr, ref=highpassed, **kwargs)
     refined = highpassed.std.MergeDiff(refined)
 
     return func.return_clip(refined)
