@@ -1009,7 +1009,7 @@ class MVTools(vs_object):
         delta: int = 1, thscd: int | tuple[int | None, int | float | None] | None = None
     ) -> vs.VideoNode:
         """
-        Creates scene detection mask clip from motion vectors data.
+        Creates scene change frameprops from motion vectors data.
 
         :param clip:       The clip to process.
                            If None, the :py:attr:`workclip` attribute is used.
