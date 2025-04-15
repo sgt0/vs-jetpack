@@ -755,43 +755,6 @@ def limiter(
     tv_range: bool = False,
     func: FuncExceptT | None = None
 ) -> ConstantFormatVideoNode:
-    ...
-
-@overload
-def limiter(
-    _func: Callable[P, ConstantFormatVideoNode],
-    /,
-    min_val: float | Sequence[float] | None = None,
-    max_val: float | Sequence[float] | None = None,
-    *,
-    tv_range: bool = False,
-    func: FuncExceptT | None = None
-) -> Callable[P, ConstantFormatVideoNode]:
-    ...
-
-@overload
-def limiter(
-    *,
-    min_val: float | Sequence[float] | None = None,
-    max_val: float | Sequence[float] | None = None,
-    tv_range: bool = False,
-    func: FuncExceptT | None = None
-) -> Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]:
-    ...
-
-def limiter(
-    clip_or_func: vs.VideoNode | Callable[P, ConstantFormatVideoNode] | None = None,
-    /,
-    min_val: float | Sequence[float] | None = None,
-    max_val: float | Sequence[float] | None = None,
-    *,
-    tv_range: bool = False,
-    func: FuncExceptT | None = None
-) -> Union[
-    ConstantFormatVideoNode,
-    Callable[P, ConstantFormatVideoNode],
-    Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]
-]:
     """
     Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
     if clip format is not integer, a min/max val is specified or tv_range is True.
@@ -806,6 +769,74 @@ def limiter(
                         This should only be set by VS package developers.
     :return:            Clamped clip.
     """
+
+
+@overload
+def limiter(
+    _func: Callable[P, ConstantFormatVideoNode],
+    /,
+    min_val: float | Sequence[float] | None = None,
+    max_val: float | Sequence[float] | None = None,
+    *,
+    tv_range: bool = False,
+    func: FuncExceptT | None = None
+) -> Callable[P, ConstantFormatVideoNode]:
+    """
+    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
+    if clip format is not integer, a min/max val is specified or tv_range is True.
+
+    This is the decorator implementation.
+
+    :param _func:       Function that returns a VideoNode to be processed.
+    :param min_val:     Lower bound. Defaults to the lowest allowed value for the input.
+                        Can be specified for each plane individually.
+    :param max_val:     Upper bound. Defaults to the highest allowed value for the input.
+                        Can be specified for each plane individually.
+    :param tv_range:    Changes min/max defaults values to LIMITED.
+    :param func:        Function returned for custom error handling.
+                        This should only be set by VS package developers.
+    :return:            Decorated function.
+    """
+
+
+@overload
+def limiter(
+    *,
+    min_val: float | Sequence[float] | None = None,
+    max_val: float | Sequence[float] | None = None,
+    tv_range: bool = False,
+    func: FuncExceptT | None = None
+) -> Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]:
+    """
+    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
+    if clip format is not integer, a min/max val is specified or tv_range is True.
+
+    This is the decorator implementation.
+
+    :param min_val:     Lower bound. Defaults to the lowest allowed value for the input.
+                        Can be specified for each plane individually.
+    :param max_val:     Upper bound. Defaults to the highest allowed value for the input.
+                        Can be specified for each plane individually.
+    :param tv_range:    Changes min/max defaults values to LIMITED.
+    :param func:        Function returned for custom error handling.
+                        This should only be set by VS package developers.
+    :return:            Decorated function.
+    """
+
+
+def limiter(
+    clip_or_func: vs.VideoNode | Callable[P, ConstantFormatVideoNode] | None = None,
+    /,
+    min_val: float | Sequence[float] | None = None,
+    max_val: float | Sequence[float] | None = None,
+    *,
+    tv_range: bool = False,
+    func: FuncExceptT | None = None
+) -> Union[
+    ConstantFormatVideoNode,
+    Callable[P, ConstantFormatVideoNode],
+    Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]
+]:
     if callable(clip_or_func):
         _func = clip_or_func
 

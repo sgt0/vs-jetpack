@@ -152,9 +152,6 @@ def bmdegrain(
                                     Default: 3.0.
     :param refine:                  The amount of iterations for iterative regularization.
                                     Default: 0.
-    :param radius:                  Temporal radius. To enable spatial-only denoising, set this to 0.
-                                    Higher values will rapidly increase filtering time and RAM usage.
-                                    Default: 0.
     :param ref:                     Reference clip. Must be the same dimensions and format as input clip.
                                     Alternatively, a :py:class:`Prefilter` can be passed.
                                     Default: None.

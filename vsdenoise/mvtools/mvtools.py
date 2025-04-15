@@ -252,51 +252,51 @@ class MVTools(vs_object):
         The vector with the lowest SAD value is chosen as the final motion vector,
         with a penalty applied to maintain motion coherence between blocks.
 
-        :param super:          The multilevel super clip prepared by :py:attr:`super`.
-                               If None, super will be obtained from clip.
-        :param tr:             The temporal radius. This determines how many frames are analyzed before/after the current frame.
-                               Default: 1.
-        :param blksize:        Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
-        :param levels:         Number of levels used in hierarchical motion vector analysis.
-                               A positive value specifies how many levels to use.
-                               A negative or zero value specifies how many coarse levels to skip.
-                               Lower values generally give better results since vectors of any length can be found.
-                               Sometimes adding more levels can help prevent false vectors in CGI or similar content.
-        :param search:         Search algorithm to use at the finest level. See :py:class:`SearchMode` for options.
-        :param searchparam:    Additional parameter for the search algorithm. For NSTEP, this is the step size.
-                               For EXHAUSTIVE, EXHAUSTIVE_H, EXHAUSTIVE_V, HEXAGON and UMH, this is the search radius.
-        :param lambda_:        Controls the coherence of the motion vector field.
-                               Higher values enforce more coherent/smooth motion between blocks.
-                               Too high values may cause the algorithm to miss the optimal vectors.
-        :param truemotion:     Preset that controls the default values of motion estimation parameters to optimize for true motion.
-                               For more information, see :py:class:`MotionMode`.
-        :param lsad:           SAD limit for lambda.
-                               When the SAD value of a vector predictor (formed from neighboring blocks) exceeds this limit,
-                               the local lambda value is decreased. This helps prevent the use of bad predictors,
-                               but reduces motion coherence between blocks.
-        :param plevel:         Controls how the penalty factor (lambda) scales with hierarchical levels.
-                               For more information, see :py:class:`PenaltyMode`.
-        :param global_:        Whether to estimate global motion at each level and use it as an additional predictor.
-                               This can help with camera motion.
-        :param pnew:           Penalty multiplier (relative to 256) applied to the SAD cost when evaluating new candidate vectors.
-                               Higher values make the search more conservative.
-        :param pzero:          Penalty multiplier (relative to 256) applied to the SAD cost for the zero motion vector.
-                               Higher values discourage using zero motion.
-        :param pglobal:        Penalty multiplier (relative to 256) applied to the SAD cost when using the global motion predictor.
-        :param overlap:        Block overlap value. Can be a single integer for both dimensions or a tuple of (horizontal, vertical) overlap values.
-                               Each value must be even and less than its corresponding block size dimension.
-        :param divide:         Whether to divide each block into 4 subblocks during post-processing.
-                               This may improve accuracy at the cost of performance.
-        :param badsad:         SAD threshold above which a wider secondary search will be performed to find better motion vectors.
-                               Higher values mean fewer blocks will trigger the secondary search.
-        :param badrange:       Search radius for the secondary search when a block's SAD exceeds badsad.
-        :param meander:        Whether to use a meandering scan pattern when processing blocks.
-                               If True, alternates between left-to-right and right-to-left scanning between rows to improve motion coherence.
-        :param trymany:        Whether to test multiple predictor vectors during the search process at coarser levels.
-                               Enabling this can find better vectors but increases processing time.
-        :param dct:            SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
-                               For more information, see :py:class:`SADMode`.
-        :param scale_lambda    Whether to scale lambda_ value according to truemotion's default value formula.
+        :param super:           The multilevel super clip prepared by :py:attr:`super`.
+                                If None, super will be obtained from clip.
+        :param tr:              The temporal radius. This determines how many frames are analyzed before/after the current frame.
+                                Default: 1.
+        :param blksize:         Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
+        :param levels:          Number of levels used in hierarchical motion vector analysis.
+                                A positive value specifies how many levels to use.
+                                A negative or zero value specifies how many coarse levels to skip.
+                                Lower values generally give better results since vectors of any length can be found.
+                                Sometimes adding more levels can help prevent false vectors in CGI or similar content.
+        :param search:          Search algorithm to use at the finest level. See :py:class:`SearchMode` for options.
+        :param searchparam:     Additional parameter for the search algorithm. For NSTEP, this is the step size.
+                                For EXHAUSTIVE, EXHAUSTIVE_H, EXHAUSTIVE_V, HEXAGON and UMH, this is the search radius.
+        :param lambda_:         Controls the coherence of the motion vector field.
+                                Higher values enforce more coherent/smooth motion between blocks.
+                                Too high values may cause the algorithm to miss the optimal vectors.
+        :param truemotion:      Preset that controls the default values of motion estimation parameters to optimize for true motion.
+                                For more information, see :py:class:`MotionMode`.
+        :param lsad:            SAD limit for lambda.
+                                When the SAD value of a vector predictor (formed from neighboring blocks) exceeds this limit,
+                                the local lambda value is decreased. This helps prevent the use of bad predictors,
+                                but reduces motion coherence between blocks.
+        :param plevel:          Controls how the penalty factor (lambda) scales with hierarchical levels.
+                                For more information, see :py:class:`PenaltyMode`.
+        :param global_:         Whether to estimate global motion at each level and use it as an additional predictor.
+                                This can help with camera motion.
+        :param pnew:            Penalty multiplier (relative to 256) applied to the SAD cost when evaluating new candidate vectors.
+                                Higher values make the search more conservative.
+        :param pzero:           Penalty multiplier (relative to 256) applied to the SAD cost for the zero motion vector.
+                                Higher values discourage using zero motion.
+        :param pglobal:         Penalty multiplier (relative to 256) applied to the SAD cost when using the global motion predictor.
+        :param overlap:         Block overlap value. Can be a single integer for both dimensions or a tuple of (horizontal, vertical) overlap values.
+                                Each value must be even and less than its corresponding block size dimension.
+        :param divide:          Whether to divide each block into 4 subblocks during post-processing.
+                                This may improve accuracy at the cost of performance.
+        :param badsad:          SAD threshold above which a wider secondary search will be performed to find better motion vectors.
+                                Higher values mean fewer blocks will trigger the secondary search.
+        :param badrange:        Search radius for the secondary search when a block's SAD exceeds badsad.
+        :param meander:         Whether to use a meandering scan pattern when processing blocks.
+                                If True, alternates between left-to-right and right-to-left scanning between rows to improve motion coherence.
+        :param trymany:         Whether to test multiple predictor vectors during the search process at coarser levels.
+                                Enabling this can find better vectors but increases processing time.
+        :param dct:             SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
+                                For more information, see :py:class:`SADMode`.
+        :param scale_lambda:    Whether to scale lambda_ value according to truemotion's default value formula.
 
         :return:               A :py:class:`MotionVectors` object containing the analyzed motion vectors for each frame.
                                These vectors describe the estimated motion between frames and can be used for motion compensation.
@@ -360,35 +360,35 @@ class MVTools(vs_object):
         The SAD threshold is normalized to an 8x8 block size. Vectors with good quality are preserved,
         though their SAD values are still recalculated and updated.
 
-        :param super:          The multilevel super clip prepared by :py:attr:`super`.
-                               If None, super will be obtained from clip.
-        :param vectors:        Motion vectors to use.
-                               If None, uses the vectors from this instance.
-        :param thsad:          Only bad quality new vectors with a SAD above thid will be re-estimated by search.
-                               thsad value is scaled to 8x8 block size.
-        :param blksize:        Size of blocks for motion estimation. Can be an int or tuple of (width, height).
-                               Larger blocks are less sensitive to noise and faster to process, but will produce less accurate vectors.
-        :param smooth:         This is method for dividing coarse blocks into smaller ones.
-                               Only used with the FLOAT MVTools plugin.
-        :param search:         Search algorithm to use at the finest level. See :py:class:`SearchMode` for options.
-        :param searchparam:    Additional parameter for the search algorithm. For NSTEP, this is the step size.
-                               For EXHAUSTIVE, EXHAUSTIVE_H, EXHAUSTIVE_V, HEXAGON and UMH, this is the search radius.
-        :param lambda_:        Controls the coherence of the motion vector field.
-                               Higher values enforce more coherent/smooth motion between blocks.
-                               Too high values may cause the algorithm to miss the optimal vectors.
-        :param truemotion:     Preset that controls the default values of motion estimation parameters to optimize for true motion.
-                               For more information, see :py:class:`MotionMode`.
-        :param pnew:           Penalty multiplier (relative to 256) applied to the SAD cost when evaluating new candidate vectors.
-                               Higher values make the search more conservative.
-        :param overlap:        Block overlap value. Can be a single integer for both dimensions or a tuple of (horizontal, vertical) overlap values.
-                               Each value must be even and less than its corresponding block size dimension.
-        :param divide:         Whether to divide each block into 4 subblocks during post-processing.
-                               This may improve accuracy at the cost of performance.
-        :param meander:        Whether to use a meandering scan pattern when processing blocks.
-                               If True, alternates between left-to-right and right-to-left scanning between rows to improve motion coherence.
-        :param dct:            SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
-                               For more information, see :py:class:`SADMode`.
-        :param scale_lambda    Whether to scale lambda_ value according to truemotion's default value formula.
+        :param super:           The multilevel super clip prepared by :py:attr:`super`.
+                                If None, super will be obtained from clip.
+        :param vectors:         Motion vectors to use.
+                                If None, uses the vectors from this instance.
+        :param thsad:           Only bad quality new vectors with a SAD above thid will be re-estimated by search.
+                                thsad value is scaled to 8x8 block size.
+        :param blksize:         Size of blocks for motion estimation. Can be an int or tuple of (width, height).
+                                Larger blocks are less sensitive to noise and faster to process, but will produce less accurate vectors.
+        :param smooth:          This is method for dividing coarse blocks into smaller ones.
+                                Only used with the FLOAT MVTools plugin.
+        :param search:          Search algorithm to use at the finest level. See :py:class:`SearchMode` for options.
+        :param searchparam:     Additional parameter for the search algorithm. For NSTEP, this is the step size.
+                                For EXHAUSTIVE, EXHAUSTIVE_H, EXHAUSTIVE_V, HEXAGON and UMH, this is the search radius.
+        :param lambda_:         Controls the coherence of the motion vector field.
+                                Higher values enforce more coherent/smooth motion between blocks.
+                                Too high values may cause the algorithm to miss the optimal vectors.
+        :param truemotion:      Preset that controls the default values of motion estimation parameters to optimize for true motion.
+                                For more information, see :py:class:`MotionMode`.
+        :param pnew:            Penalty multiplier (relative to 256) applied to the SAD cost when evaluating new candidate vectors.
+                                Higher values make the search more conservative.
+        :param overlap:         Block overlap value. Can be a single integer for both dimensions or a tuple of (horizontal, vertical) overlap values.
+                                Each value must be even and less than its corresponding block size dimension.
+        :param divide:          Whether to divide each block into 4 subblocks during post-processing.
+                                This may improve accuracy at the cost of performance.
+        :param meander:         Whether to use a meandering scan pattern when processing blocks.
+                                If True, alternates between left-to-right and right-to-left scanning between rows to improve motion coherence.
+        :param dct:             SAD calculation mode using block DCT (frequency spectrum) for comparing blocks.
+                                For more information, see :py:class:`SADMode`.
+        :param scale_lambda:    Whether to scale lambda_ value according to truemotion's default value formula.
         """
 
         super_clip = self.get_super(fallback(super, self.search_clip))

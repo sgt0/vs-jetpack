@@ -30,11 +30,11 @@ def check_ref_clip(src: vs.VideoNode, ref: vs.VideoNode | None, func: FuncExcept
 
     If no ref clip can be found, this function will simply do nothing.
 
-    :param src:     Input clip.
-    :param ref:     Reference clip.
-                    Default: None.
+    :param src:                                 Input clip.
+    :param ref:                                 Reference clip.
+                                                Default: None.
 
-    :raises VariableFormatError                 The format of either clip is variable.
+    :raises VariableFormatError:                The format of either clip is variable.
     :raises VariableResolutionError:            The resolution of either clip is variable.
     :raises FormatsRefClipMismatchError:        The formats of the two clips do not match.
     :raises ResolutionsRefClipMismatchError:    The resolutions of the two clips do not match.

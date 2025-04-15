@@ -438,8 +438,6 @@ class InvalidTimecodeVersionError(CustomValueError):
         :param to_check:                        Value to check. Must be an integer representing the timecodes version.
         :param correct:                         A correct value or an array of correct values.
                                                 Defaults to [1, 2] (V1, V2).
-        :param func:                            Function returned for custom error handling.
-                                                This should only be set by VS package developers.
         :param message:                         Message to print when throwing the exception.
                                                 The message will be formatted to display the correct and wrong values
                                                 (`{correct}` and `{wrong}` respectively).

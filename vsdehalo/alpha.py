@@ -306,7 +306,7 @@ class _fine_dehalo:
         rx: int = 1, ry: int | None = None, thmi: int = 50, thma: int = 100, thlimi: int = 50, thlima: int = 100,
         exclude: bool = True, edgeproc: float = 0.0, edgemask: EdgeDetect = Robinson3(), pre_ss: int = 1,
         pre_supersampler: ScalerT = Bilinear,
-        mask: int | FineDehaloMask = 1, planes: PlanesT = 0, first_plane: bool = False, func: FuncExceptT | None = None
+        show_mask: int | FineDehaloMask = 1, planes: PlanesT = 0, first_plane: bool = False, func: FuncExceptT | None = None
     ) -> vs.VideoNode:
         """
         The fine_dehalo mask.
@@ -323,9 +323,9 @@ class _fine_dehalo:
         :param exclude:             If True, add an addionnal step to exclude edges close to each other
         :param edgeproc:            If > 0, it will add the edgemask to the processing, defaults to 0.0
         :param edgemask:            Internal mask used for detecting the edges, defaults to Robinson3()
-        :param get_mask:            Whether to show the computed halo mask. 1-7 values to select intermediate masks.
         :param pre_ss:              Supersampling rate used before anything else. This value will be be rounded.
         :param pre_supersampler:    Supersampler used for ``pre_ss``.
+        :param show_mask:           Whether to show the computed halo mask. 1-7 values to select intermediate masks.
         :param planes:              Planes to process.
         :param first_plane:         Whether to mask chroma planes with luma mask.
         :param func:                Function from where this function was called.
@@ -344,7 +344,7 @@ class _fine_dehalo:
 
         dehalo_mask = self(
             work_clip, rx, ry, thmi=thmi, thma=thma, thlimi=thlimi, thlima=thlima, exclude=exclude,
-            edgeproc=edgeproc, edgemask=edgemask, planes=planes, show_mask=mask, func=func or self.mask
+            edgeproc=edgeproc, edgemask=edgemask, planes=planes, show_mask=show_mask, func=func or self.mask
         )
 
         if (dehalo_mask.width, dehalo_mask.height) != (clip.width, clip.height):

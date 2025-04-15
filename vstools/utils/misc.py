@@ -406,7 +406,14 @@ def set_output(
     alpha: vs.VideoNode | None = ...,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param alpha:           Alpha planes node, defaults to None
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
@@ -418,7 +425,14 @@ def set_output(
     alpha: vs.VideoNode | None = ...,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional name, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param name:            Node's name, defaults to variable name
+    :param alpha:           Alpha planes node, defaults to None
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
@@ -429,7 +443,15 @@ def set_output(
     alpha: vs.VideoNode | None = ...,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index and name, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param name:            Node's name, defaults to variable name
+    :param alpha:           Alpha planes node, defaults to None
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
@@ -439,7 +461,13 @@ def set_output(
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
@@ -449,7 +477,13 @@ def set_output(
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional name, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param name:            Node's name, defaults to variable name
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
@@ -459,77 +493,63 @@ def set_output(
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index and name, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param name:            Node's name, defaults to variable name
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
 def set_output(
-    node: Iterable[vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]]],
+    node: Iterable[vs.RawNode | Iterable[vs.RawNode | Iterable[vs.RawNode]]],
     index: int | Sequence[int] = ...,
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
 def set_output(
-    node: Iterable[vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]]],
+    node: Iterable[vs.RawNode | Iterable[vs.RawNode | Iterable[vs.RawNode]]],
     name: str | bool | None = ...,
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional name, and if available, use vspreview set_output.
+
+    :param node:            Output node
+    :param name:            Node's name, defaults to variable name
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 @overload
 def set_output(
-    node: Iterable[vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]]],
+    node: Iterable[vs.RawNode | Iterable[vs.RawNode | Iterable[vs.RawNode]]],
     index: int | Sequence[int] = ..., name: str | bool | None = ...,
     /,
     **kwargs: Any
 ) -> None:
-    ...
+    """
+    Set output node with optional index and name, and if available, use vspreview set_output.
 
-
-@overload
-def set_output(
-    node: Iterable[vs.AudioNode | Iterable[vs.AudioNode | Iterable[vs.AudioNode]]],
-    index: int | Sequence[int] = ...,
-    /,
-    **kwargs: Any
-) -> None:
-    ...
-
-
-@overload
-def set_output(
-    node: Iterable[vs.AudioNode | Iterable[vs.AudioNode | Iterable[vs.AudioNode]]],
-    name: str | bool | None = ...,
-    /,
-    **kwargs: Any
-) -> None:
-    ...
-
-
-@overload
-def set_output(
-    node: Iterable[vs.AudioNode | Iterable[vs.AudioNode | Iterable[vs.AudioNode]]],
-    index: int | Sequence[int] = ..., name: str | bool | None = ...,
-    /,
-    **kwargs: Any
-) -> None:
-    ...
-
-
-@overload
-def set_output(
-    node: vs.RawNode | Iterable[vs.RawNode | Iterable[vs.RawNode | Iterable[vs.RawNode]]],
-    index: int | Sequence[int] = ..., name: str | bool | None = ...,
-    /,
-    **kwargs: Any
-) -> None:
-    ...
+    :param node:            Output node
+    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
+    :param name:            Node's name, defaults to variable name
+    :param **kwargs:        Additional arguments to be passed to `vspreview.set_output`.
+    """
 
 
 def set_output(
@@ -539,13 +559,6 @@ def set_output(
     alpha: vs.VideoNode | None = None,
     **kwargs: Any
 ) -> None:
-    """Set output node with optional name, and if available, use vspreview set_output.
-
-    :param node:            Output node
-    :param index:           Index number, defaults to current maximum index number + 1 or 0 if no ouput exists yet
-    :param name:            Node's name, defaults to variable name
-    :param alpha:           Alpha planes node, defaults to None
-    """
     from ..functions import flatten, to_arr
 
     if isinstance(index_or_name, (str, bool)):

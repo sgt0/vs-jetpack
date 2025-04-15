@@ -25,9 +25,11 @@ def base_dehalo_mask(
     :param src:         Input clip.
     :param expand:      Expansion of edge mask.
     :param iterations:  Protects parallel lines and corners that are usually damaged by strong dehaloing.
-    :param brz:         Adjusts the internal line thickness.
+    :param brz0:        Adjusts the internal line thickness.
+    :param brz1:        Adjusts the internal line thickness.
     :param shift:       8-bit corrective shift value for fine-tuning expansion.
     :param pre_ss:      Perform the mask creation at 2x.
+    :param multi:       Final pixel value multiplier.
 
     :return:            Dehalo mask.
     """

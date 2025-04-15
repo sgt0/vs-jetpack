@@ -80,7 +80,6 @@ def smooth_dering(
     :param drrep:       Use repair for details retention, recommended values are 13/12/1.
     :param planes:      Planes to be processed.
     :param show_mask:   Show the computed ringing mask.
-    :param kwargs:      Kwargs to be passed to the prefilter function.
 
     :return:            Deringed clip.
     """

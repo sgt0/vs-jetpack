@@ -79,7 +79,7 @@ def contrasharpening_dehalo(
     flt: vs.VideoNode, src: vs.VideoNode, level: float = 1.4, alpha: float = 2.49, planes: PlanesT = 0
 ) -> ConstantFormatVideoNode:
     """
-    :param dehaloed:    Dehaloed clip
+    :param flt:         Dehaloed clip
     :param src:         Source clip
     :param level:       Strength level
     :return:            Contrasharpened clip

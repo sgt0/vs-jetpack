@@ -50,8 +50,6 @@ def normalize_planes(clip: vs.VideoNode, planes: PlanesT = None) -> list[int]:
     :param clip:        Input clip.
     :param planes:      Array of planes. If None, returns all planes of the input clip's format.
                         Default: None.
-    :param pad:         Whether to pad the output list.
-                        Default: False.
 
     :return:            Sorted list of planes.
     """
@@ -157,7 +155,7 @@ def normalize_ranges(clip: vs.VideoNode, ranges: FrameRangeN | FrameRangesN) -> 
 
 
     :param clip:        Input clip.
-    :param franges:     Frame range or list of frame ranges.
+    :param ranges:      Frame range or list of frame ranges.
 
     :return:            List of positive frame ranges.
     """

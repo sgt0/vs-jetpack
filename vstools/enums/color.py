@@ -261,7 +261,7 @@ class Matrix(_MatrixMeta):  # type: ignore[misc]
         """
         Obtain the matrix from a Primaries object.
 
-        :param transfer:                        Primaries object.
+        :param primaries:                       Primaries object.
         :param strict:                          Be strict about the primaries-matrix mapping.
                                                 Will ALWAYS error with Primaries.UNKNOWN.
 
