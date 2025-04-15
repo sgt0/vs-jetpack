@@ -21,7 +21,7 @@ from .prefilters import PrefilterPartial
 
 __all__ = [
     'mc_degrain',
-    'mc_sharplimit',
+    'mc_clamp',
 
     'waifu2x_denoise'
 ]
@@ -143,17 +143,17 @@ def mc_degrain(
     return (den, mv) if export_globals else den
 
 
-def mc_sharplimit(
+def mc_clamp(
     flt: vs.VideoNode, src: vs.VideoNode, mv_obj: MVTools, ref: vs.VideoNode | None = None,
-    limit: int | float | tuple[int | float, int | float] = 0, **kwargs: Any,
+    clamp: int | float | tuple[int | float, int | float] = 0, **kwargs: Any,
 ) -> ConstantFormatVideoNode:
-    assert check_variable(flt, mc_sharplimit)
-    assert check_variable(src, mc_sharplimit)
-    check_ref_clip(src, flt, mc_sharplimit)
+    assert check_variable(flt, mc_clamp)
+    assert check_variable(src, mc_clamp)
+    check_ref_clip(src, flt, mc_clamp)
 
     ref = fallback(ref, src)
 
-    undershoot, overshoot = normalize_seq(limit, 2)
+    undershoot, overshoot = normalize_seq(clamp, 2)
 
     backward_comp, forward_comp = mv_obj.compensate(ref, interleave=False, **kwargs)
 
