@@ -119,8 +119,6 @@ def mc_degrain(
     mv_args = preset | KwargsNotNone(search_clip=prefilter)
 
     blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
-    thsad = thsad if isinstance(thsad, tuple) else (thsad, thsad)
-
     mfilter = mfilter(clip) if callable(mfilter) else fallback(mfilter, clip)
 
     mv = MVTools(clip, vectors=vectors, planes=planes, **mv_args)
@@ -130,7 +128,7 @@ def mc_degrain(
 
         if refine:
             if thsad_recalc is None:
-                thsad_recalc = thsad[0] // 2
+                thsad_recalc = round((thsad[0] if isinstance(thsad, tuple) else thsad) / 2)
 
             for _ in range(refine):
                 blksize = _floor_div_tuple(blksize)
