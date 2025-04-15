@@ -269,7 +269,7 @@ def sbr(
 
     return norm_expr(
         [clip, diff, blurred_diff],
-        'y z - D1! y neutral - D2! x D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? -',
+        'y neutral - D1! y z - D2! D1@ D2@ xor x x D1@ abs D2@ abs < D1@ D2@ ? - ?',
         planes=planes, func=func
     )
 
