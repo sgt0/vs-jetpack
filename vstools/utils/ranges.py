@@ -32,26 +32,26 @@ _VideoFrameT_contra = TypeVar(
 )
 
 
-class RangesCallBack(Protocol):
+class _RangesCallBack(Protocol):
     def __call__(self, n: int, /) -> bool:
         ...
 
-class RangesCallBackF(Protocol[_VideoFrameT_contra]):
+class _RangesCallBackF(Protocol[_VideoFrameT_contra]):
     def __call__(self, f: _VideoFrameT_contra, /) -> bool:
         ...
 
 
-class RangesCallBackNF(Protocol[_VideoFrameT_contra]):
+class _RangesCallBackNF(Protocol[_VideoFrameT_contra]):
     def __call__(self, n: int, f: _VideoFrameT_contra, /) -> bool:
         ...
 
 
-RangesCallBackT = Union[
-    RangesCallBack,
-    RangesCallBackF[vs.VideoFrame],
-    RangesCallBackNF[vs.VideoFrame],
-    RangesCallBackF[Sequence[vs.VideoFrame]],
-    RangesCallBackNF[Sequence[vs.VideoFrame]],
+_RangesCallBackT = Union[
+    _RangesCallBack,
+    _RangesCallBackF[vs.VideoFrame],
+    _RangesCallBackNF[vs.VideoFrame],
+    _RangesCallBackF[Sequence[vs.VideoFrame]],
+    _RangesCallBackNF[Sequence[vs.VideoFrame]],
 ]
 
 
@@ -73,7 +73,7 @@ def replace_ranges(
 
 @overload
 def replace_ranges(
-    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: RangesCallBack,
+    clip_a: vs.VideoNode, clip_b: vs.VideoNode, ranges: _RangesCallBack,
     *,
     mismatch: bool = False
 ) -> vs.VideoNode:
@@ -83,7 +83,7 @@ def replace_ranges(
 @overload
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: RangesCallBackF[vs.VideoFrame] | RangesCallBackNF[vs.VideoFrame],
+    ranges: _RangesCallBackF[vs.VideoFrame] | _RangesCallBackNF[vs.VideoFrame],
     *,
     mismatch: bool = False,
     prop_src: vs.VideoNode
@@ -94,7 +94,7 @@ def replace_ranges(
 @overload
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: RangesCallBackF[Sequence[vs.VideoFrame]] | RangesCallBackNF[Sequence[vs.VideoFrame]],
+    ranges: _RangesCallBackF[Sequence[vs.VideoFrame]] | _RangesCallBackNF[Sequence[vs.VideoFrame]],
     *,
     mismatch: bool = False,
     prop_src: Sequence[vs.VideoNode]
@@ -105,7 +105,7 @@ def replace_ranges(
 @overload
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | RangesCallBackT | None,
+    ranges: FrameRangeN | FrameRangesN | _RangesCallBackT | None,
     exclusive: bool = False, mismatch: bool = False,
     *,
     prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None
@@ -115,7 +115,7 @@ def replace_ranges(
 
 def replace_ranges(
     clip_a: vs.VideoNode, clip_b: vs.VideoNode,
-    ranges: FrameRangeN | FrameRangesN | RangesCallBackT | None,
+    ranges: FrameRangeN | FrameRangesN | _RangesCallBackT | None,
     exclusive: bool = False, mismatch: bool = False,
     *, prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None
 ) -> vs.VideoNode:
@@ -189,17 +189,17 @@ def replace_ranges(
 
         def _func_nf(
             n: int, f: vs.VideoFrame | Sequence[vs.VideoFrame],
-            callback: RangesCallBackNF[vs.VideoFrame | Sequence[vs.VideoFrame]]
+            callback: _RangesCallBackNF[vs.VideoFrame | Sequence[vs.VideoFrame]]
         ) -> vs.VideoNode:
             return clip_b if callback(n, f) else clip_a
 
         def _func_f(
             n: int, f: vs.VideoFrame | Sequence[vs.VideoFrame],
-            callback: RangesCallBackF[vs.VideoFrame | Sequence[vs.VideoFrame]]
+            callback: _RangesCallBackF[vs.VideoFrame | Sequence[vs.VideoFrame]]
         ) -> vs.VideoNode:
             return clip_b if callback(f) else clip_a
 
-        def _func_n(n: int, callback: RangesCallBack) -> vs.VideoNode:
+        def _func_n(n: int, callback: _RangesCallBack) -> vs.VideoNode:
             return clip_b if callback(n) else clip_a
 
         _func: Callable[..., vs.VideoNode]
