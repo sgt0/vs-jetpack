@@ -72,7 +72,7 @@ jobs:
       - name: Running mypy on vsmasktools
         run: uv run mypy vsmasktools
 
-      - name: Running mypy on vsmasktools
+      - name: Running mypy on vsscale
         run: uv run mypy vsscale
 
       - name: Post webhook for failure
