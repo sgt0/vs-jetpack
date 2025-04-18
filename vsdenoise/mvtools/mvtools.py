@@ -364,7 +364,7 @@ class MVTools(vs_object):
                                 If None, super will be obtained from clip.
         :param vectors:         Motion vectors to use.
                                 If None, uses the vectors from this instance.
-        :param thsad:           Only bad quality new vectors with a SAD above thid will be re-estimated by search.
+        :param thsad:           Only bad quality new vectors with a SAD above this will be re-estimated by search.
                                 thsad value is scaled to 8x8 block size.
         :param blksize:         Size of blocks for motion estimation. Can be an int or tuple of (width, height).
                                 Larger blocks are less sensitive to noise and faster to process, but will produce less accurate vectors.

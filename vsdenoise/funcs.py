@@ -100,7 +100,7 @@ def mc_degrain(
                               The actual SAD threshold for each reference frame is interpolated between thsad (nearest frames)
                               and thsad2 (furthest frames).
                               Only used with the FLOAT MVTools plugin.
-    :param thsad_recalc:      Only bad quality new vectors with a SAD above thid will be re-estimated by search.
+    :param thsad_recalc:      Only bad quality new vectors with a SAD above this will be re-estimated by search.
                               thsad value is scaled to 8x8 block size.
     :param limit:             Maximum allowed change in pixel values.
     :param thscd:             Scene change detection thresholds:
