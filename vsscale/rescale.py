@@ -160,79 +160,85 @@ class Rescale(RescaleBase):
     Rescale wrapper supporting everything you need for (fractional) descaling,
     re-upscaling and masking-out details.
 
-    Examples usage:\n
-    - Basic 720p rescale:
-    ```py
-    from vsscale import Rescale
-    from vskernels import Bilinear
+    Examples usage:
 
-    rs = Rescale(clip, 720, Bilinear)
-    final = rs.upscale
-    ```
+    - Basic 720p rescale:
+
+        ```py
+        from vsscale import Rescale
+        from vskernels import Bilinear
+
+        rs = Rescale(clip, 720, Bilinear)
+        final = rs.upscale
+        ```
 
     - Adding aa and dehalo on doubled clip:
-    ```py
-    from vsaa import based_aa
-    from vsdehalo import fine_dehalo
 
-    aa = based_aa(rs.doubled, supersampler=False)
-    dehalo = fine_dehalo(aa, ...)
+        ``` py
+        from vsaa import based_aa
+        from vsdehalo import fine_dehalo
 
-    rs.doubled = dehalo
-    ```
+        aa = based_aa(rs.doubled, supersampler=False)
+        dehalo = fine_dehalo(aa, ...)
+
+        rs.doubled = dehalo
+        ```
 
     - Loading line_mask and credit_mask:
-    ```py
-    from vsmasktools import diff_creditless_oped
-    from vsexprtools import ExprOp
 
-    rs.default_line_mask()
+        ``` py
+        from vsmasktools import diff_creditless_oped
+        from vsexprtools import ExprOp
 
-    oped_credit_mask = diff_creditless_oped(...)
-    credit_mask = rs.default_credit_mask(thr=0.209, ranges=(200, 300), postfilter=4)
-    rs.credit_mask = ExprOp.ADD.combine(oped_credit_mask, credit_mask)
-    ```
+        rs.default_line_mask()
+
+        oped_credit_mask = diff_creditless_oped(...)
+        credit_mask = rs.default_credit_mask(thr=0.209, ranges=(200, 300), postfilter=4)
+        rs.credit_mask = ExprOp.ADD.combine(oped_credit_mask, credit_mask)
+        ```
 
     - Fractional rescale:
-    ```py
-    from vsscale import Rescale
-    from vskernels import Bilinear
 
-    # Forcing the height to a float will ensure a fractional descale
-    rs = Rescale(clip, 800.0, Bilinear)
-    >>> rs.descale_args
-    ScalingArgs(
-        width=1424, height=800, src_width=1422.2222222222222, src_height=800.0,
-        src_top=0.0, src_left=0.8888888888889142, mode='hw'
-    )
+        ``` py
+        from vsscale import Rescale
+        from vskernels import Bilinear
 
-    # while doing this will not
-    rs = Rescale(clip, 800, Bilinear)
-    >>> rs.descale_args
-    ScalingArgs(width=1422, height=800, src_width=1422, src_height=800, src_top=0, src_left=0, mode='hw')
-    ```
+        # Forcing the height to a float will ensure a fractional descale
+        rs = Rescale(clip, 800.0, Bilinear)
+        >>> rs.descale_args
+        ScalingArgs(
+            width=1424, height=800, src_width=1422.2222222222222, src_height=800.0,
+            src_top=0.0, src_left=0.8888888888889142, mode='hw'
+        )
+
+        # while doing this will not
+        rs = Rescale(clip, 800, Bilinear)
+        >>> rs.descale_args
+        ScalingArgs(width=1422, height=800, src_width=1422, src_height=800, src_top=0, src_left=0, mode='hw')
+        ```
 
     - Cropping is also supported:
-    ```py
-    from vsscale import Rescale
-    from vskernels import Bilinear
 
-    # Descaling while cropping the letterboxes at the top and bottom
-    rs = Rescale(clip, 874, Bilinear, crop=(0, 0, 202, 202))
-    >>> rs.descale_args
-    ScalingArgs(
-        width=1554, height=548, src_width=1554.0, src_height=547.0592592592592,
-        src_top=0.4703703703703752, src_left=0.0, mode='hw'
-    )
+        ``` py
+        from vsscale import Rescale
+        from vskernels import Bilinear
 
-    # Same thing but ensuring the width is fractional descaled
-    rs = Rescale(clip, 874.0, Bilinear, crop=(0, 0, 202, 202))
-    >>> rs.descale_args
-    ScalingArgs(
-        width=1554, height=548, src_width=1553.7777777777778, src_height=547.0592592592592,
-        src_top=0.4703703703703752, src_left=0.11111111111108585, mode='hw'
-    )
-    ```
+        # Descaling while cropping the letterboxes at the top and bottom
+        rs = Rescale(clip, 874, Bilinear, crop=(0, 0, 202, 202))
+        >>> rs.descale_args
+        ScalingArgs(
+            width=1554, height=548, src_width=1554.0, src_height=547.0592592592592,
+            src_top=0.4703703703703752, src_left=0.0, mode='hw'
+        )
+
+        # Same thing but ensuring the width is fractional descaled
+        rs = Rescale(clip, 874.0, Bilinear, crop=(0, 0, 202, 202))
+        >>> rs.descale_args
+        ScalingArgs(
+            width=1554, height=548, src_width=1553.7777777777778, src_height=547.0592592592592,
+            src_top=0.4703703703703752, src_left=0.11111111111108585, mode='hw'
+        )
+        ```
     """
 
     def __init__(
@@ -251,32 +257,34 @@ class Rescale(RescaleBase):
         field_based: FieldBasedT | bool | None = None,
         border_handling: int | BorderHandling = BorderHandling.MIRROR
     ) -> None:
-        """Initialize the rescaling process.
+        """
+        Initialize the rescaling process.
 
-        :param clip:                Clip to be rescaled
+        :param clip:                Clip to be rescaled.
         :param height:              Height to be descaled to.
-                                    Forcing the value to float will ensure a fractional descale
-        :param kernel:              Kernel used for descaling
-        :param upscaler:            Scaler that supports doubling, defaults to ArtCNN
-        :param downscaler:          Scaler used for downscaling the upscaled clip back to input res,
-                                    defaults to Hermite(linear=True)
-        :param width:               Width to be descaled to. If None, automatically calculated from the height
-        :param base_height:         Integer height at which the clip will be contained.
-                                    If None, automatically calculated from the height
-        :param base_width:          Integer width at which the clip will be contained.
-                                    If None, automatically calculated from the width
+                                    If passed as a float, a fractional descale is performed.
+        :param kernel:              Kernel used for descaling.
+        :param upscaler:            Scaler that supports doubling. Defaults to ``ArtCNN``.
+        :param downscaler:          Scaler used to downscale the upscaled clip back to input resolution.
+                                    Defaults to ``Hermite(linear=True)``.
+        :param width:               Width to be descaled to. If ``None``, it is automatically calculated from the height.
+        :param base_height:         Integer height to contain the clip within.
+                                    If ``None``, it is automatically calculated from the height.
+        :param base_width:          Integer width to contain the clip within.
+                                    If ``None``, it is automatically calculated from the width.
         :param crop:                Cropping values to apply before descale.
-                                    The ratio descale height / source height will be preserved even after descale.
-                                    The cropped area is restored when calling the `upscale` property.
-        :param shift:               Shifts to apply during descale and upscale, defaults to (0, 0)
-        :param field_based:         Parameter specifying the source is a cross-converted/interlaced upscaled content
-        :param border_handling:     Adjust the way the clip is padded internally during the scaling process.
+                                    The ratio ``descale_height / source_height`` is preserved even after descale.
+                                    The cropped area is restored when calling the ``upscale`` property.
+        :param shift:               Pixel shifts to apply during descale and upscale. Defaults to ``(0, 0)``.
+        :param field_based:         Whether the input is cross-converted or interlaced content.
+        :param border_handling:     Adjusts how the clip is padded internally during the scaling process.
                                     Accepted values are:
-                                        0: Assume the image was resized with mirror padding.
-                                        1: Assume the image was resized with zero padding.
-                                        2: Assume the image was resized with extend padding,
-                                           where the outermost row was extended infinitely far.
-                                    Defaults to 0
+                                    
+                                       - ``0`` (MIRROR): Assume the image was resized with mirror padding.
+                                       - ``1`` (ZERO):   Assume the image was resized with zero padding.
+                                       - ``2`` (EXTEND): Assume the image was resized with extend padding, where the outermost row was extended infinitely far.
+                                       
+                                    Defaults to ``0``.
         """
         self._line_mask: ConstantFormatVideoNode | None = None
         self._credit_mask: ConstantFormatVideoNode | None = None

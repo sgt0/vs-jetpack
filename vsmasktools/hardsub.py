@@ -405,9 +405,9 @@ class HardsubLineFade(HardsubLine):
         :param bound:           An optional bounding box that defines the area of the frame where the mask will be applied.
                                 If None, the mask applies to the whole frame.
         :param expand:          std.Maximum iterations. Default is automatically adjusted based on the width of the clip.
-        :param refframe:        Reference frame weight. Must be between 0 and 1.
-        :param blur:            Whether to apply a box blur effect to the mask.
         :param refframe:        Weight of the reference frame used in building the final mask for each range.
+                                Must be between 0 and 1.
+        :param blur:            Whether to apply a box blur effect to the mask.
         """
         if refframe < 0 or refframe > 1:
             raise CustomOverflowError('"refframe" must be between 0 and 1!', self.__class__)
