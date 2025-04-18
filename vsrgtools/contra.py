@@ -82,6 +82,7 @@ def contrasharpening_dehalo(
     :param flt:         Dehaloed clip
     :param src:         Source clip
     :param level:       Strength level
+
     :return:            Contrasharpened clip
     """
     assert check_variable(src, contrasharpening_dehalo)
@@ -98,7 +99,7 @@ def contrasharpening_dehalo(
 
     return norm_expr(
         [flt, src, blur, blur2],
-        'z a - {alpha} * {level} * D1! y x - D2! D1@ D2@ xor 0 D1@ abs D2@ abs < D1@ D2@ ? ? x +',
+        'y x - D1! z a - {alpha} * {level} * D2! D1@ D2@ xor x x D1@ abs D2@ abs < D1@ D2@ ? + ?',
         planes, alpha=alpha, level=level, func=contrasharpening_dehalo
     )
 
