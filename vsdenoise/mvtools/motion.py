@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from vstools import vs, vs_object
+from vstools import ConstantFormatVideoNode, check_variable_format, vs, vs_object
 
 from .enums import MVDirection
 
@@ -14,10 +14,10 @@ __all__ = [
 class MotionVectors(vs_object):
     """Class for storing and managing motion vectors for a video clip."""
 
-    motion_vectors: dict[MVDirection, dict[int, vs.VideoNode]]
+    motion_vectors: dict[MVDirection, dict[int, ConstantFormatVideoNode]]
     """Dictionary containing both backward and forward motion vectors."""
 
-    mv_multi: vs.VideoNode | None
+    mv_multi: ConstantFormatVideoNode
     """Multi-vector clip."""
 
     tr: int
@@ -31,7 +31,6 @@ class MotionVectors(vs_object):
 
     def __init__(self) -> None:
         self._init_vects()
-        self.mv_multi = None
         self.tr = 0
         self.analysis_data = dict[str, Any]()
         self.scaled = False
@@ -46,7 +45,8 @@ class MotionVectors(vs_object):
             v.clear()
 
         self.motion_vectors.clear()
-        self.mv_multi = None
+        if hasattr(self, "mv_multi"):
+            del self.mv_multi
         self.tr = 0
         self.analysis_data.clear()
         self.scaled = False
@@ -57,7 +57,10 @@ class MotionVectors(vs_object):
         """Check if motion vectors are available."""
 
         return bool(
-            (self.motion_vectors[MVDirection.BACKWARD] and self.motion_vectors[MVDirection.FORWARD]) or self.mv_multi
+            (
+                self.motion_vectors[MVDirection.BACKWARD]
+                and self.motion_vectors[MVDirection.FORWARD]
+            ) or hasattr(self, "mv_multi")
         )
 
     def set_vector(self, vector: vs.VideoNode, direction: MVDirection, delta: int) -> None:
@@ -68,6 +71,7 @@ class MotionVectors(vs_object):
         :param direction:    Direction of the motion vector (forward or backward).
         :param delta:        Frame distance for the motion vector.
         """
+        assert check_variable_format(vector, self.set_vector)
 
         self.motion_vectors[direction][delta] = vector
 
@@ -77,4 +81,5 @@ class MotionVectors(vs_object):
                 if not TYPE_CHECKING:
                     v[k] = None
 
-        self.mv_multi = None
+        if not TYPE_CHECKING:
+            self.mv_multi = None
