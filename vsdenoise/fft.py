@@ -5,12 +5,14 @@ from enum import Enum, auto
 from typing import (
     TYPE_CHECKING, Any, Iterator, Literal, Mapping, NamedTuple, Sequence, TypeAlias, TypeVar, cast, overload
 )
+
 from scipy.interpolate import interp1d
+from typing_extensions import deprecated
 
 from vstools import (
-    CustomEnum, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
-    FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex,
-    check_variable, core, flatten, get_depth, get_sample_type, inject_self, vs, check_progressive
+    ConstantFormatVideoNode, CustomEnum, CustomIntEnum, CustomOverflowError, CustomRuntimeError, CustomValueError,
+    FieldBased, FuncExceptT, KwargsNotNone, KwargsT, PlanesT, SupportsFloatOrIndex, check_progressive, check_variable,
+    core, flatten, get_depth, get_sample_type, inject_self, vs
 )
 
 __all__ = [
@@ -627,15 +629,34 @@ class DFTTest:
         )
 
 
-def fft3d(clip: vs.VideoNode, func: FuncExceptT | None = None, **kwargs: Any) -> vs.VideoNode:
+@deprecated("`fft3d` is permanently deprecated and known to contain many bugs. Use with caution.")
+def fft3d(clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+    """
+    Applies FFT3DFilter, a 3D frequency-domain filter used for strong denoising and mild sharpening.
+
+    This filter processes frames using the Fast Fourier Transform (FFT) in the frequency domain.
+    Unlike local filters, FFT3DFilter performs block-based, non-local processing.
+
+    Official documentation:
+    https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md
+
+    Possibly faster implementation:
+    https://github.com/AmusementClub/VapourSynth-FFT3DFilter/releases
+
+    Note: Sigma values are internally scaled according to bit depth, unlike when using the plugin directly.
+
+    :param clip:        Input video clip.
+    :param **kwargs:    Additional parameters passed to the FFT3DFilter plugin.
+    :return:            A heavily degraded version of DFTTest, with added banding and color shifts.
+    """
     kwargs |= dict(interlaced=FieldBased.from_video(clip, False, fft3d).is_inter)
 
     # fft3dfilter requires sigma values to be scaled to bit depth
     # https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md#scaling-parameters-according-to-bit-depth
-    sigmaMultiplier = 1.0 / 256.0 if get_sample_type(clip) is vs.FLOAT else 1 << (get_depth(clip) - 8)
+    sigma_multiplier = 1.0 / 256.0 if get_sample_type(clip) is vs.FLOAT else 1 << (get_depth(clip) - 8)
 
-    for sigma in ['sigma', 'sigma2', 'sigma3', 'sigma4']:
+    for sigma in ['sigma', 'sigma2', 'sigma3', 'sigma4', 'smin ', 'smax']:
         if sigma in kwargs:
-            kwargs[sigma] *= sigmaMultiplier
+            kwargs[sigma] *= sigma_multiplier
 
-    return core.fft3dfilter.FFT3DFilter(clip, **kwargs)  # type: ignore
+    return core.fft3dfilter.FFT3DFilter(clip, **kwargs)

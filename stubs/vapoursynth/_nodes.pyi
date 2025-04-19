@@ -349,6 +349,19 @@ class _Plugin_ffms2_Core_Bound(Plugin):
 # end implementation
 
 
+# implementation: fft3dfilter
+
+class _Plugin_fft3dfilter_Core_Bound(Plugin):
+    """This class implements the module definitions for the "fft3dfilter" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def FFT3DFilter(self, clip: VideoNode, sigma: float | None = None, beta: float | None = None, planes: _SingleAndSequence[int] | None = None, bw: int | None = None, bh: int | None = None, bt: int | None = None, ow: int | None = None, oh: int | None = None, kratio: float | None = None, sharpen: float | None = None, scutoff: float | None = None, svr: float | None = None, smin: float | None = None, smax: float | None = None, measure: int | None = None, interlaced: int | None = None, wintype: int | None = None, pframe: int | None = None, px: int | None = None, py: int | None = None, pshow: int | None = None, pcutoff: float | None = None, pfactor: float | None = None, sigma2: float | None = None, sigma3: float | None = None, sigma4: float | None = None, degrid: float | None = None, dehalo: float | None = None, hr: float | None = None, ht: float | None = None, ncpu: int | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_fft3dfilter_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "fft3dfilter" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def FFT3DFilter(self, sigma: float | None = None, beta: float | None = None, planes: _SingleAndSequence[int] | None = None, bw: int | None = None, bh: int | None = None, bt: int | None = None, ow: int | None = None, oh: int | None = None, kratio: float | None = None, sharpen: float | None = None, scutoff: float | None = None, svr: float | None = None, smin: float | None = None, smax: float | None = None, measure: int | None = None, interlaced: int | None = None, wintype: int | None = None, pframe: int | None = None, px: int | None = None, py: int | None = None, pshow: int | None = None, pcutoff: float | None = None, pfactor: float | None = None, sigma2: float | None = None, sigma3: float | None = None, sigma4: float | None = None, degrid: float | None = None, dehalo: float | None = None, hr: float | None = None, ht: float | None = None, ncpu: int | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
 
 # implementation: fmtc
 
@@ -1449,6 +1462,11 @@ class VideoNode(RawNode):
     def eedi3m(self) -> _Plugin_eedi3m_VideoNode_Bound:
         """Enhanced Edge Directed Interpolation 3"""
     # end instance
+    # instance_bound_VideoNode: fft3dfilter
+    @property
+    def fft3dfilter(self) -> _Plugin_fft3dfilter_VideoNode_Bound:
+        """systems"""
+    # end instance
     # instance_bound_VideoNode: fmtc
     @property
     def fmtc(self) -> _Plugin_fmtc_VideoNode_Bound:
@@ -1731,6 +1749,11 @@ class Core:
     @property
     def eedi3m(self) -> _Plugin_eedi3m_Core_Bound:
         """Enhanced Edge Directed Interpolation 3"""
+    # end instance
+    # instance_bound_Core: fft3dfilter
+    @property
+    def fft3dfilter(self) -> _Plugin_fft3dfilter_Core_Bound:
+        """systems"""
     # end instance
     # instance_bound_Core: ffms2
     @property
