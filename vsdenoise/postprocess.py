@@ -4,7 +4,7 @@ from typing import Any
 
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vskernels import Bilinear
-from vsmasktools import EdgeDetectT, FDoGTCanny, range_mask
+from vsmasktools import EdgeDetect, EdgeDetectT, FDoGTCanny, range_mask
 from vsrgtools import bilateral, box_blur, gauss_blur
 from vstools import (
     CustomIndexError, InvalidColorFamilyError, PlanesT, check_ref_clip, check_variable, flatten_vnodes, get_y,
@@ -94,7 +94,11 @@ def decrease_size(
             range_mask(clip, rad=3, radc=2), clip.format.replace(subsampling_h=0, subsampling_w=0)
         )
 
-        mask = FDoGTCanny.ensure_obj(emask[0] if emask else None).edgemask(pre)
+        if emask:
+            mask = EdgeDetect.ensure_obj(emask[0]).edgemask(pre)
+        else:
+            mask = FDoGTCanny.edgemask(pre)
+
         mask = mask.std.Maximum().std.Minimum()
 
         mask_planes = flatten_vnodes(yuv444, mask, split_planes=True)
