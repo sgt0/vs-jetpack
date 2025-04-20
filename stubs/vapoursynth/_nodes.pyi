@@ -181,6 +181,20 @@ class _Plugin_bs_Core_Bound(Plugin):
 
 
 
+# implementation: bwdif
+
+class _Plugin_bwdif_Core_Bound(Plugin):
+    """This class implements the module definitions for the "bwdif" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Bwdif(self, clip: VideoNode, field: int, edeint: VideoNode | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_bwdif_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "bwdif" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Bwdif(self, field: int, edeint: VideoNode | None = None, opt: int | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+
 # implementation: cs
 
 class _Plugin_cs_Core_Bound(Plugin):
@@ -203,6 +217,32 @@ class _Plugin_d2v_Core_Bound(Plugin):
     def Source(self, input: _DataType, threads: int | None = None, nocrop: int | None = None, rff: int | None = None) -> ConstantFormatVideoNode: ...
 
 # end implementation
+
+
+
+# implementation: dctf
+
+class _Plugin_dctf_Core_Bound(Plugin):
+    """This class implements the module definitions for the "dctf" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def DCTFilter(self, clip: VideoNode, factors: _SingleAndSequence[float], planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_dctf_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "dctf" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def DCTFilter(self, factors: _SingleAndSequence[float], planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+# end implementation
+
+
+
+# implementation: deblock
+
+class _Plugin_deblock_Core_Bound(Plugin):
+    """This class implements the module definitions for the "deblock" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Deblock(self, clip: VideoNode, quant: int | None = None, aoffset: int | None = None, boffset: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
+
+class _Plugin_deblock_VideoNode_Bound(Plugin):
+    """This class implements the module definitions for the "deblock" VapourSynth plugin.\n\n*This class cannot be imported.*"""
+    def Deblock(self, quant: int | None = None, aoffset: int | None = None, boffset: int | None = None, planes: _SingleAndSequence[int] | None = None) -> ConstantFormatVideoNode: ...
 
 
 
@@ -1432,10 +1472,25 @@ class VideoNode(RawNode):
     def bm3dsycl(self) -> _Plugin_bm3dsycl_VideoNode_Bound:
         """BM3D algorithm implemented in SYCL"""
     # end instance
+    # instance_bound_VideoNode: bwdif
+    @property
+    def bwdif(self) -> _Plugin_bwdif_VideoNode_Bound:
+        """BobWeaver Deinterlacing Filter"""
+    # end instance
     # instance_bound_VideoNode: cs
     @property
     def cs(self) -> _Plugin_cs_VideoNode_Bound:
         """carefulsource"""
+    # end instance
+    # instance_bound_VideoNode: dctf
+    @property
+    def dctf(self) -> _Plugin_dctf_VideoNode_Bound:
+        """DCT/IDCT Frequency Suppressor"""
+    # end instance
+    # instance_bound_VideoNode: deblock
+    @property
+    def deblock(self) -> _Plugin_deblock_VideoNode_Bound:
+        """It does a deblocking of the picture, using the deblocking filter of h264"""
     # end instance
     # instance_bound_VideoNode: descale
     @property
@@ -1705,6 +1760,11 @@ class Core:
     def bs(self) -> _Plugin_bs_Core_Bound:
         """Best Source 2"""
     # end instance
+    # instance_bound_Core: bwdif
+    @property
+    def bwdif(self) -> _Plugin_bwdif_Core_Bound:
+        """BobWeaver Deinterlacing Filter"""
+    # end instance
     # instance_bound_Core: cs
     @property
     def cs(self) -> _Plugin_cs_Core_Bound:
@@ -1714,6 +1774,16 @@ class Core:
     @property
     def d2v(self) -> _Plugin_d2v_Core_Bound:
         """D2V Source"""
+    # end instance
+    # instance_bound_Core: dctf
+    @property
+    def dctf(self) -> _Plugin_dctf_Core_Bound:
+        """DCT/IDCT Frequency Suppressor"""
+    # end instance
+    # instance_bound_Core: deblock
+    @property
+    def deblock(self) -> _Plugin_deblock_Core_Bound:
+        """It does a deblocking of the picture, using the deblocking filter of h264"""
     # end instance
     # instance_bound_Core: descale
     @property
