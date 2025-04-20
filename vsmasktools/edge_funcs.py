@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Sequence, cast, overload
 
-from jetpytools import CustomEnum
+from jetpytools import CustomEnum, CustomNotImplementedError
 
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
@@ -131,17 +131,17 @@ class _dre_edgemask(CustomEnum):
     CLAHE = cast(VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode], object())
 
     def _prefilter(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        if self is self.RETINEX:  # type: ignore
+        if self is _dre_edgemask.RETINEX:
             sigmas = kwargs.get('sigmas', [50, 200, 350])
 
             return retinex(clip, sigmas, 0.001, 0.005)
 
-        if self is self.CLAHE:  # type: ignore
+        if self is _dre_edgemask.CLAHE:
             limit, tile = kwargs.get('limit', 0.0305), kwargs.get('tile', 5)
 
             return depth(depth(clip, 16).vszip.CLAHE(int(scale_delta(limit, 32, 16)), tile), clip)
 
-        return clip
+        raise CustomNotImplementedError
 
     @overload
     def __call__(  # type: ignore[misc]
