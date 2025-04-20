@@ -11,11 +11,10 @@ from vskernels import Catrom, Kernel, KernelT
 from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask
 from vsrgtools import MeanMode, gauss_blur, repair
 from vstools import (
-    Align, CustomStrEnum, DependencyNotFoundError, FrameRangeN, FrameRangesN,
-    FunctionUtil, InvalidColorFamilyError, KwargsT, LengthMismatchError, Matrix, MatrixT, PlanesT,
-    UnsupportedVideoFormatError, VSFunction, check_variable, core,
-    depth, fallback, get_depth, get_nvidia_version, get_plane_sizes, get_y, join, limiter,
-    normalize_seq, padder, replace_ranges, shift_clip_multi, vs, check_progressive
+    Align, CustomStrEnum, DependencyNotFoundError, FrameRangeN, FrameRangesN, FunctionUtil, InvalidColorFamilyError,
+    KwargsT, LengthMismatchError, Matrix, MatrixT, PlanesT, UnsupportedVideoFormatError, VSFunctionNoArgs,
+    check_progressive, check_variable, core, depth, fallback, get_depth, get_nvidia_version, get_plane_sizes, get_y,
+    join, limiter, normalize_seq, padder, replace_ranges, shift_clip_multi, vs
 )
 
 __all__ = [
@@ -423,7 +422,7 @@ def deblock_qed(
 
 
 def mpeg2stinx(
-    clip: vs.VideoNode, bobber: VSFunction | None = None,
+    clip: vs.VideoNode, bobber: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     radius: int | tuple[int, int] = 2, limit: float | None = 1.0
 ) -> vs.VideoNode:
     """
@@ -458,19 +457,23 @@ def mpeg2stinx(
 
         return repaired.std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
 
-    def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode) -> vs.VideoNode:
+    def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode, adj: vs.VideoNode | None) -> vs.VideoNode:
         if limit is None:
             return flt
+        
+        assert adj
 
         diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs', func=mpeg2stinx).std.SeparateFields(True)
-        diff = norm_expr([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))], 'x y min', func=mpeg2stinx)
+        diff = norm_expr(
+            [core.std.SelectEvery(diff, 4, (0, 1)), core.std.SelectEvery(diff, 4, (2, 3))], 'x y min', func=mpeg2stinx
+        )
         diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
 
         return norm_expr([flt, src, diff], 'z {limit} * LIM! x y LIM@ - y LIM@ + clip', limit=limit, func=mpeg2stinx)
 
     def _default_bob(clip: vs.VideoNode) -> vs.VideoNode:
         bobber = Nnedi3(field=3)
-        bobbed = bobber.interpolate(clip, double_y=False, **bobber.get_aa_args(clip))
+        bobbed = bobber.interpolate(clip, double_y=False)
         return clip.bwdif.Bwdif(field=3, edeint=bobbed)
     
     assert check_progressive(clip, mpeg2stinx)
@@ -481,11 +484,13 @@ def mpeg2stinx(
         bobber = _default_bob
 
     if limit is not None:
-        adj = shift_clip_multi(clip)
-        adj.pop(1)
-        adj = core.std.Interleave(adj)
+        adjs = shift_clip_multi(clip)
+        adjs.pop(1)
+        adj = core.std.Interleave(adjs)
+    else:
+        adj = None
 
-    fixed1 = _temporal_limit(clip, _crossfield_repair(clip, bobber(clip)))
-    fixed2 = _temporal_limit(fixed1, _crossfield_repair(fixed1, bobber(fixed1)))
+    fixed1 = _temporal_limit(clip, _crossfield_repair(clip, bobber(clip)), adj)
+    fixed2 = _temporal_limit(fixed1, _crossfield_repair(fixed1, bobber(fixed1)), adj)
 
     return fixed1.std.Merge(fixed2).std.SetFieldBased(0)
