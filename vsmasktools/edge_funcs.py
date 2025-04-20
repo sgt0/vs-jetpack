@@ -144,17 +144,21 @@ class _dre_edgemask(CustomEnum):
         return clip
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[_dre_edgemask.RETINEX], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
         *, sigmas: Sequence[float] = [50, 200, 350]
     ) -> ConstantFormatVideoNode:
         ...
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[_dre_edgemask.CLAHE], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
         *, limit: float = 0.0305, tile: int = 5
     ) -> ConstantFormatVideoNode:
+        ...
+
+    @overload
+    def __call__(self, src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any) -> ConstantFormatVideoNode:
         ...
 
     def __call__(self, src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any) -> ConstantFormatVideoNode:
