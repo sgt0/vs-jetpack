@@ -243,7 +243,7 @@ class BlurMatrixBase(list[_Nb]):
                 clip, lambda x: expr_conv(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes
             )
 
-        vars_, = ExprOp.matrix(ExprVars(len(self)), r, self.mode)
+        vars_ = [[f"{v}"] for v in ExprOp.matrix(ExprVars(len(self)), r, self.mode)[0]]
 
         # Conditionnal for backward frames
         condb = list([ExprList(["cond0!", "cond0@", 0])])
@@ -271,13 +271,13 @@ class BlurMatrixBase(list[_Nb]):
 
         # Conditionnal for backward frames
         for i, (v, c) in enumerate(zip(vars_[:r][::-1], condb)):
-            expr.append(f"{v}._SceneChangeNext", *c)
+            expr.append(f"{v[0]}._SceneChangeNext", *c)
 
         expr.append(condb[-1][2:], ExprOp.TERN * r)
 
         # Conditionnal for forward frames
         for i, (v, c) in enumerate(zip(vars_[r + 1:], condf)):
-            expr.append(f"{v}._SceneChangePrev", *c)
+            expr.append(f"{v[0]}._SceneChangePrev", *c)
 
         expr.append(condf[-1][2:], ExprOp.TERN * r)
 
