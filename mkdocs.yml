@@ -63,7 +63,6 @@ plugins:
               - "^__call__$"
               - "^_dpir$"         # vs-denoise: mostly public via alias.
               - "^_fine_dehalo$"  # vs-dehalo: mostly public via alias.
-              - "^_get_prop$"     # vs-tools: mostly public via alias.
               - "^_padder$"       # vs-tools: mostly public via alias.
               - "^_pre_aa$"       # vs-aa: mostly public via alias.
             heading_level: 1
