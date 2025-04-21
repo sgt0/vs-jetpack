@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, Any, Callable, Literal, MutableMapping, Sequence, TypeVar
+from typing import Any, Callable, Literal, MutableMapping, Sequence, TypeVar
 from typing import cast as typing_cast
 from typing import overload
 
