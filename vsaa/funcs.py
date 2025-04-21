@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from functools import partial
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal
+
+from jetpytools import P, R
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Box, Catrom, NoScale, Scaler, ScalerT
@@ -23,7 +24,20 @@ __all__ = [
 ]
 
 
-class _pre_aa:
+class PreAA(Generic[P, R]):
+    """
+    Class decorator that wraps the [pre_aa][vsaa.funcs.pre_aa] function
+    and extends its functionality.
+
+    It is not meant to be used directly.
+    """
+
+    def __init__(self, pre_aa: Callable[P, R]) -> None:
+        self._func = pre_aa
+        
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        return self._func(*args, **kwargs)
+
     def custom(
         self,
         clip: vs.VideoNode,
@@ -34,6 +48,7 @@ class _pre_aa:
         func = FunctionUtil(clip, pre_aa, planes)
 
         field = kwargs.pop('field', 3)
+
         if field < 2:
             field += 2
 
@@ -49,21 +64,19 @@ class _pre_aa:
 
         return func.return_clip(wclip)
 
-    def __call__(
-        self,
-        clip: vs.VideoNode,
-        radius: int = 1,
-        strength: int = 100,
-        aa: Antialiaser = Nnedi3(),
-        planes: PlanesT = None,
-        **kwargs: Any
-    ) -> vs.VideoNode:
-        return self.custom(
-            clip, partial(unsharp_masked, radius=radius, strength=strength), aa, planes, **kwargs
-        )
 
-
-pre_aa = _pre_aa()
+@PreAA
+def pre_aa(
+    clip: vs.VideoNode,
+    radius: int = 1,
+    strength: int = 100,
+    aa: Antialiaser = Nnedi3(),
+    planes: PlanesT = None,
+    **kwargs: Any
+) -> vs.VideoNode:
+    return pre_aa.custom(
+        clip, lambda clip: unsharp_masked(clip, radius, strength, planes), aa, planes, **kwargs
+    )
 
 
 def clamp_aa(
