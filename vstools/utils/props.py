@@ -123,16 +123,7 @@ def get_prop(
     """
     props: MutableMapping[str, Any]
 
-    # TODO: mypy being dumb and doesn't recognize the type check properly
-    if TYPE_CHECKING:
-        FramePropsT = MutableMapping
-    else:
-        # Implicit supports any form of MutableMapping like before
-        FramePropsT = vs.FrameProps | MutableMapping
-
-    if isinstance(obj, FramePropsT):
-        props = obj
-    elif isinstance(obj, vs.RawNode):
+    if isinstance(obj, vs.RawNode):
         try:
             props = _get_prop_cache[(obj, 0)]
         except KeyError:
@@ -140,8 +131,10 @@ def get_prop(
                 props = f.props.copy()
 
             _get_prop_cache[(obj, 0)] = props
-    else:
+    elif isinstance(obj, vs.RawFrame):
         props = obj.props
+    else:
+        props = obj
 
     prop: Any = MISSING
 
