@@ -304,20 +304,14 @@ class RektPartial(Generic[P, R]):
 
     It is not meant to be used directly.
     """
+
     def __init__(self, rekt_partial: Callable[P, R]) -> None:
         self._func = rekt_partial
         
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        """        
-        See [rekt_partial][vsmasktools.utils.rekt_partial].
-        """
-
         return self._func(*args, **kwargs)
 
     def rel(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        """        
-        See [rekt_partial][vsmasktools.utils.rekt_partial].
-        """
         return self._func(*args, **kwargs)
 
     def abs(
