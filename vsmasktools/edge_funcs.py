@@ -124,19 +124,19 @@ def limited_linemask(
     )
 
 
-class _dre_edgemask(CustomEnum):
+class dre_edgemask(CustomEnum):
     """Edgemask with dynamic range enhancement prefiltering."""
 
-    RETINEX = cast(VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode], object())
-    CLAHE = cast(VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode], object())
+    RETINEX = cast("dre_edgemask", object())
+    CLAHE = cast("dre_edgemask", object())
 
     def _prefilter(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        if self is _dre_edgemask.RETINEX:
+        if self is dre_edgemask.RETINEX:
             sigmas = kwargs.get('sigmas', [50, 200, 350])
 
             return retinex(clip, sigmas, 0.001, 0.005)
 
-        if self is _dre_edgemask.CLAHE:
+        if self is dre_edgemask.CLAHE:
             limit, tile = kwargs.get('limit', 0.0305), kwargs.get('tile', 5)
 
             return depth(depth(clip, 16).vszip.CLAHE(int(scale_delta(limit, 32, 16)), tile), clip)
@@ -145,14 +145,14 @@ class _dre_edgemask(CustomEnum):
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[_dre_edgemask.RETINEX], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
+        self: Literal[dre_edgemask.RETINEX], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
         *, sigmas: Sequence[float] = [50, 200, 350]
     ) -> ConstantFormatVideoNode:
         ...
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[_dre_edgemask.CLAHE], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
+        self: Literal[dre_edgemask.CLAHE], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
         *, limit: float = 0.0305, tile: int = 5
     ) -> ConstantFormatVideoNode:
         ...
@@ -177,6 +177,3 @@ class _dre_edgemask(CustomEnum):
             add_clip = Morpho.binarize(add_clip, brz)
 
         return ColorRange.FULL.apply(add_clip)
-
-
-dre_edgemask = _dre_edgemask.RETINEX
