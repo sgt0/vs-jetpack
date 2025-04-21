@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Sequence, final
+from typing import Any, Callable, Generic, Sequence
+
+from jetpytools import P, R
 
 from vsaa import Nnedi3
 from vsdenoise import Prefilter
@@ -116,197 +118,46 @@ def _dehalo_supersample_minmax(
     return dehalo
 
 
-@final
-class FineDehaloMask(CustomIntEnum):
-    MAIN = 1
-    EDGES = 3
-    SHARP_EDGES = 4
-    LARGE_EDGES = 6
-    IGNORE_DETAILS = 5
-    SHRINK = 2
-    SHRINK_EDGES_EXCL = 7
 
+class FineDehalo(Generic[P, R]):
+    """
+    Class decorator that wraps the [fine_dehalo][vsdehalo.alpha.fine_dehalo] function
+    and extends its functionality.
 
-class _fine_dehalo:
-    @property
-    def Masks(self) -> type[FineDehaloMask]:
-        return FineDehaloMask
-
-    def __call__(
-        self, clip: vs.VideoNode, rx: FloatIterArr = 2.0, ry: FloatIterArr | None = None, darkstr: FloatIterArr = 0.0,
-        brightstr: FloatIterArr = 1.0, lowsens: FloatIterArr = 50.0, highsens: FloatIterArr = 50.0,
-        thmi: int = 80, thma: int = 128, thlimi: int = 50, thlima: int = 100, sigma_mask: float | bool = False,
-        ss: FloatIterArr = 1.5, contra: int | float | bool = 0.0, exclude: bool = True,
-        edgeproc: float = 0.0, edgemask: EdgeDetect = Robinson3(), planes: PlanesT = 0,
-        show_mask: int | FineDehaloMask | bool = False,
-        mask_radius: RadiusT = 1, downscaler: ScalerT = Mitchell, upscaler: ScalerT = BSpline,
-        supersampler: ScalerT = Lanczos(3), supersampler_ref: ScalerT = Mitchell, pre_ss: float = 1.0,
-        pre_supersampler: ScalerT = Nnedi3(0, field=0, shifter=NoShift), pre_downscaler: ScalerT = Point,
-        mask_coords: Sequence[int] | None = None,
-        func: FuncExceptT | None = None
-    ) -> vs.VideoNode:
+    It is not meant to be used directly.
+    """
+    def __init__(self, fine_dehalo: Callable[P, R]) -> None:
+        self._func = fine_dehalo
+        
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        """        
+        See [fine_dehalo][vsdehalo.alpha.fine_dehalo].
         """
-        Halo removal script that uses ``dehalo_alpha`` with a few masks and optional contra-sharpening
-        to try removing halos without nuking important details like line edges.
 
-        **For ``rx``, ``ry``, only the first value will be used for calculating the mask.**
+        return self._func(*args, **kwargs)
 
-        ``rx``, ``ry``, ``darkstr``, ``brightstr``, ``lowsens``, ``highsens``, ``ss`` are all
-        configurable per plane and iteration. `tuple` means iteration, `list` plane.
-
-        `rx=(2.0, [2.0, 2.4], [2.2, 2.0, 2.1])` means three iterations.
-        * 1st => 2.0 for all planes
-        * 2nd => 2.0 for luma, 2.4 for chroma
-        * 3rd => 2.2 for luma, 2.0 for u, 2.1 for v
-
-
-        :param clip:                Source clip.
-        :param rx:                  Horizontal radius for halo removal.
-        :param ry:                  Vertical radius for halo removal.
-        :param darkstr:             Strength factor for dark halos.
-        :param brightstr:           Strength factor for bright halos.
-        :param lowsens:             Sensitivity setting for how weak the dehalo has to be to get fully accepted.
-        :param highsens:            Sensitivity setting for how strong the dehalo has to be to get fully discarded.
-        :param thmi:                Minimum threshold for sharp edges; keep only the sharpest edges (line edges).
-        :param thma:                Maximum threshold for sharp edges; keep only the sharpest edges (line edges).
-        :param thlimi:              Minimum limiting threshold; include more edges than previously ignored details.
-        :param thlima:              Maximum limiting threshold; include more edges than previously ignored details.
-        :param sigma_mask:          Blurring strength for the mask.
-        :param ss:                  Supersampling factor, to avoid creation of aliasing.
-        :param contra:              Contrasharpening. If True or int, will use :py:func:`contrasharpening`
-                                    otherwise uses :py:func:`contrasharpening_fine_dehalo` with specified level.
-        :param exclude:             If True, add an addionnal step to exclude edges close to each other
-        :param edgeproc:            If > 0, it will add the edgemask to the processing, defaults to 0.0
-        :param edgemask:            Internal mask used for detecting the edges, defaults to Robinson3()
-        :param planes:              Planes to process.
-        :param show_mask:           Whether to show the computed halo mask. 1-7 values to select intermediate masks.
-        :param mask_radius:         Mask expanding radius with ``gradient``.
-        :param downscaler:          Scaler used to downscale the clip.
-        :param upscaler:            Scaler used to upscale the downscaled clip.
-        :param supersampler:        Scaler used to supersampler the rescaled clip to `ss` factor.
-        :param supersampler_ref:    Reference scaler used to clamp the supersampled clip. Has to be blurrier.
-        :param pre_ss:              Supersampling rate used before anything else.
-        :param pre_supersampler:    Supersampler used for ``pre_ss``.
-        :param pre_downscaler:      Downscaler used for undoing the upscaling done by ``pre_supersampler``.
-        :param func:                Function from where this function was called.
-
-        :return:                    Dehaloed clip.
-
-
-        """
-        func = func or 'fine_dehalo'
-
-        assert check_variable(clip, func)
-        assert check_progressive(clip, func)
-
-        InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
-
-        if show_mask is not False and not (0 < int(show_mask) <= 7):
-            raise CustomValueError('valid values for show_mask are 1–7!', func)
-
-        thmif, thmaf, thlimif, thlimaf = [
-            scale_mask(x, 8, clip)
-            for x in [thmi, thma, thlimi, thlima]
-        ]
-
-        peak = get_peak_value(clip)
-        planes = normalize_planes(clip, planes)
-
-        rx_i, ry_i = cround(to_arr(to_arr(rx)[0])[0]), cround(to_arr(to_arr(fallback(ry, rx))[0])[0])  # type: ignore
-
-        work_clip, *chroma = split(clip) if planes == [0] else (clip, )
-
-        # Main edges #
-        # Basic edge detection, thresholding will be applied later.
-        edges = edgemask.edgemask(work_clip)
-
-        # Keeps only the sharpest edges (line edges)
-        strong = norm_expr(edges, f'x {thmif} - {thmaf - thmif} / {peak} *', planes, func=func)
-
-        # Extends them to include the potential halos
-        large = Morpho.expand(strong, rx_i, ry_i, planes=planes, func=func)
-
-        # Exclusion zones #
-        # When two edges are close from each other (both edges of a single
-        # line or multiple parallel color bands), the halo removal
-        # oversmoothes them or makes seriously bleed the bands, producing
-        # annoying artifacts. Therefore we have to produce a mask to exclude
-        # these zones from the halo removal.
-
-        # Includes more edges than previously, but ignores simple details
-        light = norm_expr(edges, f'x {thlimif} - {thlimaf - thlimif} / {peak} *', planes, func=func)
-
-        # To build the exclusion zone, we make grow the edge mask, then shrink
-        # it to its original shape. During the growing stage, close adjacent
-        # edge masks will join and merge, forming a solid area, which will
-        # remain solid even after the shrinking stage.
-        # Mask growing
-        shrink = Morpho.expand(light, rx_i, ry_i, XxpandMode.ELLIPSE, planes=planes, func=func)
-
-        # At this point, because the mask was made of a shades of grey, we may
-        # end up with large areas of dark grey after shrinking. To avoid this,
-        # we amplify and saturate the mask here (actually we could even
-        # binarize it).
-        shrink = norm_expr(shrink, 'x 4 *', planes, func=func)
-        shrink = Morpho.inpand(shrink, rx_i, rx_i, XxpandMode.ELLIPSE, planes=planes, func=func)
-
-        # This mask is almost binary, which will produce distinct
-        # discontinuities once applied. Then we have to smooth it.
-        shrink = box_blur(shrink, 1, 2, planes=planes)
-
-        # Final mask building #
-
-        # Previous mask may be a bit weak on the pure edge side, so we ensure
-        # that the main edges are really excluded. We do not want them to be
-        # smoothed by the halo removal.
-        shr_med = combine([strong, shrink], ExprOp.MAX, planes=planes) if exclude else strong
-
-        # Subtracts masks and amplifies the difference to be sure we get 255
-        # on the areas to be processed.
-        mask = norm_expr([large, shr_med], 'x y - 2 *', planes, func=func)
-
-        # If edge processing is required, adds the edgemask
-        if edgeproc > 0:
-            mask = norm_expr([mask, strong], f'x y {edgeproc} 0.66 * * +', planes, func=func)
-
-        # Smooth again and amplify to grow the mask a bit, otherwise the halo
-        # parts sticking to the edges could be missed.
-        # Also clamp to legal ranges
-        mask = box_blur(mask, planes=planes)
-
-        mask = norm_expr(mask, f'x 2 * {ExprOp.clamp(0, peak)}', planes, func=func)
-
-        # Masking #
-        if show_mask:
-            return [mask, shrink, edges, strong, light, large, shr_med][int(show_mask) - 1]
-
-        dehaloed = dehalo_alpha(
-            work_clip, rx, ry, darkstr, brightstr, lowsens, highsens, sigma_mask, ss, planes, False, mask_radius,
-            downscaler, upscaler, supersampler, supersampler_ref, pre_ss, pre_supersampler, pre_downscaler,
-            mask_coords, func
-        )
-
-        if contra:
-            if isinstance(contra, float):
-                dehaloed = contrasharpening_dehalo(dehaloed, work_clip, contra, planes=planes)
-            else:
-                dehaloed = contrasharpening(
-                    dehaloed, work_clip, int(contra), planes=planes
-                )
-
-        y_merge = work_clip.std.MaskedMerge(dehaloed, mask, planes)
-
-        if chroma:
-            return join([y_merge, *chroma], clip.format.color_family)
-
-        return y_merge
+    class Masks(CustomIntEnum):
+        MAIN = 1
+        EDGES = 3
+        SHARP_EDGES = 4
+        LARGE_EDGES = 6
+        IGNORE_DETAILS = 5
+        SHRINK = 2
+        SHRINK_EDGES_EXCL = 7
 
     def mask(
-        self, clip: vs.VideoNode, dehaloed: vs.VideoNode | None = None,
-        rx: int = 1, ry: int | None = None, thmi: int = 50, thma: int = 100, thlimi: int = 50, thlima: int = 100,
-        exclude: bool = True, edgeproc: float = 0.0, edgemask: EdgeDetect = Robinson3(), pre_ss: int = 1,
-        pre_supersampler: ScalerT = Bilinear,
-        show_mask: int | FineDehaloMask = 1, planes: PlanesT = 0, first_plane: bool = False, func: FuncExceptT | None = None
+        self,
+        clip: vs.VideoNode, dehaloed: vs.VideoNode | None = None,
+        rx: int = 1, ry: int | None = None,
+        thmi: int = 50, thma: int = 100,
+        thlimi: int = 50, thlima: int = 100,
+        exclude: bool = True,
+        edgeproc: float = 0.0, edgemask: EdgeDetect = Robinson3(),
+        pre_ss: int = 1, pre_supersampler: ScalerT = Bilinear,
+        show_mask: int | FineDehalo.Masks = 1,
+        planes: PlanesT = 0,
+        first_plane: bool = False,
+        func: FuncExceptT | None = None
     ) -> vs.VideoNode:
         """
         The fine_dehalo mask.
@@ -342,7 +193,8 @@ class _fine_dehalo:
                 (-(0.5 / pre_ss), -(0.5 / pre_ss))
             )
 
-        dehalo_mask = self(
+
+        dehalo_mask = fine_dehalo(
             work_clip, rx, ry, thmi=thmi, thma=thma, thlimi=thlimi, thlima=thlima, exclude=exclude,
             edgeproc=edgeproc, edgemask=edgemask, planes=planes, show_mask=show_mask, func=func or self.mask
         )
@@ -356,7 +208,183 @@ class _fine_dehalo:
         return dehalo_mask
 
 
-fine_dehalo = _fine_dehalo()
+@FineDehalo
+def fine_dehalo(
+    clip: vs.VideoNode,
+    rx: FloatIterArr = 2.0, ry: FloatIterArr | None = None,
+    darkstr: FloatIterArr = 0.0, brightstr: FloatIterArr = 1.0,
+    lowsens: FloatIterArr = 50.0, highsens: FloatIterArr = 50.0,
+    thmi: int = 80, thma: int = 128, thlimi: int = 50,
+    thlima: int = 100, sigma_mask: float | bool = False,
+    ss: FloatIterArr = 1.5,
+    contra: int | float | bool = 0.0,
+    exclude: bool = True,
+    edgeproc: float = 0.0,
+    edgemask: EdgeDetect = Robinson3(),
+    planes: PlanesT = 0,
+    show_mask: int | FineDehalo.Masks | bool = False,
+    mask_radius: RadiusT = 1,
+    downscaler: ScalerT = Mitchell,
+    upscaler: ScalerT = BSpline,
+    supersampler: ScalerT = Lanczos(3), supersampler_ref: ScalerT = Mitchell,
+    pre_ss: float = 1.0, pre_supersampler: ScalerT = Nnedi3(0, field=0, shifter=NoShift), pre_downscaler: ScalerT = Point,
+    mask_coords: Sequence[int] | None = None,
+    func: FuncExceptT | None = None
+) -> vs.VideoNode:
+    """
+    Halo removal script that uses ``dehalo_alpha`` with a few masks and optional contra-sharpening
+    to try removing halos without nuking important details like line edges.
+
+    **For ``rx``, ``ry``, only the first value will be used for calculating the mask.**
+
+    ``rx``, ``ry``, ``darkstr``, ``brightstr``, ``lowsens``, ``highsens``, ``ss`` are all
+    configurable per plane and iteration. `tuple` means iteration, `list` plane.
+
+    `rx=(2.0, [2.0, 2.4], [2.2, 2.0, 2.1])` means three iterations.
+    * 1st => 2.0 for all planes
+    * 2nd => 2.0 for luma, 2.4 for chroma
+    * 3rd => 2.2 for luma, 2.0 for u, 2.1 for v
+
+    :param clip:                Source clip.
+    :param rx:                  Horizontal radius for halo removal.
+    :param ry:                  Vertical radius for halo removal.
+    :param darkstr:             Strength factor for dark halos.
+    :param brightstr:           Strength factor for bright halos.
+    :param lowsens:             Sensitivity setting for how weak the dehalo has to be to get fully accepted.
+    :param highsens:            Sensitivity setting for how strong the dehalo has to be to get fully discarded.
+    :param thmi:                Minimum threshold for sharp edges; keep only the sharpest edges (line edges).
+    :param thma:                Maximum threshold for sharp edges; keep only the sharpest edges (line edges).
+    :param thlimi:              Minimum limiting threshold; include more edges than previously ignored details.
+    :param thlima:              Maximum limiting threshold; include more edges than previously ignored details.
+    :param sigma_mask:          Blurring strength for the mask.
+    :param ss:                  Supersampling factor, to avoid creation of aliasing.
+    :param contra:              Contrasharpening. If True or int, will use :py:func:`contrasharpening`
+                                otherwise uses :py:func:`contrasharpening_fine_dehalo` with specified level.
+    :param exclude:             If True, add an addionnal step to exclude edges close to each other
+    :param edgeproc:            If > 0, it will add the edgemask to the processing, defaults to 0.0
+    :param edgemask:            Internal mask used for detecting the edges, defaults to Robinson3()
+    :param planes:              Planes to process.
+    :param show_mask:           Whether to show the computed halo mask. 1-7 values to select intermediate masks.
+    :param mask_radius:         Mask expanding radius with ``gradient``.
+    :param downscaler:          Scaler used to downscale the clip.
+    :param upscaler:            Scaler used to upscale the downscaled clip.
+    :param supersampler:        Scaler used to supersampler the rescaled clip to `ss` factor.
+    :param supersampler_ref:    Reference scaler used to clamp the supersampled clip. Has to be blurrier.
+    :param pre_ss:              Supersampling rate used before anything else.
+    :param pre_supersampler:    Supersampler used for ``pre_ss``.
+    :param pre_downscaler:      Downscaler used for undoing the upscaling done by ``pre_supersampler``.
+    :param func:                Function from where this function was called.
+
+    :return:                    Dehaloed clip.
+
+
+    """
+    func = func or 'fine_dehalo'
+
+    assert check_variable(clip, func)
+    assert check_progressive(clip, func)
+
+    InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
+
+    if show_mask is not False and not (0 < int(show_mask) <= 7):
+        raise CustomValueError('valid values for show_mask are 1–7!', func)
+
+    thmif, thmaf, thlimif, thlimaf = [
+        scale_mask(x, 8, clip)
+        for x in [thmi, thma, thlimi, thlima]
+    ]
+
+    peak = get_peak_value(clip)
+    planes = normalize_planes(clip, planes)
+
+    rx_i, ry_i = cround(to_arr(to_arr(rx)[0])[0]), cround(to_arr(to_arr(fallback(ry, rx))[0])[0])  # type: ignore
+
+    work_clip, *chroma = split(clip) if planes == [0] else (clip, )
+
+    # Main edges #
+    # Basic edge detection, thresholding will be applied later.
+    edges = edgemask.edgemask(work_clip)
+
+    # Keeps only the sharpest edges (line edges)
+    strong = norm_expr(edges, f'x {thmif} - {thmaf - thmif} / {peak} *', planes, func=func)
+
+    # Extends them to include the potential halos
+    large = Morpho.expand(strong, rx_i, ry_i, planes=planes, func=func)
+
+    # Exclusion zones #
+    # When two edges are close from each other (both edges of a single
+    # line or multiple parallel color bands), the halo removal
+    # oversmoothes them or makes seriously bleed the bands, producing
+    # annoying artifacts. Therefore we have to produce a mask to exclude
+    # these zones from the halo removal.
+
+    # Includes more edges than previously, but ignores simple details
+    light = norm_expr(edges, f'x {thlimif} - {thlimaf - thlimif} / {peak} *', planes, func=func)
+
+    # To build the exclusion zone, we make grow the edge mask, then shrink
+    # it to its original shape. During the growing stage, close adjacent
+    # edge masks will join and merge, forming a solid area, which will
+    # remain solid even after the shrinking stage.
+    # Mask growing
+    shrink = Morpho.expand(light, rx_i, ry_i, XxpandMode.ELLIPSE, planes=planes, func=func)
+
+    # At this point, because the mask was made of a shades of grey, we may
+    # end up with large areas of dark grey after shrinking. To avoid this,
+    # we amplify and saturate the mask here (actually we could even
+    # binarize it).
+    shrink = norm_expr(shrink, 'x 4 *', planes, func=func)
+    shrink = Morpho.inpand(shrink, rx_i, rx_i, XxpandMode.ELLIPSE, planes=planes, func=func)
+
+    # This mask is almost binary, which will produce distinct
+    # discontinuities once applied. Then we have to smooth it.
+    shrink = box_blur(shrink, 1, 2, planes=planes)
+
+    # Final mask building #
+
+    # Previous mask may be a bit weak on the pure edge side, so we ensure
+    # that the main edges are really excluded. We do not want them to be
+    # smoothed by the halo removal.
+    shr_med = combine([strong, shrink], ExprOp.MAX, planes=planes) if exclude else strong
+
+    # Subtracts masks and amplifies the difference to be sure we get 255
+    # on the areas to be processed.
+    mask = norm_expr([large, shr_med], 'x y - 2 *', planes, func=func)
+
+    # If edge processing is required, adds the edgemask
+    if edgeproc > 0:
+        mask = norm_expr([mask, strong], f'x y {edgeproc} 0.66 * * +', planes, func=func)
+
+    # Smooth again and amplify to grow the mask a bit, otherwise the halo
+    # parts sticking to the edges could be missed.
+    # Also clamp to legal ranges
+    mask = box_blur(mask, planes=planes)
+
+    mask = norm_expr(mask, f'x 2 * {ExprOp.clamp(0, peak)}', planes, func=func)
+
+    # Masking #
+    if show_mask:
+        return [mask, shrink, edges, strong, light, large, shr_med][int(show_mask) - 1]
+
+    dehaloed = dehalo_alpha(
+        work_clip, rx, ry, darkstr, brightstr, lowsens, highsens, sigma_mask, ss, planes, False, mask_radius,
+        downscaler, upscaler, supersampler, supersampler_ref, pre_ss, pre_supersampler, pre_downscaler,
+        mask_coords, func
+    )
+
+    if contra:
+        if isinstance(contra, float):
+            dehaloed = contrasharpening_dehalo(dehaloed, work_clip, contra, planes=planes)
+        else:
+            dehaloed = contrasharpening(
+                dehaloed, work_clip, int(contra), planes=planes
+            )
+
+    y_merge = work_clip.std.MaskedMerge(dehaloed, mask, planes)
+
+    if chroma:
+        return join([y_merge, *chroma], clip.format.color_family)
+
+    return y_merge
 
 
 def fine_dehalo2(
