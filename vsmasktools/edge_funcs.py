@@ -7,7 +7,7 @@ from jetpytools import CustomEnum, CustomNotImplementedError
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
 from vstools import (
-    ColorRange, ConstantFormatVideoNode, ConvMode, VSFunctionAllArgs, check_variable, depth, get_peak_value, get_y, limiter, plane,
+    ColorRange, ConstantFormatVideoNode, ConvMode, check_variable, depth, get_peak_value, get_y, limiter, plane,
     scale_delta, scale_mask, scale_value, vs
 )
 
@@ -128,7 +128,13 @@ class dre_edgemask(CustomEnum):
     """Edgemask with dynamic range enhancement prefiltering."""
 
     RETINEX = cast("dre_edgemask", object())
+    """Retinex-based edgemask."""
+
     CLAHE = cast("dre_edgemask", object())
+    """
+    Contrast Limited Adaptive Histogram Equalization.
+    Based on the [OpenCV implementation](https://docs.opencv.org/5.x/d5/daf/tutorial_py_histogram_equalization.html)
+    """
 
     def _prefilter(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         if self is dre_edgemask.RETINEX:
@@ -145,24 +151,51 @@ class dre_edgemask(CustomEnum):
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[dre_edgemask.RETINEX], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
-        *, sigmas: Sequence[float] = [50, 200, 350]
+        self: Literal[dre_edgemask.RETINEX],
+        clip: vs.VideoNode,
+        tsigma: float = 1,
+        brz: float = 0.122,
+        *,
+        sigmas: Sequence[float] = [50, 200, 350]
     ) -> ConstantFormatVideoNode:
         ...
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[dre_edgemask.CLAHE], src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122,
-        *, limit: float = 0.0305, tile: int = 5
+        self: Literal[dre_edgemask.CLAHE],
+        clip: vs.VideoNode,
+        tsigma: float = 1,
+        brz: float = 0.122,
+        *,
+        limit: float = 0.0305,
+        tile: int = 5
     ) -> ConstantFormatVideoNode:
         ...
 
     @overload
-    def __call__(self, src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any) -> ConstantFormatVideoNode:
+    def __call__(
+        self, clip: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
         ...
 
-    def __call__(self, src: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any) -> ConstantFormatVideoNode:
-        luma = get_y(src)
+    def __call__(
+        self, clip: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
+        """
+        Creates an edgemask with dynamic range enhancement (DRE) prefiltering.
+
+        This function serves as a wrapper around the `retinex` and `vszip.CLAHE` functions,
+        applying one of them as a prefilter before generating the edgemask.
+
+        :param clip:            Source clip.
+        :param tsigma:          Sigma value for TCanny edge detection. Defaults to 1.
+        :param brz:             Binarization threshold (32-bit float scale). Defaults to 0.122.
+        :param sigmas:          Sigma values for the retinex prefilter. Defaults to [50, 200, 350].
+        :param limit:           Limit for CLAHE prefilter. Defaults to 0.0305.
+        :param tile:            Tile size for CLAHE prefilter. Defaults to 5.
+        :return:                Edgemask clip with applied DRE prefiltering.
+        """
+        luma = get_y(clip)
 
         dreluma = self._prefilter(luma, **kwargs)
 
