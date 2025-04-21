@@ -130,10 +130,6 @@ class FineDehalo(Generic[P, R]):
         self._func = fine_dehalo
         
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
-        """        
-        See [fine_dehalo][vsdehalo.alpha.fine_dehalo].
-        """
-
         return self._func(*args, **kwargs)
 
     class Masks(CustomIntEnum):
