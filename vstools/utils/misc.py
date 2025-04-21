@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from fractions import Fraction
 from math import floor
 from types import TracebackType
@@ -8,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, cast, overl
 import vapoursynth as vs
 
 from jetpytools import MISSING, MissingT, P
+from typing_extensions import Self
 
 from ..enums import Align, BaseAlign
 from ..exceptions import InvalidSubsamplingError
@@ -21,7 +23,7 @@ __all__ = [
 
     'match_clip',
 
-    'padder',
+    'padder_ctx', 'padder',
 
     'pick_func_stype',
 
@@ -98,10 +100,99 @@ def match_clip(
     return clip.std.AssumeFPS(fpsnum=ref.fps.numerator, fpsden=ref.fps.denominator)
 
 
-class _padder:
+class padder_ctx(AbstractContextManager["padder_ctx"]):
+    """Context manager for the padder class."""
+
+    def __init__(self, mod: int = 8, min: int = 0, align: Align = Align.MIDDLE_CENTER) -> None:
+        """
+        :param mod:         The modulus used for calculations or constraints. Defaults to 8.
+        :param min:         The minimum value allowed or used as a base threshold. Defaults to 0.
+        :param align:       The alignment configuration. Defaults to Align.MIDDLE_CENTER.
+        """
+        self.mod = mod
+        self.min = min
+        self.align = align
+        self.pad_ops = list[tuple[tuple[int, int, int, int], tuple[int, int]]]()
+
+    def CROP(self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None) -> ConstantFormatVideoNode:
+        """
+        Crop a clip with the padding values.
+
+        :param clip:        Input clip.
+        :param crop_scale:  Optional scale factor for the padding values. If None, no scaling is applied.
+        :return:            Cropped clip.
+        """
+        (padding, sizes) = self.pad_ops.pop(0)
+
+        if crop_scale is None:
+            crop_scale = (clip.width / sizes[0], clip.height / sizes[1])
+
+        crop_pad = padder._crop_padding(padder._get_sizes_crop_scale(clip, crop_scale)[1])
+
+        return clip.std.Crop(*(x * y for x, y in zip(padding, crop_pad)))
+
+    def MIRROR(self, clip: VideoNodeT) -> VideoNodeT:
+        """
+        Pad a clip with reflect mode. This will reflect the clip on each side.
+
+        :param clip:        Input clip.
+        :return:            Padded clip with reflected borders.
+        """
+        padding = padder.mod_padding(clip, self.mod, self.min, self.align)
+        out = padder.MIRROR(clip, *padding)
+        self.pad_ops.append((padding, (out.width, out.height)))
+        return out
+
+    def REPEAT(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
+        """
+        Pad a clip with repeat mode. This will simply repeat the last row/column till the end.
+
+        :param clip:        Input clip.
+        :return:            Padded clip with repeated borders.
+        """
+        padding = padder.mod_padding(clip, self.mod, self.min, self.align)
+        out = padder.REPEAT(clip, *padding)
+        self.pad_ops.append((padding, (out.width, out.height)))
+        return out
+
+    def COLOR(
+        self, clip: vs.VideoNode,
+        color: int | float | bool | None | Sequence[int | float | bool | None] = (False, None)
+    ) -> ConstantFormatVideoNode:
+        """
+        Pad a clip with a constant color.
+
+        :param clip:        Input clip.
+        :param color:       Constant color that should be added on the sides:
+                                * number: This will be treated as such and not converted or clamped.
+                                * False: Lowest value for this clip format and color range.
+                                * True: Highest value for this clip format and color range.
+                                * None: Neutral value for this clip format.
+                                * MISSING: Automatically set to False if RGB, else None.
+
+        :return:            Padded clip with colored borders.
+        """
+        padding = padder.mod_padding(clip, self.mod, self.min, self.align)
+        out = padder.COLOR(clip, *padding, color)
+        self.pad_ops.append((padding, (out.width, out.height)))
+        return out
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        return None
+
+
+class padder:
     """Pad out the pixels on the sides by the given amount of pixels."""
 
-    def _base(self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> tuple[
+    ctx = padder_ctx
+
+    @staticmethod
+    def _base(clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> tuple[
         int, int, vs.VideoFormat, int, int
     ]:
         from ..functions import check_variable
@@ -122,7 +213,8 @@ class _padder:
 
         return width, height, fmt, w_sub, h_sub
 
-    def MIRROR(self, clip: VideoNodeT, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> VideoNodeT:
+    @classmethod
+    def MIRROR(cls, clip: VideoNodeT, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> VideoNodeT:
         """
         Pad a clip with reflect mode. This will reflect the clip on each side.
 
@@ -145,7 +237,7 @@ class _padder:
 
         from ..utils import core
 
-        width, height, *_ = self._base(clip, left, right, top, bottom)
+        width, height, *_ = cls._base(clip, left, right, top, bottom)
 
         padded = core.resize.Point(
             core.std.CopyFrameProps(clip, clip.std.BlankClip()),
@@ -155,7 +247,8 @@ class _padder:
         )
         return core.std.CopyFrameProps(padded, clip)
 
-    def REPEAT(self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> ConstantFormatVideoNode:
+    @classmethod
+    def REPEAT(cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> ConstantFormatVideoNode:
         """
         Pad a clip with repeat mode. This will simply repeat the last row/column till the end.
 
@@ -176,7 +269,7 @@ class _padder:
         :return:            Padded clip with repeated borders.
         """
 
-        *_, fmt, w_sub, h_sub = self._base(clip, left, right, top, bottom)
+        *_, fmt, w_sub, h_sub = cls._base(clip, left, right, top, bottom)
 
         padded = clip.std.AddBorders(left, right, top, bottom)
 
@@ -216,8 +309,9 @@ class _padder:
             for l_, r_, t_, b_ in pads
         ])
 
+    @classmethod
     def COLOR(
-        self, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0,
+        cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0,
         color: int | float | bool | None | MissingT | Sequence[int | float | bool | None | MissingT] = (False, MISSING)
     ) -> ConstantFormatVideoNode:
         """
@@ -251,7 +345,7 @@ class _padder:
 
         assert check_variable_format(clip, "padder")
 
-        self._base(clip, left, right, top, bottom)
+        cls._base(clip, left, right, top, bottom)
 
         def _norm(colr: int | float | bool | None | MissingT) -> Sequence[int | float]:
             if colr is MISSING:
@@ -275,9 +369,9 @@ class _padder:
 
         return core.std.AddBorders(clip, left, right, top, bottom, norm_colors)
 
-    @classmethod
+    @staticmethod
     def _get_sizes_crop_scale(
-        cls, sizes: tuple[int, int] | vs.VideoNode, crop_scale: float | tuple[float, float]
+        sizes: tuple[int, int] | vs.VideoNode, crop_scale: float | tuple[float, float]
     ) -> tuple[tuple[int, int], tuple[int, int]]:
         if isinstance(sizes, vs.VideoNode):
             sizes = (sizes.width, sizes.height)
@@ -287,8 +381,8 @@ class _padder:
 
         return sizes, crop_scale  # type: ignore[return-value]
 
-    @classmethod
-    def _crop_padding(cls, crop_scale: tuple[int, int]) -> tuple[int, int, int, int]:
+    @staticmethod
+    def _crop_padding(crop_scale: tuple[int, int]) -> tuple[int, int, int, int]:
         return tuple(crop_scale[0 if i < 2 else 1] for i in range(4))  # type: ignore
 
     @classmethod
@@ -324,59 +418,6 @@ class _padder:
         sizes, crop_scale = cls._get_sizes_crop_scale(sizes, crop_scale)
         padding = cls.mod_padding(sizes, mod, min, align)
         return padding, tuple(x * crop_scale[0 if i < 2 else 1] for x, i in enumerate(padding))  # type: ignore
-
-    class ctx:
-        class padder_ctx:
-            def __init__(self, ctx: _padder.ctx) -> None:
-                self.ctx = ctx
-                self.pad_ops = list[tuple[tuple[int, int, int, int], tuple[int, int]]]()
-
-            def COLOR(
-                self, clip: vs.VideoNode,
-                color: int | float | bool | None | Sequence[int | float | bool | None] = (False, None)
-            ) -> ConstantFormatVideoNode:
-                padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
-                out = padder.COLOR(clip, *padding, color)
-                self.pad_ops.append((padding, (out.width, out.height)))
-                return out
-
-            def REPEAT(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
-                padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
-                out = padder.REPEAT(clip, *padding)
-                self.pad_ops.append((padding, (out.width, out.height)))
-                return out
-
-            def MIRROR(self, clip: VideoNodeT) -> VideoNodeT:
-                padding = padder.mod_padding(clip, self.ctx.mod, self.ctx.min, self.ctx.align)
-                out = padder.MIRROR(clip, *padding)
-                self.pad_ops.append((padding, (out.width, out.height)))
-                return out
-
-            def CROP(self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None) -> ConstantFormatVideoNode:
-                (padding, sizes) = self.pad_ops.pop(0)
-
-                if crop_scale is None:
-                    crop_scale = (clip.width / sizes[0], clip.height / sizes[1])
-
-                crop_pad = padder._crop_padding(padder._get_sizes_crop_scale(clip, crop_scale)[1])
-
-                return clip.std.Crop(*(x * y for x, y in zip(padding, crop_pad)))
-
-        def __init__(self, mod: int = 8, min: int = 0, align: Align = Align.MIDDLE_CENTER) -> None:
-            self.mod = mod
-            self.min = min
-            self.align = align
-
-        def __enter__(self) -> padder_ctx:
-            return self.padder_ctx(self)
-
-        def __exit__(
-            self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-        ) -> None:
-            return None
-
-
-padder = _padder()
 
 
 def pick_func_stype(
