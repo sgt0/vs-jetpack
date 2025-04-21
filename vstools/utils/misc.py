@@ -220,11 +220,11 @@ class padder:
 
         Visual example:
 
-        .. code-block:: python
-
+            ```
             >>> |ABCDE
             >>> padder.MIRROR(left=3)
             >>> CBA|ABCDE
+            ```
 
         :param clip:        Input clip.
         :param left:        Padding added to the left side of the clip.
@@ -254,11 +254,11 @@ class padder:
 
         Visual example:
 
-        .. code-block:: python
-
+            ```
             >>> |ABCDE
             >>> padder.REPEAT(left=3)
             >>> AAA|ABCDE
+            ```
 
         :param clip:        Input clip.
         :param left:        Padding added to the left side of the clip.
@@ -319,11 +319,11 @@ class padder:
 
         Visual example:
 
-        .. code-block:: python
-
+            ```
             >>> |ABCDE
             >>> padder.COLOR(left=3, color=Z)
             >>> ZZZ|ABCDE
+            ```
 
         :param clip:        Input clip.
         :param left:        Padding added to the left side of the clip.
