@@ -178,9 +178,7 @@ def gauss_blur(
             for i, p in enumerate(split(clip))
         ])
 
-    kernel: BlurMatrixBase[float] = BlurMatrix.GAUSS(  # type: ignore
-        taps, sigma=sigma, mode=mode, scale_value=1023
-    )
+    kernel = BlurMatrix.GAUSS(taps, sigma=sigma, mode=mode, scale_value=1023)
 
     return kernel(clip, planes, **kwargs)
 
