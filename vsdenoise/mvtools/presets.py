@@ -172,7 +172,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
     def __init__(
         self,
         *,
-        search_clip: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None,
+        search_clip: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
         tr: int | None = None,
         pel: int | None = None,
         pad: int | tuple[int | None, int | None] | None = None,
