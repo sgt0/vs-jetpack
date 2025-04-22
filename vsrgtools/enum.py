@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import operator
-
 from enum import auto
-from itertools import accumulate
 from math import ceil, exp, log2, pi, sqrt
 from typing import Any, Iterable, Literal, Sequence, TypeVar, overload
 
@@ -241,59 +238,47 @@ class BlurMatrixBase(list[_Nb]):
             )
             return iterate(
                 clip, lambda x: expr_conv(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes
-            )
-
-        vars_ = [[f"{v}"] for v in ExprOp.matrix(ExprVars(len(self)), r, self.mode)[0]]
-
-        # Conditionnal for backward frames
-        condb = list([ExprList(["cond0!", "cond0@", 0])])
-
-        for i, vv in enumerate(accumulate(vars_[:r][::-1], operator.add), 1):
-            ww = list[Any]()
-
-            for j, (v, w) in enumerate(zip(vv, self[:r][::-1])):
-                ww.append([v, w, ExprOp.DUP, f"div{j}!", ExprOp.MUL])
-
-            condb.append(ExprList([f"cond{i}!", f"cond{i}@", ww, [ExprOp.ADD] * (i - 1)]))
-
-        # Conditionnal for forward frames
-        condf = list([ExprList([f"cond{i + 1}!", f"cond{i + 1}@", 0])])
-
-        for ii, vv in enumerate(accumulate(vars_[r + 1:], operator.add), i + 2):
-            ww = list[Any]()
-
-            for jj, (v, w) in enumerate(zip(vv, self[r + 1:]), j + 2):
-                ww.append([v, w, ExprOp.DUP, f"div{jj}!", ExprOp.MUL])
-
-            condf.append(ExprList([f"cond{ii}!", f"cond{ii}@", ww, [ExprOp.ADD] * (ii - i - 2)]))
+            ).std.CopyFrameProps(clip)
 
         expr = ExprList()
 
-        # Conditionnal for backward frames
-        for i, (v, c) in enumerate(zip(vars_[:r][::-1], condb)):
-            expr.append(f"{v[0]}._SceneChangeNext", *c)
+        vars_ = [[f"{v}"] for v in ExprOp.matrix(ExprVars(len(self), akarin=True), r, self.mode)[0]]
 
-        expr.append(condb[-1][2:], ExprOp.TERN * r)
+        back_vars = vars_[:r]
 
-        # Conditionnal for forward frames
-        for i, (v, c) in enumerate(zip(vars_[r + 1:], condf)):
-            expr.append(f"{v[0]}._SceneChangePrev", *c)
+        # Constructing the expression for backward (previous) clips.
+        # Each clip is weighted by its corresponding weight and multiplied by the logical NOT
+        # of all `_SceneChangeNext` properties from the current and subsequent clips.
+        # This ensures that the expression excludes frames that follow detected scene changes.
+        for i, (var, weight) in enumerate(zip(back_vars, self[:r])):
+            expr.append(
+                var, weight, ExprOp.MUL,
+                [[f"{back_vars[ii][0]}._SceneChangeNext", ExprOp.NOT, ExprOp.MUL]
+                 for ii in range(i, len(back_vars))],
+                ExprOp.DUP, f"cond{i}!"
+            )
 
-        expr.append(condf[-1][2:], ExprOp.TERN * r)
+        forw_vars = vars_[r + 1:]
+        forw_vars.reverse()
 
-        expr.append(ExprOp.ADD, vars_[r], self[r])
+        # Same thing for forward (next) clips.
+        for j, (var, weight) in enumerate(zip(forw_vars, reversed(self[r + 1:]))):
+            expr.append(
+                var, weight, ExprOp.MUL,
+                [[f"{forw_vars[jj][0]}._SceneChangePrev", ExprOp.NOT, ExprOp.MUL]
+                 for jj in range(j, len(forw_vars))],
+                ExprOp.DUP, f"cond{len(vars_) - j - 1}!"
+            )
 
-        # Center frame
-        weights_cum_b = ExprList(v for v in reversed(list(accumulate(self[:r]))))
-        weights_cum_f = ExprList(v for v in reversed(list(accumulate(self[r + 1:][::-1]))))
+        # If a scene change is detected, all the weights beyond it are applied
+        # to the center frame.
+        expr.append(vars_[r], self[r])
 
-        for k, ws in zip(range(ii), weights_cum_b + ExprList() + weights_cum_f):
-            if k == r:
-                continue
-            expr.append(f"cond{k}@", ws, ExprOp.MUL)
+        for k, w in enumerate(self[:r] + ([None] + self[r + 1:])):
+            if w is not None:
+                expr.append(f"cond{k}@", 0, w, ExprOp.TERN)
 
-        expr.extend([ExprOp.ADD] * k)
-        expr.append(ExprOp.DUP, f"div{r}!", ExprOp.MUL, ExprOp.ADD)
+        expr.append(ExprOp.ADD * r * 2, ExprOp.MUL, ExprOp.ADD * r * 2)
 
         if (premultiply := conv_kwargs.get("premultiply", None)):
             expr.append(premultiply, ExprOp.MUL)
@@ -301,22 +286,7 @@ class BlurMatrixBase(list[_Nb]):
         if divisor:
             expr.append(divisor, ExprOp.DIV)
         else:
-            # Divisor conditionnal
-            for cond, rr in zip([condb, condf], [(0, r), (r + 1, r * 2 + 1)]):
-                for n, m in zip(accumulate(([d] for d in range(*rr)), initial=[0]), cond[:-1]):
-                    if (n := n[1:]):
-                        div = list[str]()
-                        for divn in n:
-                            div.append(f"div{divn}@")
-                    else:
-                        div = [str(0)]
-
-                    expr.append(str(m[0])[:5] + "@", div, [ExprOp.ADD] * max(0, len(n) - 1))
-
-                expr.append(*div, f"div{divn + 1}@", ExprOp.ADD * len(div))
-                expr.append(ExprOp.TERN * r)
-
-            expr.append(ExprOp.ADD, f"div{r}@", ExprOp.ADD, ExprOp.DIV)
+            expr.append(sum(self), ExprOp.DIV)
 
         if bias:
             expr.append(bias, ExprOp.ADD)
@@ -330,12 +300,14 @@ class BlurMatrixBase(list[_Nb]):
         if conv_kwargs.get("clamp", False):
             expr.append(ExprOp.clamp(ExprToken.RangeMin, ExprToken.RangeMax))
 
-        return iterate(clip, lambda x: expr(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes)
+        return iterate(
+            clip, lambda x: expr(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes
+        ).std.CopyFrameProps(clip)
 
     def outer(self) -> Self:
         from numpy import outer
 
-        return self.__class__(list[_Nb](outer(self, self).flatten()), self.mode)
+        return self.__class__(list[_Nb](outer(self, self).flatten()), self.mode)  #pyright: ignore[reportArgumentType]
 
 
 class BlurMatrix(CustomIntEnum):
