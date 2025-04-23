@@ -105,7 +105,7 @@ class QTempGaussMC(vs_object):
         postprocess: SearchPostProcess = SearchPostProcess.GAUSSBLUR_EDGESOFTEN,
         strength: tuple[float, float] = (1.9, 0.1),
         limit: tuple[int | float, int | float, int | float] = (3, 7, 2),
-        range_conversion_args: KwargsT | None | Literal[False] = KwargsT(range_conversion=2.0),
+        range_expansion_args: KwargsT | None | Literal[False] = None,
         mask_shimmer_args: KwargsT | None = None,
     ) -> Self:
         """
@@ -114,7 +114,7 @@ class QTempGaussMC(vs_object):
         :param postprocess:              Post-processing routine to use.
         :param strength:                 Tuple containing gaussian blur sigma & blend weight of the blur.
         :param limit:                    3-step limiting thresholds for the gaussian blur post-processing.
-        :param range_conversion_args:    Arguments passed to :py:attr:`prefilter_to_full_range`.
+        :param range_expansion_args:    Arguments passed to :py:attr:`prefilter_to_full_range`.
         :param mask_shimmer_args:        Arguments passed to :py:attr:`QTempGaussMC.mask_shimmer`.
         """
 
@@ -123,7 +123,7 @@ class QTempGaussMC(vs_object):
         self.prefilter_postprocess = postprocess
         self.prefilter_blur_strength = strength
         self.prefilter_soften_limit = limit
-        self.prefilter_range_conversion_args = fallback(range_conversion_args, KwargsT())
+        self.prefilter_range_expansion_args = fallback(range_expansion_args, KwargsT())
         self.prefilter_mask_shimmer_args = fallback(mask_shimmer_args, KwargsT())
 
         return self
@@ -474,8 +474,8 @@ class QTempGaussMC(vs_object):
         else:
             blurred = smoothed
 
-        if self.prefilter_range_conversion_args is not False:
-            blurred = prefilter_to_full_range(blurred, **self.prefilter_range_conversion_args)  # type: ignore
+        if self.prefilter_range_expansion_args is not False:
+            blurred = prefilter_to_full_range(blurred, **self.prefilter_range_expansion_args)  # type: ignore
 
         self.prefilter_output = blurred
 
