@@ -657,7 +657,7 @@ class QTempGaussMC(vs_object):
 
                 clamp = norm_expr(
                     [clip, source_min, source_max],
-                    'y z + 2 / AVG! x AVG@ {undershoot} - AVG@ {overshoot} + clip',
+                    'y z + 2 / AVG! AVG@ x {undershoot} - x {overshoot} + clip',
                     undershoot=scale_delta(undershoot, 8, clip),
                     overshoot=scale_delta(overshoot, 8, clip),
                 )
