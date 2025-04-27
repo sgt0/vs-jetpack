@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Sequence, Union
+from typing import Callable, Union
 
 from vstools import CustomEnum, vs
 
