@@ -541,7 +541,7 @@ class PrefilterPartial(AbstractPrefilter):
             clip,
             self.planes if planes is MISSING else planes,
             self.full_range if full_range is MISSING else full_range,
-            **kwargs | self.kwargs
+            **self.kwargs | kwargs
         )
 
 
