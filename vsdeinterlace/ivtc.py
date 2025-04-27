@@ -42,8 +42,10 @@ def sivtc(
 
 def jivtc(
     clip: vs.VideoNode, pattern: int, tff: FieldBasedT | bool | None = None, chroma_only: bool = True,
-    postprocess: VSFunctionKwArgs = deblend, postdecimate: IVTCycles | None = IVTCycles.cycle_05,
-    ivtc_cycle: IVTCycles = IVTCycles.cycle_10, final_ivtc_cycle: IVTCycles = IVTCycles.cycle_08,
+    postprocess: VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] = deblend,
+    postdecimate: IVTCycles | None = IVTCycles.cycle_05,
+    ivtc_cycle: IVTCycles = IVTCycles.cycle_10,
+    final_ivtc_cycle: IVTCycles = IVTCycles.cycle_08,
     **kwargs: Any
 ) -> vs.VideoNode:
     """
@@ -83,7 +85,7 @@ def jivtc(
 def vfm(
     clip: vs.VideoNode, tff: FieldBasedT | bool | None = None,
     mode: VFMMode = VFMMode.TWO_WAY_MATCH_THIRD_COMBED,
-    postprocess: vs.VideoNode | VSFunctionNoArgs | None = None,
+    postprocess: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     **kwargs: Any
 ) -> vs.VideoNode:
     """
