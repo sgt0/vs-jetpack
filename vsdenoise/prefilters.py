@@ -33,8 +33,6 @@ __all__ = [
 def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **kwargs: Any) -> vs.VideoNode:
     assert check_variable(clip, pref_type)
 
-    planes = normalize_planes(clip, planes)
-
     if pref_type == Prefilter.NONE:
         return clip
 
@@ -45,7 +43,15 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return gauss_blur(clip, kwargs.pop('sigma', 1.5), **kwargs, planes=planes)
 
     if pref_type == Prefilter.FLUXSMOOTHST:
-        temp_thr, spat_thr = kwargs.pop('temp_thr', 2), kwargs.pop('spat_thr', 2)
+        planes = normalize_planes(clip, planes)
+
+        temp_thr, spat_thr = normalize_seq(kwargs.pop('temp_thr', 2), 3), normalize_seq(kwargs.pop('spat_thr', 2), 3)
+
+        for i in range(3):
+            if i not in planes:
+                temp_thr[i] = -1
+                spat_thr[i] = -1
+
         return flux_smooth(clip, temp_thr, spat_thr, **kwargs)
 
     if pref_type == Prefilter.DFTTEST:
@@ -80,6 +86,8 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return nl_means(clip, **kwargs)
 
     if pref_type == Prefilter.BM3D:
+        planes = normalize_planes(clip, planes)
+
         bm3d_arch: type[AbstractBM3D] = kwargs.pop('arch', None)
         gpu: bool | None = kwargs.pop('gpu', None)
 
@@ -110,6 +118,8 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return bm3d_arch.denoise(clip, **bm3d_args)
 
     if pref_type is Prefilter.BILATERAL:
+        planes = normalize_planes(clip, planes)
+
         sigmaS = cast(float | list[float] | tuple[float | list[float], ...], kwargs.pop('sigmaS', 3.0))
         sigmaR = cast(float | list[float] | tuple[float | list[float], ...], kwargs.pop('sigmaR', 0.02))
 
@@ -133,7 +143,7 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
             for siS, siR in zip(otherS, otherR):
                 base, ref = ref or clip, bilateral(base, ref, siS, siR, **kwargs)
 
-        return bilateral(clip, ref, baseS, baseR, **kwargs)
+        return bilateral(clip, ref, baseS, baseR, planes=planes, **kwargs)
 
     raise CustomNotImplementedError(func=pref_type, reason=pref_type)
 
@@ -178,23 +188,25 @@ class Prefilter(AbstractPrefilter, CustomEnum):
     """Classic bilateral filtering or edge-preserving bilateral multi pass filtering."""
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.FLUXSMOOTHST],
-        clip: vs.VideoNode,
-        /,
-        *,
+        clip: vs.VideoNode, /,
+        planes: PlanesT = None,
         full_range: bool | float = False,
+        *,
         temp_thr: float | Sequence[float] = 2.0,
-        spat_thr: float | Sequence[float] | None = 2.0
+        spat_thr: float | Sequence[float] | None = 2.0,
+        **kwargs: Any
     ) -> vs.VideoNode:
         """
         Perform smoothing using `zsmooth.FluxSmoothST`
 
         :param clip:        Clip to be preprocessed.
+        :param planes:      Planes to be preprocessed.
         :param full_range:  Whether to return a prefiltered clip in full range.
         :param temp_thr:    Temporal threshold for the temporal median function.
         :param spat_thr:    Spatial threshold for the temporal median function.
-
+        :param kwargs:      Additional arguments to pass to the prefilter.
         :return:            Preprocessed clip.
         """
 
@@ -326,20 +338,24 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.FLUXSMOOTHST],
         /,
         *,
+        planes: PlanesT = None,
         full_range: bool | float = False,
         temp_thr: float | Sequence[float] = 2.0,
-        spat_thr: float | Sequence[float] | None = 2.0
+        spat_thr: float | Sequence[float] | None = 2.0,
+        **kwargs: Any
     ) -> PrefilterPartial:
         """
         Perform smoothing using `zsmooth.FluxSmoothST`
 
+        :param planes:      Planes to be preprocessed.
         :param full_range:  Whether to return a prefiltered clip in full range.
         :param temp_thr:    Temporal threshold for the temporal median function.
         :param spat_thr:    Spatial threshold for the temporal median function.
+        :param kwargs:      Additional arguments to pass to the prefilter.
 
         :return:            Partial Prefilter.
         """
