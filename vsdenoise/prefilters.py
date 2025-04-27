@@ -81,9 +81,7 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return dftt.std.MaskedMerge(clip, pref_mask, planes)
 
     if pref_type == Prefilter.NLMEANS:
-        kwargs |= dict(strength=7.0, tr=1, sr=2, simr=2) | kwargs | dict(planes=planes)
-
-        return nl_means(clip, **kwargs)
+        return nl_means(clip, **KwargsT(strength=7.0, simr=2, planes=planes) | kwargs)
 
     if pref_type == Prefilter.BM3D:
         planes = normalize_planes(clip, planes)
@@ -211,7 +209,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.DFTTEST],
         clip: vs.VideoNode, /,
         planes: PlanesT = None,
@@ -219,10 +217,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         *,
         sloc: SLocT | None = {0.0: 4.0, 0.2: 9.0, 1.0: 15.0},
         pref_mask: vs.VideoNode | Literal[False] | tuple[int, int] = (16, 75),
-        tbsize: int = 1,
-        sbsize: int = 12,
-        sosize: int = 6,
-        swin: int = 2,
         **kwargs: Any
     ) -> vs.VideoNode:
         """
@@ -242,15 +236,13 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.NLMEANS],
         clip: vs.VideoNode, /,
         planes: PlanesT = None,
         full_range: bool | float = False,
         *,
         strength: SingleOrArr[float] = 7.0,
-        tr: SingleOrArr[int] = 1,
-        sr: SingleOrArr[int] = 2,
         simr: SingleOrArr[int] = 2,
         device_type: DeviceType = DeviceType.AUTO,
         **kwargs: Any
@@ -261,14 +253,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         :param clip:            Source clip.
         :param strength:        Controls the strength of the filtering.\n
                                 Larger values will remove more noise.
-        :param tr:              Temporal Radius. Temporal size = `(2 * tr + 1)`.\n
-                                Sets the number of past and future frames to uses for denoising the current frame.\n
-                                tr=0 uses 1 frame, while tr=1 uses 3 frames and so on.\n
-                                Usually, larger values result in better denoising.
-        :param sr:              Search Radius. Spatial size = `(2 * sr + 1)^2`.\n
-                                Sets the radius of the search window.\n
-                                sr=1 uses 9 pixel, while sr=2 uses 25 pixels and so on.\n
-                                Usually, larger values result in better denoising.
         :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
                                 Sets the radius of the similarity neighbourhood window.\n
                                 The impact on performance is low, therefore it depends on the nature of the noise.
@@ -361,7 +345,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.DFTTEST],
         /,
         *,
@@ -369,10 +353,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         full_range: bool | float = False,
         sloc: SLocT | None = {0.0: 4.0, 0.2: 9.0, 1.0: 15.0},
         pref_mask: vs.VideoNode | Literal[False] | tuple[int, int] = (16, 75),
-        tbsize: int = 1,
-        sbsize: int = 12,
-        sosize: int = 6,
-        swin: int = 2,
         **kwargs: Any
     ) -> PrefilterPartial:
         """
@@ -392,15 +372,13 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.NLMEANS],
         /,
         *,
         planes: PlanesT = None,
         full_range: bool | float = False,
         strength: SingleOrArr[float] = 7.0,
-        tr: SingleOrArr[int] = 1,
-        sr: SingleOrArr[int] = 2,
         simr: SingleOrArr[int] = 2,
         device_type: DeviceType = DeviceType.AUTO,
         **kwargs: Any
@@ -411,14 +389,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         :param planes:          Set the clip planes to be processed.
         :param strength:        Controls the strength of the filtering.\n
                                 Larger values will remove more noise.
-        :param tr:              Temporal Radius. Temporal size = `(2 * tr + 1)`.\n
-                                Sets the number of past and future frames to uses for denoising the current frame.\n
-                                tr=0 uses 1 frame, while tr=1 uses 3 frames and so on.\n
-                                Usually, larger values result in better denoising.
-        :param sr:              Search Radius. Spatial size = `(2 * sr + 1)^2`.\n
-                                Sets the radius of the search window.\n
-                                sr=1 uses 9 pixel, while sr=2 uses 25 pixels and so on.\n
-                                Usually, larger values result in better denoising.
         :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
                                 Sets the radius of the similarity neighbourhood window.\n
                                 The impact on performance is low, therefore it depends on the nature of the noise.
