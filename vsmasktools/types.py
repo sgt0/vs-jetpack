@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Union
+from typing import Callable, Sequence, Union
 
 from vstools import CustomEnum, vs
 
@@ -28,12 +28,12 @@ class XxpandMode(CustomEnum):
     """Diamond shape"""
 
 
-class Coordinates(list[int], CustomEnum):  # type: ignore[misc]
-    VERTICAL = [0, 1, 0, 0, 0, 0, 1, 0]
-    HORIZONTAL = [0, 0, 0, 1, 1, 0, 0, 0]
-    RECTANGLE = [1, 1, 1, 1, 1, 1, 1, 1]
-    DIAMOND = [0, 1, 0, 1, 1, 0, 1, 0]
-    CORNERS = [1, 0, 1, 0, 0, 1, 0, 1]
+class Coordinates(tuple[int, ...], CustomEnum):
+    VERTICAL = (0, 1, 0, 0, 0, 0, 1, 0)
+    HORIZONTAL = (0, 0, 0, 1, 1, 0, 0, 0)
+    RECTANGLE = (1, 1, 1, 1, 1, 1, 1, 1)
+    DIAMOND = (0, 1, 0, 1, 1, 0, 1, 0)
+    CORNERS = (1, 0, 1, 0, 0, 1, 0, 1)
 
     @classmethod
     def from_iter(cls, iter: int) -> Coordinates:
