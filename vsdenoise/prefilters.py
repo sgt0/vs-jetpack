@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import auto
 from typing import Any, Literal, Sequence, cast, overload
 
-from jetpytools import CustomEnum, CustomNotImplementedError
+from jetpytools import CustomEnum, CustomNotImplementedError, KwargsT
 
 from vsexprtools import norm_expr
 from vsrgtools import bilateral, flux_smooth, gauss_blur, min_blur
@@ -31,6 +31,8 @@ __all__ = [
 
 
 def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **kwargs: Any) -> vs.VideoNode:
+    """Internal function for applying a prefilter to a clip."""
+
     assert check_variable(clip, pref_type)
 
     if pref_type == Prefilter.NONE:
@@ -157,7 +159,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
     """
     Enum representing available filters.
 
-    These are mainly thought of as prefilters for :py:attr:`MVTools`,
+    These are mainly thought of as prefilters for [MVTools][vsdenoise.mvtools.mvtools.MVTools]
     but can be used standalone as-is.
     """
 
@@ -165,13 +167,13 @@ class Prefilter(AbstractPrefilter, CustomEnum):
     """Don't do any prefiltering. Returns the clip as-is."""
 
     MINBLUR = auto()
-    """Minimum difference of a gaussian/median blur"""
+    """Minimum difference of a gaussian/median blur."""
 
     GAUSS = auto()
     """Gaussian blur."""
 
     FLUXSMOOTHST = auto()
-    """Perform smoothing using `zsmooth.FluxSmoothST`"""
+    """Perform smoothing using `zsmooth.FluxSmoothST`."""
 
     DFTTEST = auto()
     """Denoising in frequency domain with dfttest and an adaptive mask for retaining details."""
@@ -231,6 +233,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
                             Anything below lower bound isn't denoised at all.
                             Anything above upper bound is fully denoised.
                             Values between them are a gradient.
+        :param kwargs:      Additional arguments to pass to the prefilter.
 
         :return:            Denoised clip.
         """
@@ -250,21 +253,22 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
         Denoising with NLMeans.
 
-        :param clip:            Source clip.
+        :param clip:            Clip to be preprocessed.
+        :param planes:          Planes to be preprocessed.
+        :param full_range:      Whether to return a prefiltered clip in full range.
         :param strength:        Controls the strength of the filtering.\n
                                 Larger values will remove more noise.
         :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
                                 Sets the radius of the similarity neighbourhood window.\n
                                 The impact on performance is low, therefore it depends on the nature of the noise.
-        :param planes:          Set the clip planes to be processed.
         :param device_type:     Set the device to use for processing. The fastest device will be used by default.
-        :param kwargs:          Additional arguments passed to the plugin.
+        :param kwargs:          Additional arguments to pass to the prefilter.
 
         :return:                Denoised clip.
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.BM3D],
         clip: vs.VideoNode, /,
         planes: PlanesT = None,
@@ -281,6 +285,8 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         Normal spatio-temporal denoising using BM3D.
 
         :param clip:        Clip to be preprocessed.
+        :param planes:      Planes to be preprocessed.
+        :param full_range:  Whether to return a prefiltered clip in full range.
         :param sigma:       Strength of denoising, valid range is [0, +inf].
         :param tr:          Temporal radius, valid range is [1, 16].
         :param profile:     See :py:attr:`vsdenoise.bm3d.Profile`.
@@ -295,7 +301,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.BILATERAL],
         clip: vs.VideoNode, /,
         planes: PlanesT = None,
@@ -303,11 +309,11 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         *,
         sigmaS: float | list[float] | tuple[float | list[float], ...] = 3.0,
         sigmaR: float | list[float] | tuple[float | list[float], ...] = 0.02,
-        gpu: bool | None = None,
         **kwargs: Any
     ) -> vs.VideoNode:
         """
         Classic bilateral filtering or edge-preserving bilateral multi pass filtering.
+
         If sigmaS or sigmaR are tuples, first values will be used as base,
         other values as a recursive reference.
 
@@ -316,7 +322,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         :param full_range:  Whether to return a prefiltered clip in full range.
         :param sigmaS:      Sigma of Gaussian function to calculate spatial weight.
         :param sigmaR:      Sigma of Gaussian function to calculate range weight.
-        :param gpu:         Whether to use GPU processing if available or not.
+        :param kwargs:      Additional arguments to pass to the prefilter.
 
         :return:            Preprocessed clip.
         """
@@ -358,7 +364,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
         2D/3D frequency domain denoiser.
 
-        :param clip:        Clip to be preprocessed.
         :param planes:      Planes to be preprocessed.
         :param full_range:  Whether to return a prefiltered clip in full range.
         :param pref_mask:   Gradient mask node for details retaining if VideoNode.
@@ -367,6 +372,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
                             Anything below lower bound isn't denoised at all.
                             Anything above upper bound is fully denoised.
                             Values between them are a gradient.
+        :param kwargs:      Additional arguments to pass to the prefilter.
 
         :return:            Partial Prefilter.
         """
@@ -386,20 +392,21 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
         Denoising with NLMeans.
 
-        :param planes:          Set the clip planes to be processed.
+        :param planes:          Planes to be preprocessed.
+        :param full_range:      Whether to return a prefiltered clip in full range.
         :param strength:        Controls the strength of the filtering.\n
                                 Larger values will remove more noise.
         :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
                                 Sets the radius of the similarity neighbourhood window.\n
                                 The impact on performance is low, therefore it depends on the nature of the noise.
         :param device_type:     Set the device to use for processing. The fastest device will be used by default.
-        :param kwargs:          Additional arguments passed to the plugin.
+        :param kwargs:          Additional arguments to pass to the prefilter.
 
         :return:                Partial Prefilter.
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.BM3D],
         /,
         *,
@@ -416,6 +423,8 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
         Normal spatio-temporal denoising using BM3D.
 
+        :param planes:      Planes to be preprocessed.
+        :param full_range:  Whether to return a prefiltered clip in full range.
         :param sigma:       Strength of denoising, valid range is [0, +inf].
         :param radius:      Temporal radius, valid range is [1, 16].
         :param profile:     See :py:attr:`vsdenoise.bm3d.Profile`.
@@ -430,7 +439,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         """
 
     @overload
-    def __call__(  # type: ignore
+    def __call__(  # type: ignore[misc]
         self: Literal[Prefilter.BILATERAL],
         /,
         *,
@@ -438,7 +447,6 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         full_range: bool | float = False,
         sigmaS: float | list[float] | tuple[float | list[float], ...] = 3.0,
         sigmaR: float | list[float] | tuple[float | list[float], ...] = 0.02,
-        gpu: bool | None = None,
         **kwargs: Any
     ) -> PrefilterPartial:
         """
@@ -450,7 +458,7 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         :param full_range:  Whether to return a prefiltered clip in full range.
         :param sigmaS:      Sigma of Gaussian function to calculate spatial weight.
         :param sigmaR:      Sigma of Gaussian function to calculate range weight.
-        :param gpu:         Whether to use GPU processing if available or not.
+        :param kwargs:      Additional arguments to pass to the prefilter.
 
         :return:            Partial Prefilter.
         """
@@ -471,12 +479,12 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         self, clip: vs.VideoNode | MissingT = MISSING, /, planes: PlanesT = None, full_range: bool | float = False, **kwargs: Any
     ) -> vs.VideoNode | PrefilterPartial:
         """
-        Run the selected filter.
+        Run the selected prefilter.
 
         :param clip:        Clip to be preprocessed.
         :param planes:      Planes to be preprocessed.
         :param full_range:  Whether to return a prefiltered clip in full range.
-        :param kwargs:      Arguments for the specified filter.
+        :param kwargs:      Additional arguments to pass to the specified prefilter.
 
         :return:            Preprocessed clip or Partial Prefilter.
         """
@@ -494,9 +502,18 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         return out
 
 
-
 class PrefilterPartial(AbstractPrefilter):
+    """A partially-applied prefilter wrapper."""
+
     def __init__(self, prefilter: Prefilter, planes: PlanesT, full_range: bool | float, **kwargs: Any) -> None:
+        """
+        Stores a prefilter function, allowing it to be reused with different clips.
+
+        :param prefilter:   [Prefilter][vsdenoise.prefilters.Prefilter] enumeration.
+        :param planes:      Planes to be preprocessed.
+        :param full_range:  Whether to return a prefiltered clip in full range.
+        :param kwargs:      Arguments for the specified prefilter.
+        """
         self.prefilter = prefilter
         self.planes = planes
         self.full_range = full_range
@@ -509,6 +526,17 @@ class PrefilterPartial(AbstractPrefilter):
         full_range: bool | float | MissingT = MISSING,
         **kwargs: Any
     ) -> vs.VideoNode:
+        """
+        Apply the prefilter to the given clip with optional argument overrides.
+
+        :param clip:        Clip to be preprocessed.
+        :param planes:      Optional override for the planes to preprocess.
+                            If not provided, the default set in the constructor is used.
+        :param full_range:  Optional override for full range setting.
+                            If not provided, the default set in the constructor is used.
+        :param kwargs:      Additional keyword arguments to override or extend the stored ones.
+        :return:            Preprocessed clip.
+        """
         return self.prefilter(
             clip,
             self.planes if planes is MISSING else planes,
@@ -518,7 +546,17 @@ class PrefilterPartial(AbstractPrefilter):
 
 
 class MultiPrefilter(AbstractPrefilter):
+    """
+    A wrapper to apply multiple prefilters in sequence.
+    """
+
     def __init__(self, *prefilters: Prefilter) -> None:
+        """
+        Stores a sequence of prefilter functions and applies them one after
+        another to a given clip using the same parameters.
+    
+        :param prefilters: One or more prefilter functions to apply in order.
+        """
         self.prefilters = prefilters
 
     def __call__(
@@ -528,6 +566,15 @@ class MultiPrefilter(AbstractPrefilter):
         full_range: bool | float = False,
         **kwargs: Any
     ) -> vs.VideoNode:
+        """
+        Apply a sequence of prefilters to the given clip.
+
+        :param clip:        Clip to be preprocessed.
+        :param planes:      Planes to be preprocessed.
+        :param full_range:  Whether to return a prefiltered clip in full range.
+        :param kwargs:      Additional keyword arguments passed to each prefilter.
+        :return:            Preprocessed clip.
+        """
         for pref in self.prefilters:
             clip = pref(clip, planes, full_range, **kwargs)
 
