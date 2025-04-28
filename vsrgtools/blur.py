@@ -130,8 +130,11 @@ def side_box_blur(
 
 
 def gauss_blur(
-    clip: vs.VideoNode, sigma: float | list[float] = 0.5, taps: int | None = None,
-    mode: ConvMode = ConvMode.HV, planes: PlanesT = None,
+    clip: vs.VideoNode,
+    sigma: float | list[float] = 0.5,
+    taps: int | None = None,
+    mode: OneDimConvModeT | TempConvModeT = ConvMode.HV,
+    planes: PlanesT = None,
     **kwargs: Any
 ) -> ConstantFormatVideoNode:
     """
