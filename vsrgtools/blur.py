@@ -213,13 +213,30 @@ def gauss_blur(
 
 
 def min_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1,
-    mode: tuple[ConvMode, ConvMode] = (ConvMode.HV, ConvMode.SQUARE), planes: PlanesT = None,
+    clip: vs.VideoNode,
+    radius: int | list[int] = 1,
+    mode: tuple[ConvMode, ConvMode] = (ConvMode.HV, ConvMode.SQUARE),
+    planes: PlanesT = None,
     **kwargs: Any
 ) -> ConstantFormatVideoNode:
     """
-    MinBlur by Didée (http://avisynth.nl/index.php/MinBlur)
-    Nifty Gauss/Median combination
+    Combines binomial (Gaussian-like) blur and median filtering for a balanced smoothing effect.
+
+    This filter blends the input clip with both a binomial blur and a median blur to achieve
+    a "best of both worlds" result — combining the edge-preserving nature of median filtering
+    with the smoothness of Gaussian blur. The effect is somewhat reminiscent of a bilateral filter.
+
+    Original concept: http://avisynth.nl/index.php/MinBlur
+
+    :param clip:      Source clip.
+    :param radius:    Radius of blur to apply. Can be a single int or a list for per-plane control.
+    :param mode:      A tuple of two convolution modes:
+                         - First element: mode for binomial blur.
+                         - Second element: mode for median blur.
+                      Defaults to (HV, SQUARE).
+    :param planes:    Planes to process. Defaults to all.
+    :param kwargs:    Additional arguments passed to the binomial blur.
+    :return:          Clip with MinBlur applied.
     """
     assert check_variable(clip, min_blur)
 
@@ -234,7 +251,6 @@ def min_blur(
     median = median_blur(clip, radius, mode_median, planes=planes)
 
     return MeanMode.MEDIAN([clip, blurred, median], planes=planes)
-
 
 
 _SbrBlurT = Union[
