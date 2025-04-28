@@ -29,9 +29,23 @@ __all__ = [
 
 
 def box_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1, passes: int = 1,
-    mode: OneDimConvModeT | TempConvModeT = ConvMode.HV, planes: PlanesT = None, **kwargs: Any
+    clip: vs.VideoNode,
+    radius: int | list[int] = 1,
+    passes: int = 1,
+    mode: OneDimConvModeT | TempConvModeT = ConvMode.HV,
+    planes: PlanesT = None, **kwargs: Any
 ) -> ConstantFormatVideoNode:
+    """
+    Applies a box blur to the input clip.
+
+    :param clip:                Source clip.
+    :param radius:              Blur radius (spatial or temporal). Defaults to 1
+    :param passes:              Number of times the blur is applied. Defaults to 1
+    :param mode:                Convolution mode (horizontal, vertical, both, or temporal). Defaults to HV.
+    :param planes:              Planes to process. Defaults to all.
+    :raises CustomValueError:   If square convolution mode is specified, which is unsupported.
+    :return:                    Blurred clip.
+    """
     assert check_variable(clip, box_blur)
 
     if isinstance(radius, list):
