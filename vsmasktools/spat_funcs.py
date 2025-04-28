@@ -105,10 +105,27 @@ def adg_mask(
 
 @limiter
 def retinex(
-    clip: vs.VideoNode, sigma: Sequence[float] = [25, 80, 250],
-    lower_thr: float = 0.001, upper_thr: float = 0.001,
-    fast: bool = True, func: FuncExceptT | None = None
+    clip: vs.VideoNode,
+    sigma: Sequence[float] = [25, 80, 250],
+    lower_thr: float = 0.001,
+    upper_thr: float = 0.001,
+    fast: bool = True,
+    func: FuncExceptT | None = None
 ) -> ConstantFormatVideoNode:
+    """
+    Multi-Scale Retinex (MSR) implementation for dynamic range and contrast enhancement.
+
+    More information [here](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Retinex).
+
+    :param clip:        Input video clip.
+    :param sigma:       List of Gaussian sigmas for MSR. Using 3 scales (e.g., [25, 80, 250]) balances speed and quality.
+    :param lower_thr:   Lower threshold percentile for output normalization (0–1, exclusive). Affects shadow contrast.
+    :param upper_thr:   Upper threshold percentile for output normalization (0–1, exclusive). Affects highlight compression.
+    :param fast:        Enables fast mode using downscaled approximation and simplifications. Default is True.
+    :param func:        Function returned for custom error handling.
+                        This should only be set by VS package developers.
+    :return:            Processed luma-enhanced clip.
+    """
     func = func or retinex
 
     assert check_variable(clip, func)
