@@ -35,9 +35,29 @@ def adg_mask(
 
 
 def adg_mask(
-    clip: vs.VideoNode, luma_scaling: float | Sequence[float] = 8.0,
-    relative: bool = False, func: FuncExceptT | None = None
+    clip: vs.VideoNode,
+    luma_scaling: float | Sequence[float] = 8.0,
+    relative: bool = False,
+    func: FuncExceptT | None = None
 ) -> ConstantFormatVideoNode | list[ConstantFormatVideoNode]:
+    """
+    Generates an adaptive grain mask based on each frame's average luma and pixel value.
+
+    This function is primarily used to create masks for adaptive grain applications but can be used
+    in other scenarios requiring luminance-aware masking.
+
+    :param clip:                The clip to process.
+    :param luma_scaling:        Controls the strength of the adaptive mask. Can be a single float or a sequence of floats.
+                                Default is 8.0. Negative values invert the mask behavior.
+    :param relative:            Enables relative computation based on pixel-to-average luminance ratios.
+                                Requires the akarin plugin. If True without akarin, an error is raised.
+    :param func:                Function returned for custom error handling.
+                                This should only be set by VS package developers.
+    :raises CustomRuntimeError: If the akarin plugin is not available and either `relative` is True
+                                or the clip is in fp16 format.
+    :return:                    A single mask or a list of masks (if `luma_scaling` is a sequence),
+                                corresponding to the input clip.
+    """
     func = func or adg_mask
 
     assert check_variable(clip, func)
