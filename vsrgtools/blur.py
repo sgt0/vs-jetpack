@@ -304,21 +304,21 @@ def sbr(
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int = ..., mode: Literal[ConvMode.TEMPORAL] = ..., planes: PlanesT = ...
+    clip: vs.VideoNode, radius: int | list[int] = 1, mode: SpatialConvModeT = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int | list[int] = ..., mode: SpatialConvModeT = ..., planes: PlanesT = None
+    clip: vs.VideoNode, radius: int = 1, mode: Literal[ConvMode.TEMPORAL] = ..., planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     ...
 
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int | list[int] = ..., mode: ConvMode = ..., planes: PlanesT = None
+    clip: vs.VideoNode, radius: int | list[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     ...
 
@@ -326,6 +326,20 @@ def median_blur(
 def median_blur(
     clip: vs.VideoNode, radius: int | list[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
+    """
+    Applies a median blur to the clip using spatial or temporal neighborhood.
+
+    - In temporal mode, each pixel is replaced by the median across multiple frames.
+    - In spatial modes, each pixel is replaced with the median of its 2D neighborhood.
+
+    :param clip:                Source clip.
+    :param radius:              Blur radius per plane (list) or uniform radius (int).
+                                Only int is allowed in temporal mode.
+    :param mode:                Convolution mode. Defaults to SQUARE.
+    :param planes:              Planes to process. Defaults to all.
+    :raises CustomValueError:   If a list is passed for radius in temporal mode, which is unsupported.
+    :return:                    Median-blurred video clip.
+    """
     assert check_variable(clip, median_blur)
 
     if mode == ConvMode.TEMPORAL:
