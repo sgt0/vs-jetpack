@@ -134,6 +134,18 @@ def gauss_blur(
     mode: ConvMode = ConvMode.HV, planes: PlanesT = None,
     **kwargs: Any
 ) -> ConstantFormatVideoNode:
+    """
+    Applies Gaussian blur to a clip, supporting spatial and temporal modes, and per-plane control.
+
+    :param clip:    Source clip.
+    :param sigma:   Standard deviation of the Gaussian kernel. Can be a float or a list for per-plane control.
+    :param taps:    Number of taps in the kernel. Automatically determined if not specified.
+    :param mode:    Convolution mode (horizontal, vertical, both, or temporal). Defaults to HV.
+    :param planes:  Planes to process. Defaults to all.
+    :param kwargs:  Additional arguments passed to the resizer or blur kernel.
+                    Specifying `_fast=True` enables fast approximation.
+    :return:        Blurred clip.
+    """
     assert check_variable(clip, gauss_blur)
 
     planes = normalize_planes(clip, planes)
