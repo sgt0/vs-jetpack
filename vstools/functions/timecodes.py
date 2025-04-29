@@ -239,7 +239,7 @@ class Timecodes(list[Timecode]):
         elif 'v2' in version:
             timecodes_l = [float(t) for t in _timecodes if not t.startswith('#')]
             norm_timecodes = [
-                Fraction(int(denominator * float(f'{round((x - y) * 100, 4) / 100000:.08f}'[:-1])), denominator)
+                Fraction(denominator, int(denominator / float(f'{round((x - y) * 100, 4) / 100000:.08f}'[:-1])))
                 for x, y in zip(timecodes_l[1:], timecodes_l[:-1])
             ]
         else:
