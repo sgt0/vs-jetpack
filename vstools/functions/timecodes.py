@@ -28,8 +28,8 @@ keyframes_storage = PackageStorage(package_name='keyframes')
 
 
 @dataclass
-class Timecode:
-    """A Timecode object representing the timecodes of a specific frame."""
+class FrameDur:
+    """A fraction representing the duration of a specific frame."""
 
     frame: int
     """The frame number."""
@@ -41,12 +41,12 @@ class Timecode:
     """The framerate denominator."""
 
     def to_fraction(self) -> Fraction:
-        """Convert the Timecode to a Fraction that represents the FPS."""
+        """Convert the FrameDur to a Fraction that represents the frame duration."""
 
         return Fraction(self.numerator, self.denominator)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Timecode):
+        if not isinstance(other, FrameDur):
             return False
 
         return (self.numerator, self.denominator) == (other.numerator, other.denominator)
@@ -58,14 +58,34 @@ class Timecode:
         return float(self.to_fraction())
 
 
-TimecodeBoundT = TypeVar('TimecodeBoundT', bound=Timecode)
-
-
-class Timecodes(list[Timecode]):
-    """A list of individual Timecode objects."""
+class Timecodes(list[FrameDur]):
+    """A list of frame durations, together representing a (possibly variable) frame rate."""
 
     V1 = 1
+    """
+    V1 timecode format, containing a list of frame ranges with associated frame rates. For example:
+    ```
+    # timecodes format v1
+    Assume 23.976023976024
+    544,548,29.97002997003
+    721,725,29.97002997003
+    770,772,17.982017982018
+    ```
+    """
+
     V2 = 2
+    """
+    V2 timecode format, containing a timestamp for each frame, including possibly a final timestamp after the last frame
+    to specify the final frame's duration. For example:
+    ```
+    # timecode format v2
+    0.000000
+    41.708333
+    83.416667
+    125.125000
+    166.833333
+    ```
+    """
 
     def to_fractions(self) -> list[Fraction]:
         """Convert to a list of frame lengths, representing the individual framerates."""
@@ -81,7 +101,7 @@ class Timecodes(list[Timecode]):
         timecodes_ranges = dict[tuple[int, int], Fraction]()
 
         last_i = len(self) - 1
-        last_tcode: tuple[int, Timecode] = (0, self[0])
+        last_tcode: tuple[int, FrameDur] = (0, self[0])
 
         for tcode in self[1:]:
             start, ltcode = last_tcode
@@ -162,8 +182,8 @@ class Timecodes(list[Timecode]):
         """
         from ..utils import get_prop
 
-        def _get_timecode(n: int, f: vs.VideoFrame) -> Timecode:
-            return Timecode(n, get_prop(f, "_DurationNum", int), get_prop(f, "_DurationDen", int))
+        def _get_timecode(n: int, f: vs.VideoFrame) -> FrameDur:
+            return FrameDur(n, get_prop(f, "_DurationNum", int), get_prop(f, "_DurationDen", int))
 
         return cls(clip_async_render(clip, None, 'Fetching timecodes...', _get_timecode, **kwargs))
 
@@ -191,7 +211,7 @@ class Timecodes(list[Timecode]):
 
         :param file:            File to read.
         :param length:          Total number of frames.
-        :param den:             The denominator. If None, try to obtain it from the ref if possible,
+        :param den:             The frame rate denominator. If None, try to obtain it from the ref if possible,
                                 else fall back to 1001.
         :param func:            Function returned for custom error handling.
                                 This should only be set by VS package developers.
@@ -252,7 +272,7 @@ class Timecodes(list[Timecode]):
             )
 
         return cls(
-            Timecode(i, f.numerator, f.denominator) for i, f in enumerate(norm_timecodes)
+            FrameDur(i, f.numerator, f.denominator) for i, f in enumerate(norm_timecodes)
         )
 
     def assume_vfr(self, clip: VideoNodeT, func: FuncExceptT | None = None) -> VideoNodeT:
