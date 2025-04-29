@@ -356,9 +356,13 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
         :param cache_size:  The maximum number of VideoNode allowed in the cache. Defaults to 10
         :return:            Processed variable clip.
         """
-        setattr(cls, "process", lambda self, clip: func(clip))
+        def process(self: ProcessVariableClip[T, VideoNodeT], clip: VideoNodeT) -> VideoNodeT:
+            return func(clip)
 
-        return cls(clip, out_dim, out_fmt, cache_size).eval_clip()
+        ns = cls.__dict__.copy()
+        ns[process.__name__] = process
+
+        return type(cls.__name__, cls.__bases__, ns)(clip, out_dim, out_fmt, cache_size).eval_clip()
 
     @abstractmethod
     def get_key(self, frame: vs.VideoNode | vs.VideoFrame) -> T:
