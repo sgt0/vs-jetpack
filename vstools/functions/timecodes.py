@@ -35,10 +35,10 @@ class FrameDur:
     """The frame number."""
 
     numerator: int
-    """The framerate numerator."""
+    """The frame duration's numerator."""
 
     denominator: int
-    """The framerate denominator."""
+    """The frame duration's denominator."""
 
     def to_fraction(self) -> Fraction:
         """Convert the FrameDur to a Fraction that represents the frame duration."""
