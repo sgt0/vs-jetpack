@@ -191,7 +191,7 @@ class EEDI3(Interpolater):
         else:
             interpolated = core.eedi3m.EEDI3(clip, self.field, double_y or not self.drop_fields, **aa_kwargs)
 
-        return self.shift_interpolate(clip, interpolated, double_y, **kwargs)
+        return self.shift_interpolate(clip, interpolated, double_y)
 
     def _handle_sclip(
         self, clip: vs.VideoNode, double_y: bool, aa_kwargs: dict[str, Any], **kwargs: Any
