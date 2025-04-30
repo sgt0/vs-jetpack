@@ -126,12 +126,12 @@ class Timecodes(list[FrameDur]):
 
         for (startn, endn), fps in timecodes.items():
             start = max(fallback(startn, 0), 0)
-            end = fallback(endn, length)
+            end = fallback(endn, length - 1)
 
-            if end > len(norm_timecodes):
-                norm_timecodes += [fps] * (end - len(norm_timecodes))
+            if end + 1 > len(norm_timecodes):
+                norm_timecodes += [fps] * (end + 1 - len(norm_timecodes))
 
-            norm_timecodes[start:end] = [fps] * (end - start)
+            norm_timecodes[start:end + 1] = [fps] * (end + 1 - start)
 
         return norm_timecodes
 
