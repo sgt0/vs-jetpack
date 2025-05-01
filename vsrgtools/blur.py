@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from functools import partial
 from itertools import count
-from typing import TYPE_CHECKING, Any, Literal, Sequence, Union, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Sequence, Union, overload
 
-from jetpytools import FuncExceptT
+from jetpytools import CustomStrEnum, FuncExceptT, P, R
 
 from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
 from vskernels import Bilinear, Gaussian
@@ -14,11 +14,11 @@ from vstools import (
     split, to_arr, vs
 )
 
-from .enum import BilateralBackend, BlurMatrix, BlurMatrixBase, LimitFilterMode, VerticalCleanerMode, RemoveGrainMode
+from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode, RemoveGrainMode, VerticalCleanerMode
 from .freqs import MeanMode
 from .limit import limit_filter
 from .rgtools import remove_grain, vertical_cleaner
-from .util import normalize_radius, norm_rmode_planes
+from .util import norm_rmode_planes, normalize_radius
 
 __all__ = [
     'box_blur', 'side_box_blur',
@@ -393,18 +393,99 @@ def median_blur(
     return clip
 
 
+class Bilateral(Generic[P, R]):
+    """
+    Class decorator that wraps the [bilateral][vsrgtools.blur.bilateral] function
+    and extends its functionality.
+
+    It is not meant to be used directly.
+    """
+
+    def __init__(self, bilateral_func: Callable[P, R]) -> None:
+        self._func = bilateral_func
+
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        return self._func(*args, **kwargs)
+
+    class Backend(CustomStrEnum):
+        """
+        Enum specifying which backend implementation of the bilateral filter to use.
+        """
+
+        CPU = 'vszip'
+        """
+        Uses `vszip.Bilateral` — a fast, CPU-based implementation written in Zig.
+        """
+
+        GPU = 'bilateralgpu'
+        """
+        Uses `bilateralgpu.Bilateral` — a CUDA-based GPU implementation.
+        """
+
+        GPU_RTC = 'bilateralgpu_rtc'
+        """
+        Uses `bilateralgpu_rtc.Bilateral` — a CUDA-based GPU implementation with runtime shader compilation.
+        """
+
+        def Bilateral(self, clip: vs.VideoNode, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
+            """
+            Applies the bilateral filter using the plugin associated with the selected backend.
+
+            :param clip:                    Source clip.
+            :param *args:                   Positional arguments passed to the selected plugin.
+            :param **kwargs:                Keyword arguments passed to the selected plugin.
+            :return:                        Bilaterally filtered clip.
+            """
+            return getattr(clip, self.value).Bilateral(*args, **kwargs)
+
+
+@Bilateral
 def bilateral(
-    clip: vs.VideoNode, ref: vs.VideoNode | None = None, sigmaS: float | Sequence[float] | None = None,
-    sigmaR: float | Sequence[float] | None = None, backend: BilateralBackend = BilateralBackend.CPU, **kwargs: Any
+    clip: vs.VideoNode,
+    ref: vs.VideoNode | None = None,
+    sigmaS: float | Sequence[float] | None = None,
+    sigmaR: float | Sequence[float] | None = None,
+    backend: Bilateral.Backend = Bilateral.Backend.CPU,
+    **kwargs: Any
 ) -> ConstantFormatVideoNode:
+    """
+    Applies a bilateral filter for edge-preserving and noise-reducing smoothing.
+
+    This filter replaces each pixel with a weighted average of nearby pixels based on both spatial distance
+    and pixel intensity similarity.
+    It can be used for joint (cross) bilateral filtering when a reference clip is given.
+
+    Example:
+        ```py
+        blurred = bilateral(clip, ref, 3.0, 0.02, backend=bilateral.Backend.CPU)
+        ```
+
+    For more details, see:
+        - https://github.com/dnjulek/vapoursynth-zip/wiki/Bilateral
+        - https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Bilateral
+        - https://github.com/WolframRhodium/VapourSynth-BilateralGPU
+
+    :param clip:        Source clip.
+    :param ref:         Optional reference clip for joint bilateral filtering.
+    :param sigmaS:      Spatial sigma (controls the extent of spatial smoothing).
+                        Can be a float or per-plane list.
+    :param sigmaR:      Range sigma (controls sensitivity to intensity differences).
+                        Can be a float or per-plane list.
+    :param backend:     Backend implementation to use.
+    :param kwargs:      Additional arguments forwarded to the backend-specific implementation.
+    :return:            Bilaterally filtered clip.
+    """
     assert check_variable_format(clip, bilateral)
 
-    if backend == BilateralBackend.CPU:
+    # TODO: remove this when BilateralBackend will be removed
+    backend = Bilateral.Backend(backend)
+
+    if backend == Bilateral.Backend.CPU:
         bilateral_args = KwargsT(ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=normalize_planes(clip))
     else:
         bilateral_args = KwargsT(ref=ref, sigma_spatial=sigmaS, sigma_color=sigmaR)
 
-    return getattr(clip, backend).Bilateral(**bilateral_args | kwargs)
+    return backend.Bilateral(clip, **bilateral_args | kwargs)
 
 
 def flux_smooth(
