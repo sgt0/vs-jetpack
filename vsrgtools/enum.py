@@ -49,6 +49,11 @@ class LimitFilterMode(LimitFilterModeMeta, CustomIntEnum):
         return self
 
 
+@deprecated(
+    "This enum is deprecated and will be removed in a future version. "
+    "Uses `vsrgtools.remove_grain.Mode` instead.",
+    category=DeprecationWarning
+)
 class RemoveGrainMode(CustomIntEnum):
     NONE = 0
     MINMAX_AROUND1 = 1
@@ -89,6 +94,11 @@ class RemoveGrainMode(CustomIntEnum):
 RemoveGrainModeT = int | RemoveGrainMode | Sequence[int | RemoveGrainMode]
 
 
+@deprecated(
+    "This enum is deprecated and will be removed in a future version. "
+    "Uses `vsrgtools.repair.Mode` instead.",
+    category=DeprecationWarning
+)
 class RepairMode(CustomIntEnum):
     NONE = 0
     MINMAX_SQUARE1 = 1
@@ -128,6 +138,11 @@ class RepairMode(CustomIntEnum):
 RepairModeT = int | RepairMode | Sequence[int | RepairMode]
 
 
+@deprecated(
+    "This enum is deprecated and will be removed in a future version. "
+    "Uses `vsrgtools.vertical_cleaner.Mode` instead.",
+    category=DeprecationWarning
+)
 class VerticalCleanerMode(CustomIntEnum):
     NONE = 0
     MEDIAN = 1
@@ -142,6 +157,11 @@ class VerticalCleanerMode(CustomIntEnum):
 VerticalCleanerModeT = int | VerticalCleanerMode | Sequence[int | VerticalCleanerMode]
 
 
+@deprecated(
+    "This enum is deprecated and will be removed in a future version. "
+    "Uses `vsrgtools.clense.Mode` instead.",
+    category=DeprecationWarning
+)
 class ClenseMode(CustomStrEnum):
     NONE = ''
     BACKWARD = 'BackwardClense'
