@@ -302,11 +302,11 @@ class MatrixEdgeDetect(EdgeDetect):
 
     def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
         if len(self.matrices[0]) > 9 or (self.mode_types and self.mode_types[0] != 's'):
-            clip = vs.core.std.Crop(
+            cropped = vs.core.std.Crop(
                 clip,
                 right=clip.format.subsampling_w * 2 if clip.format.subsampling_w != 0 else 2
             )
-            clip = vs.core.resize.Point(clip, clip.width, src_width=clip.width)
+            clip = vs.core.resize.Point(cropped, clip.width, src_width=clip.width)
 
         return clip
 
