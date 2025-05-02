@@ -206,6 +206,8 @@ class RemoveGrain(Generic[P, R]):
 
         These modes serve a wide range of use cases, such as clamping outliers,
         removing noise, or simple dehaloing.
+
+        More information [here](https://blog.kageru.moe/legacy/removegrain.html).
         """
 
         NONE = 0
@@ -286,6 +288,9 @@ class RemoveGrain(Generic[P, R]):
         EDGE_DEHALO2 = 24
         """More conservative version of mode 23."""
 
+        MIN_SHARP2 = 25
+        """Minimal sharpening also known as "non destructive sharpen"."""
+
         SMART_RGC = 26
         """Like mode 17, but preserves corners. Does not preserve thin lines."""
 
@@ -319,7 +324,7 @@ def remove_grain(
     See [RemoveGrain.Mode][vsrgtools.rgtools.RemoveGrain.Mode] for all available modes.
 
     - Modes 1–24 are natively implemented in [zsmooth.RemoveGrain](https://github.com/adworacz/zsmooth?tab=readme-ov-file#removegrain).
-    - Modes 26+ fall back to expression-based implementations.
+    - Modes 25+ fall back to expression-based implementations.
 
     Example:
         ```py
