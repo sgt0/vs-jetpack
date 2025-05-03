@@ -146,7 +146,7 @@ def side_box_blur(
 
 def gauss_blur(
     clip: vs.VideoNode,
-    sigma: float | list[float] = 0.5,
+    sigma: float | Sequence[float] = 0.5,
     taps: int | None = None,
     mode: OneDimConvModeT | TempConvModeT = ConvMode.HV,
     planes: PlanesT = None,
@@ -168,7 +168,7 @@ def gauss_blur(
 
     planes = normalize_planes(clip, planes)
 
-    if isinstance(sigma, list):
+    if isinstance(sigma, Sequence):
         return normalize_radius(clip, gauss_blur, dict(sigma=sigma), planes, mode=mode)
 
     fast = kwargs.pop("_fast", False)
