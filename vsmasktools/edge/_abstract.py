@@ -252,7 +252,7 @@ class EdgeDetect(ABC):
         raise NotImplementedError
 
     def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        return clip
+        return ColorRange.FULL.apply(clip)
 
     def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
         return clip
