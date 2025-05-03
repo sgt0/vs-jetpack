@@ -155,18 +155,23 @@ def gauss_blur(
     """
     Applies Gaussian blur to a clip, supporting spatial and temporal modes, and per-plane control.
 
-    :param clip:    Source clip.
-    :param sigma:   Standard deviation of the Gaussian kernel. Can be a float or a list for per-plane control.
-    :param taps:    Number of taps in the kernel. Automatically determined if not specified.
-    :param mode:    Convolution mode (horizontal, vertical, both, or temporal). Defaults to HV.
-    :param planes:  Planes to process. Defaults to all.
-    :param kwargs:  Additional arguments passed to the resizer or blur kernel.
-                    Specifying `_fast=True` enables fast approximation.
+    :param clip:                Source clip.
+    :param sigma:               Standard deviation of the Gaussian kernel. Can be a float or a list for per-plane control.
+    :param taps:                Number of taps in the kernel. Automatically determined if not specified.
+    :param mode:                Convolution mode (horizontal, vertical, both, or temporal). Defaults to HV.
+    :param planes:              Planes to process. Defaults to all.
+    :param kwargs:              Additional arguments passed to the resizer or blur kernel.
+                                Specifying `_fast=True` enables fast approximation.
+    :raises CustomValueError:   If square convolution mode is specified, which is unsupported.
     :return:        Blurred clip.
     """
     assert check_variable(clip, gauss_blur)
 
     planes = normalize_planes(clip, planes)
+
+    if not TYPE_CHECKING:
+        if mode == ConvMode.SQUARE:
+            raise CustomValueError("Invalid mode specified", gauss_blur, mode)
 
     if isinstance(sigma, Sequence):
         return normalize_radius(clip, gauss_blur, dict(sigma=sigma), planes, mode=mode)
