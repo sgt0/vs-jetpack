@@ -30,7 +30,7 @@ __all__ = [
 
 def box_blur(
     clip: vs.VideoNode,
-    radius: int | list[int] = 1,
+    radius: int | Sequence[int] = 1,
     passes: int = 1,
     mode: OneDimConvModeT | TempConvModeT = ConvMode.HV,
     planes: PlanesT = None, **kwargs: Any
@@ -48,7 +48,7 @@ def box_blur(
     """
     assert check_variable(clip, box_blur)
 
-    if isinstance(radius, list):
+    if isinstance(radius, Sequence):
         return normalize_radius(clip, box_blur, radius, planes, passes=passes, mode=mode, **kwargs)
 
     if not radius:
