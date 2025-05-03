@@ -398,7 +398,7 @@ class SingleMatrix(MatrixEdgeDetect, ABC):
 
 class EuclideanDistance(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode]) -> ConstantFormatVideoNode:
-        return norm_expr(clips, 'x x * y y * + sqrt', func=self.__class__)
+        return norm_expr(clips, 'x dup * y dup * + sqrt', func=self.__class__)
 
     def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode]) -> NoReturn | ConstantFormatVideoNode:
         raise NotImplementedError
