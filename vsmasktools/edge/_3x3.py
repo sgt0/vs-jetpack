@@ -189,7 +189,7 @@ class ScharrTCanny(Matrix3x3, EdgeDetect):
     """H. Scharr optimised TCanny Vapoursynth plugin operator."""
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        return clip.tcanny.TCanny(op=2, **(KwargsT(sigma=0, mode=1, scale=4 / 3) | kwargs))
+        return clip.tcanny.TCanny(op=3, **(KwargsT(sigma=0, mode=1, scale=4 / 3) | kwargs))
 
 
 class Kroon(RidgeDetect, EuclideanDistance, Matrix3x3):
