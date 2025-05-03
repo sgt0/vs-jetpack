@@ -220,7 +220,7 @@ def gauss_blur(
 
 def min_blur(
     clip: vs.VideoNode,
-    radius: int | list[int] = 1,
+    radius: int | Sequence[int] = 1,
     mode: tuple[ConvMode, ConvMode] = (ConvMode.HV, ConvMode.SQUARE),
     planes: PlanesT = None,
     **kwargs: Any
@@ -248,7 +248,7 @@ def min_blur(
 
     planes = normalize_planes(clip, planes)
 
-    if isinstance(radius, list):
+    if isinstance(radius, Sequence):
         return normalize_radius(clip, min_blur, radius, planes)
 
     mode_blur, mode_median = normalize_seq(mode, 2)
