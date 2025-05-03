@@ -16,7 +16,7 @@ from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, PlanesT,
 
 __all__ = [
     'normalize_seq',
-    'normalize_planes',
+    'normalize_planes', 'invert_planes',
     'to_arr',
     'flatten', 'flatten_vnodes',
     'normalize_list_to_ranges',
@@ -62,6 +62,18 @@ def normalize_planes(clip: vs.VideoNode, planes: PlanesT = None) -> list[int]:
         planes = to_arr(planes)
 
     return list(sorted(set(planes).intersection(range(clip.format.num_planes))))
+
+
+def invert_planes(clip: vs.VideoNode, planes: PlanesT = None) -> list[int]:
+    """
+    Invert a sequence of planes.
+
+    :param clip:        Input clip.
+    :param planes:      Array of planes. If None, selects all planes of the input clip's format.
+
+    :return:            Sorted inverted list of planes.
+    """
+    return sorted(set(normalize_planes(clip, None)) - set(normalize_planes(clip, planes)))
 
 
 @overload
