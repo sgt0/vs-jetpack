@@ -168,7 +168,7 @@ def gauss_blur(
     planes = normalize_planes(clip, planes)
 
     if isinstance(sigma, list):
-        return normalize_radius(clip, gauss_blur, ('sigma', sigma), planes, mode=mode)
+        return normalize_radius(clip, gauss_blur, dict(sigma=sigma), planes, mode=mode)
 
     fast = kwargs.pop("_fast", False)
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Sequence, TypeVar
 
 from vstools import (
-    ConstantFormatVideoNode, GenericVSFunction, KwargsT, Nb, PlanesT, check_variable, check_variable_format,
+    ConstantFormatVideoNode, GenericVSFunction, PlanesT, check_variable, check_variable_format,
     join, normalize_planes, normalize_seq, plane, vs
 )
 
@@ -30,28 +30,30 @@ def norm_rmode_planes(
 
 
 def normalize_radius(
-    clip: vs.VideoNode, func: GenericVSFunction[ConstantFormatVideoNode], radius: list[Nb] | tuple[str, list[Nb]],
-    planes: PlanesT, **kwargs: Any
+    clip: vs.VideoNode,
+    func: GenericVSFunction[ConstantFormatVideoNode],
+    radius: Sequence[float | int] | dict[str, Sequence[float | int]],
+    planes: PlanesT,
+    **kwargs: Any
 ) -> ConstantFormatVideoNode:
     assert check_variable_format(clip, normalize_radius)
 
-    name, radius = radius if isinstance(radius, tuple) else ('radius', radius)
+    if isinstance(radius, dict):
+        name, radius = radius.popitem()
+    else:
+        name, radius = "radius", radius
 
     radius = normalize_seq(radius, clip.format.num_planes)
 
     planes = normalize_planes(clip, planes)
 
-    def _get_kwargs(rad: Nb) -> KwargsT:
-        return kwargs | {name: rad, 'planes': planes}
-
     if len(set(radius)) > 0:
         if len(planes) != 1:
-            return join([
-                func(plane(clip, i), **_get_kwargs(rad)) for i, rad in enumerate(radius)
-            ])
+            pplanes = [func(plane(clip, i), **kwargs | {name: rad, 'planes': 0}) for i, rad in enumerate(radius)]
+            return join(pplanes)
 
         radius_i = radius[planes[0]]
     else:
         radius_i = radius[0]
 
-    return func(clip, **_get_kwargs(radius_i))
+    return func(clip, **kwargs | {name: radius_i, 'planes': planes})
