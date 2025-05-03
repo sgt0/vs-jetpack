@@ -3,7 +3,9 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, Sequence
 
-from vstools import ColorRange, ConstantFormatVideoNode, depth
+from jetpytools import KwargsT
+
+from vstools import ColorRange, ConstantFormatVideoNode, depth, vs
 from vsexprtools import norm_expr
 
 from ._abstract import EdgeDetect, EuclideanDistance, MagnitudeMatrix, Max, RidgeDetect, SingleMatrix
@@ -92,7 +94,9 @@ class FDoGTCanny(Matrix5x5, EdgeDetect):
     """Flow-based Difference of Gaussian TCanny Vapoursynth plugin."""
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        return clip.tcanny.TCanny(kwargs.pop('sigma', 0), mode=1, op=6, scale=0.5, **kwargs)
+        _scale_constant = 0.5 if clip.format.sample_type == vs.FLOAT else (1 - 1 / (7 / 3) * 0.9696)
+        
+        return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
 
 
 class DoG(EuclideanDistance, Matrix5x5):
