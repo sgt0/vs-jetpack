@@ -326,7 +326,7 @@ def sbr(
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1, mode: SpatialConvModeT = ConvMode.SQUARE, planes: PlanesT = None
+    clip: vs.VideoNode, radius: int | Sequence[int] = 1, mode: SpatialConvModeT = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     ...
 
@@ -340,13 +340,13 @@ def median_blur(
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
+    clip: vs.VideoNode, radius: int | Sequence[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     ...
 
 
 def median_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
+    clip: vs.VideoNode, radius: int | Sequence[int] = 1, mode: ConvMode = ConvMode.SQUARE, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     """
     Applies a median blur to the clip using spatial or temporal neighborhood.
