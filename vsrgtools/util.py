@@ -4,7 +4,7 @@ from typing import Any, Sequence, TypeVar
 
 from vstools import (
     ConstantFormatVideoNode, GenericVSFunction, PlanesT, check_variable, check_variable_format,
-    join, normalize_planes, normalize_seq, plane, vs
+    join, normalize_planes, normalize_seq, split, vs
 )
 
 from .enum import RemoveGrainMode, RepairMode
@@ -44,16 +44,14 @@ def normalize_radius(
         name, radius = "radius", radius
 
     radius = normalize_seq(radius, clip.format.num_planes)
-
     planes = normalize_planes(clip, planes)
 
-    if len(set(radius)) > 0:
-        if len(planes) != 1:
-            pplanes = [func(plane(clip, i), **kwargs | {name: rad, 'planes': 0}) for i, rad in enumerate(radius)]
-            return join(pplanes)
+    if len(set(radius)) > 1:
+        pplanes = [
+            func(p, **kwargs | {name: rad, 'planes': 0})
+            if i in planes else p
+            for i, (rad, p) in enumerate(zip(radius, split(clip)))
+        ]
+        return join(pplanes)
 
-        radius_i = radius[planes[0]]
-    else:
-        radius_i = radius[0]
-
-    return func(clip, **kwargs | {name: radius_i, 'planes': planes})
+    return func(clip, **kwargs | {name: radius[0], 'planes': planes})
