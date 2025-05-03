@@ -39,7 +39,8 @@ def box_blur(
     Applies a box blur to the input clip.
 
     :param clip:                Source clip.
-    :param radius:              Blur radius (spatial or temporal). Defaults to 1
+    :param radius:              Blur radius (spatial or temporal) Can be a int or a list for per-plane control.
+                                Defaults to 1
     :param passes:              Number of times the blur is applied. Defaults to 1
     :param mode:                Convolution mode (horizontal, vertical, both, or temporal). Defaults to HV.
     :param planes:              Planes to process. Defaults to all.
