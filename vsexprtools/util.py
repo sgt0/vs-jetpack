@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from itertools import count
+import re
 from typing import Callable, Iterable, Iterator, Sequence, SupportsIndex, TypeAlias, overload
 
 from jetpytools import SupportsString
@@ -247,10 +248,10 @@ def bitdepth_aware_tokenize_expr(
     for mkey, function in replaces:
         if mkey in expr:
             for key, clip, crange in [
-                (f'{mkey}_{k} ' if k else f'{mkey} ', clip, crange)
+                (f'{mkey}_{k}' if k else f'{mkey}', clip, crange)
                 for k, clip, crange in mapped_clips
             ]:
-                expr = expr.replace(key, str(function(clip, chroma, crange) * 1.0) + ' ')
+                expr = re.sub(rf"\b{key}\b", str(function(clip, chroma, crange) * 1.0), expr)
 
         if mkey in expr:
             raise CustomIndexError('Parsing error or not enough clips passed!', func, reason=expr)
