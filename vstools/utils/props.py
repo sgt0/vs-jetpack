@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import sys
 
-from typing import Any, Callable, Literal, MutableMapping, Sequence, TypeVar
+from types import UnionType
+from typing import Any, Callable, Iterable, Literal, MutableMapping, Sequence, TypeVar, _UnionGenericAlias  # type: ignore[attr-defined]
 from typing import cast as typing_cast
-from typing import overload
+from typing import get_args, get_origin, overload
 
 import vapoursynth as vs
 
 from jetpytools import (
-    MISSING, FileWasNotFoundError, FuncExceptT, MissingT, SPath, SPathLike, SupportsString,
-    normalize_seq
+    MISSING, FileWasNotFoundError, FuncExceptT, MissingT, SPath, SPathLike, SupportsString, T, normalize_seq, to_arr
 )
 
 from ..enums import PropEnum
@@ -31,6 +31,23 @@ CT = TypeVar('CT')
 
 
 _get_prop_cache = NodesPropsCache[vs.RawNode]()
+
+
+def _normalize_types(types: type[T] | Iterable[type[T]]) -> tuple[type[T], ...]:
+    norm_t = list[type[T]]()
+
+    for tt in to_arr(types):
+        t_origin = get_origin(tt)
+
+        if t_origin is not None:
+            if isinstance(tt, (_UnionGenericAlias, UnionType)):
+                norm_t.extend(_normalize_types(get_args(tt)))
+            else:
+                norm_t.append(t_origin)
+        else:
+            norm_t.append(tt)
+
+    return tuple(norm_t)
 
 
 @overload
@@ -139,19 +156,17 @@ def get_prop(
     prop: Any = MISSING
 
     try:
-        if isinstance(key, str):
-            prop = props[key]
-        elif isinstance(key, type) and issubclass(key, PropEnum):
+        if isinstance(key, type) and issubclass(key, PropEnum):
             key = key.prop_key
         else:
             key = str(key)
 
         prop = props[key]
 
-        if not isinstance(prop, t):
-            ts: tuple[type[BoundVSMapValue], ...] = (t, ) if not isinstance(t, tuple) else t
+        norm_t = _normalize_types(t)
 
-            if all(issubclass(ty, str) for ty in ts) and isinstance(prop, bytes):
+        if not isinstance(prop, norm_t):
+            if all(issubclass(ty, str) for ty in norm_t) and isinstance(prop, bytes):
                 return prop.decode('utf-8')  # type: ignore[return-value]
             raise TypeError
 
