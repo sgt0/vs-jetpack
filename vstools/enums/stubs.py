@@ -33,6 +33,7 @@ class PropEnum(CustomIntEnum):
         return False
 
     @classproperty
+    @classmethod
     def prop_key(cls) -> str:
         """The key used in props to store the enum."""
 

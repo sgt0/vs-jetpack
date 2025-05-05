@@ -206,6 +206,7 @@ class _ExprVars(Iterable[str]):
         return ' '.join(iter(self))
 
     @classproperty
+    @classmethod
     def cycle(cls) -> Iterator[str]:
         for x in count():
             yield cls.get_var(x)

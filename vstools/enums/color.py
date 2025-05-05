@@ -935,24 +935,28 @@ class MatrixCoefficients(NamedTuple):
     """Coefficient representing the exponent of the gamma curve."""
 
     @classproperty
+    @classmethod
     def SRGB(cls) -> MatrixCoefficients:
         """Matrix Coefficients for SRGB."""
 
         return MatrixCoefficients(0.04045, 12.92, 0.055, 2.4)
 
     @classproperty
+    @classmethod
     def BT709(cls) -> MatrixCoefficients:
         """Matrix Coefficients for BT709."""
 
         return MatrixCoefficients(0.08145, 4.5, 0.0993, 2.22222)
 
     @classproperty
+    @classmethod
     def SMPTE240M(cls) -> MatrixCoefficients:
         """Matrix Coefficients for SMPTE240M."""
 
         return MatrixCoefficients(0.0912, 4.0, 0.1115, 2.22222)
 
     @classproperty
+    @classmethod
     def BT2020(cls) -> MatrixCoefficients:
         """Matrix Coefficients for BT2020."""
 
