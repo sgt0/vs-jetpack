@@ -278,40 +278,52 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
         if self._dict["super_args"]:
             self._dict["super_args"]["pelclip"] = None
 
+    @classproperty
+    @classmethod
+    def HQ_COHERENCE(cls) -> Self:
+        return cls(
+            search_clip=prefilter_to_full_range,
+            analyze_args=AnalyzeArgs(
+                blksize=16,
+                overlap=8,
+                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
+            ),
+            recalculate_args=RecalculateArgs(
+                blksize=8,
+                overlap=4,
+                dct=SADMode.ADAPTIVE_SATD_MIXED,
+            )
+        )
 
+    @classproperty
+    @classmethod
+    def HQ_SAD(cls) -> Self:
+        return cls(
+            search_clip=prefilter_to_full_range,
+            analyze_args=AnalyzeArgs(
+                blksize=16,
+                overlap=8,
+                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
+                truemotion=MotionMode.SAD,
+            ),
+            recalculate_args=RecalculateArgs(
+                blksize=8,
+                overlap=4,
+                dct=SADMode.ADAPTIVE_SATD_MIXED,
+                truemotion=MotionMode.SAD,
+            )
+        )
+
+# TODO: add deprecation
 class MVToolsPresets:
     """Presets for arguments passed to MVTools functions."""
 
     @classproperty
-    def HQ_COHERENCE(self) -> MVToolsPreset:
-        return MVToolsPreset(
-            search_clip=prefilter_to_full_range,
-            analyze_args=AnalyzeArgs(
-                blksize=16,
-                overlap=8,
-                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
-            ),
-            recalculate_args=RecalculateArgs(
-                blksize=8,
-                overlap=4,
-                dct=SADMode.ADAPTIVE_SATD_MIXED,
-            )
-        )
+    @classmethod
+    def HQ_COHERENCE(cls) -> MVToolsPreset:
+        return MVToolsPreset.HQ_COHERENCE
 
     @classproperty
-    def HQ_SAD(self) -> MVToolsPreset:
-        return MVToolsPreset(
-            search_clip=prefilter_to_full_range,
-            analyze_args=AnalyzeArgs(
-                blksize=16,
-                overlap=8,
-                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
-                truemotion=MotionMode.SAD,
-            ),
-            recalculate_args=RecalculateArgs(
-                blksize=8,
-                overlap=4,
-                dct=SADMode.ADAPTIVE_SATD_MIXED,
-                truemotion=MotionMode.SAD,
-            )
-        )
+    @classmethod
+    def HQ_SAD(cls) -> MVToolsPreset:
+        return MVToolsPreset.HQ_SAD
