@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from jetpytools import CustomIntEnum
 
-from vstools import core, vs, vs_object
+from vstools import core, vs
 
 from .base import Indexer
 
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-class BestSource(Indexer, vs_object):
+class BestSource(Indexer):
     """BestSource indexer"""
 
     _source_func = core.lazy.bs.VideoSource
@@ -52,9 +52,7 @@ class BestSource(Indexer, vs_object):
         in the absolute path in *cachepath* with track number and index extension appended.
         """
 
-    def __init__(self, *, force: bool = True, **kwargs: Any) -> None:
-        kwargs.setdefault("cachemode", BestSource.CacheMode.ABSOLUTE)
-        super().__init__(force=force, **kwargs)
+    def _source(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
 
         from logging import WARNING, getLogger
 
@@ -73,15 +71,13 @@ class BestSource(Indexer, vs_object):
             ]):
                 print(msg, end="\r")
 
-        self._log_handle = core.add_log_handler(handler_func_best_source)
+        logger = core.add_log_handler(handler_func_best_source)
 
-    def __vs_del__(self, core_id: int) -> None:
-        self.__del__()
+        clip = super()._source(*args, **kwargs)
 
-    def __del__(self) -> None:
-        core.remove_log_handler(self._log_handle)
-        if not TYPE_CHECKING:
-            self._log_handle = None
+        core.remove_log_handler(logger)
+
+        return clip
 
 
 class IMWRI(Indexer):
