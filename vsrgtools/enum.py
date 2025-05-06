@@ -234,8 +234,6 @@ class BlurMatrix(CustomEnum):
 
     BOX_BLUR_NO_CENTER = MEAN_NO_CENTER
 
-    CIRCLE = MEAN_NO_CENTER  # TODO: remove
-
     MEAN = auto()
     """Standard mean/box blur kernel including the center pixel. Aliased as BOX_BLUR."""
 
