@@ -163,7 +163,7 @@ def gauss_blur(
     :param kwargs:              Additional arguments passed to the resizer or blur kernel.
                                 Specifying `_fast=True` enables fast approximation.
     :raises CustomValueError:   If square convolution mode is specified, which is unsupported.
-    :return:        Blurred clip.
+    :return:                    Blurred clip.
     """
     assert check_variable(clip, gauss_blur)
 
