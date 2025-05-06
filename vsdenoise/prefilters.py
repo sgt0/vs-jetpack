@@ -12,10 +12,9 @@ from jetpytools import CustomEnum, CustomNotImplementedError, KwargsT
 from vsexprtools import norm_expr
 from vsrgtools import bilateral, flux_smooth, gauss_blur, min_blur
 from vstools import (
-    MISSING, ColorRange, MissingT, PlanesT, SingleOrArr, check_variable, core, get_video_format,
-    get_peak_value, get_y, normalize_planes, normalize_seq, scale_value, vs, InvalidColorFamilyError
+    MISSING, ColorRange, ConstantFormatVideoNode, InvalidColorFamilyError, MissingT, PlanesT, SingleOrArr,
+    check_variable, check_variable_format, core, get_peak_value, get_y, normalize_planes, normalize_seq, scale_value, vs
 )
-
 
 from .bm3d import BM3D as BM3DM
 from .bm3d import BM3DCPU, AbstractBM3D, BM3DCuda, BM3DCudaRTC, Profile
@@ -584,7 +583,7 @@ class MultiPrefilter(AbstractPrefilter):
 PrefilterT = Prefilter | PrefilterPartial | MultiPrefilter
 
 
-def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: float = 0.0625) -> vs.VideoNode:
+def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: float = 0.0625) -> ConstantFormatVideoNode:
     """
     Converts a clip to full range if necessary and amplifies dark areas.
     Essentially acts like a luma-based multiplier on the SAD when used as an mvtools prefilter.
@@ -595,11 +594,11 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
 
     :return:            Range expanded clip.
     """
+    assert check_variable_format(clip, prefilter_to_full_range)
 
     InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), prefilter_to_full_range)
 
     clip_range = ColorRange.from_video(clip)
-    clip_fmt = get_video_format(clip)
 
     curve = (slope - 1) * smooth
     luma_expr = (
@@ -608,9 +607,9 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
     )
     chroma_expr = 'x neutral - range_max crange_in_max crange_in_min - / * range_half + round'
 
-    if clip_fmt.sample_type is vs.INTEGER:
+    if clip.format.sample_type is vs.INTEGER:
         luma_expr += 'round'
 
-    planes = 0 if clip_range.is_full or clip_fmt.sample_type is vs.FLOAT else None
+    planes = 0 if clip_range.is_full or clip.format.sample_type is vs.FLOAT else None
 
     return ColorRange.FULL.apply(norm_expr(clip, (luma_expr, chroma_expr), k=curve, c=smooth, planes=planes))
