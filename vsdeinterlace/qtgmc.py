@@ -1,29 +1,25 @@
 from functools import partial
 from math import factorial
-from typing import Literal, MutableMapping, Protocol
+from typing import Literal, MutableMapping, Protocol, cast
 
 from jetpytools import CustomIntEnum
 from numpy import linalg, zeros
 from typing_extensions import Self
 
-from vsaa import Nnedi3, Interpolater
+from vsaa import Interpolater, Nnedi3
 from vsdeband import AddNoise
 from vsdenoise import (
-    MotionVectors, MVDirection, MVTools, MVToolsPreset, MVToolsPresets,
-    MaskMode, DFTTest, mc_clamp, prefilter_to_full_range
+    DFTTest, MaskMode, MotionVectors, MVDirection, MVTools, MVToolsPreset, MVToolsPresets, mc_clamp,
+    prefilter_to_full_range
 )
 from vsexprtools import norm_expr
 from vsmasktools import Coordinates, Morpho
 from vsrgtools import BlurMatrix, gauss_blur, median_blur, remove_grain, repair, unsharpen
 from vstools import (
     ConstantFormatVideoNode, ConvMode, CustomRuntimeError, FieldBased, FieldBasedT, KwargsT, VSFunctionKwArgs,
-    check_variable, core, fallback, scale_delta, normalize_seq, vs, vs_object
+    check_variable, core, fallback, normalize_seq, scale_delta, vs, vs_object
 )
 
-from .enums import (
-    BackBlendMode, InputType, LosslessMode, NoiseDeintMode, NoiseProcessMode, SearchPostProcess, SharpLimitMode,
-    SharpMode, SourceMatchMode
-)
 from .utils import reinterlace, reweave
 
 __all__ = [
@@ -250,7 +246,7 @@ class QTempGaussMC(vs_object):
         self.prefilter_postprocess = postprocess
         self.prefilter_blur_strength = strength
         self.prefilter_soften_limit = limit
-        self.prefilter_range_expansion_args = fallback(range_expansion_args, KwargsT())
+        self.prefilter_range_expansion_args: KwargsT | Literal[False] = fallback(range_expansion_args, KwargsT())
         self.prefilter_mask_shimmer_args = fallback(mask_shimmer_args, KwargsT())
 
         return self
@@ -602,7 +598,7 @@ class QTempGaussMC(vs_object):
             blurred = smoothed
 
         if self.prefilter_range_expansion_args is not False:
-            blurred = prefilter_to_full_range(blurred, **self.prefilter_range_expansion_args)  # type: ignore
+            blurred = prefilter_to_full_range(blurred, **self.prefilter_range_expansion_args)
 
         self.prefilter_output = blurred
 
@@ -617,7 +613,7 @@ class QTempGaussMC(vs_object):
                     **self.denoise_func_comp_args,
                 )
             else:
-                denoised = self.denoise_func(self.draft)  # type: ignore
+                denoised = cast(ConstantFormatVideoNode, self.denoise_func(self.draft))
 
             if self.input_type == self.InputType.INTERLACE:
                 denoised = reinterlace(denoised, self.tff)
@@ -663,7 +659,7 @@ class QTempGaussMC(vs_object):
             self.denoise_output = denoised if self.denoise_mode == self.NoiseProcessMode.DENOISE else self.clip
         
         if self.input_type == self.InputType.REPAIR:
-            self.denoise_output = reinterlace(self.denoise_output, self.tff)  # type: ignore
+            self.denoise_output = reinterlace(self.denoise_output, self.tff)
 
     def apply_basic(self) -> None:
         if self.input_type == self.InputType.PROGRESSIVE:
@@ -704,12 +700,14 @@ class QTempGaussMC(vs_object):
         self.basic_output = self.apply_noise_restore(resharp, self.basic_noise_restore)
 
     def apply_source_match(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
-        def _error_adjustment(clip: vs.VideoNode, ref: vs.VideoNode, tr: int) -> ConstantFormatVideoNode:
+        assert check_variable(clip, self.apply_source_match)
+
+        def _error_adjustment(clip: ConstantFormatVideoNode, ref: ConstantFormatVideoNode, tr: int) -> ConstantFormatVideoNode:
             tr_f = 2 * tr - 1
             binomial_coeff = factorial(tr_f) // factorial(tr) // factorial(tr_f - tr)
             error_adj = 2**tr_f / (binomial_coeff + self.match_similarity * (2**tr_f - binomial_coeff))
 
-            return norm_expr([clip, ref], 'y {adj} 1 + * x {adj} * -', adj=error_adj)  # type: ignore
+            return norm_expr([clip, ref], 'y {adj} 1 + * x {adj} * -', adj=error_adj)
 
         if self.input_type != self.InputType.PROGRESSIVE:
             clip = reinterlace(clip, self.tff)
@@ -749,7 +747,7 @@ class QTempGaussMC(vs_object):
         fields_src = self.denoise_output.std.SeparateFields(self.tff)
 
         if self.input_type == self.InputType.REPAIR:
-            fields_src = fields_src.std.SelectEvery(4, (0, 3))  # type: ignore
+            fields_src = core.std.SelectEvery(fields_src, 4, (0, 3))
 
         fields_flt = flt.std.SeparateFields(self.tff).std.SelectEvery(4, (1, 2))
 
@@ -764,7 +762,7 @@ class QTempGaussMC(vs_object):
         )
         processed_diff = repair.Mode.MINMAX_SQUARE1(processed_diff, remove_grain.Mode.MINMAX_AROUND2(processed_diff))
 
-        return reweave(fields_src, fields_flt.std.MakeDiff(processed_diff), self.tff)  # type: ignore
+        return reweave(fields_src, fields_flt.std.MakeDiff(processed_diff), self.tff)
 
     def apply_sharpen(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(clip, self.apply_sharpen)
@@ -928,7 +926,7 @@ class QTempGaussMC(vs_object):
         self.apply_final()
         self.apply_motion_blur()
 
-        return self.motion_blur_output.std.SetFieldBased(0)  # type: ignore
+        return core.std.SetFieldBased(self.motion_blur_output, 0)
 
     def __vs_del__(self, core_id: int) -> None:
         for k, v in self.__dict__.items():
