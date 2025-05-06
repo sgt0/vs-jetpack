@@ -14,9 +14,7 @@ from vsdenoise import (
 )
 from vsexprtools import norm_expr
 from vsmasktools import Coordinates, Morpho
-from vsrgtools import (
-    BlurMatrix, RemoveGrainMode, RepairMode, gauss_blur, median_blur, remove_grain, repair, unsharpen
-)
+from vsrgtools import BlurMatrix, gauss_blur, median_blur, remove_grain, repair, unsharpen
 from vstools import (
     ConstantFormatVideoNode, ConvMode, CustomRuntimeError, FieldBased, FieldBasedT, KwargsT, VSFunctionKwArgs,
     check_variable, core, fallback, scale_delta, normalize_seq, vs, vs_object
@@ -764,9 +762,7 @@ class QTempGaussMC(vs_object):
             [fields_diff, median_blur(fields_diff, mode=ConvMode.VERTICAL)],
             'x neutral - X! y neutral - Y! X@ Y@ xor neutral X@ abs Y@ abs < x y ? ?',
         )
-        processed_diff = repair(
-            processed_diff, remove_grain(processed_diff, RemoveGrainMode.MINMAX_AROUND2), RepairMode.MINMAX_SQUARE1
-        )
+        processed_diff = repair.Mode.MINMAX_SQUARE1(processed_diff, remove_grain.Mode.MINMAX_AROUND2(processed_diff))
 
         return reweave(fields_src, fields_flt.std.MakeDiff(processed_diff), self.tff)  # type: ignore
 
@@ -819,11 +815,9 @@ class QTempGaussMC(vs_object):
         if self.sharp_mode:
             if self.limit_mode in (self.SharpLimitMode.SPATIAL_PRESMOOTH, self.SharpLimitMode.SPATIAL_POSTSMOOTH):
                 if self.limit_radius == 1:
-                    clip = repair(clip, self.bobbed, RepairMode.MINMAX_SQUARE1)
+                    clip = repair.Mode.MINMAX_SQUARE1(clip, self.bobbed)
                 elif self.limit_radius > 1:
-                    clip = repair(
-                        clip, repair(clip, self.bobbed, RepairMode.MINMAX_SQUARE_REF2), RepairMode.MINMAX_SQUARE1
-                    )
+                    clip = repair.Mode.MINMAX_SQUARE1(clip, repair.Mode.MINMAX_SQUARE_REF2(clip, self.bobbed))
 
             if self.limit_mode in (self.SharpLimitMode.TEMPORAL_PRESMOOTH, self.SharpLimitMode.TEMPORAL_POSTSMOOTH):
                 clip = mc_clamp(
