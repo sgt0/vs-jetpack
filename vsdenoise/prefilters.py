@@ -19,7 +19,6 @@ from vstools import (
 from .bm3d import BM3D as BM3DM
 from .bm3d import BM3DCPU, AbstractBM3D, BM3DCuda, BM3DCudaRTC, Profile
 from .fft import DFTTest, SLocT
-from .nlm import DeviceType, nl_means
 
 __all__ = [
     'Prefilter', 'PrefilterPartial', 'MultiPrefilter',
@@ -82,7 +81,9 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return dftt.std.MaskedMerge(clip, pref_mask, planes)
 
     if pref_type == Prefilter.NLMEANS:
-        return nl_means(clip, **KwargsT(strength=7.0, simr=2, planes=planes) | kwargs)
+        from .nlm import nl_means
+
+        return nl_means(clip, **KwargsT(h=7.0, s=2, planes=planes) | kwargs)
 
     if pref_type == Prefilter.BM3D:
         planes = normalize_planes(clip, planes)
@@ -244,9 +245,8 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         planes: PlanesT = None,
         full_range: bool | float = False,
         *,
-        strength: SingleOrArr[float] = 7.0,
-        simr: SingleOrArr[int] = 2,
-        device_type: DeviceType = DeviceType.AUTO,
+        h: float | Sequence[float] = 7.0,
+        s: int | Sequence[int] = 2,
         **kwargs: Any
     ) -> vs.VideoNode:
         """
@@ -255,12 +255,11 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         :param clip:            Clip to be preprocessed.
         :param planes:          Planes to be preprocessed.
         :param full_range:      Whether to return a prefiltered clip in full range.
-        :param strength:        Controls the strength of the filtering.\n
+        :param h:               Controls the strength of the filtering.
                                 Larger values will remove more noise.
-        :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
-                                Sets the radius of the similarity neighbourhood window.\n
+        :param s:               Similarity Radius. Similarity neighbourhood size = `(2 * s + 1) ** 2`.
+                                Sets the radius of the similarity neighbourhood window.
                                 The impact on performance is low, therefore it depends on the nature of the noise.
-        :param device_type:     Set the device to use for processing. The fastest device will be used by default.
         :param kwargs:          Additional arguments to pass to the prefilter.
 
         :return:                Denoised clip.
@@ -383,9 +382,8 @@ class Prefilter(AbstractPrefilter, CustomEnum):
         *,
         planes: PlanesT = None,
         full_range: bool | float = False,
-        strength: SingleOrArr[float] = 7.0,
-        simr: SingleOrArr[int] = 2,
-        device_type: DeviceType = DeviceType.AUTO,
+        h: float | Sequence[float] = 7.0,
+        s: int | Sequence[int]= 2,
         **kwargs: Any
     ) -> PrefilterPartial:
         """
@@ -393,12 +391,11 @@ class Prefilter(AbstractPrefilter, CustomEnum):
 
         :param planes:          Planes to be preprocessed.
         :param full_range:      Whether to return a prefiltered clip in full range.
-        :param strength:        Controls the strength of the filtering.\n
+        :param h:               Controls the strength of the filtering.
                                 Larger values will remove more noise.
-        :param simr:            Similarity Radius. Similarity neighbourhood size = `(2 * simr + 1) ** 2`.\n
-                                Sets the radius of the similarity neighbourhood window.\n
+        :param s:               Similarity Radius. Similarity neighbourhood size = `(2 * s + 1) ** 2`.
+                                Sets the radius of the similarity neighbourhood window.
                                 The impact on performance is low, therefore it depends on the nature of the noise.
-        :param device_type:     Set the device to use for processing. The fastest device will be used by default.
         :param kwargs:          Additional arguments to pass to the prefilter.
 
         :return:                Partial Prefilter.
