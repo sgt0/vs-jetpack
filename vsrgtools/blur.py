@@ -483,9 +483,6 @@ def bilateral(
     """
     assert check_variable_format(clip, bilateral)
 
-    # TODO: remove this when BilateralBackend will be removed
-    backend = Bilateral.Backend(backend)
-
     if backend == Bilateral.Backend.CPU:
         bilateral_args = KwargsT(ref=ref, sigmaS=sigmaS, sigmaR=sigmaR, planes=normalize_planes(clip))
     else:

@@ -406,14 +406,3 @@ class BlurMatrix(CustomEnum):
             taps = ceil(abs(sigma) * 8 + 1) // 2
 
         return taps
-
-
-@deprecated(
-    "This enum is deprecated and will be removed in a future version. "
-    "Uses `vsrgtools.bilateral.Backend` instead.",
-    category=DeprecationWarning
-)
-class BilateralBackend(CustomStrEnum):
-    CPU = 'vszip'
-    GPU = 'bilateralgpu'
-    GPU_RTC = 'bilateralgpu_rtc'
