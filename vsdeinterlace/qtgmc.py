@@ -665,7 +665,7 @@ class QTempGaussMC(vs_object):
                 if self.input_type == self.InputType.INTERLACE:
                     match self.denoise_deint:
                         case self.NoiseDeintMode.WEAVE:
-                            noise = core.std.Interleave([noise] * 2)
+                            noise = noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
                         case self.NoiseDeintMode.BOB:
                             noise = noise.resize.Bob(tff=self.tff)
                         case self.NoiseDeintMode.GENERATE:
