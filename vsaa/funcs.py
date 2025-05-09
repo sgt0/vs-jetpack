@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Generic, Literal
+from functools import partial
 
 from jetpytools import P, R
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Box, Catrom, NoScale, Scaler, ScalerT
 from vsmasktools import EdgeDetect, EdgeDetectT, Prewitt
-from vsrgtools import MeanMode, bilateral, box_blur, unsharp_masked
+from vsrgtools import MeanMode, bilateral, box_blur, gauss_blur, unsharpen
 from vsscale import ArtCNN
 from vstools import (
     ConstantFormatVideoNode, CustomValueError, FormatsMismatchError, FunctionUtil, KwargsT, PlanesT, VSFunctionNoArgs,
@@ -68,14 +69,14 @@ class PreAA(Generic[P, R]):
 @PreAA
 def pre_aa(
     clip: vs.VideoNode,
-    radius: int = 1,
-    strength: int = 100,
+    strength: int = 1,
+    sigma: float = 1.0,
     aa: Antialiaser = Nnedi3(),
     planes: PlanesT = None,
     **kwargs: Any
 ) -> vs.VideoNode:
     return pre_aa.custom(
-        clip, lambda clip: unsharp_masked(clip, radius, strength, planes), aa, planes, **kwargs
+        clip, lambda clip: unsharpen(clip, strength, partial(gauss_blur, sigma=sigma), planes), aa, planes, **kwargs
     )
 
 
