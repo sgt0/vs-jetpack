@@ -69,7 +69,7 @@ class PreAA(Generic[P, R]):
 @PreAA
 def pre_aa(
     clip: vs.VideoNode,
-    strength: int = 1,
+    strength: float = 1.0,
     sigma: float = 1.0,
     aa: Antialiaser = Nnedi3(),
     planes: PlanesT = None,
