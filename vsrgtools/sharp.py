@@ -5,20 +5,16 @@ from functools import partial
 
 from vsexprtools import norm_expr
 from vstools import (
-    ConstantFormatVideoNode, ConvMode, CustomTypeError, FunctionUtil, GenericVSFunction, 
-    check_ref_clip, PlanesT, VSFunctionNoArgs, check_variable, normalize_planes, vs
+    ConstantFormatVideoNode, ConvMode, FunctionUtil, GenericVSFunction, 
+    check_ref_clip, PlanesT, VSFunctionNoArgs, check_variable, vs
 )
 
-from .blur import box_blur, gauss_blur, median_blur, min_blur
+from .blur import box_blur, gauss_blur, median_blur
 from .enum import BlurMatrix
-from .limit import limit_filter
 from .rgtools import repair
-from .util import normalize_radius
 
 __all__ = [
     'unsharpen',
-    'unsharp_masked',
-    'limit_usm',
     'fine_sharp',
     'soothe'
 ]
@@ -39,47 +35,6 @@ def unsharpen(
     check_ref_clip(clip, blur, unsharpen)
 
     return norm_expr([clip, blur], f'x y - {strength} * x +', planes, func=unsharpen)
-
-
-def unsharp_masked(
-    clip: vs.VideoNode, radius: int | list[int] = 1, strength: float = 100.0, planes: PlanesT = None
-) -> ConstantFormatVideoNode:
-
-    assert check_variable(clip, unsharp_masked)
-
-    planes = normalize_planes(clip, planes)
-
-    if isinstance(radius, list):
-        return normalize_radius(clip, unsharp_masked, radius, planes, strength=strength)
-
-    blurred = BlurMatrix.LOG(radius, strength=strength)(clip, planes)
-
-    return norm_expr([clip, blurred], 'x dup y - +', func=unsharp_masked)
-
-
-def limit_usm(
-    clip: vs.VideoNode, blur: int | vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] = 1,
-    thr: int | tuple[int, int] = 3, elast: float = 4.0, bright_thr: int | None = None,
-    planes: PlanesT = None
-) -> ConstantFormatVideoNode:
-    """Limited unsharp_masked."""
-
-    if callable(blur):
-        blurred = blur(clip)
-    elif isinstance(blur, vs.VideoNode):
-        blurred = blur
-    elif blur <= 0:
-        blurred = min_blur(clip, -blur, planes=planes)
-    elif blur == 1:
-        blurred = BlurMatrix.BINOMIAL()(clip, planes)
-    elif blur == 2:
-        blurred = BlurMatrix.MEAN()(clip, planes)
-    else:
-        raise CustomTypeError("'blur' must be an int, clip or a blurring function!", limit_usm, blur)
-
-    sharp = norm_expr([clip, blurred], 'x dup y - +', planes, func=limit_usm)
-
-    return limit_filter(sharp, clip, thr=thr, elast=elast, bright_thr=bright_thr)
 
 
 def fine_sharp(

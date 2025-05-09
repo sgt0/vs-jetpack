@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import auto
-from math import ceil, exp, log2, pi, sqrt
+from math import ceil, exp, pi, sqrt
 from typing import Any, Iterable, Literal, TypeVar, overload
 
 from jetpytools import CustomEnum, CustomNotImplementedError
@@ -242,9 +242,6 @@ class BlurMatrix(CustomEnum):
     BINOMIAL = auto()
     """Pascal triangle coefficients approximating Gaussian blur."""
 
-    LOG = auto()
-    """Exponential/logarithmic blur kernel with adjustable decay rate via `strength`."""
-
     GAUSS = auto()
     """Proper Gaussian kernel defined by `sigma`."""
 
@@ -268,12 +265,6 @@ class BlurMatrix(CustomEnum):
 
     @overload
     def __call__(  # type: ignore[misc]
-        self: Literal[BlurMatrix.LOG], taps: int = 1, *, strength: float = 100.0, mode: ConvMode = ConvMode.HV
-    ) -> BlurMatrixBase[float]:
-        ...
-
-    @overload
-    def __call__(  # type: ignore[misc]
         self: Literal[BlurMatrix.GAUSS], taps: int | None = None, *, sigma: float = 0.5, mode: ConvMode = ConvMode.HV,
         **kwargs: Any
     ) -> BlurMatrixBase[float]:
@@ -289,7 +280,6 @@ class BlurMatrix(CustomEnum):
 
         :param taps:                Size of the kernel in each direction.
         :param sigma:               [GAUSS only] Standard deviation of the Gaussian kernel.
-        :param strength:            [LOG only] Controls decay rate of the exponential kernel.
         :param mode:                Convolution mode. Default depends on kernel.
         :return:                    A `BlurMatrixBase` instance representing the kernel.
         """
@@ -325,22 +315,6 @@ class BlurMatrix(CustomEnum):
                     c = c * (n - i) // i
 
                 kernel = BlurMatrixBase(matrix[:-1] + matrix[::-1], mode)
-
-            case BlurMatrix.LOG:
-                taps = fallback(taps, 1)
-                strength = kwargs.pop("strength", 100)
-                mode = kwargs.pop("mode", ConvMode.HV)
-
-                strength = max(1e-6, min(log2(3) * strength / 100, log2(3)))
-
-                weight = 0.5 ** strength / ((1 - 0.5 ** strength) * 0.5)
-
-                matrixf = [1.0]
-
-                for _ in range(taps):
-                    matrixf.append(matrixf[-1] / weight)
-
-                kernel = BlurMatrixBase([*matrixf[::-1], *matrixf[1:]], mode)
 
             case BlurMatrix.GAUSS:
                 taps = fallback(taps, 1)
