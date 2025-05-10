@@ -46,7 +46,6 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 |                                        | [carefulsource](https://github.com/wwww-wwww/carefulsource) | [vivtc](https://github.com/vapoursynth/vivtc) |
 |                                        |                                        | [wnnm](https://github.com/WolframRhodium/VapourSynth-WNNM) |
 |                                        |                                        | [bm3d](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D) / [bm3dcuda](https://github.com/WolframRhodium/VapourSynth-BM3DCUDA) |
-|                                        |                                        | [bmdegrain](https://github.com/AmusementClub/vs-bmdegrain) |
 |                                        |                                        | [dctfilter](https://github.com/AmusementClub/VapourSynth-DCTFilter) |
 |                                        |                                        | [mlrt](https://github.com/AmusementClub/vs-mlrt) |
 |                                        |                                        | [dfttest2](https://github.com/AmusementClub/vs-dfttest2) / [dfttest](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DFTTest) |
