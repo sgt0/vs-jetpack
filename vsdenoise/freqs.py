@@ -54,22 +54,21 @@ def frequency_merge(
     Merges the frequency components of the input clips.
 
     Example:
+    - Replacing the high-frequency details of a Blu-ray source with the sharper components from a web stream:
 
-        - Replacing the high-frequency details of a Blu-ray source with the sharper components from a web stream:
+    ``` py
+        delowpass = frequency_merge(
+            bluray_src, (web_src, lambda clip: Lanczos(taps=4).scale(clip, blur=4/3, force=True)),
+            mode_high=web_src,
+            mode_low=bluray_src
+        )
+    ```
 
-        ``` py
-            delowpass = frequency_merge(
-                bluray_src, (web_src, lambda clip: Lanczos(taps=4).scale(clip, blur=4/3, force=True)),
-                mode_high=web_src,
-                mode_low=bluray_src
-            )
-        ```
+    - Lehmer merging 34 sources (stop doing that please)
 
-        - Lehmer merging 34 sources (stop doing that please)
-
-        ``` py
-            merged = frequency_merge(*clips, lowpass=lambda clip: DFTTest.denoise(clip, ...))
-        ```
+    ``` py
+        merged = frequency_merge(*clips, lowpass=lambda clip: DFTTest.denoise(clip, ...))
+    ```
 
     :param _clips:      A variable number of tuples, each containing a clip and an optional lowpass filter function.
                         The lowpass function can either be a standard function or one that supports per-plane filtering.
