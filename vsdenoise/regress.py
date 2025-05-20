@@ -83,7 +83,7 @@ class Regression:
 
         @classmethod
         def from_param(
-            self, func: Callable[Concatenate[vs.VideoNode, P1], vs.VideoNode] | Regression.BlurConf,
+            cls, func: Callable[Concatenate[vs.VideoNode, P1], vs.VideoNode] | Regression.BlurConf,
             *args: P1.args, **kwargs: P1.kwargs
         ) -> Regression.BlurConf:
             """
@@ -111,8 +111,8 @@ class Regression:
             :return:            :py:attr:`BlurConf` object.
             """
             if args or kwargs:
-                return Regression.BlurConf(
-                    self.func, *(args or self.args), **(self.kwargs | kwargs)  # type: ignore[arg-type]
+                return Regression.BlurConf(  # pyright: ignore
+                    self.func, *(args or self.args), **(self.kwargs | kwargs)
                 )
             return self
 
@@ -150,7 +150,7 @@ class Regression:
                             return outc
 
                 try:
-                    out = self.func(clip, *args, **ckwargs)  # type: ignore[arg-type]
+                    out = self.func(clip, *args, **ckwargs)
                 except Exception:
                     ...
 
@@ -216,18 +216,18 @@ class Regression:
 
             return blur, variation, var_mul
 
-    blur_func: BlurConf | VSFunction = BlurConf(box_blur, radius=2)
+    blur_func: BlurConf | VSFunction[vs.VideoNode] = BlurConf(box_blur, radius=2)
     """Function used for blurring (averaging)."""
 
     eps: float = 1e-7
     """Epsilon, used in expressions to avoid division by zero."""
 
     def __post_init__(self) -> None:
-        self.blur_conf = Regression.BlurConf.from_param(self.blur_func)  # type: ignore
+        self.blur_conf = Regression.BlurConf.from_param(self.blur_func)
 
     @classmethod
     def from_param(
-        self, func: Callable[Concatenate[vs.VideoNode, P1], vs.VideoNode] | Regression.BlurConf,
+        cls, func: Callable[Concatenate[vs.VideoNode, P1], vs.VideoNode] | Regression.BlurConf,
         *args: P1.args, **kwargs: P1.kwargs
     ) -> Regression:
         """
@@ -487,7 +487,7 @@ class ChromaReconstruct(ABC):
         return (0.5 * c_width / y_width)
 
     def _get_bases(self, clip: vs.VideoNode, include_edges: bool, func: FuncExceptT) -> tuple[
-        vs.VideoNode, vs.VideoNode, vs.VideoNode, vs.VideoNode, list[vs.VideoNode], list[vs.VideoNode]
+        vs.VideoNode, vs.VideoNode, vs.VideoNode, vs.VideoNode, Sequence[vs.VideoNode], Sequence[vs.VideoNode]
     ]:
         InvalidColorFamilyError.check(clip, vs.YUV, func)
 
@@ -553,7 +553,7 @@ class ChromaReconstruct(ABC):
 
         y, y_base, y_m, y_dm, chroma_base, chroma_dm = self._get_bases(clip, include_edges, self.reconstruct)
 
-        reg = Regression.from_param(Regression.BlurConf(gauss_blur, sigma=sigma))
+        reg = Regression.from_param(Regression.BlurConf(gauss_blur, sigma=sigma))  #pyright: ignore
 
         if not isinstance(diff_mode, ReconDiffModeConf):
             diff_mode = diff_mode()
@@ -567,7 +567,7 @@ class ChromaReconstruct(ABC):
         )
 
         fixup = (
-            y_diff.recon.Reconstruct(
+            y_diff.recon.Reconstruct(  # type: ignore
                 reg.slope, reg.correlation, radius=radius, intercept=(
                     None if diff_mode.inter_scale == 0.0 else reg.intercept
                 )
@@ -596,7 +596,7 @@ class ChromaReconstruct(ABC):
             if out_mode == ReconOutput.i420:
                 targ_sizes = tuple[int, int](targ_size // 2 for targ_size in targ_sizes)  # type: ignore
 
-            shifted_chroma = (self._scaler.scale(p, *targ_sizes) for p in shifted_chroma)
+            shifted_chroma = (self._scaler.scale(p, *targ_sizes) for p in shifted_chroma)  # type: ignore
 
         return depth(join(y_base, *shifted_chroma), clip)
 
