@@ -14,9 +14,9 @@ from typing import Any, Callable, ClassVar, overload
 from typing_extensions import Self
 
 from vsexprtools import norm_expr
-from vskernels import Catrom, Kernel, KernelT, NoShift, Scaler, ScalerT
+from vskernels import Catrom, Kernel, KernelLike, Scaler, ScalerLike
 from vskernels.types import LeftShift, TopShift
-from vstools import ConstantFormatVideoNode, check_progressive, check_variable, core, inject_self, vs
+from vstools import ConstantFormatVideoNode, check_progressive, check_variable, core, vs
 
 from .enums import AADirection
 
@@ -80,15 +80,15 @@ class Interpolater(_SingleInterpolate, ABC):
     transpose_first: bool = False
     """Transpose the clip before any operation."""
 
-    shifter: KernelT = Catrom
+    shifter: KernelLike = Catrom
     """Kernel used for shifting operations. Default to Catrom."""
 
-    scaler: ScalerT | None = None
+    scaler: ScalerLike | None = None
     """Scaler used for additional scaling operations. If None, default to `shifter`"""
 
     def __post_init__(self) -> None:
         self._shifter = Kernel.ensure_obj(self.shifter)
-        self._scaler = self._shifter.ensure_obj(self.scaler, self.__class__)
+        self._scaler = Scaler.ensure_obj(self.scaler or self._shifter, self.__class__)
 
     def _preprocess_clip(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         """
@@ -185,7 +185,6 @@ class SuperSampler(Interpolater, Scaler, ABC):
         """
         return kwargs
 
-    @inject_self.cached
     def scale(
         self,
         clip: vs.VideoNode,
@@ -270,13 +269,9 @@ class SuperSampler(Interpolater, Scaler, ABC):
 
                     cleftshift -= cresshift
 
-            if isinstance(self._shifter, NoShift):
-                if upscaled.format.subsampling_h or upscaled.format.subsampling_w:
-                    upscaled = Catrom.shift(upscaled, 0, [0, cleftshift + cresshift])
-            else:
-                upscaled = self._shifter.shift(
-                    upscaled, [topshift, ctopshift], [leftshift, cleftshift]
-                )
+            upscaled = self._shifter.shift(
+                upscaled, [topshift, ctopshift], [leftshift, cleftshift]
+            )
 
         return self._scaler.scale(upscaled, width, height, shift)
 
