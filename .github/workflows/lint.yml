@@ -78,6 +78,9 @@ jobs:
       - name: Running mypy on vsaa
         run: uv run mypy vsaa
 
+      - name: Running mypy on vsdenoise
+        run: uv run mypy vsdenoise
+
       - name: Post webhook for failure
         if: failure()
         uses: tsickert/discord-webhook@v6.0.0
