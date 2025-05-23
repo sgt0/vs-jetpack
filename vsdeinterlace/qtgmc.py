@@ -667,7 +667,7 @@ class QTempGaussMC(vs_object):
                         case self.NoiseDeintMode.WEAVE:
                             noise = noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
                         case self.NoiseDeintMode.BOB:
-                            noise = Catrom().bob(noise, self.tff)  # type: ignore
+                            noise = Catrom().bob(noise, tff=self.tff)
                         case self.NoiseDeintMode.GENERATE:
                             noise_source = noise.std.SeparateFields(self.tff)
 
@@ -940,7 +940,7 @@ class QTempGaussMC(vs_object):
         def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
             return (x[0] // 2, x[1] // 2)
 
-        self.draft = Catrom().bob(self.clip, self.tff) if self.input_type == self.InputType.INTERLACE else self.clip  # type: ignore
+        self.draft = Catrom().bob(self.clip, tff=self.tff) if self.input_type == self.InputType.INTERLACE else self.clip
         self.thscd = thscd
 
         tr = max(1, force_tr, self.denoise_tr, self.basic_tr, self.match_tr, self.final_tr)
