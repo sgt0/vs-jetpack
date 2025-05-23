@@ -6,6 +6,7 @@ from jetpytools import CustomIntEnum
 from numpy import linalg, zeros
 from typing_extensions import Self
 
+from vskernels import Catrom
 from vsaa import Interpolater, Nnedi3
 from vsdeband import AddNoise
 from vsdenoise import (
@@ -666,7 +667,7 @@ class QTempGaussMC(vs_object):
                         case self.NoiseDeintMode.WEAVE:
                             noise = noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
                         case self.NoiseDeintMode.BOB:
-                            noise = noise.resize.Bob(tff=self.tff)
+                            noise = Catrom().bob(noise, self.tff)  # type: ignore
                         case self.NoiseDeintMode.GENERATE:
                             noise_source = noise.std.SeparateFields(self.tff)
 
@@ -939,7 +940,7 @@ class QTempGaussMC(vs_object):
         def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
             return (x[0] // 2, x[1] // 2)
 
-        self.draft = self.clip.resize.Bob(tff=self.tff) if self.input_type == self.InputType.INTERLACE else self.clip
+        self.draft = Catrom().bob(self.clip, self.tff) if self.input_type == self.InputType.INTERLACE else self.clip  # type: ignore
         self.thscd = thscd
 
         tr = max(1, force_tr, self.denoise_tr, self.basic_tr, self.match_tr, self.final_tr)
