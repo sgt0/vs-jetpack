@@ -57,7 +57,7 @@ class ZimgBobber(BaseScaler):
         :param double_rate: Wether to double the frame rate (True) of retain the original rate (False).
         :return:            The bobbed clip.
         """
-        bobbed = self.bob(clip, tff=tff)
+        bobbed = self.bob(clip, tff=tff, **kwargs)
 
         if not double_rate:
             return bobbed[::2]
