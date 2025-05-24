@@ -98,7 +98,6 @@ class QTempGaussMC(vs_object):
         REPAIR = 2
         """Repair badly deinterlaced material with considerable horizontal artefacts."""
 
-
     class SearchPostProcess(CustomIntEnum):
         """Prefiltering to apply in order to assist with motion search."""
 
@@ -110,7 +109,6 @@ class QTempGaussMC(vs_object):
 
         GAUSSBLUR_EDGESOFTEN = 2
         """Gaussian blur & edge softening."""
-
 
     class NoiseProcessMode(CustomIntEnum):
         """How to handle processing noise in the source."""
@@ -124,7 +122,6 @@ class QTempGaussMC(vs_object):
         IDENTIFY = 2
         """Identify noise only & optionally restore some noise back at the end of basic or final stages."""
 
-
     class NoiseDeintMode(CustomIntEnum):
         """When noise is taken from interlaced source, how to 'deinterlace' it before restoring."""
 
@@ -135,8 +132,7 @@ class QTempGaussMC(vs_object):
         """Bob source noise, results in coarse noise."""
 
         GENERATE = 2
-        """Gnerates fresh noise lines."""
-
+        """Generates fresh noise lines."""
 
     class SharpMode(CustomIntEnum):
         """How to re-sharpen the clip after temporally blurring."""
@@ -149,7 +145,6 @@ class QTempGaussMC(vs_object):
 
         UNSHARP_MINMAX = 2
         """Re-sharpening using unsharpening clamped to the local 3x3 min/max average."""
-
 
     class SharpLimitMode(CustomIntEnum):
         """How to limit and when to apply re-sharpening of the clip."""
@@ -169,7 +164,6 @@ class QTempGaussMC(vs_object):
         TEMPORAL_POSTSMOOTH = 4
         """Temporal sharpness limiting after the final stage."""
 
-
     class BackBlendMode(CustomIntEnum):
         """When to back blend (blurred) difference between pre & post sharpened clip."""
 
@@ -185,7 +179,6 @@ class QTempGaussMC(vs_object):
         BOTH = 3
         """Perform back-blending both before and after sharpness limiting."""
 
-
     class SourceMatchMode(CustomIntEnum):
         """Creates higher fidelity output with extra processing. will capture more source detail and reduce oversharpening / haloing."""
 
@@ -200,7 +193,6 @@ class QTempGaussMC(vs_object):
 
         TWICE_REFINED = 3
         """Restores almost exact source detail."""
-
 
     class LosslessMode(CustomIntEnum):
         """When to put exact source fields into result & clean any artefacts."""
