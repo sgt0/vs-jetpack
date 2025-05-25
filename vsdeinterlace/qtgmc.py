@@ -608,7 +608,7 @@ class QTempGaussMC(vs_object):
             scenechange = self.prefilter_sc_threshold is not False
 
             scenes = sc_detect(search, self.prefilter_sc_threshold) if scenechange else search
-            smoothed = BlurMatrix.BINOMIAL(self.prefilter_tr, mode=ConvMode.TEMPORAL, scenechange=scenechange)(scenes)
+            smoothed = BlurMatrix.BINOMIAL(self.prefilter_tr, mode=ConvMode.TEMPORAL)(scenes, scenechange=scenechange)
             smoothed = self.mask_shimmer(smoothed, search, **self.prefilter_mask_shimmer_args)
         else:
             smoothed = search
