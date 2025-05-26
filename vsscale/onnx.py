@@ -877,6 +877,8 @@ class BaseDPIR(BaseOnnxScaler):
         **kwargs: Any
     ) -> None:
         """
+        Initializes the class with the specified parameters.
+
         :param strength:        Threshold (8-bit scale) strength for deblocking/denoising.
                                 If a VideoNode is used, it must be in GRAY8, GRAYH, or GRAYS format, with pixel values
                                 representing the 8-bit thresholds.
@@ -975,7 +977,9 @@ class DPIR(BaseDPIR):
     _model = (2, 3)
 
     class DrunetDenoise(BaseDPIR):
+        """DPIR model for denoising."""
         _model = (0, 1)
 
     class DrunetDeblock(BaseDPIR):
+        """DPIR model for deblocking."""
         _model = (2, 3)
