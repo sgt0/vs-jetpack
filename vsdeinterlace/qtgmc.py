@@ -641,7 +641,7 @@ class QTempGaussMC(vs_object):
         else:
             if self.denoise_tr:
                 denoised = self.mv.compensate(
-                    self.draft, tr=self.denoise_tr, thscd=self.thscd,
+                    tr=self.denoise_tr, thscd=self.thscd,
                     temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
                     **self.denoise_func_comp_args,
                 )
@@ -835,7 +835,7 @@ class QTempGaussMC(vs_object):
     def apply_back_blend(self, flt: vs.VideoNode, src: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(flt, self.apply_back_blend)
 
-        if self.backblend_sigma:
+        if self.sharp_mode or self.sharp_thin and self.backblend_sigma:
             flt = flt.std.MakeDiff(gauss_blur(flt.std.MakeDiff(src), self.backblend_sigma))
 
         return flt
@@ -843,7 +843,7 @@ class QTempGaussMC(vs_object):
     def apply_sharpen_limit(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(clip, self.apply_sharpen_limit)
 
-        if self.sharp_mode:
+        if self.sharp_mode or self.sharp_thin:
             if self.limit_mode in (self.SharpLimitMode.SPATIAL_PRESMOOTH, self.SharpLimitMode.SPATIAL_POSTSMOOTH):
                 if self.limit_radius == 1:
                     clip = repair.Mode.MINMAX_SQUARE1(clip, self.bobbed)
