@@ -693,16 +693,18 @@ class QTempGaussMC(vs_object):
 
             self.noise = noise
             self.denoise_output = denoised if self.denoise_mode == self.NoiseProcessMode.DENOISE else self.clip
-        
-        if self.input_type == self.InputType.REPAIR:
-            self.denoise_output = reinterlace(self.denoise_output, self.tff)
 
     def apply_basic(self) -> None:
         if self.input_type == self.InputType.PROGRESSIVE:
             self.bobbed = self.denoise_output
         else:
+            if self.input_type == self.InputType.REPAIR:
+                input_clip = reinterlace(self.denoise_output, self.tff)
+            else:
+                input_clip = self.denoise_output
+
             self.bobbed = self.basic_bobber.interpolate(
-                self.denoise_output, False, **self.basic_bobber.get_aa_args(self.denoise_output)
+                input_clip, False, **self.basic_bobber.get_aa_args(self.denoise_output)
             )
 
         if self.basic_mask_args is not False and self.input_type == self.InputType.REPAIR:
