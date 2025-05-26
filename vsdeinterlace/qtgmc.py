@@ -230,6 +230,9 @@ class QTempGaussMC(vs_object):
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter:
             raise CustomRuntimeError(f'{self.input_type} incompatible with interlaced video!', self.__class__)
 
+        if self.input_type in (self.InputType.INTERLACE, self.InputType.REPAIR) and not clip_fieldbased.is_inter:
+            raise CustomRuntimeError(f'{self.input_type} incompatible with progressive video!', self.__class__)
+
     def prefilter(
         self,
         *,
@@ -835,7 +838,7 @@ class QTempGaussMC(vs_object):
     def apply_back_blend(self, flt: vs.VideoNode, src: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(flt, self.apply_back_blend)
 
-        if self.sharp_mode or self.sharp_thin and self.backblend_sigma:
+        if self.backblend_sigma and self.sharp_mode or self.sharp_thin:
             flt = flt.std.MakeDiff(gauss_blur(flt.std.MakeDiff(src), self.backblend_sigma))
 
         return flt
