@@ -97,6 +97,7 @@ class Placebo(ComplexScaler, abstract=True):
             )
             | self.kwargs
             | kwargs
+            | dict(linearize=False, sigmoidize=False)
         )
 
     @ComplexScaler.cached_property
