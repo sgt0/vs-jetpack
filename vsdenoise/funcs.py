@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from typing import Any, Literal, overload
 
-from vsexprtools import norm_expr
-from vsrgtools import MeanMode
 from vstools import (
     ConstantFormatVideoNode, KwargsNotNone, PlanesT, VSFunctionNoArgs, check_ref_clip, check_variable, fallback,
     normalize_seq, scale_delta, vs
@@ -27,7 +25,7 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     mfilter: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
-    preset: MVToolsPreset = MVToolsPreset.HQ_SAD, tr: int = 1,
+    preset: MVToolsPreset = ..., tr: int = 1,
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -42,7 +40,7 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     mfilter: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
-    preset: MVToolsPreset = MVToolsPreset.HQ_SAD, tr: int = 1,
+    preset: MVToolsPreset = ..., tr: int = 1,
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -57,7 +55,7 @@ def mc_degrain(
     clip: vs.VideoNode, vectors: MotionVectors | None = None,
     prefilter: vs.VideoNode | PrefilterPartial | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     mfilter: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
-    preset: MVToolsPreset = MVToolsPreset.HQ_SAD, tr: int = 1,
+    preset: MVToolsPreset = ..., tr: int = 1,
     blksize: int | tuple[int, int] = 16, refine: int = 1,
     thsad: int | tuple[int, int] = 400, thsad2: int | tuple[int | None, int | None] | None = None,
     thsad_recalc: int | None = None, limit: int | tuple[int | None, int | None] | None = None,
@@ -88,7 +86,7 @@ def mc_degrain(
     :param vectors:           Motion vectors to use. Can be a MotionVectors object or another MVTools instance.
     :param prefilter:         Filter or clip to use when performing motion vector search.
     :param mfilter:           Filter or clip to use where degrain couldn't find a matching block.
-    :param preset:            MVTools preset defining base values for the MVTools object.
+    :param preset:            MVTools preset defining base values for the MVTools object. Default is HQ_SAD.
     :param tr:                The temporal radius. This determines how many frames are analyzed before/after the current frame.
     :param blksize:           Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
     :param refine:            Number of times to recalculate motion vectors with halved block size.
@@ -144,6 +142,9 @@ def mc_clamp(
     flt: vs.VideoNode, src: vs.VideoNode, mv_obj: MVTools, ref: vs.VideoNode | None = None,
     clamp: int | float | tuple[int | float, int | float] = 0, **kwargs: Any,
 ) -> ConstantFormatVideoNode:
+    from vsexprtools import norm_expr
+    from vsrgtools import MeanMode
+
     assert check_variable(flt, mc_clamp)
     assert check_variable(src, mc_clamp)
     check_ref_clip(src, flt, mc_clamp)

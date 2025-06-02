@@ -7,17 +7,10 @@ from __future__ import annotations
 from math import sin, sqrt
 from typing import Any
 
+from jetpytools import CustomIntEnum
 from typing_extensions import deprecated
 
-from vsaa import NNEDI3
-from vsexprtools import complexpr_available, norm_expr
-from vskernels import Bicubic, Point
-from vsscale import SSIM
-from vstools import (
-    EXPR_VARS, ConstantFormatVideoNode, CustomIndexError, CustomIntEnum, InvalidColorFamilyError, Matrix, MatrixT, PlanesT,
-    UnsupportedSubsamplingError, check_ref_clip, check_variable, fallback, get_peak_value, join, normalize_planes, plane, shift_clip,
-    split, vs
-)
+from vstools import MatrixT, PlanesT, vs
 
 __all__ = [
     'ccd', 'CCDMode', 'CCDPoints'
@@ -125,6 +118,16 @@ def ccd(
 
     :return:            Denoised clip.
     """
+
+    from vsaa import NNEDI3
+    from vsexprtools import complexpr_available, norm_expr
+    from vskernels import Bicubic, Point
+    from vsscale import SSIM
+    from vstools import (
+        EXPR_VARS, ConstantFormatVideoNode, CustomIndexError, InvalidColorFamilyError, Matrix,
+        UnsupportedSubsamplingError, check_ref_clip, check_variable, fallback, get_peak_value, join, normalize_planes,
+        plane, shift_clip, split, vs
+    )
 
     assert check_variable(src, ccd)
 
