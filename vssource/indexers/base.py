@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from ..formats.dvd.parsedvd import IFOX, IFO0Title
 
 
-PackageStorage()
+PackageStorage(package_name="vssource")
 
 
 __all__ = [

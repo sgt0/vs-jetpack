@@ -4,6 +4,7 @@ import re
 
 from dataclasses import dataclass
 from fractions import Fraction
+from functools import cache
 from pathlib import Path
 from typing import Any, ClassVar, Iterable, Literal, NamedTuple, TypeVar, overload
 
@@ -24,7 +25,10 @@ __all__ = [
     'LWIndex'
 ]
 
-keyframes_storage = PackageStorage(package_name='keyframes')
+
+@cache
+def _get_keyframes_storage() -> PackageStorage:
+    return PackageStorage(package_name='keyframes')
 
 
 @dataclass
@@ -379,7 +383,7 @@ class Keyframes(list[int]):
     def _get_unique_path(clip: vs.VideoNode, key: str) -> SPath:
         key = SPath(str(key)).stem + f'_{clip.num_frames}_{clip.fps_num}_{clip.fps_den}'
 
-        return keyframes_storage.get_file(key, ext='.txt')
+        return _get_keyframes_storage().get_file(key, ext='.txt')
 
     @classmethod
     def unique(

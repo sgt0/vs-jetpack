@@ -5,6 +5,7 @@ import json
 import shutil
 import warnings
 
+from functools import cache
 from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
 from typing import TypedDict
@@ -24,8 +25,9 @@ __all__ = [
     'ScenePacketStats',
 ]
 
-
-packets_storage = PackageStorage(package_name='packets')
+@cache
+def _get_packet_storage() -> PackageStorage:
+    return PackageStorage(package_name='packets')
 
 
 class ScenePacketStats(TypedDict):
@@ -92,7 +94,7 @@ class VideoPackets(list[int]):
         if video_packets := cls.from_file(out_file, func=func):
             return video_packets
 
-        out_file = packets_storage.get_file(out_file, ext='.txt')
+        out_file = _get_packet_storage().get_file(out_file, ext='.txt')
 
         if not shutil.which('ffprobe'):
             raise DependencyNotFoundError(func, 'ffprobe', 'Could not find {package}! Make sure it\'s in your PATH!')
@@ -145,7 +147,7 @@ class VideoPackets(list[int]):
         """
 
         if file is not None:
-            file = packets_storage.get_file(file, ext='.txt')
+            file = _get_packet_storage().get_file(file, ext='.txt')
 
             if file.exists() and not file.stat().st_size:
                 file.unlink()
