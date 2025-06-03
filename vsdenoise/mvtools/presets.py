@@ -288,12 +288,11 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
             analyze_args=AnalyzeArgs(
                 blksize=16,
                 overlap=8,
-                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
             ),
             recalculate_args=RecalculateArgs(
                 blksize=8,
                 overlap=4,
-                dct=SADMode.ADAPTIVE_SATD_MIXED,
+                dct=SADMode.SATD,
             )
         )
 
@@ -305,13 +304,12 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
             analyze_args=AnalyzeArgs(
                 blksize=16,
                 overlap=8,
-                dct=SADMode.ADAPTIVE_SPATIAL_MIXED,
                 truemotion=MotionMode.SAD,
             ),
             recalculate_args=RecalculateArgs(
                 blksize=8,
                 overlap=4,
-                dct=SADMode.ADAPTIVE_SATD_MIXED,
+                dct=SADMode.SATD,
                 truemotion=MotionMode.SAD,
             )
         )
