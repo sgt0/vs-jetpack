@@ -695,14 +695,15 @@ def bm3d(
         return depth(denoised, clip)
 
     preclip = depth(clip, 32)
+    prepre = depth(pre, 32) if pre else pre
+    preref = depth(ref, 32) if ref else ref
 
     if clip.format.color_family == vs.YUV and {clip.format.subsampling_w, clip.format.subsampling_h} == {0}:
         if backend == BM3D.Backend.OLD:
             point = Point()
-            preclip = point.resample(clip, clip.format.replace(color_family=vs.RGB))
 
             denoised = bm3d(
-                preclip,
+                point.resample(clip, clip.format.replace(color_family=vs.RGB)),
                 sigma,
                 (radius_basic, radius_final),
                 refine,
@@ -717,7 +718,7 @@ def bm3d(
 
             return point.resample(denoised, clip, clip)
 
-        denoised = _bm3d_wolfram(preclip, pre, ref, chroma=True)
+        denoised = _bm3d_wolfram(preclip, prepre, preref, chroma=True)
 
         return depth(denoised, clip)
 
@@ -727,6 +728,6 @@ def bm3d(
             func, clip.format.color_family
         )
 
-    denoised = _bm3d_wolfram(preclip, pre, ref)
+    denoised = _bm3d_wolfram(preclip, prepre, preref)
 
     return depth(denoised, clip)
