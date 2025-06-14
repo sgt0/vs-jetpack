@@ -498,7 +498,7 @@ def bm3d(
 
     Example:
         ```py
-        denoised = bm3d(clip, 1.25, 1, backend=bm3d.Backend.CUDA_RTC, ...)
+        denoised = bm3d(clip, 1.25, 1, profile=bm3d.Profile.NORMAL, backend=bm3d.Backend.CUDA_RTC, ...)
         ```
 
     :param clip:                            The clip to process.
