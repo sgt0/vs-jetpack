@@ -495,6 +495,7 @@ def flux_smooth(
     clip: vs.VideoNode,
     temporal_threshold: float | Sequence[float] = 7.0,
     spatial_threshold: float | Sequence[float] | None = None,
+    planes: PlanesT = None,
     scalep: bool = True,
 ) -> ConstantFormatVideoNode:
     """
@@ -519,6 +520,7 @@ def flux_smooth(
     :param spatial_threshold:       Spatial neighbour pixels within this threshold from the current pixel
                                     are included in the average. A negative value (such as -1) indicates that the plane
                                     should not be processed and will be copied from the input clip.
+    :param planes:                  Which planes to process. Default to all.
     :param scalep:                  Parameter scaling. If set to true, all threshold values
                                     will be automatically scaled from 8-bit range (0-255) to the corresponding range
                                     of the input clip's bit depth.
@@ -528,6 +530,6 @@ def flux_smooth(
     assert check_variable_format(clip, flux_smooth)
 
     if spatial_threshold:
-        return core.zsmooth.FluxSmoothST(clip, temporal_threshold, spatial_threshold, scalep)
+        return core.zsmooth.FluxSmoothST(clip, temporal_threshold, spatial_threshold, planes, scalep)
 
-    return core.zsmooth.FluxSmoothT(clip, temporal_threshold, scalep)
+    return core.zsmooth.FluxSmoothT(clip, temporal_threshold, planes, scalep)

@@ -41,16 +41,9 @@ def _run_prefilter(pref_type: Prefilter, clip: vs.VideoNode, planes: PlanesT, **
         return gauss_blur(clip, kwargs.pop('sigma', 1.5), **kwargs, planes=planes)
 
     if pref_type == Prefilter.FLUXSMOOTHST:
-        planes = normalize_planes(clip, planes)
-
         temp_thr, spat_thr = normalize_seq(kwargs.pop('temp_thr', 2), 3), normalize_seq(kwargs.pop('spat_thr', 2), 3)
 
-        for i in range(3):
-            if i not in planes:
-                temp_thr[i] = -1
-                spat_thr[i] = -1
-
-        return flux_smooth(clip, temp_thr, spat_thr, **kwargs)
+        return flux_smooth(clip, temp_thr, spat_thr, planes, **kwargs)
 
     if pref_type == Prefilter.DFTTEST:
         peak = get_peak_value(clip)
