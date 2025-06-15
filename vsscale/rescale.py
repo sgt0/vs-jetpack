@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property, wraps
-from typing import Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, BorderHandling, Hermite, Kernel, KernelLike, Scaler, ScalerLike
@@ -10,7 +10,7 @@ from vsmasktools import KirschTCanny, based_diff_mask
 from vsmasktools.utils import _get_region_expr
 from vstools import (
     ColorRange, ConstantFormatVideoNode, DitherType, FieldBased, FieldBasedT, FrameRangeN, FrameRangesN, VideoNodeT,
-    check_variable, core, depth, get_peak_value, get_y, join, limiter, replace_ranges, split, vs
+    check_variable, core, depth, get_peak_value, get_y, join, limiter, replace_ranges, split, vs, vs_object
 )
 
 from .helpers import BottomCrop, CropRel, LeftCrop, RightCrop, ScalingArgs, TopCrop
@@ -25,7 +25,7 @@ __all__ = [
 RescaleT = TypeVar('RescaleT', bound="RescaleBase")
 
 
-class RescaleBase:
+class RescaleBase(vs_object):
     descale_args: ScalingArgs
     field_based: FieldBased | None
 
@@ -153,6 +153,13 @@ class RescaleBase:
             *self.chroma
         )
         return core.std.CopyFrameProps(upscaled, self.clipy, '_ChromaLocation')
+
+    def __vs_del__(self, core_id: int) -> None:
+        if not TYPE_CHECKING:
+            self.descale = None
+            self.rescale = None
+            self.doubled = None
+            self.upscale = None
 
 
 class Rescale(RescaleBase):
@@ -487,3 +494,13 @@ class Rescale(RescaleBase):
         self.credit_mask = credit_mask
 
         return self.credit_mask
+
+    def __vs_del__(self, core_id: int) -> None:
+        self._line_mask = None
+        self.credit_mask = None
+        self.ignore_mask = None
+
+        if not TYPE_CHECKING:
+            self._pre = None
+
+        super().__vs_del__(core_id)
