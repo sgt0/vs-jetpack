@@ -488,7 +488,7 @@ class VerticalCleaner(Generic[P, R]):
             :param planes:      Planes to process. Defaults to all.
             :return:            Filtered clip.
             """
-            return vertical_cleaner(clip, normalize_param_planes(clip, self, planes, 0))
+            return vertical_cleaner(clip, self, planes)
 
 
 @VerticalCleaner
