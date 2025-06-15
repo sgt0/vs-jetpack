@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
+from typing_extensions import deprecated
+
 from vstools import (
-    ConstantFormatVideoNode, GenericVSFunction, PlanesT, check_variable, check_variable_format,
-    join, normalize_planes, normalize_seq, split, vs
+    ConstantFormatVideoNode, GenericVSFunction, PlanesT, check_variable_format, join, normalize_planes, normalize_seq,
+    split, vs
 )
 
 __all__ = [
@@ -13,16 +15,17 @@ __all__ = [
 ]
 
 
+@deprecated(
+    "`norm_rmode_planes` is deprecated and will be removed in a future version. "
+    "Use `vstools.normalize_param_planes` instead",
+    category=DeprecationWarning
+)
 def norm_rmode_planes(
     clip: vs.VideoNode, mode: int | Sequence[int], planes: PlanesT = None
 ) -> list[int]:
-    assert check_variable(clip, norm_rmode_planes)
+    from vstools import normalize_param_planes
 
-    modes_array = normalize_seq(mode, clip.format.num_planes)
-
-    planes = normalize_planes(clip, planes)
-
-    return [rep if i in planes else 0 for i, rep in enumerate(modes_array, 0)]
+    return normalize_param_planes(clip, mode, planes, 0)
 
 
 def normalize_radius(
