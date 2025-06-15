@@ -11,13 +11,13 @@ from vskernels import Gaussian
 from vstools import (
     ConstantFormatVideoNode, ConvMode, CustomValueError, KwargsT, OneDimConvModeT, PlanesT, SpatialConvModeT,
     TempConvModeT, VSFunctionNoArgs, check_variable, check_variable_format, core, join, normalize_planes, normalize_seq,
-    split, to_arr, vs
+    split, vs
 )
 
 from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode
 from .freqs import MeanMode
 from .limit import limit_filter
-from .rgtools import remove_grain, vertical_cleaner
+from .rgtools import vertical_cleaner
 from .util import normalize_radius
 
 __all__ = [
@@ -370,13 +370,13 @@ def median_blur(
 
         raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", median_blur, radius)
 
-    radius = to_arr(radius)
+    radius = normalize_seq(radius, clip.num_frames)
 
-    if (len((rs := set(radius))) == 1 and rs.pop() == 1):
-        if mode == ConvMode.SQUARE:
-            return remove_grain.Mode.MINMAX_MEDIAN(clip, planes)
-        if mode == ConvMode.VERTICAL:
-            return vertical_cleaner.Mode.MEDIAN(clip, planes)
+    if mode == ConvMode.SQUARE and max(radius) <= 3:
+        return core.zsmooth.Median(clip, radius, planes)
+
+    if mode == ConvMode.VERTICAL and all(r == 1 for r in radius):
+        return vertical_cleaner.Mode.MEDIAN(clip, planes)
 
     expr_plane = list[list[str]]()
 
