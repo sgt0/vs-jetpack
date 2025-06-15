@@ -32,8 +32,8 @@ class GeneralMask(ABC):
 
 
 class BoundingBox(GeneralMask):
-    pos: Position
     size: Size
+    pos: Position
     invert: bool
 
     @overload
@@ -52,7 +52,7 @@ class BoundingBox(GeneralMask):
         else:
             raise CustomTypeError(None, self.__class__, args)
 
-        self.size, self.pos, self.invert = Size(pos), Position(size), invert
+        self.size, self.pos, self.invert = Size(size), Position(pos), invert
 
     def get_mask(self, ref: vs.VideoNode, /, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
         from .utils import squaremask
