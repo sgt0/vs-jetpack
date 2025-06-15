@@ -5,14 +5,13 @@ from typing import Callable, Sequence
 
 from vsexprtools import norm_expr
 from vstools import (
-    ConstantFormatVideoNode, CustomValueError, GenericVSFunction, PlanesT, check_ref_clip,
-    check_variable, iterate, normalize_planes, vs, core
+    ConstantFormatVideoNode, CustomValueError, GenericVSFunction, PlanesT, check_ref_clip, check_variable, core,
+    iterate, normalize_param_planes, normalize_planes, vs
 )
 
 from .blur import box_blur, median_blur, min_blur
 from .enum import BlurMatrix
-from .rgtools import remove_grain, repair, Repair, RemoveGrain
-from .util import norm_rmode_planes
+from .rgtools import RemoveGrain, Repair, remove_grain, repair
 
 __all__ = [
     'contrasharpening',
@@ -26,7 +25,7 @@ def contrasharpening(
     src: vs.VideoNode,
     radius: int = 1,
     sharp: vs.VideoNode | GenericVSFunction[vs.VideoNode] | None = None,
-    mode: Repair.Mode = repair.Mode.MINMAX_SQUARE3,
+    mode: int | Repair.Mode = repair.Mode.MINMAX_SQUARE3,
     planes: PlanesT = 0
 ) -> ConstantFormatVideoNode:
     """
@@ -46,8 +45,6 @@ def contrasharpening(
     assert check_variable(src, contrasharpening)
     assert check_variable(flt, contrasharpening)
     check_ref_clip(src, flt, contrasharpening)
-
-    planes = normalize_planes(flt, planes)
 
     # Damp down remaining spots of the denoised clip
     if callable(sharp):
@@ -69,7 +66,7 @@ def contrasharpening(
     diff_flt = src.std.MakeDiff(flt, planes)
 
     # Limit the difference to the max of what the filtering removed locally
-    limit = repair(diff_blur, diff_flt, norm_rmode_planes(flt, mode, planes))
+    limit = repair(diff_blur, diff_flt, mode, planes)
 
     # abs(diff) after limiting may not be bigger than before
     # Apply the limited difference (sharpening is just inverse blurring)
@@ -92,9 +89,7 @@ def contrasharpening_dehalo(
     assert check_variable(flt, contrasharpening_dehalo)
     check_ref_clip(src, flt, contrasharpening_dehalo)
 
-    planes = normalize_planes(flt, planes)
-
-    rep_modes = norm_rmode_planes(flt, repair.Mode.MINMAX_SQUARE1, planes)
+    rep_modes = normalize_param_planes(flt, repair.Mode.MINMAX_SQUARE1, planes, 0, contrasharpening_dehalo)
 
     blur = BlurMatrix.BINOMIAL()(flt, planes)
     blur2 = median_blur(blur, 2, planes=planes)
@@ -127,7 +122,7 @@ def contrasharpening_median(
     planes = normalize_planes(flt, planes)
 
     if isinstance(mode, (int, Sequence)):
-        repaired = remove_grain(flt, norm_rmode_planes(flt, mode, planes))
+        repaired = remove_grain(flt, mode, planes)
     elif callable(mode):
         repaired = mode(flt, planes=planes)
     else:

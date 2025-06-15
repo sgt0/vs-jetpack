@@ -5,7 +5,9 @@ from typing import Callable, Generic, Sequence
 from jetpytools import CustomIntEnum, CustomStrEnum, P, R
 
 from vsexprtools import norm_expr
-from vstools import ConstantFormatVideoNode, KwargsNotNone, PlanesT, check_variable, normalize_seq, vs
+from vstools import (
+    ConstantFormatVideoNode, KwargsNotNone, PlanesT, check_variable, normalize_param_planes, vs
+)
 
 from .aka_expr import removegrain_aka_exprs, repair_aka_exprs
 
@@ -136,14 +138,15 @@ class Repair(Generic[P, R]):
             :param planes:          Planes to process. Defaults to all.
             :return:                Clip with repaired pixels, bounded by the reference.
             """
-            from .util import norm_rmode_planes
-
-            return repair(clip, repairclip, norm_rmode_planes(clip, self, planes))
+            return repair(clip, repairclip, self, planes)
 
 
 @Repair
 def repair(
-    clip: vs.VideoNode, repairclip: vs.VideoNode, mode: int | Repair.Mode | Sequence[int | Repair.Mode]
+    clip: vs.VideoNode,
+    repairclip: vs.VideoNode,
+    mode: int | Repair.Mode | Sequence[int | Repair.Mode],
+    planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     """
     Constrains the input `clip` using a `repairclip` by clamping pixel values
@@ -170,12 +173,13 @@ def repair(
     :param repairclip:    Reference clip for bounds (often the original or a less-processed version).
     :param mode:          Repair mode(s) used to constrain pixels. Can be a single mode or a list per plane.
                           See [Repair.Mode][vsrgtools.rgtools.Repair.Mode] for details.
+    :param planes:        Planes to process. Default to all.
     :return:              Clip with repaired pixels, bounded by the reference.
     """
     assert check_variable(clip, repair)
     assert check_variable(repairclip, repair)
 
-    mode = normalize_seq(mode, clip.format.num_planes)
+    mode = normalize_param_planes(clip, mode, planes, Repair.Mode.NONE)
 
     if not sum(mode):
         return clip
@@ -308,14 +312,12 @@ class RemoveGrain(Generic[P, R]):
             :param planes:          Planes to process. Defaults to all.
             :return:                Processed (denoised) clip.
             """
-            from .util import norm_rmode_planes
-
-            return remove_grain(clip, norm_rmode_planes(clip, self, planes))
+            return remove_grain(clip, self, planes)
 
 
 @RemoveGrain
 def remove_grain(
-    clip: vs.VideoNode, mode: int | RemoveGrain.Mode | Sequence[int | RemoveGrain.Mode]
+    clip: vs.VideoNode, mode: int | RemoveGrain.Mode | Sequence[int | RemoveGrain.Mode], planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     """
     Apply spatial denoising using the RemoveGrain algorithm.
@@ -339,11 +341,12 @@ def remove_grain(
     :param clip:    Clip to process.
     :param mode:    Mode(s) to use. Can be a single mode or per-plane list.
                     See [RemoveGrain.Mode][vsrgtools.rgtools.RemoveGrain.Mode] for details.
+    :param planes:  Planes to process. Default to all.
     :return:        Processed (denoised) clip.
     """
     assert check_variable(clip, remove_grain)
 
-    mode = normalize_seq(mode, clip.format.num_planes)
+    mode = normalize_param_planes(clip, mode, planes, RemoveGrain.Mode.NONE)
 
     if not sum(mode):
         return clip
@@ -485,13 +488,14 @@ class VerticalCleaner(Generic[P, R]):
             :param planes:      Planes to process. Defaults to all.
             :return:            Filtered clip.
             """
-            from .util import norm_rmode_planes
-            return vertical_cleaner(clip, norm_rmode_planes(clip, self, planes))
+            return vertical_cleaner(clip, normalize_param_planes(clip, self, planes, 0))
 
 
 @VerticalCleaner
 def vertical_cleaner(
-    clip: vs.VideoNode, mode: int | VerticalCleaner.Mode | Sequence[int | VerticalCleaner.Mode]
+    clip: vs.VideoNode,
+    mode: int | VerticalCleaner.Mode | Sequence[int | VerticalCleaner.Mode],
+    planes: PlanesT = None,
 ) -> ConstantFormatVideoNode:
     """
     Applies a fast vertical median or relaxed median filter to the clip
@@ -511,11 +515,12 @@ def vertical_cleaner(
     :param mode:    Mode of vertical cleaning to apply. Can be:
                       - A single enum/int (applied to all planes),
                       - A sequence of enums/ints (one per plane).
+    :param planes:  Planes to process. Defaults to all.
     :return:        Filtered clip.
     """
     assert check_variable(clip, vertical_cleaner)
 
-    mode = normalize_seq(mode, clip.format.num_planes)
+    mode = normalize_param_planes(clip, mode, planes, VerticalCleaner.Mode.NONE)
 
     if not sum(mode):
         return clip

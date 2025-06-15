@@ -375,8 +375,8 @@ def median_blur(
     if mode == ConvMode.SQUARE and max(radius) <= 3:
         return core.zsmooth.Median(clip, radius, planes)
 
-    if mode == ConvMode.VERTICAL and all(r == 1 for r in radius):
-        return vertical_cleaner.Mode.MEDIAN(clip, planes)
+    if mode == ConvMode.VERTICAL and max(radius) <= 1:
+        return vertical_cleaner(clip, radius, planes)
 
     expr_plane = list[list[str]]()
 
