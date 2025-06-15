@@ -14,7 +14,7 @@ from vsexprtools import norm_expr
 from vskernels import Point
 from vstools import (
     ConstantFormatVideoNode, FunctionUtil, PlanesT, UnsupportedVideoFormatError, check_progressive, check_ref_clip,
-    check_variable, core, depth, get_y, join, vs
+    check_variable, core, depth, get_y, join, vs, normalize_param_planes
 )
 
 __all__ = [
@@ -487,6 +487,7 @@ def bm3d(
     backend: BM3D.Backend = BM3D.Backend.AUTO,
     basic_args: dict[str, Any] | None = None,
     final_args: dict[str, Any] | None = None,
+    planes: PlanesT = None,
     **kwargs: Any,
 ) -> ConstantFormatVideoNode:
     """
@@ -547,6 +548,8 @@ def bm3d(
     :param final_args:                      Additional arguments to pass to the final estimate step.
                                             Defaults to None.
 
+    :param planes:                          Planes to process. Default to all.
+
     :param **kwargs:                        Internal keyword arguments for testing purposes.
 
     :raises CustomValueError:               If both `pre` and `ref` are specified at the same time.
@@ -568,7 +571,7 @@ def bm3d(
         ref = check_ref_clip(clip, ref, func)
 
     radius_basic, radius_final = normalize_seq(tr, 2)
-    nsigma = normalize_seq(sigma, 3)
+    nsigma = normalize_param_planes(clip, sigma, planes, 0, func)
 
     backend = backend.resolve()
     nbasic_args = fallback(basic_args, KwargsT())
