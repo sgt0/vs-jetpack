@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from functools import partial
 from typing import Sequence
 
@@ -9,10 +8,10 @@ from jetpytools import CustomIntEnum, KwargsT
 from vsdenoise import MVTools, MVToolsPreset, prefilter_to_full_range
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
-from vstools import (ConvMode, CustomEnum, FormatsMismatchError, FuncExceptT,
-                     FunctionUtil, GenericVSFunction, PlanesT, check_ref_clip,
-                     check_variable, core, limiter, scale_delta, shift_clip,
-                     vs)
+from vstools import (
+    ConvMode, FormatsMismatchError, FunctionUtil, GenericVSFunction, PlanesT,
+    check_ref_clip, check_variable, core, limiter, scale_delta, shift_clip, vs,
+)
 
 from .enums import IVTCycles
 
@@ -124,17 +123,15 @@ class InterpolateOverlay(CustomIntEnum):
                 return fixed.std.SelectEvery(8, (3, 5, 7, 6))
 
 
-class FixInterlacedFades(CustomEnum):
-    Average: FixInterlacedFades = object()  # type: ignore
-    Match: FixInterlacedFades = object()  # type: ignore
+class FixInterlacedFades(CustomIntEnum):
+    Average = 0
+    """Use the average value across both fields."""
 
-    # Deprecated aliases for `Match`
-    Darken: FixInterlacedFades = object()  # type: ignore
-    Brighten: FixInterlacedFades = object()  # type: ignore
+    Match = 1
+    """Match to the field closest to color."""
 
     def __call__(
-        self, clip: vs.VideoNode, colors: float | Sequence[float] = 0.0,
-        planes: PlanesT = None, func: FuncExceptT | None = None
+        self, clip: vs.VideoNode, color: float | Sequence[float] = 0.0, planes: PlanesT = None
     ) -> vs.VideoNode:
         """
         Give a mathematically perfect solution to decombing fades made *after* telecine
@@ -148,52 +145,43 @@ class FixInterlacedFades(CustomEnum):
 
         Make sure to run this *after* IVTC!
 
-        :param clip:                            Clip to process.
-        :param colors:                          Fade source/target color (floating-point plane averages).
-                                                Accepts a single float or a sequence of floats
-                                                to control the colors per plane.
+        :param clip:      Clip to process.
+        :param color:     Fade source/target color (floating-point plane averages).
+                          Accepts a single float or a sequence of floats to control the colors per plane.
 
-        :return:                                Clip with fades to/from `colors` accurately deinterlaced.
-                                                Frames that don't contain such fades may be damaged.
+        :return:          Clip with fades to/from `colors` accurately deinterlaced.
+                          Frames that don't contain such fades may be damaged.
         """
-        func = func or self.__class__
 
-        if self in (self.Darken, self.Brighten):
-            warnings.warn(
-                'FixInterlacedFades: Darken and Brighten are deprecated and will be removed in a future version. '
-                'They are now aliases for Match, so use Match directly instead.',
-                DeprecationWarning
-            )
+        func = FunctionUtil(clip, self.__class__, planes, vs.YUV, 32)
 
-        f = FunctionUtil(clip, func, planes, vs.YUV, 32)
+        fields = limiter(func.work_clip).std.SeparateFields(tff=True)
 
-        fields = limiter(f.work_clip).std.SeparateFields(tff=True)
-
-        fields = norm_expr(fields, 'x {color} - abs', planes, color=colors, func=func)
-        for i in f.norm_planes:
-            fields = fields.std.PlaneStats(None, i, f'P{i}')
+        fields = norm_expr(fields, "x {color} - abs", planes, color=color, func=self.__class__)
+        for i in func.norm_planes:
+            fields = fields.std.PlaneStats(None, i, f"P{i}")
 
         props_clip = core.akarin.PropExpr(
-            [f.work_clip, fields[::2], fields[1::2]], lambda: {  # type: ignore[misc]
-                f'f{t}Avg{i}': f'{c}.P{i}Average'  # type: ignore[has-type]
-                for t, c in ['ty', 'bz']
-                for i in f.norm_planes
+            [func.work_clip, fields[::2], fields[1::2]],
+            lambda: {
+                f"f{f}Avg{i}": f"{c}.P{i}Average" for f, c in zip("tb", "yz") for i in func.norm_planes
             }
         )
 
         expr = (
-            'Y 2 % x.fbAvg{i} x.ftAvg{i} ? AVG! '
-            'AVG@ 0 = x x {color} - x.ftAvg{i} x.fbAvg{i} {expr_mode} AVG@ / * {color} + ?'
+            "Y 2 % x.fbAvg{i} x.ftAvg{i} ? AVG! "
+            "AVG@ 0 = x x {color} - x.ftAvg{i} x.fbAvg{i} {expr_mode} AVG@ / * {color} + ?"
         )
 
         fix = norm_expr(
             props_clip, expr, planes,
-            i=f.norm_planes, color=colors,
-            expr_mode='+ 2 /' if self == self.Average else 'min',
-            func=func
+            i=func.norm_planes, color=color,
+            expr_mode="+ 2 /" if self == self.Average else "min",
+            func=self.__class__,
         )
 
-        return f.return_clip(fix)
+        return func.return_clip(fix)
+
 
 
 def vinverse(
