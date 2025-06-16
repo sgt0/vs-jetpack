@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import warnings
-
 from functools import partial
+from typing import Sequence
+
 from jetpytools import CustomIntEnum, KwargsT
 
 from vsdenoise import MVTools, MVToolsPreset, prefilter_to_full_range
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
-from vstools import (
-    ConvMode, CustomEnum, FormatsMismatchError, FuncExceptT, FunctionUtil, GenericVSFunction,
-    PlanesT, check_variable, check_ref_clip, core, limiter, scale_delta, shift_clip, vs
-)
+from vstools import (ConvMode, CustomEnum, FormatsMismatchError, FuncExceptT,
+                     FunctionUtil, GenericVSFunction, PlanesT, check_ref_clip,
+                     check_variable, core, limiter, scale_delta, shift_clip,
+                     vs)
 
 from .enums import IVTCycles
 
