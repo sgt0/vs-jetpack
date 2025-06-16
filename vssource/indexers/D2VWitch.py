@@ -155,7 +155,7 @@ class D2VWitch(DVDExtIndexer):
         fflags, vobids, progseq = self._d2v_collect_all_frameflags(vob_input_files, output_folder)
 
         index_file = self.index(vob_input_files, output_folder=output_folder)[0]
-        node = self._source_func(index_file, rff=False)  # type: ignore
+        node = self._source_func(index_file, rff=False)
 
         assert len(node) == len(fflags) == len(vobids) == len(progseq)
 
