@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from fractions import Fraction
 from functools import lru_cache, partial
-from typing import TYPE_CHECKING, Sequence
+from typing import TYPE_CHECKING, Callable, ClassVar, Sequence
 
 from vstools import CustomValueError, SPath, core, remap_frames, vs
 
@@ -22,7 +22,7 @@ __all__ = [
 class D2VWitch(DVDExtIndexer):
     _bin_path = 'd2vwitch'
     _ext = 'd2v'
-    _source_func = core.lazy.d2v.Source
+    _source_func: ClassVar[Callable[..., vs.VideoNode]] = core.lazy.d2v.Source
 
     _default_args = ('--single-input', )
 
