@@ -3,8 +3,8 @@ from __future__ import annotations
 import warnings
 
 from functools import partial
-
 from jetpytools import CustomIntEnum, KwargsT
+
 from vsdenoise import MVTools, MVToolsPreset, prefilter_to_full_range
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
@@ -132,7 +132,7 @@ class FixInterlacedFades(CustomEnum):
     Brighten: FixInterlacedFades = object()  # type: ignore
 
     def __call__(
-        self, clip: vs.VideoNode, colors: float | list[float] | PlanesT = 0.0,
+        self, clip: vs.VideoNode, colors: float | Sequence[float] = 0.0,
         planes: PlanesT = None, func: FuncExceptT | None = None
     ) -> vs.VideoNode:
         """
@@ -149,6 +149,8 @@ class FixInterlacedFades(CustomEnum):
 
         :param clip:                            Clip to process.
         :param colors:                          Fade source/target color (floating-point plane averages).
+                                                Accepts a single float or a sequence of floats
+                                                to control the colors per plane.
 
         :return:                                Clip with fades to/from `colors` accurately deinterlaced.
                                                 Frames that don't contain such fades may be damaged.
