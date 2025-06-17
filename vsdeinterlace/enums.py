@@ -1,4 +1,4 @@
-from vstools import CustomEnum, CustomIntEnum, vs
+from vstools import ConstantFormatVideoNode, check_variable, CustomEnum, CustomIntEnum, vs, core
 
 __all__ = [
     'VFMMode',
@@ -45,28 +45,31 @@ class IVTCycles(CustomEnum):
     Each pattern defines a sequence of frame indices to keep during decimation.
     """
 
-    cycle_10 = [[0, 3, 6, 8], [0, 2, 5, 8], [0, 2, 4, 7], [2, 4, 6, 9], [1, 4, 6, 8]]
+    CYCLE_10 = [[0, 3, 6, 8], [0, 2, 5, 8], [0, 2, 4, 7], [2, 4, 6, 9], [1, 4, 6, 8]]
     """Pattern for standard field-based 2:3 pulldown."""
 
-    cycle_08 = [[0, 3, 4, 6], [0, 2, 5, 6], [0, 2, 4, 7], [0, 2, 4, 7], [1, 2, 4, 6]]
+    CYCLE_08 = [[0, 3, 4, 6], [0, 2, 5, 6], [0, 2, 4, 7], [0, 2, 4, 7], [1, 2, 4, 6]]
     """Pattern for 2:3:3:2 pulldown."""
 
-    cycle_05 = [[0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3], [1, 2, 3, 4], [0, 2, 3, 4]]
+    CYCLE_05 = [[0, 1, 3, 4], [0, 1, 2, 4], [0, 1, 2, 3], [1, 2, 3, 4], [0, 2, 3, 4]]
     """Pattern for standard frame-based 2:3 pulldown."""
 
     @property
     def pattern_length(self) -> int:
         """Get the length of the pattern cycle in frames."""
+
         return int(self._name_[6:])
 
     @property
-    def cycle (self) -> int:
+    def cycle(self) -> int:
         """Get the total number of available pattern variations for this cycle."""
 
         return len(self.value)
 
-    def decimate(self, clip: vs.VideoNode, pattern: int = 0) -> vs.VideoNode:
+    def decimate(self, clip: vs.VideoNode, pattern: int = 0) -> ConstantFormatVideoNode:
         """Apply the decimation pattern to a video clip with the given pattern index."""
 
+        assert check_variable(clip, self.decimate)
         assert 0 <= pattern < self.cycle
-        return clip.std.SelectEvery(self.pattern_length, self.value[pattern])
+
+        return core.std.SelectEvery(clip, self.pattern_length, self.value[pattern])

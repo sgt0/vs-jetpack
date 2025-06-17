@@ -3,7 +3,10 @@ from __future__ import annotations
 from typing import Any, cast
 
 from vsexprtools import complexpr_available, expr_func, norm_expr
-from vstools import VSFunction, join, shift_clip, shift_clip_multi, vs
+from vstools import (
+    ConstantFormatVideoNode, check_variable, check_ref_clip,
+    VSFunctionNoArgs, join, shift_clip, shift_clip_multi, vs, core
+)
 
 from .funcs import vinverse
 from .utils import telecine_patterns
@@ -17,7 +20,7 @@ __all__ = [
 ]
 
 
-def deblending_helper(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, length: int = 5) -> vs.VideoNode:
+def deblending_helper(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, length: int = 5) -> ConstantFormatVideoNode:
     """
     Helper function to select a deblended clip pattern from a fieldmatched clip.
 
@@ -27,6 +30,11 @@ def deblending_helper(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, lengt
 
     :return: Deblended clip.
     """
+
+    assert check_variable(deblended, deblending_helper)
+    assert check_variable(fieldmatched, deblending_helper)
+    check_ref_clip(fieldmatched, deblended, deblending_helper)
+
     inters = telecine_patterns(fieldmatched, deblended, length)
     inters += [shift_clip(inter, 1) for inter in inters]
 
@@ -39,7 +47,7 @@ def deblending_helper(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, lengt
             prop_srcs, f'x._Combed N {length} % 1 + y._Combed {length} 0 ? + 0 ?', vs.GRAY8
         )
 
-        return fieldmatched.std.FrameEval(lambda n, f: inters[f[0][0, 0]], index_src)
+        return core.std.FrameEval(fieldmatched, lambda n, f: inters[f[0][0, 0]], index_src)
 
     def _deblend_eval(n: int, f: list[vs.VideoFrame]) -> vs.VideoNode:
         idx = 0
@@ -52,12 +60,15 @@ def deblending_helper(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, lengt
 
         return inters[idx]
 
-    return fieldmatched.std.FrameEval(_deblend_eval, prop_srcs)
+    return core.std.FrameEval(fieldmatched, _deblend_eval, prop_srcs)
 
 
 def deblend(
-    clip: vs.VideoNode, fieldmatched: vs.VideoNode | None = None, decomber: VSFunction | None = vinverse, **kwargs: Any
-) -> vs.VideoNode:
+    clip: vs.VideoNode,
+    fieldmatched: vs.VideoNode | None = None,
+    decomber: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = vinverse,
+    **kwargs: Any,
+) -> ConstantFormatVideoNode:
     """
     Automatically deblends if normal field matching leaves 2 blends every 5 frames. Adopted from jvsfunc.
 
@@ -79,25 +90,20 @@ def deblend(
     return join(fieldmatched or clip, deblended)
 
 
-def deblend_bob(
-    bobbed: vs.VideoNode | tuple[vs.VideoNode, vs.VideoNode], fieldmatched: vs.VideoNode | None = None
-) -> vs.VideoNode:
+def deblend_bob(bobbed: vs.VideoNode, fieldmatched: vs.VideoNode | None = None) -> ConstantFormatVideoNode:
     """
     Stronger version of `deblend` that uses a bobbed clip to deblend. Adopted from jvsfunc.
 
-    :param bobbed:          Bobbed source or a tuple of even/odd fields.
+    :param bobbed:          Bobbed source.
     :param fieldmatched:    Source after field matching, must have field=3 and possibly low cthresh.
 
     :return: Deblended clip.
     """
 
-    if isinstance(bobbed, tuple):
-        bob0, bob1 = bobbed
-    else:
-        bob0, bob1 = bobbed.std.SelectEvery(2, 0), bobbed.std.SelectEvery(2, 1)
+    assert check_variable(bobbed, deblend_bob)
 
-    ab0, bc0, c0 = shift_clip_multi(bob0, (0, 2))
-    bc1, ab1, a1 = shift_clip_multi(bob1)
+    ab0, bc0, c0 = shift_clip_multi(bobbed[::2], (0, 2))
+    bc1, ab1, a1 = shift_clip_multi(bobbed[1::2])
 
     deblended = norm_expr([a1, ab1, ab0, bc1, bc0, c0], ('b', 'y x - z + b c - a + + 2 /'), func=deblend_bob)
 
@@ -107,7 +113,7 @@ def deblend_bob(
     return deblended
 
 
-def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode) -> vs.VideoNode:
+def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode) -> ConstantFormatVideoNode:
     """
     Should be used after deblend/_bob to fix scene changes. Adopted from jvsfunc.
 
@@ -117,6 +123,8 @@ def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode) -> vs.Vi
     :return: Deblended clip with fixed blended keyframes.
     """
 
+    assert check_variable(deblended, deblend_fix_kf)
+
     shifted_clips = shift_clip_multi(deblended)
     prop_srcs = shift_clip_multi(fieldmatched, (0, 1))
 
@@ -125,7 +133,7 @@ def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode) -> vs.Vi
             prop_srcs, 'x._Combed x.VFMSceneChange and y.VFMSceneChange 2 0 ? 1 ?', vs.GRAY8
         )
 
-        return deblended.std.FrameEval(lambda n, f: shifted_clips[f[0][0, 0]], index_src)
+        return core.std.FrameEval(deblended, lambda n, f: shifted_clips[f[0][0, 0]], index_src)
 
     def _keyframe_fix(n: int, f: list[vs.VideoFrame]) -> vs.VideoNode:
         keyfm = cast(tuple[int, int], (f[0].props.VFMSceneChange, f[1].props.VFMSceneChange))
@@ -139,4 +147,4 @@ def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode) -> vs.Vi
 
         return shifted_clips[idx]
 
-    return deblended.std.FrameEval(_keyframe_fix, prop_srcs)
+    return core.std.FrameEval(deblended, _keyframe_fix, prop_srcs)

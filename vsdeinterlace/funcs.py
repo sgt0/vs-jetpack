@@ -9,7 +9,7 @@ from vsdenoise import MVTools, MVToolsPreset, prefilter_to_full_range
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
 from vstools import (
-    ConvMode, FormatsMismatchError, FunctionUtil, GenericVSFunction, PlanesT,
+    ConvMode, ConstantFormatVideoNode, FormatsMismatchError, FunctionUtil, VSFunctionKwArgs, PlanesT,
     check_ref_clip, check_variable, core, limiter, scale_delta, shift_clip, vs,
 )
 
@@ -41,7 +41,7 @@ class InterpolateOverlay(CustomIntEnum):
         blksize: int | tuple[int, int] = 8,
         refine: int = 1,
         thsad_recalc: int | None = None,
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Virtually oversamples the video to 120 fps with motion interpolation on credits only, and decimates to 24 fps.
         Requires manually specifying the 3:2 pulldown pattern (the clip must be split into parts if it changes).
@@ -76,7 +76,7 @@ class InterpolateOverlay(CustomIntEnum):
 
         assert check_variable(clip, self.__class__)
         assert check_variable(bobbed, self.__class__)
-        assert check_ref_clip(bobbed, clip)
+        check_ref_clip(bobbed, clip, self.__class__)
 
         field_ref = pattern * 2 % 5
         invpos = (5 - field_ref) % 5
@@ -94,7 +94,7 @@ class InterpolateOverlay(CustomIntEnum):
                 offsets = list(range(0, 10))
                 offsets.pop(8)
 
-                clean = IVTCycles.cycle_05.decimate(clip, pattern % 5)
+                clean = IVTCycles.CYCLE_05.decimate(clip, pattern % 5)
                 judder = select_every(bobbed, 1, -1 - invpos).std.SelectEvery(10, offsets)
 
         mv = MVTools(judder, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
@@ -120,19 +120,19 @@ class InterpolateOverlay(CustomIntEnum):
             case InterpolateOverlay.DEC_TXT60:
                 return fixed[invpos // 3 :]
             case InterpolateOverlay.IVTC_TXT30:
-                return fixed.std.SelectEvery(8, (3, 5, 7, 6))
+                return core.std.SelectEvery(fixed, 8, (3, 5, 7, 6))
 
 
 class FixInterlacedFades(CustomIntEnum):
-    Average = 0
+    AVERAGE = 0
     """Adjust the average of each field to `color`."""
 
-    Match = 1
+    MATCH = 1
     """Match to the field closest to `color`."""
 
     def __call__(
         self, clip: vs.VideoNode, color: float | Sequence[float] = 0.0, planes: PlanesT = None
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Give a mathematically perfect solution to decombing fades made *after* telecine
         (which made perfect IVTC impossible) that start or end in a solid color.
@@ -176,7 +176,7 @@ class FixInterlacedFades(CustomIntEnum):
         fix = norm_expr(
             props_clip, expr, planes,
             i=func.norm_planes, color=color,
-            expr_mode='+ 2 /' if self == self.Average else 'min',
+            expr_mode='+ 2 /' if self == self.AVERAGE else 'min',
             func=self.__class__,
         )
 
@@ -186,11 +186,16 @@ class FixInterlacedFades(CustomIntEnum):
 
 def vinverse(
     clip: vs.VideoNode,
-    comb_blur: GenericVSFunction | vs.VideoNode = partial(sbr, mode=ConvMode.VERTICAL),
-    contra_blur: GenericVSFunction | vs.VideoNode = BlurMatrix.BINOMIAL(mode=ConvMode.VERTICAL),
-    contra_str: float = 2.7, amnt: int | float | None = None, scl: float = 0.25,
-    thr: int | float = 0, planes: PlanesT = None
-) -> vs.VideoNode:
+    comb_blur: VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] | vs.VideoNode = partial(sbr, mode=ConvMode.VERTICAL),
+    contra_blur: VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] | vs.VideoNode = BlurMatrix.BINOMIAL(
+        mode=ConvMode.VERTICAL
+    ),
+    contra_str: float = 2.7,
+    amnt: int | float | None = None,
+    scl: float = 0.25,
+    thr: int | float = 0,
+    planes: PlanesT = None,
+) -> ConstantFormatVideoNode:
     """
     A simple but effective script to remove residual combing. Based on an AviSynth script by Didée.
 
@@ -212,6 +217,10 @@ def vinverse(
         blurred2 = contra_blur(blurred, planes=planes)
     else:
         blurred2 = contra_blur
+
+    assert check_variable(clip, vinverse)
+    assert check_variable(blurred, vinverse)
+    assert check_variable(blurred2, vinverse)
 
     FormatsMismatchError.check(vinverse, clip, blurred, blurred2)
 

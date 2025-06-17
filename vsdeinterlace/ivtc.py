@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from vstools import (
-    FieldBased, FieldBasedT, FunctionUtil, InvalidFramerateError,
+    ConstantFormatVideoNode, FieldBased, FieldBasedT, FunctionUtil, InvalidFramerateError,
     VSFunctionKwArgs, VSFunctionNoArgs, core, find_prop_rfs, join, vs
 )
 
@@ -17,8 +17,8 @@ __all__ = [
 
 
 def sivtc(
-    clip: vs.VideoNode, pattern: int = 0, tff: FieldBasedT | bool | None = None, ivtc_cycle: IVTCycles = IVTCycles.cycle_10
-) -> vs.VideoNode:
+    clip: vs.VideoNode, pattern: int = 0, tff: FieldBasedT | bool | None = None, ivtc_cycle: IVTCycles = IVTCycles.CYCLE_10
+) -> ConstantFormatVideoNode:
     """
     Simplest form of a fieldmatching function.
 
@@ -43,11 +43,11 @@ def sivtc(
 def jivtc(
     clip: vs.VideoNode, pattern: int, tff: FieldBasedT | bool | None = None, chroma_only: bool = True,
     postprocess: VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] = deblend,
-    postdecimate: IVTCycles | None = IVTCycles.cycle_05,
-    ivtc_cycle: IVTCycles = IVTCycles.cycle_10,
-    final_ivtc_cycle: IVTCycles = IVTCycles.cycle_08,
+    postdecimate: IVTCycles | None = IVTCycles.CYCLE_05,
+    ivtc_cycle: IVTCycles = IVTCycles.CYCLE_10,
+    final_ivtc_cycle: IVTCycles = IVTCycles.CYCLE_08,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     This function should only be used when a normal ivtc or ivtc + bobber leaves chroma blend to every fourth frame.
     You can disable chroma_only to use it for luma as well, but it is not recommended.
@@ -87,7 +87,7 @@ def vfm(
     mode: VFMMode = VFMMode.TWO_WAY_MATCH_THIRD_COMBED,
     postprocess: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] | None = None,
     **kwargs: Any
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     Perform field matching using VFM.
 
@@ -147,7 +147,7 @@ def vfm(
     return func.return_clip(fieldmatch)
 
 
-def vdecimate(clip: vs.VideoNode, weight: float = 0.0, **kwargs: Any) -> vs.VideoNode:
+def vdecimate(clip: vs.VideoNode, weight: float = 0.0, **kwargs: Any) -> ConstantFormatVideoNode:
     """
     Perform frame decimation using VDecimate.
 
