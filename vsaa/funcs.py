@@ -250,7 +250,7 @@ def based_aa(
     if callable(postfilter):
         aa = postfilter(aa)
     elif postfilter is None:
-        aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa, func.work_clip))
+        aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa, func.work_clip, 2, 1 / 255))
 
     if mask:
         aa = func.work_clip.std.MaskedMerge(aa, mask)
