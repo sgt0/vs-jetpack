@@ -57,6 +57,7 @@ else:
 
 class PresetVideoFormat(PresetVideoFormatBase):  # type: ignore[misc]
     if not TYPE_CHECKING:
+        NONE = 0
         GRAY8 = MAKE_VIDEO_ID(GRAY, INTEGER, 8, 0, 0)
         GRAY9 = MAKE_VIDEO_ID(GRAY, INTEGER, 9, 0, 0)
         GRAY10 = MAKE_VIDEO_ID(GRAY, INTEGER, 10, 0, 0)
