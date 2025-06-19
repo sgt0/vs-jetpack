@@ -142,7 +142,7 @@ def deblock_qed(
     chroma_mode: int = 0,
     align: Align = Align.TOP_LEFT,
     planes: PlanesT = None
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     A postprocessed Deblock: Uses full frequencies of Deblock's changes on block borders,
     but DCT-lowpassed changes on block interiours.
@@ -164,6 +164,7 @@ def deblock_qed(
     :return:                Deblocked clip
     """
     func = FunctionUtil(clip, deblock_qed, planes)
+
     if not func.chroma:
         chroma_mode = 0
 
