@@ -10,9 +10,9 @@ from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask, st
 from vsrgtools import MeanMode, gauss_blur, repair
 from vsscale import DPIR
 from vstools import (
-    Align, ConstantFormatVideoNode, FrameRangeN, FrameRangesN, FunctionUtil, PlanesT, check_progressive,
-    check_variable_format, core, depth, fallback, get_plane_sizes, get_y, join, normalize_ranges,
-    normalize_seq, padder, plane, replace_ranges, shift_clip_multi, vs
+    Align, ConstantFormatVideoNode, FrameRangeN, FrameRangesN, FieldBased, FunctionUtil, PlanesT,
+    check_progressive, check_variable, check_variable_format, core, depth, fallback, get_plane_sizes,
+    get_y, join, normalize_ranges, normalize_seq, padder, plane, replace_ranges, shift_clip_multi, vs
 )
 
 __all__ = [
@@ -216,7 +216,7 @@ def deblock_qed(
 def mpeg2stinx(
     clip: vs.VideoNode, bobber: Deinterlacer = NNEDI3(tff=True), mask: bool = True,
     radius: int | tuple[int, int] = 2, limit: float | None = 1.0
-) -> vs.VideoNode:
+) -> ConstantFormatVideoNode:
     """
     This filter is designed to eliminate certain combing-like compression artifacts that show up all too often
     in hard-telecined MPEG-2 encodes, and works to a smaller extent on bitrate-starved hard-telecined AVC as well.
@@ -233,22 +233,16 @@ def mpeg2stinx(
     """
 
     def _crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
-        even, odd = bobbed[::2], bobbed[1::2]
+        clip = core.std.Interleave([clip] * 2)
 
         if sw == 1 and sh == 1:
-            repair_even, repair_odd = repair(clip, even, 1), repair(clip, odd, 1)
+            repaired = repair(clip, bobbed, 1)
         else:
-            inpand_even, expand_even = Morpho.inpand(even, sw, sh), Morpho.expand(even, sw, sh)
-            inpand_odd, expand_odd = Morpho.inpand(odd, sw, sh), Morpho.expand(odd, sw, sh)
+            inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
 
-            repair_even, repair_odd = (
-                MeanMode.MEDIAN([clip, inpand_even, expand_even]),
-                MeanMode.MEDIAN([clip, inpand_odd, expand_odd])
-            )
+            repaired = MeanMode.MEDIAN([clip, inpand, expand])
 
-        repaired = core.std.Interleave([repair_even, repair_odd]).std.SeparateFields(True)
-
-        return repaired.std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
+        return repaired.std.SeparateFields(True).std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
 
     def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode, adj: vs.VideoNode | None) -> vs.VideoNode:
         if limit is None:
@@ -257,14 +251,12 @@ def mpeg2stinx(
         assert adj
 
         diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs', func=mpeg2stinx).std.SeparateFields(True)
-        diff = norm_expr(
-            [core.std.SelectEvery(diff, 4, (0, 1)), core.std.SelectEvery(diff, 4, (2, 3))], 'x y min', func=mpeg2stinx
-        )
+        diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))])
         diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
 
         return norm_expr([flt, src, diff], 'z {limit} * LIM! x y LIM@ - y LIM@ + clip', limit=limit, func=mpeg2stinx)
 
-    def _bob_func(clip: vs.VideoNode) -> vs.VideoNode:
+    def _bobfunc(clip: vs.VideoNode) -> vs.VideoNode:
         bobbed = bobber.bob(clip)
 
         if mask:
@@ -272,6 +264,7 @@ def mpeg2stinx(
 
         return bobbed
 
+    assert check_variable(clip, mpeg2stinx)
     assert check_progressive(clip, mpeg2stinx)
 
     sw, sh = normalize_seq(radius, 2)
@@ -284,7 +277,7 @@ def mpeg2stinx(
     else:
         adj = None
 
-    fixed1 = _temporal_limit(clip, _crossfield_repair(clip, _bob_func(clip)), adj)
-    fixed2 = _temporal_limit(fixed1, _crossfield_repair(fixed1, _bob_func(fixed1)), adj)
+    fixed1 = _temporal_limit(clip, _crossfield_repair(clip, _bobfunc(clip)), adj)
+    fixed2 = _temporal_limit(fixed1, _crossfield_repair(fixed1, _bobfunc(fixed1)), adj)
 
-    return fixed1.std.Merge(fixed2).std.SetFieldBased(0)
+    return core.std.SetFieldBased(fixed1.std.Merge(fixed2), FieldBased.PROGRESSIVE)
