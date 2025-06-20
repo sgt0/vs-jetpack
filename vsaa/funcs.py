@@ -28,6 +28,7 @@ def pre_aa(
         unsharpen, blur=partial(gauss_blur, mode=ConvMode.VERTICAL, sigma=1)
     ),
     antialiaser: AntiAliaser = NNEDI3(),
+    transpose_first: bool = False,
     direction: AntiAliaser.AADirection = AntiAliaser.AADirection.BOTH,
     planes: PlanesT = None,
 ) -> vs.VideoNode:
@@ -35,16 +36,16 @@ def pre_aa(
 
     wclip = func.work_clip
 
-    for x in AntiAliaser.AADirection:
-        if direction in (x, AntiAliaser.AADirection.BOTH):
-            if x == AntiAliaser.AADirection.HORIZONTAL:
+    for y in sorted((aa_dir for aa_dir in AntiAliaser.AADirection), key=lambda x: x.value, reverse=transpose_first):
+        if direction in (y, AntiAliaser.AADirection.BOTH):
+            if y == AntiAliaser.AADirection.HORIZONTAL:
                 wclip = antialiaser.transpose(wclip)
 
             aa = antialiaser.antialias(wclip, AntiAliaser.AADirection.VERTICAL)
             sharp = sharpener(wclip)
             limit = MeanMode.MEDIAN(wclip, aa, sharp)
 
-            if x == AntiAliaser.AADirection.HORIZONTAL:
+            if y == AntiAliaser.AADirection.HORIZONTAL:
                 wclip = antialiaser.transpose(limit)
 
     return func.return_clip(wclip)
