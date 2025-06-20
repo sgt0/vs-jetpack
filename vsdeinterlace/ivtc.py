@@ -34,7 +34,7 @@ def sivtc(
 
     tff = FieldBased.from_param_or_video(tff, clip, True, sivtc).is_tff
 
-    ivtc = clip.std.SeparateFields(tff=tff).std.DoubleWeave()
+    ivtc = clip.std.SeparateFields(tff).std.DoubleWeave(tff)
     ivtc = ivtc_cycle.decimate(ivtc, pattern)
 
     return FieldBased.PROGRESSIVE.apply(ivtc)
