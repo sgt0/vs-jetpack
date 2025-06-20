@@ -215,15 +215,16 @@ def deblock_qed(
 
 
 def mpeg2stinx(
-    clip: vs.VideoNode, bobber: Deinterlacer = NNEDI3(tff=True), mask: bool = True,
-    radius: int | tuple[int, int] = 2, limit: float | None = 1.0
+    clip: vs.VideoNode, bobber: Deinterlacer = NNEDI3(tff=True), tff: bool = True,
+    mask: bool = True, radius: int | tuple[int, int] = 2, limit: float | None = 1.0,
 ) -> ConstantFormatVideoNode:
     """
     This filter is designed to eliminate certain combing-like compression artifacts that show up all too often
     in hard-telecined MPEG-2 encodes, and works to a smaller extent on bitrate-starved hard-telecined AVC as well.
     General artifact removal is better accomplished with actual denoisers.
 
-    :param clip:       Clip to process
+    :param clip:       Clip to process.
+    :param tff:        The field order.
     :param mask:       Whether to use BWDIF motion masking.
     :param bobber:     Callable to use in place of the internal deinterlacing filter.
     :param radius:     x, y radius of min-max clipping (i.e. repair) to remove artifacts.
@@ -240,10 +241,9 @@ def mpeg2stinx(
             repaired = repair(clip, bobbed, 1)
         else:
             inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
-
             repaired = MeanMode.MEDIAN([clip, inpand, expand])
 
-        return repaired.std.SeparateFields(True).std.SelectEvery(4, (2, 1)).std.DoubleWeave()[::2]
+        return repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)).std.DoubleWeave(tff)[::2]
 
     def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode, adj: vs.VideoNode | None) -> vs.VideoNode:
         if limit is None:
@@ -251,9 +251,9 @@ def mpeg2stinx(
 
         assert adj
 
-        diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs', func=mpeg2stinx).std.SeparateFields(True)
+        diff = norm_expr([core.std.Interleave([src] * 2), adj], 'x y - abs', func=mpeg2stinx).std.SeparateFields(tff)
         diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))])
-        diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave()[::2]
+        diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave(tff)[::2]
 
         return norm_expr([flt, src, diff], 'z {limit} * LIM! x y LIM@ - y LIM@ + clip', limit=limit, func=mpeg2stinx)
 
@@ -261,7 +261,7 @@ def mpeg2stinx(
         bobbed = bobber.bob(clip)
 
         if mask:
-            bobbed = BWDIF(tff=True, edeint=bobbed).bob(clip)
+            bobbed = BWDIF(tff=tff, edeint=bobbed).bob(clip)
 
         return bobbed
 
@@ -269,7 +269,7 @@ def mpeg2stinx(
     assert check_progressive(clip, mpeg2stinx)
 
     sw, sh = normalize_seq(radius, 2)
-    bobber = bobber.copy(tff=True)
+    bobber = bobber.copy(tff=tff)
 
     if limit is not None:
         adjs = shift_clip_multi(clip)
