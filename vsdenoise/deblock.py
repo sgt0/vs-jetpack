@@ -215,7 +215,7 @@ def deblock_qed(
 
 
 def mpeg2stinx(
-    clip: vs.VideoNode, bobber: Deinterlacer = NNEDI3(tff=True), tff: bool = True,
+    clip: vs.VideoNode, bobber: Deinterlacer = NNEDI3(), tff: bool = True,
     mask: bool = True, radius: int | tuple[int, int] = 2, limit: float | None = 1.0,
 ) -> ConstantFormatVideoNode:
     """
