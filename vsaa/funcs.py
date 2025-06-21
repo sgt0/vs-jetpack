@@ -235,9 +235,8 @@ def based_aa(
 
     if not antialiaser:
         antialiaser = EEDI3(
-            alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, None),
-            mclip=Bilinear().scale(mask, ss.width, ss.height) if mask else None,
-            sclip=ss
+            alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss,
+            mclip=Bilinear().scale(mask, ss.width, ss.height) if mask else None
         )
 
     aa = antialiaser.antialias(ss, **aa_kwargs)
@@ -246,12 +245,12 @@ def based_aa(
 
     if pscale != 1.0 and not isinstance(supersampler, NoScale):
         no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
-        aa = norm_expr([func.work_clip, aa, no_aa], 'x z x - {pscale} * + y z - +', pscale=pscale, func=func.func)  # type: ignore
+        aa = norm_expr([ss_clip, aa, no_aa], 'x z x - {pscale} * + y z - +', pscale=pscale, func=func.func)  # type: ignore
 
     if callable(postfilter):
         aa = postfilter(aa)
     elif postfilter is None:
-        aa = MeanMode.MEDIAN(aa, func.work_clip, bilateral(aa, func.work_clip, 2, 1 / 255))
+        aa = MeanMode.MEDIAN(aa, ss_clip, bilateral(aa, func.work_clip, 2, 1 / 255))
 
     if mask:
         aa = func.work_clip.std.MaskedMerge(aa, mask)
