@@ -99,23 +99,27 @@ def fine_sharp(
 
 def soothe(
     flt: vs.VideoNode, src: vs.VideoNode,
-    spatial_strength: float = 0, temporal_strength: float = 0.75,
+    spatial_strength: float = 0.0, temporal_strength: float = 0.75,
     spatial_radius: int = 1, temporal_radius: int = 1,
     scenechange: bool = False, planes: PlanesT = None
 ) -> ConstantFormatVideoNode:
     sharp_diff = src.std.MakeDiff(flt, planes)
 
     expr = (
-        'x neutral - X! y neutral - Y! X@ Y@ xor X@ {strength} / neutral + '
-        'X@ abs Y@ abs > x y - {strength} / y + x ? ?'
+        'x neutral - X! y neutral - Y! X@ Y@ xor X@ {strength} * neutral + '
+        'X@ abs Y@ abs > x y - {strength} * y + x ? ?'
     )
 
     if spatial_strength:
         blurred = box_blur(sharp_diff, spatial_radius, planes=planes)
-        sharp_diff = norm_expr([sharp_diff, blurred], expr, strength=spatial_strength + 1.0, planes=planes, func=soothe)
+        sharp_diff = norm_expr(
+            [sharp_diff, blurred], expr, strength=1.0 - spatial_strength, planes=planes, func=soothe
+        )
 
     if temporal_strength:
-        blurred = box_blur(sharp_diff, temporal_radius, mode=ConvMode.TEMPORAL, scenechange=scenechange, planes=planes)
-        sharp_diff = norm_expr([sharp_diff, blurred], expr, strength=temporal_strength + 1.0, planes=planes, func=soothe)
+        blurred = box_blur(sharp_diff, temporal_radius, 1, ConvMode.TEMPORAL, planes, scenechange=scenechange)
+        sharp_diff = norm_expr(
+            [sharp_diff, blurred], expr, strength=1.0 - temporal_strength, planes=planes, func=soothe
+        )
 
     return src.std.MakeDiff(sharp_diff, planes)
