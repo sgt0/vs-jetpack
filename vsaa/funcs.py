@@ -74,6 +74,12 @@ def clamp_aa(
 
     :return:                    Antialiased clip.
     """
+    import warnings
+
+    warnings.warn(
+        "clamp_aa is deprecated and will be removed in a future version. Use based_aa instead.",
+        DeprecationWarning,
+    )
 
     func = FunctionUtil(clip, clamp_aa, planes, (vs.YUV, vs.GRAY))
 
