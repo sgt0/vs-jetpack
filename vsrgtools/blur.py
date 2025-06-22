@@ -370,7 +370,7 @@ def median_blur(
 
         raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", median_blur, radius)
 
-    radius = normalize_seq(radius, clip.num_frames)
+    radius = normalize_seq(radius, clip.format.num_planes)
 
     if mode == ConvMode.SQUARE and max(radius) <= 3:
         return core.zsmooth.Median(clip, radius, planes)
