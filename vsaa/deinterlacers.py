@@ -3,6 +3,7 @@ from dataclasses import dataclass, replace
 from enum import IntFlag, auto
 from typing import Any, Protocol, Sequence, runtime_checkable
 
+from jetpytools import MISSING
 from typing_extensions import Self
 
 from vskernels import Catrom, ComplexScaler, ComplexScalerLike, LeftShift, Scaler, TopShift
@@ -590,6 +591,17 @@ class EEDI3(SuperSampler):
     opencl: bool = False
     """Enables the use of the OpenCL variant for processing."""
 
+    def _set_sclip_mclip(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        sclip, mclip = kwargs.pop("sclip", MISSING), kwargs.pop("mclip", MISSING)
+
+        if sclip is not MISSING:
+            self.sclip = sclip
+
+        if mclip is not MISSING:
+            self.mclip = mclip
+
+        return kwargs
+
     @property
     def _deinterlacer_function(self) -> VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode]:
         return core.lazy.eedi3m.EEDI3CL if self.opencl else core.lazy.eedi3m.EEDI3
@@ -613,6 +625,11 @@ class EEDI3(SuperSampler):
 
         return self._deinterlacer_function(clip, field, dh, **kwargs)
 
+    def antialias(
+        self, clip: vs.VideoNode, direction: AntiAliaser.AADirection = AntiAliaser.AADirection.BOTH, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
+        return super().antialias(clip, direction, **self._set_sclip_mclip(kwargs))
+
     def transpose(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         if isinstance(self.sclip, vs.VideoNode):
             self.sclip = self.sclip.std.Transpose()
@@ -621,6 +638,16 @@ class EEDI3(SuperSampler):
             self.mclip = self.mclip.std.Transpose()
 
         return super().transpose(clip)
+
+    def scale(
+        self,
+        clip: vs.VideoNode,
+        width: int | None = None,
+        height: int | None = None,
+        shift: tuple[TopShift, LeftShift] = (0, 0),
+        **kwargs: Any
+    ) -> ConstantFormatVideoNode:
+        return super().scale(clip, width, height, shift, **self._set_sclip_mclip(kwargs))
 
     def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
         if self.vthresh is None:
