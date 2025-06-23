@@ -238,12 +238,12 @@ def based_aa(
         ss_clip = func.work_clip
 
     ss = supersampler.scale(ss_clip, aaw, aah)
+    mclip = Bilinear().scale(mask, ss.width, ss.height) if mask else None
 
-    if not antialiaser:
-        antialiaser = EEDI3(
-            alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss,
-            mclip=Bilinear().scale(mask, ss.width, ss.height) if mask else None
-        )
+    if antialiaser and antialiaser.__class__ == EEDI3:
+        antialiaser.copy(mclip=mclip)
+    else:
+        antialiaser = EEDI3(alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss, mclip=mclip)
 
     aa = antialiaser.antialias(ss, **aa_kwargs)
 
