@@ -20,7 +20,7 @@ from .fft import DFTTest, SLocationT
 
 __all__ = [
     'Prefilter', 'PrefilterPartial', 'MultiPrefilter',
-    'PrefilterT',
+    'PrefilterLike',
 
     'prefilter_to_full_range',
 ]
@@ -527,7 +527,7 @@ class MultiPrefilter(AbstractPrefilter):
         return clip
 
 
-PrefilterT = Prefilter | PrefilterPartial | MultiPrefilter
+PrefilterLike = Prefilter | PrefilterPartial | MultiPrefilter
 
 
 def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: float = 0.0625) -> ConstantFormatVideoNode:
