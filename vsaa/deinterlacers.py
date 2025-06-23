@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, replace
 from enum import IntFlag, auto
-from typing import Any, Protocol, Sequence, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, Sequence, runtime_checkable
 
 from jetpytools import MISSING
 from typing_extensions import Self
@@ -257,22 +257,23 @@ class SuperSampler(AntiAliaser, Scaler, ABC):
             clip, width, height, (nshift[1], nshift[0])
         )
 
-    def supersample(
-        self, clip: VideoNodeT, rfactor: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> VideoNodeT:
-        """
-        Supersample a clip by a given scaling factor.
+    if TYPE_CHECKING:
+        def supersample(
+            self, clip: VideoNodeT, rfactor: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
+        ) -> VideoNodeT:
+            """
+            Supersample a clip by a given scaling factor.
 
-        Note: Setting `tff=True` results in less chroma shift for non-centered chroma locations.
+            Note: Setting `tff=True` results in less chroma shift for non-centered chroma locations.
 
-        :param clip:                The source clip.
-        :param rfactor:             Scaling factor for supersampling.
-        :param shift:               Subpixel shift (top, left) applied during scaling.
-        :param kwargs:              Additional arguments forwarded to the scale function.
-        :raises CustomValueError:   If resulting resolution is non-positive.
-        :return:                    The supersampled clip.
-        """
-        return super().supersample(clip, rfactor, shift, **kwargs)
+            :param clip:                The source clip.
+            :param rfactor:             Scaling factor for supersampling.
+            :param shift:               Subpixel shift (top, left) applied during scaling.
+            :param kwargs:              Additional arguments forwarded to the scale function.
+            :raises CustomValueError:   If resulting resolution is non-positive.
+            :return:                    The supersampled clip.
+            """
+            ...
 
 
 @dataclass
