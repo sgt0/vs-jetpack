@@ -242,7 +242,7 @@ def based_aa(
 
     if antialiaser and antialiaser.__class__ == EEDI3:
         antialiaser.copy(mclip=mclip)
-    else:
+    elif not antialiaser:
         antialiaser = EEDI3(alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss, mclip=mclip)
 
     aa = antialiaser.antialias(ss, **aa_kwargs)
