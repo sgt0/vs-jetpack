@@ -9,12 +9,12 @@ Wrappers for denoising, regression, and motion-compensation-related plugins and 
 ## Example usage
 
 ```py
-from vsdenoise import MVToolsPresets, Prefilter, mc_degrain, BM3DCuda, Profile, nl_means
+from vsdenoise import MVToolsPreset, Prefilter, mc_degrain, BM3DCuda, Profile, nl_means
 
 clip = ...
 
 ref = mc_degrain(
-    clip, prefilter=Prefilter.DFTTEST, preset=MVToolsPresets.HQ_SAD, thsad=100
+    clip, prefilter=Prefilter.DFTTEST(), preset=MVToolsPreset.HQ_SAD, thsad=100
 )
 
 denoise = BM3DCuda.denoise(
