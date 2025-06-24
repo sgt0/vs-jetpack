@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from functools import partial
 
 from vsexprtools import norm_expr
-from vskernels import Bilinear, Box, Catrom, NoScale, Scaler, ScalerLike
+from vskernels import Box, Catrom, NoScale, Scaler, ScalerLike
 from vsmasktools import EdgeDetect, EdgeDetectT, Prewitt
 from vsrgtools import MeanMode, bilateral, box_blur, gauss_blur, unsharpen
 from vsscale import ArtCNN
@@ -238,13 +238,12 @@ def based_aa(
         ss_clip = func.work_clip
 
     ss = supersampler.scale(ss_clip, aaw, aah)
-    mclip = Bilinear().scale(mask, ss.width, ss.height) if mask else None
 
     if not antialiaser:
         antialiaser = EEDI3(alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss)
 
     if isinstance(antialiaser, EEDI3):
-        aa_kwargs = {"mclip": mclip} | aa_kwargs
+        aa_kwargs = {"mclip": vs.core.resize.Bilinear(mask, ss.width, ss.height) if mask else None} | aa_kwargs
 
     aa = antialiaser.antialias(ss, **aa_kwargs)
 
