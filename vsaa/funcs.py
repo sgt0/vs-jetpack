@@ -242,9 +242,6 @@ def based_aa(
     if not antialiaser:
         antialiaser = EEDI3(alpha=0.125, beta=0.25, gamma=40, vthresh=(12, 24, 4), sclip=ss)
 
-    if isinstance(antialiaser, EEDI3):
-        aa_kwargs = {"mclip": vs.core.resize.Bilinear(mask, ss.width, ss.height) if mask else None} | aa_kwargs
-
     aa = antialiaser.antialias(ss, **aa_kwargs)
 
     aa = downscaler.scale(aa, func.work_clip.width, func.work_clip.height)

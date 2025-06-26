@@ -670,10 +670,6 @@ class EEDI3(SuperSampler):
             mclip=self.mclip
         ) | kwargs
 
-        if not self.opencl and kwargs["mclip"] is not None and kwargs.get("opt") is None:
-            # opt=3 appears to always give reliable speed boosts if mclip is used.
-            kwargs["opt"] = 3
-
         return kwargs
 
     @Scaler.cached_property
