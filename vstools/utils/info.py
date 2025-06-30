@@ -42,7 +42,19 @@ def get_var_infos(frame: vs.VideoNode | vs.VideoFrame) -> tuple[vs.VideoFormat, 
 def get_video_format(
     value: int | VideoFormatT | HoldsVideoFormatT, /, *, sample_type: int | vs.SampleType | None = None
 ) -> vs.VideoFormat:
-    """Get the video format of a given value."""
+    """
+    Retrieve a VapourSynth VideoFormat object from various input types.
+
+    :param value:           The format source. This can be:
+                            - A bidepth format if `value < 32`
+                            - A unique format ID
+                            - A VideoFormat-like object
+                            - An object holding a VideoFormat (i.e., exposing a `format` attribute)
+    :param sample_type:     Optional override for the sample type.
+                            Accepts either an integer or a SampleType.
+                            If None, the default or inferred sample type is used.
+    :return:                A VideoFormat object derived from the input.
+    """
 
     from ..utils.vs_enums import VSPresetVideoFormat
 
