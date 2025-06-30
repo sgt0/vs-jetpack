@@ -179,7 +179,7 @@ def get_lowest_value(
 
     if range_in is None:
         if isinstance(clip_or_depth, vs.VideoNode):
-            range_in = ColorRange(clip_or_depth)
+            range_in = ColorRange.from_video(clip_or_depth, func=get_lowest_value)
         elif is_rgb:
             range_in = ColorRange.FULL
         else:
@@ -197,12 +197,10 @@ def get_lowest_values(
 ) -> Sequence[float]:
     """Get the lowest values of all planes of a specified format."""
 
-    fmt = get_video_format(clip_or_depth)
-
     return normalize_seq([
-        get_lowest_value(fmt, False, range_in, family),
-        get_lowest_value(fmt, True, range_in, family)
-    ], fmt.num_planes)
+        get_lowest_value(clip_or_depth, False, range_in, family),
+        get_lowest_value(clip_or_depth, True, range_in, family)
+    ], get_video_format(clip_or_depth).num_planes)
 
 
 def get_neutral_value(clip_or_depth: int | VideoFormatT | HoldsVideoFormatT) -> float:
@@ -255,7 +253,7 @@ def get_peak_value(
 
     if range_in is None:
         if isinstance(clip_or_depth, vs.VideoNode):
-            range_in = ColorRange(clip_or_depth)
+            range_in = ColorRange.from_video(clip_or_depth, func=get_peak_value)
         elif is_rgb:
             range_in = ColorRange.FULL
         else:
@@ -273,9 +271,7 @@ def get_peak_values(
 ) -> Sequence[float]:
     """Get the peak values of all planes of a specified format."""
 
-    fmt = get_video_format(clip_or_depth)
-
     return normalize_seq([
-        get_peak_value(fmt, False, range_in, family),
-        get_peak_value(fmt, True, range_in, family)
-    ], fmt.num_planes)
+        get_peak_value(clip_or_depth, False, range_in, family),
+        get_peak_value(clip_or_depth, True, range_in, family)
+    ], get_video_format(clip_or_depth).num_planes)
