@@ -37,6 +37,7 @@ class VideoFormat:
     @overload
     def __eq__(self, other: Any) -> Literal[False]: ...
 
+    def __int__(self) -> int: ...
 
 
 class ChannelLayout(int):
