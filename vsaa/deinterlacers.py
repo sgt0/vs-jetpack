@@ -620,16 +620,21 @@ class EEDI3(SuperSampler):
         if callable(self.mclip):
             kwargs.update(mclip=self.mclip(clip))
 
-        if sclip := kwargs.get('sclip'):
-            if sclip.num_frames * 2 == clip.num_frames * (int(double_rate) + 1):
-                kwargs.update(sclip=core.std.Interleave([sclip] * 2))
-
         return self._deinterlacer_function(clip, field, dh, **kwargs)
 
     def antialias(
         self, clip: vs.VideoNode, direction: AntiAliaser.AADirection = AntiAliaser.AADirection.BOTH, **kwargs: Any
     ) -> ConstantFormatVideoNode:
-        return super().antialias(clip, direction, **self._set_sclip_mclip(kwargs))
+
+        kwargs = self._set_sclip_mclip(kwargs)
+
+        if self.sclip and self.double_rate:
+            if callable(self.sclip):
+                self.sclip = self.sclip(clip)
+
+            self.sclip = core.std.Interleave([self.sclip, self.sclip])
+
+        return super().antialias(clip, direction, **kwargs)
 
     def transpose(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         if isinstance(self.sclip, vs.VideoNode):
