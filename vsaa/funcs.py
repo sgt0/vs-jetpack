@@ -172,7 +172,6 @@ def based_aa(
                                   The supersampler should ideally be fairly sharp without
                                   introducing too much ringing.
                                   Default: ArtCNN (R8F64).
-                                  Default: False.
     :param antialiaser:           Antialiaser used for anti-aliasing. If None, EEDI3 will be selected with these default settings:
                                   (alpha=0.125, beta=0.25, vthresh0=12, vthresh1=24, field=1).
     :param prefilter:             Prefilter to apply before anti-aliasing.
