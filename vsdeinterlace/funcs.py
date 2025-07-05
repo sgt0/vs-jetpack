@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import Sequence
+from typing import Sequence, Literal, overload
 
 from jetpytools import CustomEnum, CustomIntEnum, KwargsT
 
-from vsdenoise import MVTools, MVToolsPreset, prefilter_to_full_range
+from vsdenoise import MVTools, MVToolsPreset, MotionVectors, prefilter_to_full_range
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
 from vstools import (
@@ -22,36 +22,81 @@ __all__ = [
 
 class InterpolateOverlay(CustomEnum):
     IVTC_TXT60 = 10, (4, 2, 0, 8, 6)
-    """For 60i overlaid ontop of 24t."""
+    """For 60i overlaid on top of 24t."""
 
     DEC_TXT60 = 10, (6, 4, 2, 0, 8)
-    """For 60i overlaid ontop of 24d."""
+    """For 60i overlaid on top of 24d."""
 
     IVTC_TXT30 = 9, (5, 13, 21, 29, 37)
-    """For 30p overlaid ontop of 24t."""
+    """For 30p overlaid on top of 24t."""
+
+    @overload
+    def __call__(
+        self,
+        clip: vs.VideoNode,
+        pattern: int,
+        vectors: MotionVectors | None = None,
+        preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
+        blksize: int | tuple[int, int] = 8,
+        refine: int = 1,
+        thsad_recalc: int | None = None,
+        export_globals: Literal[False] = ...,
+    ) -> ConstantFormatVideoNode:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        clip: vs.VideoNode,
+        pattern: int,
+        vectors: MotionVectors | None = None,
+        preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
+        blksize: int | tuple[int, int] = 8,
+        refine: int = 1,
+        thsad_recalc: int | None = None,
+        export_globals: Literal[True] = ...,
+    ) -> tuple[ConstantFormatVideoNode, MVTools]:
+        ...
+
+    @overload
+    def __call__(
+        self,
+        clip: vs.VideoNode,
+        pattern: int,
+        vectors: MotionVectors | None = None,
+        preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
+        blksize: int | tuple[int, int] = 8,
+        refine: int = 1,
+        thsad_recalc: int | None = None,
+        export_globals: bool = ...,
+    ) -> ConstantFormatVideoNode | tuple[ConstantFormatVideoNode, MVTools]:
+        ...
 
     def __call__(
         self,
         clip: vs.VideoNode,
         pattern: int,
+        vectors: MotionVectors | None = None,
         preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
         blksize: int | tuple[int, int] = 8,
         refine: int = 1,
         thsad_recalc: int | None = None,
-    ) -> ConstantFormatVideoNode:
+        export_globals: bool = False,
+    ) -> ConstantFormatVideoNode | tuple[ConstantFormatVideoNode, MVTools]:
         """
         Virtually oversamples the video to 120 fps with motion interpolation on credits only, and decimates to 24 fps.
         Requires manually specifying the 3:2 pulldown pattern (the clip must be split into parts if it changes).
 
-        :param clip:             Bob-deinterlaced clip.
-        :param pattern:          First frame of any clean-combed-combed-clean-clean sequence.
-        :param preset:           MVTools preset defining base values for the MVTools object. Default is HQ_COHERENCE.
-        :param blksize:          Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
-        :param refine:           Number of times to recalculate motion vectors with halved block size.
-        :param thsad_recalc:     Only bad quality new vectors with a SAD above this will be re-estimated by search.
-                                 thsad value is scaled to 8x8 block size.
+        :param clip:               Bob-deinterlaced clip.
+        :param pattern:            First frame of any clean-combed-combed-clean-clean sequence.
+        :param preset:             MVTools preset defining base values for the MVTools object. Default is HQ_COHERENCE.
+        :param blksize:            Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
+        :param refine:             Number of times to recalculate motion vectors with halved block size.
+        :param thsad_recalc:       Only bad quality new vectors with a SAD above this will be re-estimated by search.
+                                   thsad value is scaled to 8x8 block size.
+        :param export_globals:     Whether to return the MVTools object.
 
-        :return:                 Decimated clip with text resampled down to 24p.
+        :return:                   Decimated clip with text resampled down to 24p.
         """
 
         def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
@@ -65,17 +110,21 @@ class InterpolateOverlay(CustomEnum):
 
         blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
 
-        mv = MVTools(clip, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
-        mv.analyze(tr=1, blksize=blksize, overlap=_floor_div_tuple(blksize))
+        mv = MVTools(clip, vectors=vectors, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
 
-        for _ in range(refine):
-            blksize = _floor_div_tuple(blksize)
-            overlap = _floor_div_tuple(blksize)
+        if not vectors:
+            mv.analyze(tr=1, blksize=blksize, overlap=_floor_div_tuple(blksize))
 
-            mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
+            for _ in range(refine):
+                blksize = _floor_div_tuple(blksize)
+                overlap = _floor_div_tuple(blksize)
+
+                mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
         comp = mv.flow_fps(fps=clip.fps * 4)
-        return core.std.SelectEvery(comp, 40, sorted(offsets))
+        fixed = core.std.SelectEvery(comp, 40, sorted(offsets))
+
+        return (fixed, mv) if export_globals else fixed
 
 
 class FixInterlacedFades(CustomIntEnum):
