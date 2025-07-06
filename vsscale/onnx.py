@@ -269,7 +269,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         )
 
 
-class GenericOnnxScaler(BaseOnnxScaler):
+class GenericOnnxScaler(BaseOnnxScaler, partial_abstract=True):
     """
     Generic scaler class for an ONNX model.
 
@@ -283,8 +283,6 @@ class GenericOnnxScaler(BaseOnnxScaler):
     scaled = GenericOnnxScaler(r"path\\to\\model.onnx").scale(clip, ...)
     ```
     """
-
-    _static_kernel_radius = 2
 
 
 class BaseArtCNN(BaseOnnxScaler):
