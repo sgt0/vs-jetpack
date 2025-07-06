@@ -2,7 +2,7 @@
 
 from abc import ABC
 from logging import warning
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, runtime_checkable
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
 
 from jetpytools import KwargsT
 
@@ -35,6 +35,8 @@ __all__ = [
     "DPIR"
 ]
 
+
+_IntT = TypeVar("_IntT", bound=int)
 
 @runtime_checkable
 class _SupportsFP16(Protocol):
@@ -235,7 +237,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         """Performs preprocessing on the clip prior to inference."""
 
-        clip = depth(clip, 16 if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else 32, vs.FLOAT)
+        clip = depth(clip, self._pick_precision(16, 32), vs.FLOAT)
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -253,6 +255,16 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         tiles, overlaps = self.calc_tilesize(clip)
 
         return inference(clip, self.model, overlaps, tiles, self.backend, **kwargs)
+
+    def _pick_precision(self, fp16: _IntT, fp32: _IntT) -> _IntT:
+        from vsmlrt import Backend
+
+        return (
+            fp16
+            if (isinstance(self.backend, _SupportsFP16) and self.backend.fp16)
+            and not isinstance(self.backend, (Backend.OV_CPU, Backend.OV_GPU, Backend.OV_NPU))
+            else fp32
+        )
 
 
 class GenericOnnxScaler(BaseOnnxScaler):
@@ -361,7 +373,7 @@ class BaseArtCNNChroma(BaseArtCNN):
                     subsampling_h=0,
                     subsampling_w=0,
                     sample_type=vs.FLOAT,
-                    bits_per_sample=16 if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else 32
+                    bits_per_sample=self._pick_precision(16, 32)
                 )
             )
             return limiter(clip, func=self.__class__)
@@ -634,9 +646,7 @@ class BaseWaifu2x(BaseOnnxScaler):
 
 class BaseWaifu2xRGB(BaseWaifu2x):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        clip = self.kernel.resample(
-            clip, vs.RGBH if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else vs.RGBS, Matrix.RGB
-        )
+        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB)
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -944,9 +954,7 @@ class BaseDPIR(BaseOnnxScaler):
         if get_color_family(clip) == vs.GRAY:
             return super().preprocess_clip(clip, **kwargs)
 
-        clip = self.kernel.resample(
-            clip, vs.RGBH if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else vs.RGBS, Matrix.RGB
-        )
+        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB)
 
         return limiter(clip, func=self.__class__)
 
