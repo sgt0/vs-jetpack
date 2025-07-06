@@ -104,6 +104,8 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         **kwargs: Any
     ) -> None:
         """
+        Initializes the scaler with the specified parameters.
+
         :param model:           Path to the ONNX model file.
         :param backend:         The backend to be used with the vs-mlrt framework.
                                 If set to None, the most suitable backend will be automatically selected, prioritizing fp16 support.
@@ -303,6 +305,8 @@ class BaseArtCNN(BaseOnnxScaler):
         **kwargs: Any
     ) -> None:
         """
+        Initializes the scaler with the specified parameters.
+
         :param backend:         The backend to be used with the vs-mlrt framework.
                                 If set to None, the most suitable backend will be automatically selected, prioritizing fp16 support.
         :param tiles:           Whether to split the image into multiple tiles.
@@ -605,6 +609,8 @@ class BaseWaifu2x(BaseOnnxScaler):
         **kwargs: Any
     ) -> None:
         """
+        Initializes the scaler with the specified parameters.
+
         :param scale:           Upscaling factor. 1 = no uspcaling, 2 = 2x, 4 = 4x.
         :param noise:           Noise reduction level. -1 = none, 0 = low, 1 = medium, 2 = high, 3 = highest.
         :param backend:         The backend to be used with the vs-mlrt framework.
@@ -901,7 +907,7 @@ class BaseDPIR(BaseOnnxScaler):
         **kwargs: Any
     ) -> None:
         """
-        Initializes the class with the specified parameters.
+        Initializes the scaler with the specified parameters.
 
         :param strength:        Threshold (8-bit scale) strength for deblocking/denoising.
                                 If a VideoNode is used, it must be in GRAY8, GRAYH, or GRAYS format, with pixel values
