@@ -2,7 +2,7 @@
 
 from abc import ABC
 from logging import warning
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, SupportsFloat, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, runtime_checkable
 
 from jetpytools import KwargsT
 
@@ -13,6 +13,11 @@ from vstools import (
     check_variable_format, check_variable_resolution, core, depth, get_color_family, get_nvidia_version,
     get_video_format, get_y, join, limiter, padder, vs
 )
+
+if TYPE_CHECKING:
+    from vsmlrt import backendT as Backend
+else:
+    Backend = Any
 
 from .generic import BaseGenericScaler
 
@@ -31,11 +36,16 @@ __all__ = [
 ]
 
 
-def _clean_keywords(kwargs: dict[str, Any], backend: Any) -> dict[str, Any]:
+@runtime_checkable
+class _SupportsFP16(Protocol):
+    fp16: bool
+
+
+def _clean_keywords(kwargs: dict[str, Any], backend: Backend) -> dict[str, Any]:
     return {k: v for k, v in kwargs.items() if k in backend.__dataclass_fields__}
 
 
-def autoselect_backend(**kwargs: Any) -> Any:
+def autoselect_backend(**kwargs: Any) -> Backend:
     """
     Try to select the best backend for the current system.
     If the system has an NVIDIA GPU: TRT > CUDA (ORT) > Vulkan > OpenVINO GPU
@@ -80,7 +90,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     def __init__(
         self,
         model: SPathLike | None = None,
-        backend: Any | None = None,
+        backend: Backend | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -225,7 +235,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         """Performs preprocessing on the clip prior to inference."""
 
-        clip = depth(clip, 16 if self.backend.fp16 else 32, vs.FLOAT)
+        clip = depth(clip, 16 if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else 32, vs.FLOAT)
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -269,7 +279,7 @@ class BaseArtCNN(BaseOnnxScaler):
 
     def __init__(
         self,
-        backend: Any | None = None,
+        backend: Backend | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -348,8 +358,10 @@ class BaseArtCNNChroma(BaseArtCNN):
 
             clip = chroma_scaler.resample(
                 clip, clip.format.replace(
-                    subsampling_h=0, subsampling_w=0,
-                    sample_type=vs.FLOAT, bits_per_sample=16 if self.backend.fp16 else 32
+                    subsampling_h=0,
+                    subsampling_w=0,
+                    sample_type=vs.FLOAT,
+                    bits_per_sample=16 if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else 32
                 )
             )
             return limiter(clip, func=self.__class__)
@@ -569,7 +581,7 @@ class BaseWaifu2x(BaseOnnxScaler):
         self,
         scale: Literal[1, 2, 4] = 2,
         noise: Literal[-1, 0, 1, 2, 3] = -1,
-        backend: Any | None = None,
+        backend: Backend | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -622,7 +634,9 @@ class BaseWaifu2x(BaseOnnxScaler):
 
 class BaseWaifu2xRGB(BaseWaifu2x):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        clip = self.kernel.resample(clip, vs.RGBH if self.backend.fp16 else vs.RGBS, Matrix.RGB)
+        clip = self.kernel.resample(
+            clip, vs.RGBH if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else vs.RGBS, Matrix.RGB
+        )
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -866,7 +880,7 @@ class BaseDPIR(BaseOnnxScaler):
     def __init__(
         self,
         strength: SupportsFloat | vs.VideoNode = 10,
-        backend: Any | None = None,
+        backend: Backend | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -930,7 +944,9 @@ class BaseDPIR(BaseOnnxScaler):
         if get_color_family(clip) == vs.GRAY:
             return super().preprocess_clip(clip, **kwargs)
 
-        clip = self.kernel.resample(clip, vs.RGBH if self.backend.fp16 else vs.RGBS, Matrix.RGB)
+        clip = self.kernel.resample(
+            clip, vs.RGBH if isinstance(self.backend, _SupportsFP16) and self.backend.fp16 else vs.RGBS, Matrix.RGB
+        )
 
         return limiter(clip, func=self.__class__)
 
