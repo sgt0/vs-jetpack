@@ -88,6 +88,7 @@ class InterpolateOverlay(CustomEnum):
         Requires manually specifying the 3:2 pulldown pattern (the clip must be split into parts if it changes).
 
         :param clip:               Bob-deinterlaced clip.
+        :param vectors:            Motion vectors to use.
         :param pattern:            First frame of any clean-combed-combed-clean-clean sequence.
         :param preset:             MVTools preset defining base values for the MVTools object. Default is HQ_COHERENCE.
         :param blksize:            Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
@@ -121,7 +122,7 @@ class InterpolateOverlay(CustomEnum):
 
                 mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
-        comp = mv.flow_fps(fps=clip.fps * 4)
+        comp = mv.flow_interpolate(multi=4)
         fixed = core.std.SelectEvery(comp, 40, sorted(offsets))
 
         return (fixed, mv) if export_globals else fixed
