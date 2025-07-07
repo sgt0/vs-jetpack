@@ -12,7 +12,7 @@ from vskernels.abstract.base import _ScalerT
 from vsmasktools import adg_mask
 from vsrgtools import BlurMatrix
 from vstools import (
-    ColorRange, ConstantFormatVideoNode, ConvMode, PlanesT, check_variable, core,
+    ColorRange, ConstantFormatVideoNode, ConvMode, PlanesT, UnsupportedColorFamilyError, check_variable, core,
     get_lowest_values, get_neutral_values, get_peak_values, get_u, get_v, mod_x, normalize_param_planes, normalize_seq,
     scale_delta, split, to_arr, vs
 )
@@ -505,24 +505,29 @@ def _protect_pixel_range(
 
 
 def _protect_neutral_chroma(
-    clip: ConstantFormatVideoNode, grained: vs.VideoNode, base_clip: vs.VideoNode, blend: float = 0.0
+    clip: ConstantFormatVideoNode,
+    grained: vs.VideoNode,
+    base_clip: vs.VideoNode,
+    blend: float = 0.0,
 ) -> vs.VideoNode:
+    match clip.format.color_family:
+        case vs.YUV:
+            if not blend:
+                expr = "x neutral = y neutral = and range_max 0 ?"
+            else:
+                expr = "x neutral - abs {blend} / 1 min 1 swap - y neutral - abs {blend} / 1 min 1 swap - * range_max *"
 
-    if clip.format.color_family is vs.YUV:
-        if not blend:
-            expr = "x neutral = y neutral = and range_max 0 ?"
-        else:
-            expr = "x neutral - abs {blend} / 1 min 1 swap - y neutral - abs {blend} / 1 min 1 swap - * range_max *"
+            mask = norm_expr([get_u(clip), get_v(clip)], expr, blend=blend)
 
-        mask = norm_expr([get_u(clip), get_v(clip)], expr, blend=blend)
-
-        return core.std.MaskedMerge(
-            grained, base_clip, core.std.ShufflePlanes([clip, mask, mask], [0, 0, 0], vs.YUV, clip), [1, 2]
-        )
-
-    mask = norm_expr(split(clip), "x y = x z = and range_max *")
-
-    return core.std.MaskedMerge(grained, base_clip, mask)
+            return core.std.MaskedMerge(
+                grained, base_clip, core.std.ShufflePlanes([clip, mask, mask], [0, 0, 0], vs.YUV, clip), [1, 2]
+            )
+        case vs.RGB:
+            return core.std.MaskedMerge(
+                grained, base_clip, norm_expr(split(clip), "x y = x z = and range_max *")
+            )
+        case _:
+            raise UnsupportedColorFamilyError("Can't use `protect_neutral_chroma=True` when input clip is GRAY")
 
 
 class GrainerPartial(AbstractGrainer):
