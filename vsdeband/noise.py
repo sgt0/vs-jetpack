@@ -380,7 +380,7 @@ class Grainer(AbstractGrainer, CustomEnum):
             grained = _apply_grainer(
                 clip,
                 lambda clip, strength, planes, **kwds: core.noise.Add(
-                    clip, strength[0], strength[1], type=self.value, constant=static, **kwds
+                    clip, *strength[:2], type=self.value, constant=static, **kwds  # type: ignore[misc]
                 ),
                 **kwargs,
                 func=self.name,
