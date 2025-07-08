@@ -103,7 +103,7 @@ def wnnm(
 
         denoised = core.wnnm.WNNM(previous, sigma, **dkwargs)
 
-    return denoised
+    return func.return_clip(denoised)
 
 
 # TODO: remove this when vs-stubs will be a thing™
