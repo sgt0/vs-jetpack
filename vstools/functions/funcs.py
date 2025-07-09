@@ -12,7 +12,7 @@ from ..enums import (
     ChromaLocation, ChromaLocationT, FieldBased, FieldBasedT
 )
 from ..exceptions import UndefinedMatrixError
-from ..types import ConstantFormatVideoNode, HoldsVideoFormatT, PlanesT, VideoFormatT
+from ..types import ConstantFormatVideoNode, HoldsVideoFormatT, PlanesT, VideoFormatT, vs_object
 from .check import check_variable
 from .normalize import normalize_planes
 from .utils import depth, join, plane
@@ -24,7 +24,7 @@ __all__ = [
 ]
 
 
-class FunctionUtil(cachedproperty.baseclass, list[int]):
+class FunctionUtil(cachedproperty.baseclass, list[int], vs_object):
     """
     Function util to normalize common actions and boilerplate often used in functions.
 
@@ -323,7 +323,7 @@ class FunctionUtil(cachedproperty.baseclass, list[int]):
         Unprocessed planes will be set to the given "null" value.
         """
 
-        return [
-            x if i in self else null
-            for i, x in enumerate(normalize_seq(seq, self.num_planes))
-        ]
+        return [x if i in self else null for i, x in enumerate(normalize_seq(seq, self.num_planes))]
+
+    def __vs_del__(self, core_id: int) -> None:
+        self.__dict__[cachedproperty.cache_key].clear()

@@ -151,7 +151,7 @@ class NoScale(BaseScalerSpecializer[_ScalerT], Scaler, partial_abstract=True):
 
 
 @dataclass
-class LinearLightProcessing(cachedproperty.baseclass):
+class LinearLightProcessing(cachedproperty.baseclass, vs_object):
     ll: LinearLight
 
     def get_linear(self) -> vs.VideoNode:
@@ -210,6 +210,11 @@ class LinearLightProcessing(cachedproperty.baseclass):
         processed = vs.core.resize2.Point(processed, transfer_in=Transfer.LINEAR, transfer=self.ll._curve)
 
         return resample_to(processed, self.ll._fmt, self.ll._matrix, self.ll._resampler)
+
+    def __vs_del__(self, core_id: int) -> None:
+        del self._linear
+        del self.__dict__[cachedproperty.cache_key]["get_linear"]
+        del self.__dict__[cachedproperty.cache_key]["out"]
 
 
 @dataclass
