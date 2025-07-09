@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from functools import partial
-from itertools import count
+from functools import partial, reduce
 from math import sqrt
 from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Sequence, Union, overload
 
 from jetpytools import CustomIntEnum, CustomStrEnum, FuncExceptT, P, R, cround
 
-from vsexprtools import ExprOp, ExprVars, complexpr_available, norm_expr
+from vsexprtools import ExprOp, norm_expr
 from vskernels import Bilinear, Gaussian, Point, Scaler, ScalerLike
 from vstools import (
     ColorRange,
@@ -34,9 +33,8 @@ from vstools import (
     vs,
 )
 
-from .enum import BlurMatrix, BlurMatrixBase, LimitFilterMode
+from .enum import BlurMatrix, BlurMatrixBase
 from .freqs import MeanMode
-from .limit import limit_filter
 from .rgtools import vertical_cleaner
 from .util import normalize_radius
 
@@ -98,77 +96,32 @@ def box_blur(
     return clip.vszip.BoxBlur(*box_args)
 
 
-def side_box_blur(
-    clip: vs.VideoNode, radius: int | list[int] = 1, planes: PlanesT = None, inverse: bool = False
-) -> ConstantFormatVideoNode:
+def side_box_blur(clip: vs.VideoNode, radius: int = 1, planes: PlanesT = None) -> ConstantFormatVideoNode:
     assert check_variable_format(clip, side_box_blur)
-
-    planes = normalize_planes(clip, planes)
-
-    if isinstance(radius, list):
-        return normalize_radius(clip, side_box_blur, radius, planes, inverse=inverse)
 
     half_kernel = [(1 if i <= 0 else 0) for i in range(-radius, radius + 1)]
 
-    conv_m1 = partial(core.std.Convolution, matrix=half_kernel, planes=planes)
-    conv_m2 = partial(core.std.Convolution, matrix=half_kernel[::-1], planes=planes)
-    blur_pt = partial(box_blur, planes=planes)
+    vrt_filters = [
+        partial(core.std.Convolution, matrix=half_kernel, planes=planes, mode=ConvMode.VERTICAL),
+        partial(core.std.Convolution, matrix=half_kernel[::-1], planes=planes, mode=ConvMode.VERTICAL),
+        partial(box_blur, radius=radius, mode=ConvMode.VERTICAL, planes=planes),
+    ]
 
-    vrt_filters, hrz_filters = list[list[partial[ConstantFormatVideoNode]]](
-        [
-            partial(conv_m1, mode=mode),
-            partial(conv_m2, mode=mode),
-            partial(blur_pt, hradius=hr, vradius=vr, hpasses=h, vpasses=v),
-        ]
-        for h, hr, v, vr, mode in [(0, None, 1, radius, ConvMode.VERTICAL), (1, radius, 0, None, ConvMode.HORIZONTAL)]
-    )
+    hrz_filters = [
+        partial(core.std.Convolution, matrix=half_kernel, planes=planes, mode=ConvMode.HORIZONTAL),
+        partial(core.std.Convolution, matrix=half_kernel[::-1], planes=planes, mode=ConvMode.HORIZONTAL),
+        partial(box_blur, radius=radius, mode=ConvMode.HORIZONTAL, planes=planes),
+    ]
 
     vrt_intermediates = (vrt_flt(clip) for vrt_flt in vrt_filters)
-    intermediates = [
+    intermediates = (
         hrz_flt(vrt_intermediate)
         for i, vrt_intermediate in enumerate(vrt_intermediates)
         for j, hrz_flt in enumerate(hrz_filters)
         if not i == j == 2
-    ]
+    )
 
-    comp_blur = None if inverse else box_blur(clip, radius, 1, planes=planes)
-
-    if complexpr_available:
-        template = "{cum} x - abs {new} x - abs < {cum} {new} ?"
-
-        cum_expr, cumc = "", "y"
-        n_inter = len(intermediates)
-
-        for i, newc, var in zip(count(), ExprVars[2:26], ExprVars[4:26]):
-            if i == n_inter - 1:
-                break
-
-            cum_expr += template.format(cum=cumc, new=newc)
-
-            if i != n_inter - 2:
-                cumc = var.upper()
-                cum_expr += f" {cumc}! "
-                cumc = f"{cumc}@"
-
-        if comp_blur:
-            clips = [clip, *intermediates, comp_blur]
-            cum_expr = f"x {cum_expr} - {ExprVars[n_inter + 1]} +"
-        else:
-            clips = [clip, *intermediates]
-
-        cum = norm_expr(clips, cum_expr, planes, func=side_box_blur)
-    else:
-        cum = intermediates[0]
-        for new in intermediates[1:]:
-            cum = limit_filter(clip, cum, new, LimitFilterMode.SIMPLE2_MIN, planes)
-
-        if comp_blur:
-            cum = clip.std.MakeDiff(cum).std.MergeDiff(comp_blur)
-
-    if comp_blur:
-        return box_blur(cum, 1, min(radius // 2, 1))
-
-    return cum
+    return reduce(lambda x, y: norm_expr([x, y, clip], "x z - abs y z - abs < x y ?", planes=planes), intermediates)
 
 
 def gauss_blur(
