@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextlib
 from functools import cached_property, wraps
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, BorderHandling, Hermite, Kernel, KernelLike, Scaler, ScalerLike
