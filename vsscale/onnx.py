@@ -9,9 +9,26 @@ from jetpytools import KwargsT
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelLike, ScalerLike
 from vstools import (
-    ConstantFormatVideoNode, CustomValueError, DitherType, Matrix, MatrixT, ProcessVariableResClip, SPath, SPathLike,
-    check_variable_format, check_variable_resolution, core, depth, get_color_family, get_nvidia_version,
-    get_video_format, get_y, join, limiter, padder, vs
+    ConstantFormatVideoNode,
+    CustomValueError,
+    DitherType,
+    Matrix,
+    MatrixT,
+    ProcessVariableResClip,
+    SPath,
+    SPathLike,
+    check_variable_format,
+    check_variable_resolution,
+    core,
+    depth,
+    get_color_family,
+    get_nvidia_version,
+    get_video_format,
+    get_y,
+    join,
+    limiter,
+    padder,
+    vs,
 )
 
 if TYPE_CHECKING:
@@ -21,22 +38,11 @@ else:
 
 from .generic import BaseGenericScaler
 
-__all__ = [
-    "autoselect_backend",
-
-    "BaseOnnxScaler",
-
-    "GenericOnnxScaler",
-
-    "ArtCNN",
-
-    "Waifu2x",
-
-    "DPIR"
-]
+__all__ = ["DPIR", "ArtCNN", "BaseOnnxScaler", "GenericOnnxScaler", "Waifu2x", "autoselect_backend"]
 
 
 _IntT = TypeVar("_IntT", bound=int)
+
 
 @runtime_checkable
 class _SupportsFP16(Protocol):
@@ -101,7 +107,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         kernel: KernelLike = Catrom,
         scaler: ScalerLike | None = None,
         shifter: KernelLike | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Initializes the scaler with the specified parameters.
@@ -120,7 +126,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         :param shifter:         Kernel used for shifting operations. Defaults to kernel.
         :param **kwargs:        Additional arguments to pass to the backend.
                                 See the vsmlrt backend's docstring for more details.
-        """
+        """  # noqa: E501
         super().__init__(kernel=kernel, scaler=scaler, shifter=shifter, **kwargs)
 
         if model is not None:
@@ -128,7 +134,9 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         if backend is None:
             _fp16 = self.kwargs.pop("fp16", True)
-            _default_args = KwargsT(fp16=_fp16, output_format=int(_fp16), use_cuda_graph=True, use_cublas=True, heuristic=True)
+            _default_args = KwargsT(
+                fp16=_fp16, output_format=int(_fp16), use_cuda_graph=True, use_cublas=True, heuristic=True
+            )
             self.backend = autoselect_backend(**_default_args | self.kwargs)
         else:
             self.backend = backend
@@ -152,7 +160,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         width: int | None = None,
         height: int | None = None,
         shift: tuple[float, float] = (0, 0),
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
         Scale the given clip using the ONNX model.
@@ -180,8 +188,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         for k in kwargs.copy():
             for prefix, ckwargs in zip(
-                ("preprocess_", "postprocess_", "inference_"),
-                (preprocess_kwargs, postprocess_kwargs, inference_kwargs)
+                ("preprocess_", "postprocess_", "inference_"), (preprocess_kwargs, postprocess_kwargs, inference_kwargs)
             ):
                 if k.startswith(prefix):
                     ckwargs[k.removeprefix(prefix)] = kwargs.pop(k)
@@ -224,15 +231,15 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         from vsmlrt import calc_tilesize
 
-        kwargs = dict(
-            tiles=self.tiles,
-            tilesize=self.tilesize,
-            width=clip.width,
-            height=clip.height,
-            multiple=1,
-            overlap_w=self.overlap_w,
-            overlap_h=self.overlap_h,
-        ) | kwargs
+        kwargs = {
+            "tiles": self.tiles,
+            "tilesize": self.tilesize,
+            "width": clip.width,
+            "height": clip.height,
+            "multiple": 1,
+            "overlap_w": self.overlap_w,
+            "overlap_h": self.overlap_h,
+        } | kwargs
 
         return calc_tilesize(**kwargs)
 
@@ -300,7 +307,7 @@ class BaseArtCNN(BaseOnnxScaler):
         kernel: KernelLike = Catrom,
         scaler: ScalerLike | None = None,
         shifter: KernelLike | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Initializes the scaler with the specified parameters.
@@ -318,9 +325,18 @@ class BaseArtCNN(BaseOnnxScaler):
         :param shifter:         Kernel used for shifting operations. Defaults to kernel.
         :param **kwargs:        Additional arguments to pass to the backend.
                                 See the vsmlrt backend's docstring for more details.
-        """
+        """  # noqa: E501
         super().__init__(
-            None, backend, tiles, tilesize, overlap, max_instances, kernel=kernel, scaler=scaler, shifter=shifter, **kwargs
+            None,
+            backend,
+            tiles,
+            tilesize,
+            overlap,
+            max_instances,
+            kernel=kernel,
+            scaler=scaler,
+            shifter=shifter,
+            **kwargs,
         )
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -338,12 +354,12 @@ class BaseArtCNNLuma(BaseArtCNN):
         self,
         clip: ConstantFormatVideoNode,
         input_clip: ConstantFormatVideoNode,
-        width: int, height: int,
+        width: int,
+        height: int,
         shift: tuple[float, float] = (0, 0),
         matrix: MatrixT | None = None,
-        copy_props: bool = False
+        copy_props: bool = False,
     ) -> ConstantFormatVideoNode:
-
         if (clip.width, clip.height) != (width, height):
             clip = self.scaler.scale(clip, width, height)  # type: ignore[assignment]
 
@@ -371,12 +387,10 @@ class BaseArtCNNChroma(BaseArtCNN):
             chroma_scaler = Kernel.ensure_obj(kwargs.pop("chroma_scaler", Bilinear))
 
             clip = chroma_scaler.resample(
-                clip, clip.format.replace(
-                    subsampling_h=0,
-                    subsampling_w=0,
-                    sample_type=vs.FLOAT,
-                    bits_per_sample=self._pick_precision(16, 32)
-                )
+                clip,
+                clip.format.replace(
+                    subsampling_h=0, subsampling_w=0, sample_type=vs.FLOAT, bits_per_sample=self._pick_precision(16, 32)
+                ),
             )
             return limiter(clip, func=self.__class__)
 
@@ -420,7 +434,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 0
 
-    class C4F32_DS(BaseArtCNNLuma):
+    class C4F32_DS(BaseArtCNNLuma):  # noqa: N801
         """
         The same as C4F32 but intended to also sharpen and denoise.
 
@@ -451,7 +465,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 2
 
-    class C16F64_DS(BaseArtCNNLuma):
+    class C16F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
         The same as C16F64 but intended to also sharpen and denoise.
 
@@ -465,7 +479,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 3
 
-    class C4F32_Chroma(BaseArtCNNChroma):
+    class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
         The smaller of the two chroma models.\n
         These don't double the input clip and rather just try to enhance the chroma using luma information.
@@ -480,7 +494,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 4
 
-    class C16F64_Chroma(BaseArtCNNChroma):
+    class C16F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
         The bigger of the two chroma models.\n
         These don't double the input clip and rather just try to enhance the chroma using luma information.
@@ -524,7 +538,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 7
 
-    class R8F64_DS(BaseArtCNNLuma):
+    class R8F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
         The same as R8F64 but intended to also sharpen and denoise.
 
@@ -538,7 +552,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 8
 
-    class R8F64_Chroma(BaseArtCNNChroma):
+    class R8F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
         The new and fancy big chroma model.\n
         These don't double the input clip and rather just try to enhance the chroma using luma information.
@@ -569,7 +583,7 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 10
 
-    class C4F16_DS(BaseArtCNNLuma):
+    class C4F16_DS(BaseArtCNNLuma):  # noqa: N801
         """
         The same as C4F16 but intended to also sharpen and denoise.
 
@@ -604,7 +618,7 @@ class BaseWaifu2x(BaseOnnxScaler):
         kernel: KernelLike = Catrom,
         scaler: ScalerLike | None = None,
         shifter: KernelLike | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Initializes the scaler with the specified parameters.
@@ -624,11 +638,20 @@ class BaseWaifu2x(BaseOnnxScaler):
         :param shifter:         Kernel used for shifting operations. Defaults to kernel.
         :param **kwargs:        Additional arguments to pass to the backend.
                                 See the vsmlrt backend's docstring for more details.
-        """
+        """  # noqa: E501
         self.scale_w2x = scale
         self.noise = noise
         super().__init__(
-            None, backend, tiles, tilesize, overlap, max_instances, kernel=kernel, scaler=scaler, shifter=shifter, **kwargs
+            None,
+            backend,
+            tiles,
+            tilesize,
+            overlap,
+            max_instances,
+            kernel=kernel,
+            scaler=scaler,
+            shifter=shifter,
+            **kwargs,
         )
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -644,7 +667,7 @@ class BaseWaifu2x(BaseOnnxScaler):
             self.overlap,
             Waifu2xModel(self._model),
             self.backend,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -657,7 +680,7 @@ class BaseWaifu2xRGB(BaseWaifu2x):
         assert check_variable_format(clip, self.__class__)
 
         if clip.format != get_video_format(input_clip):
-            kwargs = dict(dither_type=DitherType.ORDERED) | kwargs
+            kwargs = {"dither_type": DitherType.ORDERED} | kwargs
             clip = self.kernel.resample(clip, input_clip, Matrix.from_video(input_clip, func=self.__class__), **kwargs)
 
         return clip
@@ -668,13 +691,14 @@ class _Waifu2xCunet(BaseWaifu2xRGB):
     _static_kernel_radius = 16
 
     if TYPE_CHECKING:
+
         def scale(
             self,
             clip: vs.VideoNode,
             width: int | None = None,
             height: int | None = None,
             shift: tuple[float, float] = (0, 0),
-            **kwargs: Any
+            **kwargs: Any,
         ) -> ConstantFormatVideoNode:
             """
             Scale the given clip using the ONNX model.
@@ -687,17 +711,17 @@ class _Waifu2xCunet(BaseWaifu2xRGB):
                                 `inference`, and `_final_scale` methods.
                                 Use the prefix `preprocess_` or `postprocess_` to pass an argument to the respective method.
                                 Use the prefix `inference_` to pass an argument to the inference method.
-                                
+
                                 Additional Notes for the Cunet model:
                                 - The model can cause artifacts around the image edges.
-                                To mitigate this, mirrored padding is applied to the image before inference.  
+                                To mitigate this, mirrored padding is applied to the image before inference.
                                 This behavior can be disabled by setting `inference_no_pad=True`.
                                 - A tint issue is also present but it is not constant. It leaves flat areas alone but tints detailed areas.
                                 Since most people will use Cunet to rescale details, the tint fix is enabled by default.
                                 This behavior can be disabled with `postprocess_no_tint_fix=True`
 
             :return:            The scaled clip.
-            """
+            """  # noqa: E501
             ...
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -720,9 +744,10 @@ class _Waifu2xCunet(BaseWaifu2xRGB):
             return super().postprocess_clip(clip, input_clip, **kwargs)
 
         tint_fix = norm_expr(
-            clip, 'x 0.5 255 / + 0 1 clamp',
+            clip,
+            "x 0.5 255 / + 0 1 clamp",
             planes=0 if get_video_format(input_clip).color_family is vs.GRAY else None,
-            func="Waifu2x." + self.__class__.__name__
+            func="Waifu2x." + self.__class__.__name__,
         )
         return super().postprocess_clip(tint_fix, input_clip, **kwargs)
 
@@ -752,6 +777,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.AnimeStyleArt().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 0
 
     class AnimeStyleArtRGB(BaseWaifu2xRGB):
@@ -765,6 +791,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.AnimeStyleArtRGB().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 1
 
     class Photo(BaseWaifu2xRGB):
@@ -778,6 +805,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.Photo().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 2
 
     class UpConv7AnimeStyleArt(BaseWaifu2xRGB):
@@ -791,6 +819,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.UpConv7AnimeStyleArt().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 3
 
     class UpConv7Photo(BaseWaifu2xRGB):
@@ -804,6 +833,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.UpConv7Photo().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 4
 
     class UpResNet10(BaseWaifu2xRGB):
@@ -817,6 +847,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.UpResNet10().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 5
 
     class Cunet(_Waifu2xCunet):
@@ -830,7 +861,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.Cunet().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
-  
+
     class SwinUnetArt(BaseWaifu2xRGB):
         """
         Swin-Unet-based model trained on anime-style images.
@@ -842,6 +873,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.SwinUnetArt().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 7
 
     class SwinUnetPhoto(BaseWaifu2xRGB):
@@ -855,6 +887,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.SwinUnetPhoto().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 8
 
     class SwinUnetPhotoV2(BaseWaifu2xRGB):
@@ -868,6 +901,7 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.SwinUnetPhotoV2().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 9
 
     class SwinUnetArtScan(BaseWaifu2xRGB):
@@ -881,11 +915,13 @@ class Waifu2x(_Waifu2xCunet):
         doubled = Waifu2x.SwinUnetArtScan().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
+
         _model = 10
 
 
 _DPIRGrayModel: TypeAlias = int
 _DPIRColorModel: TypeAlias = int
+
 
 class BaseDPIR(BaseOnnxScaler):
     _model: ClassVar[tuple[_DPIRGrayModel, _DPIRColorModel]]
@@ -902,7 +938,7 @@ class BaseDPIR(BaseOnnxScaler):
         kernel: KernelLike = Catrom,
         scaler: ScalerLike | None = None,
         shifter: KernelLike | None = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
         Initializes the scaler with the specified parameters.
@@ -922,10 +958,10 @@ class BaseDPIR(BaseOnnxScaler):
         :param shifter:         Kernel used for shifting operations. Defaults to kernel.
         :param **kwargs:        Additional arguments to pass to the backend.
                                 See the vsmlrt backend's docstring for more details.
-        """
+        """  # noqa: E501
         self.strength = strength
         self.multiple = 8
-    
+
         super().__init__(
             None,
             backend,
@@ -936,7 +972,7 @@ class BaseDPIR(BaseOnnxScaler):
             kernel=kernel,
             scaler=scaler,
             shifter=shifter,
-            **kwargs
+            **kwargs,
         )
 
     def scale(
@@ -945,14 +981,14 @@ class BaseDPIR(BaseOnnxScaler):
         width: int | None = None,
         height: int | None = None,
         shift: tuple[float, float] = (0, 0),
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         assert check_variable_resolution(clip, self.__class__)
 
         return super().scale(clip, width, height, shift, **kwargs)
 
     def calc_tilesize(self, clip: vs.VideoNode, **kwargs: Any) -> tuple[tuple[int, int], tuple[int, int]]:
-        return super().calc_tilesize(clip, **dict(multiple=self.multiple) | kwargs)
+        return super().calc_tilesize(clip, **{"multiple": self.multiple} | kwargs)
 
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         if get_color_family(clip) == vs.GRAY:
@@ -966,13 +1002,13 @@ class BaseDPIR(BaseOnnxScaler):
         assert check_variable_format(clip, self.__class__)
 
         if get_video_format(clip) != get_video_format(input_clip):
-            kwargs = dict(dither_type=DitherType.ORDERED) | kwargs
+            kwargs = {"dither_type": DitherType.ORDERED} | kwargs
             clip = self.kernel.resample(clip, input_clip, Matrix.from_video(input_clip, func=self.__class__), **kwargs)
 
         return clip
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        from vsmlrt import DPIR as mlrt_dpir
+        from vsmlrt import DPIR as mlrt_dpir  # noqa: N811
         from vsmlrt import DPIRModel
 
         args = (
@@ -980,7 +1016,7 @@ class BaseDPIR(BaseOnnxScaler):
             self.tilesize,
             self.overlap,
             DPIRModel(self._model[0] if clip.format.color_family == vs.GRAY else self._model[1]),
-            self.backend
+            self.backend,
         )
         padding = padder.mod_padding(clip, self.multiple, 0)
 
@@ -1006,8 +1042,10 @@ class DPIR(BaseDPIR):
 
     class DrunetDenoise(BaseDPIR):
         """DPIR model for denoising."""
+
         _model = (0, 1)
 
     class DrunetDeblock(BaseDPIR):
         """DPIR model for deblocking."""
+
         _model = (2, 3)
