@@ -176,7 +176,7 @@ class FixInterlacedFades(CustomIntEnum):
 
         expr = (
             "Y 2 % x.fbAvg{i} x.ftAvg{i} ? AVG! "
-            "AVG@ 0 = x x {color} - x.ftAvg{i} x.fbAvg{i} {expr_mode} AVG@ / * {color} + ?"
+            "AVG@ x {color} - x.ftAvg{i} x.fbAvg{i} {expr_mode} AVG@ / * {color} + x ?"
         )
 
         fix = norm_expr(

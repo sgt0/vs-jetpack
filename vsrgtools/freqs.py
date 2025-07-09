@@ -70,7 +70,7 @@ class MeanMode(CustomIntEnum):
             for y in range(2):
                 expr.extend([[f"D{i}@ {3 - y} pow" for i in counts], ExprOp.ADD * n_op, f"P{y + 1}!"])
 
-            expr.append("P2@ 0 = 0 P1@ P2@ / ? neutral +")
+            expr.append("P2@ P1@ P2@ / 0 ? neutral +")
 
             return norm_expr(clips, expr, planes=planes, func=func)
 

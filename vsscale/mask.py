@@ -77,7 +77,7 @@ def descale_error_mask(
         chroma_abs = norm_expr(chroma, "x neutral - abs y neutral - abs max")
         chroma_abs = core.resize.Bicubic(chroma_abs, y.width, y.height)
 
-        bias = norm_expr([y, chroma_abs], f"x ymax >= x ymin <= or y 0 = and {bwbias} 1 ?", func=descale_error_mask)
+        bias = norm_expr([y, chroma_abs], f"x ymax >= x ymin <= or y not and {bwbias} 1 ?", func=descale_error_mask)
         bias = Morpho.expand(bias, 2, func=descale_error_mask)
 
         error = ExprOp.MUL(error, bias)

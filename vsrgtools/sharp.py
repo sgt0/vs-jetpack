@@ -83,8 +83,9 @@ def fine_sharp(
 
     diff = norm_expr(
         [func.work_clip, blurred],
-        "range_size 256 / SCL! x y - SCL@ / D! D@ abs DA! DA@ {lstr} / 1 {pstr} / pow {sstr} * "
-        "D@ DA@ 0.001 + / * D@ 2 pow D@ 2 pow {ldmp} + / * SCL@ * neutral +",
+        "range_size 256 / SCL! x y - SCL@ / D! D@ abs DA! D@ 2 pow DP! "
+        "DA@ {lstr} / 1 {pstr} / pow {sstr} * "
+        "DA@ D@ DA@ / D@ ? * DP@ DP@ {ldmp} + / * SCL@ * neutral +",
         lstr=lstr,
         pstr=pstr,
         sstr=sstr,
