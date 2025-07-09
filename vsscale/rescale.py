@@ -170,6 +170,8 @@ class RescaleBase(vs_object):
         return core.std.CopyFrameProps(upscaled, self.clipy, "_ChromaLocation")
 
     def __vs_del__(self, core_id: int) -> None:
+        del self.clipy
+        del self.chroma
         del self.descale
         del self.rescale
         del self.doubled
