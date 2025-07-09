@@ -155,11 +155,10 @@ class RescaleBase(vs_object):
         return core.std.CopyFrameProps(upscaled, self.clipy, '_ChromaLocation')
 
     def __vs_del__(self, core_id: int) -> None:
-        if not TYPE_CHECKING:
-            self.descale = None
-            self.rescale = None
-            self.doubled = None
-            self.upscale = None
+        del self.descale
+        del self.rescale
+        del self.doubled
+        del self.upscale
 
 
 class Rescale(RescaleBase):
@@ -496,11 +495,9 @@ class Rescale(RescaleBase):
         return self.credit_mask
 
     def __vs_del__(self, core_id: int) -> None:
-        self._line_mask = None
-        self.credit_mask = None
-        self.ignore_mask = None
-
-        if not TYPE_CHECKING:
-            self._pre = None
+        del self._line_mask
+        del self._credit_mask
+        del self._ignore_mask
+        del self._pre
 
         super().__vs_del__(core_id)
