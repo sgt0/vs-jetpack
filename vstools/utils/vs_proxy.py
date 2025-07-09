@@ -1039,16 +1039,7 @@ class EnvironmentProxy(EnvironmentProxyBase):
 
     @property
     def has_core(self) -> bool:
-        import gc
-
-        found_core = _find_ref(self.data, Core)
-
-        if not found_core:
-            return False
-
-        core_refs = gc.get_referrers(found_core)
-
-        return len(core_refs) > 1
+        return any(isinstance(ref, Core) for ref in gc.get_referents(self.data))
 
 
 _curr_env_proxy = EnvironmentProxy()
