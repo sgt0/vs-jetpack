@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Callable, Literal, Protocol, Sequence, TypeGuard, TypeVar, Union, overload
 
 import vapoursynth as vs
@@ -350,7 +351,7 @@ def replace_ranges(
     shift = 1 - exclusive
     b_ranges = normalize_ranges(clip_b, ranges)
 
-    if hasattr(vs.core, "vszip"):
+    with contextlib.suppress(AttributeError):
         return vs.core.vszip.RFS(
             clip_a,
             clip_b,
