@@ -326,7 +326,7 @@ class MatrixEdgeDetect(EdgeDetect):
         return self.mode_types if self.mode_types else ["s"] * len(self._get_matrices())
 
     def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        if (self.mode_types is None or self.mode_types[0] == "s"):
+        if self.mode_types is None or self.mode_types[0] == "s":
             cropped = vs.core.std.Crop(
                 clip, right=clip.format.subsampling_w * 2 if clip.format.subsampling_w != 0 else 2
             )
