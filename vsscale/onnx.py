@@ -420,6 +420,7 @@ class BaseArtCNNChroma(BaseArtCNN):
 
         return clip
 
+
 class ArtCNN(BaseArtCNNLuma):
     """
     Super-Resolution Convolutional Neural Networks optimised for anime.
