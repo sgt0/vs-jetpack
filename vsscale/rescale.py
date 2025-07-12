@@ -392,7 +392,7 @@ class Rescale(RescaleBase):
 
         if self._crop > (0, 0, 0, 0):
             pre_y = get_y(self._pre)
-            black = pre_y.std.BlankClip()
+            black = pre_y.std.BlankClip(keep=True)
             mask = norm_expr(
                 black,
                 _get_region_expr(black, *self._crop, replace=f"{get_peak_value(black, False, ColorRange.FULL)} x"),
@@ -407,7 +407,7 @@ class Rescale(RescaleBase):
     def line_mask(self) -> ConstantFormatVideoNode:
         """Gets the lineart mask to be applied on the upscaled clip."""
         lm = self._line_mask or core.std.BlankClip(
-            self._clipy, color=get_peak_value(self._clipy, False, ColorRange.FULL)
+            self._clipy, color=get_peak_value(self._clipy, False, ColorRange.FULL), keep=True
         )
 
         if self._border_handling:
@@ -443,7 +443,7 @@ class Rescale(RescaleBase):
         if self._credit_mask:
             return self._credit_mask
 
-        self.credit_mask = core.std.BlankClip(self._clipy)
+        self.credit_mask = core.std.BlankClip(self._clipy, keep=True)
 
         return self.credit_mask
 
@@ -467,7 +467,7 @@ class Rescale(RescaleBase):
         """Gets the ignore mask to be applied on the descaled clip."""
         if self._ignore_mask:
             return self._ignore_mask
-        self.ignore_mask = core.std.BlankClip(self._clipy, format=vs.GRAY8)
+        self.ignore_mask = core.std.BlankClip(self._clipy, format=vs.GRAY8, keep=True)
         return self.ignore_mask
 
     @ignore_mask.setter
