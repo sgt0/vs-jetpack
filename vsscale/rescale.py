@@ -43,8 +43,12 @@ _RescaleT = TypeVar("_RescaleT", bound="RescaleBase")
 
 
 class RescaleBase(vs_object):
+    """Base class for Rescale wrapper"""
+
     descale_args: ScalingArgs
-    field_based: FieldBased | None
+    """
+    Descale arguments. See [ScalingArgs][vsscale.ScalingArgs]
+    """
 
     def __init__(
         self,
@@ -158,18 +162,30 @@ class RescaleBase(vs_object):
 
     @cached_property
     def descale(self) -> ConstantFormatVideoNode:
+        """
+        Gets the descaled clip.
+        """
         return self._generate_descale(self._clipy)
 
     @cached_property
     def rescale(self) -> ConstantFormatVideoNode:
+        """
+        Gets the rescaled clip.
+        """
         return self._generate_rescale(self.descale)
 
     @cached_property
     def doubled(self) -> ConstantFormatVideoNode:
+        """
+        Gets the doubled clip.
+        """
         return self._generate_doubled(self.descale)
 
     @cached_property
     def upscale(self) -> ConstantFormatVideoNode:
+        """
+        Returns the upscaled clip
+        """
         return core.std.CopyFrameProps(
             join(self._generate_upscale(self.doubled), *self._chroma), self._clipy, "_ChromaLocation"
         )
@@ -389,6 +405,7 @@ class Rescale(RescaleBase):
 
     @property
     def line_mask(self) -> ConstantFormatVideoNode:
+        """Gets the lineart mask to be applied on the upscaled clip."""
         lm = self._line_mask or core.std.BlankClip(
             self._clipy, color=get_peak_value(self._clipy, False, ColorRange.FULL)
         )
@@ -422,6 +439,7 @@ class Rescale(RescaleBase):
 
     @property
     def credit_mask(self) -> ConstantFormatVideoNode:
+        """Gets the credit mask to be applied on the upscaled clip."""
         if self._credit_mask:
             return self._credit_mask
 
@@ -446,6 +464,7 @@ class Rescale(RescaleBase):
 
     @property
     def ignore_mask(self) -> ConstantFormatVideoNode:
+        """Gets the ignore mask to be applied on the descaled clip."""
         if self._ignore_mask:
             return self._ignore_mask
         self.ignore_mask = core.std.BlankClip(self._clipy, format=vs.GRAY8)
