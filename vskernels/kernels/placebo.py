@@ -14,6 +14,8 @@ __all__ = [
     "EwaHann",
     "EwaJinc",
     "EwaLanczos",
+    "EwaLanczos4Sharpest",
+    "EwaLanczosSharp",
     "EwaRobidoux",
     "EwaRobidouxSharp",
     "Placebo",
