@@ -147,7 +147,7 @@ class EwaLanczos(Placebo):
 
     def __init__(self, radius: float = 3.2383154841662362076499, **kwargs: Any) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
@@ -170,7 +170,7 @@ class EwaLanczosSharp(Placebo):
         self, radius: float = 3.2383154841662362076499, blur: float = 0.98125058372237073562493, **kwargs: Any
     ) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
@@ -200,7 +200,7 @@ class EwaLanczos4Sharpest(Placebo):
         **kwargs: Any,
     ) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
@@ -225,7 +225,7 @@ class EwaJinc(Placebo):
 
     def __init__(self, radius: float = 3.2383154841662362076499, **kwargs: Any) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
@@ -246,7 +246,7 @@ class EwaGinseng(Placebo):
 
     def __init__(self, radius: float = 3.2383154841662362076499, **kwargs: Any) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
@@ -267,7 +267,7 @@ class EwaHann(Placebo):
 
     def __init__(self, radius: float = 3.2383154841662362076499, **kwargs: Any) -> None:
         """
-        Initialize the kernel with a specific number of taps and optional keyword arguments.
+        Initialize the kernel with a specific radius and optional keyword arguments.
 
         These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
