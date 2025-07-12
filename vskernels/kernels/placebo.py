@@ -162,6 +162,61 @@ class EwaLanczos(Placebo):
         super().__init__(taps, None, None, **kwargs)
 
 
+class EwaLanczosSharp(Placebo):
+    """Ewa Lanczos resizer."""
+
+    _kernel = "ewa_lanczossharp"
+
+    def __init__(
+        self, taps: float = 3.2383154841662362076499, blur: float = 0.98125058372237073562493, **kwargs: Any
+    ) -> None:
+        """
+        Initialize the kernel with a specific number of taps and optional keyword arguments.
+
+        These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
+        but only if the method explicitly accepts them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the `_implemented_funcs`,
+        the one passed to `func` takes precedence.
+
+        :param taps:    The number of taps used for Lanczos interpolation.
+        :param blur:    Additional blur coefficient.
+                        This effectively stretches the kernel, without changing the effective radius
+                        of the filter radius.
+        :param kwargs:  Keyword arguments that configure the internal scaling behavior.
+        """
+        super().__init__(taps, None, None, blur=blur, **kwargs)
+
+
+class EwaLanczos4Sharpest(Placebo):
+    """Ewa Lanczos resizer."""
+
+    _kernel = "ewa_lanczos4sharpest"
+
+    def __init__(
+        self,
+        taps: float = 4.2410628637960698819573,
+        blur: float = 0.88451209326050047745788,
+        antiring: float = 0.8,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize the kernel with a specific number of taps and optional keyword arguments.
+
+        These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
+        but only if the method explicitly accepts them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the `_implemented_funcs`,
+        the one passed to `func` takes precedence.
+
+        :param taps:    The number of taps used for Lanczos interpolation.
+        :param blur:    Additional blur coefficient.
+                        This effectively stretches the kernel, without changing the effective radius
+                        of the filter radius.
+        :param antiring: Antiringing strength.
+        :param kwargs:  Keyword arguments that configure the internal scaling behavior.
+        """
+        super().__init__(taps, None, None, blur=blur, antiring=antiring, **kwargs)
+
+
 class EwaJinc(Placebo):
     """Ewa Jinc resizer."""
 
