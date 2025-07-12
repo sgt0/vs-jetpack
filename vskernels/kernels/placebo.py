@@ -83,6 +83,8 @@ class Placebo(ComplexScaler, abstract=True):
         height: int | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
+        kwargs.pop("format", None)
+
         return (
             {
                 "sx": kwargs.pop("src_left", shift[1]),
