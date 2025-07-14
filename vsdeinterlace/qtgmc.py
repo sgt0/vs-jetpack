@@ -329,6 +329,9 @@ class QTempGaussMC(vs_object):
         self.tff = clip_fieldbased.is_tff
         self.double_rate = self.input_type != self.InputType.REPAIR
 
+        if self.clip.format.sample_type is vs.FLOAT:
+            raise CustomRuntimeError("FLOAT input is not supported!", self.__class__)
+
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter:
             raise CustomRuntimeError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
 
