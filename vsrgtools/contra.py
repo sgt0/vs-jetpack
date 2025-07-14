@@ -1,12 +1,19 @@
 from __future__ import annotations
 
-from functools import partial
 from typing import Callable, Sequence
 
 from vsexprtools import norm_expr
 from vstools import (
-    ConstantFormatVideoNode, CustomValueError, GenericVSFunction, PlanesT, check_ref_clip, check_variable, core,
-    iterate, normalize_param_planes, normalize_planes, vs
+    ConstantFormatVideoNode,
+    CustomValueError,
+    GenericVSFunction,
+    PlanesT,
+    check_ref_clip,
+    check_variable,
+    core,
+    normalize_param_planes,
+    normalize_planes,
+    vs,
 )
 
 from .blur import box_blur, median_blur, min_blur
@@ -93,7 +100,7 @@ def contrasharpening_dehalo(
 
     blur = BlurMatrix.BINOMIAL()(flt, planes)
     blur2 = median_blur(blur, 2, planes=planes)
-    blur2 = iterate(blur2, partial(repair, repairclip=blur), 2, mode=rep_modes)
+    blur2 = repair(blur, repair(blur, blur2, rep_modes), rep_modes)
 
     return norm_expr(
         [flt, src, blur, blur2],
