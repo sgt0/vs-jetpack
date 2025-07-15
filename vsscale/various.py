@@ -9,18 +9,14 @@ from vsrgtools.rgtools import Repair
 from vstools import (
     ConstantFormatVideoNode,
     CustomOverflowError,
-    PlanesT,
     check_ref_clip,
-    check_variable,
-    check_variable_format,
-    core,
     scale_delta,
     vs,
 )
 
-from .generic import BaseGenericScaler, GenericScaler
+from .generic import GenericScaler
 
-__all__ = ["DPID", "ClampScaler"]
+__all__ = ["ClampScaler"]
 
 
 class ClampScaler(GenericScaler):
@@ -150,69 +146,3 @@ class ClampScaler(GenericScaler):
         if not isinstance(self.reference, vs.VideoNode):
             return max(self.reference.kernel_radius, self.base_scaler.kernel_radius)
         return self.base_scaler.kernel_radius
-
-
-class DPID(BaseGenericScaler):
-    """
-    Rapid, Detail-Preserving Image Downscaler for VapourSynth.
-    """
-
-    def __init__(
-        self, sigma: float = 0.1, ref: vs.VideoNode | ScalerLike = Catrom, planes: PlanesT = None, **kwargs: Any
-    ) -> None:
-        """
-        Args:
-            sigma: The power factor of range kernel. It can be used to tune the amplification of the weights of pixels
-                that represent detail—from a box filter over an emphasis of distinct pixels towards a selection of
-                only the most distinct pixels.
-            ref: VideoNode or Scaler to obtain the downscaled reference for DPID.
-            planes: Sets which planes will be processed. Any unprocessed planes will be simply copied from ref.
-        """
-        super().__init__(**kwargs)
-
-        self.sigma = sigma
-        self.ref = ref
-        self.planes = planes
-
-        if isinstance(ref, vs.VideoNode):
-            self._ref_scaler = self.scaler
-        else:
-            self._ref_scaler = Scaler.ensure_obj(ref, self.__class__)
-
-    def scale(
-        self,
-        clip: vs.VideoNode,
-        width: int | None = None,
-        height: int | None = None,
-        shift: tuple[float, float] = (0, 0),
-        **kwargs: Any,
-    ) -> ConstantFormatVideoNode:
-        assert check_variable(clip, self.__class__)
-
-        width, height = self._wh_norm(clip, width, height)
-
-        ref = clip
-
-        if isinstance(self.ref, vs.VideoNode):
-            check_ref_clip(clip, self.ref)
-
-            if TYPE_CHECKING:
-                assert check_variable_format(self.ref, self.__class__)
-
-            ref = self.ref
-
-        if (ref.width, ref.height) != (width, height):
-            ref = self._ref_scaler.scale(ref, width, height)
-
-        kwargs = (
-            {"lambda": self.sigma, "planes": self.planes, "src_left": shift[1], "src_top": shift[0]}
-            | self.kwargs
-            | kwargs
-            | {"read_chromaloc": True}
-        )
-
-        return core.dpid.DpidRaw(clip, ref, **kwargs)
-
-    @Scaler.cached_property
-    def kernel_radius(self) -> int:
-        return self._ref_scaler.kernel_radius
