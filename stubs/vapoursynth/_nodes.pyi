@@ -1742,19 +1742,6 @@ class _Plugin_dgdecodenv_Core_Bound(Plugin):
 
 # end implementation
 
-# implementation: dpid
-
-class _Plugin_dpid_Core_Bound(Plugin):
-    """This class implements the module definitions for the "dpid" VapourSynth plugin.\n\n*This class cannot be imported.*"""
-    def Dpid(self, *args: _VapourSynthMapValue, **kwargs: _VapourSynthMapValue) -> ConstantFormatVideoNode: ...
-    def DpidRaw(self, *args: _VapourSynthMapValue, **kwargs: _VapourSynthMapValue) -> ConstantFormatVideoNode: ...
-
-class _Plugin_dpid_VideoNode_Bound(Plugin):
-    """This class implements the module definitions for the "dpid" VapourSynth plugin.\n\n*This class cannot be imported.*"""
-    def Dpid(self, *args: _VapourSynthMapValue, **kwargs: _VapourSynthMapValue) -> ConstantFormatVideoNode: ...
-    def DpidRaw(self, *args: _VapourSynthMapValue, **kwargs: _VapourSynthMapValue) -> ConstantFormatVideoNode: ...
-
-# end implementation
 
 # implementation: dvdsrc2
 
@@ -11416,11 +11403,6 @@ class VideoNode(RawNode):
     def dfttest2_nvrtc(self) -> _Plugin_dfttest2_nvrtc_VideoNode_Bound:
         """DFTTest2 (NVRTC)"""
     # end instance
-    # instance_bound_VideoNode: dpid
-    @property
-    def dpid(self) -> _Plugin_dpid_VideoNode_Bound:
-        """Rapid, Detail-Preserving Image Downscaling"""
-    # end instance
     # instance_bound_VideoNode: eedi2
     @property
     def eedi2(self) -> _Plugin_eedi2_VideoNode_Bound:
@@ -11766,11 +11748,6 @@ class Core:
     @property
     def dgdecodenv(self) -> _Plugin_dgdecodenv_Core_Bound:
         """DGDecodeNV for VapourSynth"""
-    # end instance
-    # instance_bound_Core: dpid
-    @property
-    def dpid(self) -> _Plugin_dpid_Core_Bound:
-        """Rapid, Detail-Preserving Image Downscaling"""
     # end instance
     # instance_bound_Core: dvdsrc2
     @property
