@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from functools import partial
 from typing import TYPE_CHECKING, Any, Literal
 
-from vsexprtools import ExprOp, combine, complexpr_available, expr_func, norm_expr
-from vskernels import Catrom, ComplexScaler, ComplexScalerLike, Hermite, KernelLike, Scaler, ScalerLike
+from vsexprtools import ExprOp, combine, norm_expr
+from vskernels import Catrom, KernelLike, Scaler, ScalerLike
 from vsmasktools import ringing_mask
-from vsrgtools import box_blur, gauss_blur
 from vsrgtools.rgtools import Repair
 from vstools import (
     ConstantFormatVideoNode,
     CustomOverflowError,
     PlanesT,
-    VSFunctionNoArgs,
     check_ref_clip,
     check_variable,
     check_variable_format,
@@ -23,7 +20,7 @@ from vstools import (
 
 from .generic import BaseGenericScaler, GenericScaler
 
-__all__ = ["DPID", "SSIM", "ClampScaler"]
+__all__ = ["DPID", "ClampScaler"]
 
 
 class ClampScaler(GenericScaler):
@@ -219,81 +216,3 @@ class DPID(BaseGenericScaler):
     @Scaler.cached_property
     def kernel_radius(self) -> int:
         return self._ref_scaler.kernel_radius
-
-
-class SSIM(ComplexScaler):
-    """
-    SSIM downsampler is an image downscaling technique that aims to optimize
-    for the perceptual quality of the downscaled results.
-
-    Image downscaling is considered as an optimization problem
-    where the difference between the input and output images is measured
-    using famous Structural SIMilarity (SSIM) index.
-
-    The solution is derived in closed-form, which leads to the simple, efficient implementation.
-    The downscaled images retain perceptually important features and details,
-    resulting in an accurate and spatio-temporally consistent representation of the high resolution input.
-    """
-
-    def __init__(
-        self,
-        scaler: ComplexScalerLike = Hermite,
-        smooth: int | float | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Initialize the scaler.
-
-        Args:
-            scaler: Scaler to be used for downscaling, defaults to Hermite.
-            smooth: Image smoothening method. If you pass an int, it specifies the "radius" of the internally-used
-                boxfilter, i.e. the window has a size of (2*smooth+1)x(2*smooth+1). If you pass a float, it specifies
-                the "sigma" of gauss_blur, i.e. the standard deviation of gaussian blur. If you pass a function, it acts
-                as a general smoother. Default uses a gaussian blur based on the scaler's kernel radius.
-        """
-        super().__init__(**kwargs)
-
-        self.scaler = ComplexScaler.from_param(scaler)()
-
-        if smooth is None:
-            smooth = (self.scaler.kernel_radius + 1.0) / 3
-
-        if callable(smooth):
-            self.filter_func = smooth
-        elif isinstance(smooth, int):
-            self.filter_func = partial(box_blur, radius=smooth)
-        elif isinstance(smooth, float):
-            self.filter_func = partial(gauss_blur, sigma=smooth)
-
-    def _linear_scale(
-        self,
-        clip: vs.VideoNode,
-        width: int | None,
-        height: int | None,
-        shift: tuple[float, float],
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        assert check_variable(clip, self.scale)
-
-        l1 = self.scaler.scale(clip, width, height, shift, **(kwargs | self.kwargs))
-
-        l1_sq, c_sq = [expr_func(x, "x dup *") for x in (l1, clip)]
-
-        l2 = self.scaler.scale(c_sq, width, height, shift, **(kwargs | self.kwargs))
-
-        m, sl_m_square, sh_m_square = [self.filter_func(x) for x in (l1, l1_sq, l2)]
-
-        if complexpr_available:
-            merge_expr = f"z dup * SQ! x SQ@ - SQD! SQD@ {1e-6} < 0 y SQ@ - SQD@ / sqrt ?"
-        else:
-            merge_expr = f"x z dup * - {1e-6} < 0 y z dup * - x z dup * - / sqrt ?"
-
-        r = expr_func([sl_m_square, sh_m_square, expr_func(m, "x dup *")], merge_expr)
-
-        t = expr_func([r, m], "x y *")
-
-        return expr_func([self.filter_func(m), self.filter_func(r), l1, self.filter_func(t)], "x y z * + a -")
-
-    @Scaler.cached_property
-    def kernel_radius(self) -> int:
-        return self.scaler.kernel_radius
