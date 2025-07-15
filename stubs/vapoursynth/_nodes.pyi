@@ -2593,42 +2593,6 @@ class _Plugin_manipmv_VideoNode_Bound(Plugin):
 
 # end implementation
 
-# implementation: misc
-
-class _Plugin_misc_Core_Bound(Plugin):
-    """This class implements the module definitions for the "misc" VapourSynth plugin.
-
-    *This class cannot be imported.*"""
-    def AverageFrames(
-        self,
-        clips: _SingleAndSequence[VideoNode],
-        weights: _SingleAndSequence[float],
-        scale: float | None = None,
-        scenechange: int | None = None,
-        planes: _SingleAndSequence[int] | None = None,
-    ) -> ConstantFormatVideoNode: ...
-    def Hysteresis(
-        self, clipa: VideoNode, clipb: VideoNode, planes: _SingleAndSequence[int] | None = None
-    ) -> ConstantFormatVideoNode: ...
-    def SCDetect(self, clip: VideoNode, threshold: float | None = None) -> ConstantFormatVideoNode: ...
-
-class _Plugin_misc_VideoNode_Bound(Plugin):
-    """This class implements the module definitions for the "misc" VapourSynth plugin.
-
-    *This class cannot be imported.*"""
-    def AverageFrames(
-        self,
-        weights: _SingleAndSequence[float],
-        scale: float | None = None,
-        scenechange: int | None = None,
-        planes: _SingleAndSequence[int] | None = None,
-    ) -> ConstantFormatVideoNode: ...
-    def Hysteresis(
-        self, clipb: VideoNode, planes: _SingleAndSequence[int] | None = None
-    ) -> ConstantFormatVideoNode: ...
-    def SCDetect(self, threshold: float | None = None) -> ConstantFormatVideoNode: ...
-
-# end implementation
 
 # implementation: mv
 
@@ -11448,11 +11412,6 @@ class VideoNode(RawNode):
     def manipmv(self) -> _Plugin_manipmv_VideoNode_Bound:
         """Manipulate Motion Vectors"""
     # end instance
-    # instance_bound_VideoNode: misc
-    @property
-    def misc(self) -> _Plugin_misc_VideoNode_Bound:
-        """Miscellaneous filters"""
-    # end instance
     # instance_bound_VideoNode: mv
     @property
     def mv(self) -> _Plugin_mv_VideoNode_Bound:
@@ -11808,11 +11767,6 @@ class Core:
     @property
     def manipmv(self) -> _Plugin_manipmv_Core_Bound:
         """Manipulate Motion Vectors"""
-    # end instance
-    # instance_bound_Core: misc
-    @property
-    def misc(self) -> _Plugin_misc_Core_Bound:
-        """Miscellaneous filters"""
     # end instance
     # instance_bound_Core: mv
     @property
