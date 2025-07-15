@@ -288,7 +288,7 @@ class SSIM(ComplexScaler):
         else:
             merge_expr = f"x z dup * - {1e-6} < 0 y z dup * - x z dup * - / sqrt ?"
 
-        r = expr_func([sl_m_square, sh_m_square, m], merge_expr)
+        r = expr_func([sl_m_square, sh_m_square, expr_func(m, "x dup *")], merge_expr)
 
         t = expr_func([r, m], "x y *")
 
