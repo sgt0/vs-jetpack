@@ -25,7 +25,7 @@ from vstools import (
     vs,
 )
 
-from .indexers import IMWRI, LSMAS, BestSource, D2VWitch, DGIndex, DGIndexNV, Indexer
+from .indexers import IMWRI, LSMAS, BestSource, D2VWitch, Indexer
 
 __all__ = ["parse_video_filepath", "source"]
 
