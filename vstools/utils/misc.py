@@ -81,7 +81,7 @@ def match_clip(
         if clip.num_frames < ref.num_frames:
             clip = vs.core.std.Splice([clip, clip[-1] * (ref.num_frames - clip.num_frames)])
         else:
-            clip = clip[:ref.num_frames]
+            clip = clip[: ref.num_frames]
 
     clip = clip.resize.Bicubic(ref.width, ref.height) if dimensions else clip
 
