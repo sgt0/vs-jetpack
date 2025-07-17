@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, NamedTuple, TypeAlias, Union
+from typing import Any, TypeAlias, Union
 
 import vapoursynth as vs
-from jetpytools import FuncExceptT, classproperty
+from jetpytools import FuncExceptT
 
 from ..exceptions import (
     ReservedMatrixError,
@@ -24,7 +24,6 @@ __all__ = [
     "ColorRange",
     "ColorRangeT",
     "Matrix",
-    "MatrixCoefficients",
     "MatrixT",
     "Primaries",
     "PrimariesT",
