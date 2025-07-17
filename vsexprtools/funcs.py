@@ -149,8 +149,8 @@ def norm_expr(
         opt: Forces integer evaluation as much as possible.
         boundary: Specifies the default boundary condition for relative pixel accesses:
 
-               - 0 means clamped
-               - 1 means mirrored
+               - False means clamped
+               - True means mirrored
         split_planes: Splits the VideoNodes into their individual planes.
         **kwargs: Additional keywords arguments to be passed to the expression function. These arguments are key-value
             pairs, where the keys are placeholders that will be replaced in the expression string. Iterable values
