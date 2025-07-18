@@ -185,7 +185,12 @@ def deblock_qed(
         clip.deblock.Deblock(quant[1], alpha[1], beta[1], planes),
     )
 
-    mask = norm_expr(clip[0], "Y 8 % 7 % X 8 % 7 % and 0 255 ?", planes_pp, clip.format.replace(bits_per_sample=8))
+    mask = norm_expr(
+        clip[0],
+        "Y 8 % 7 % X 8 % 7 % and 0 255 ?",
+        planes_pp,
+        clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=8),
+    )
     strong_diff = norm_expr([clip, strong, mask], "z x y - 1.01 * neutral + neutral ?", planes_pp)
     strong_pp = strong_diff.dctf.DCTFilter([1, 1, 0, 0, 0, 0, 0, 0], planes_pp)
     deblocked = norm_expr([clip, normal, strong_pp, mask], "a y x z neutral - - ?", planes_pp)
