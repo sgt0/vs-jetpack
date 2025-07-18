@@ -33,7 +33,7 @@ def contrasharpening(
 ) -> ConstantFormatVideoNode:
     """
     contra-sharpening: sharpen the denoised clip, but don't add more to any pixel than what was previously removed.
-    Script by Didée, at the VERY GRAINY thread (http://forum.doom9.org/showthread.php?p=1076491#post1076491)
+    Script by Didée, at the [VERY GRAINY thread](http://forum.doom9.org/showthread.php?p=1076491#post1076491).
 
     Args:
         flt: Filtered clip
@@ -80,6 +80,8 @@ def contrasharpening_dehalo(
     flt: vs.VideoNode, src: vs.VideoNode, level: float = 1.4, alpha: float = 2.49, planes: PlanesT = 0
 ) -> ConstantFormatVideoNode:
     """
+    Contrasharpening for dehalo.
+
     Args:
         flt: Dehaloed clip
         src: Source clip
@@ -115,6 +117,8 @@ def contrasharpening_median(
     planes: PlanesT = 0,
 ) -> ConstantFormatVideoNode:
     """
+    Contrasharpening median.
+
     Args:
         flt: Filtered clip
         src: Source clip
