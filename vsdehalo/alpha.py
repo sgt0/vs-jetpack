@@ -8,7 +8,7 @@ from vsaa import NNEDI3
 from vsdenoise import Prefilter
 from vsexprtools import ExprOp, combine, norm_expr
 from vskernels import Bilinear, BSpline, Lanczos, Mitchell, Point, Scaler, ScalerLike
-from vsmasktools import EdgeDetect, Morpho, RadiusT, Robinson3, XxpandMode, grow_mask, retinex
+from vsmasktools import EdgeDetect, Morpho, RadiusLike, Robinson3, XxpandMode, grow_mask, retinex
 from vsrgtools import (
     BlurMatrixBase,
     box_blur,
@@ -75,7 +75,7 @@ def _dehalo_mask(
     lowsens: list[float],
     highsens: list[float],
     sigma_mask: float | bool,
-    mask_radius: RadiusT,
+    mask_radius: RadiusLike,
     mask_coords: Sequence[int] | None,
     planes: PlanesT,
 ) -> vs.VideoNode:
@@ -280,7 +280,7 @@ def fine_dehalo(
     edgemask: EdgeDetect = Robinson3(),
     planes: PlanesT = 0,
     show_mask: int | FineDehalo.Masks | bool = False,
-    mask_radius: RadiusT = 1,
+    mask_radius: RadiusLike = 1,
     downscaler: ScalerLike = Mitchell,
     upscaler: ScalerLike = BSpline,
     supersampler: ScalerLike = Lanczos(3),
@@ -569,7 +569,7 @@ def dehalo_alpha(
     ss: FloatIterArr = 1.5,
     planes: PlanesT = 0,
     show_mask: bool = False,
-    mask_radius: RadiusT = 1,
+    mask_radius: RadiusLike = 1,
     downscaler: ScalerLike = Mitchell,
     upscaler: ScalerLike = BSpline,
     supersampler: ScalerLike = Lanczos(3),
@@ -695,7 +695,7 @@ def dehalo_sigma(
     pre_ss: float = 1.0,
     pre_supersampler: ScalerLike = NNEDI3(noshift=(True, False)),
     pre_downscaler: ScalerLike = Point,
-    mask_radius: RadiusT = 1,
+    mask_radius: RadiusLike = 1,
     sigma_mask: float | bool = False,
     mask_coords: Sequence[int] | None = None,
     show_mask: bool = False,
@@ -844,7 +844,7 @@ def dehalo_merge(
     ss: list[float] | float = 1.5,
     planes: PlanesT = 0,
     show_mask: bool = False,
-    mask_radius: RadiusT = 1,
+    mask_radius: RadiusLike = 1,
     supersampler: ScalerLike = Lanczos(3),
     supersampler_ref: ScalerLike = Mitchell,
     pre_ss: float = 1.0,
