@@ -128,10 +128,19 @@ class BlurMatrixBase(list[_Nb]):
         fp16 = clip.format.sample_type == vs.FLOAT and clip.format.bits_per_sample == 16
 
         if self.mode.is_spatial:
-            # std.Convolution is limited to 25 numbers
-            # SQUARE mode is not optimized
-            # std.Convolution doesn't support float 16
-            if len(self) <= 25 and self.mode != ConvMode.SQUARE and not fp16:
+            # std.Convolution:
+            # - doesn't support float 16
+            # - is limited to 25 numbers
+            # - must have coefficients in the range [-1023,+1023]
+            # - is slower than akarin.Expr for square convolution
+            if all(
+                [
+                    not fp16,
+                    len(self) <= 25,
+                    all(-1023 <= x <= 1023 for x in self),
+                    self.mode != ConvMode.SQUARE,
+                ]
+            ):
                 return iterate(clip, core.std.Convolution, passes, self, bias, divisor, planes, saturate, self.mode)
 
             return iterate(
@@ -142,10 +151,16 @@ class BlurMatrixBase(list[_Nb]):
                 **expr_kwargs,
             )
 
+        # std.AverageFrames:
+        # - doesn't support float 16
+        # - is limited to 31 numbers
+        # - must have coefficients in the range [-1023,+1023]
+        # - doesn't support premultiply, multiply and clamp from ExprOp.convolution
         if all(
             [
                 not fp16,
                 len(self) <= 31,
+                all(-1023 <= x <= 1023 for x in self),
                 not bias,
                 saturate,
                 (len(conv_kwargs) == 0 or (len(conv_kwargs) == 1 and "scenechange" in conv_kwargs)),
