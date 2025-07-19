@@ -10,7 +10,7 @@ from vsexprtools import ExprOp, combine, norm_expr
 from vskernels import Bilinear, BSpline, Lanczos, Mitchell, Point, Scaler, ScalerLike
 from vsmasktools import EdgeDetect, Morpho, RadiusLike, Robinson3, XxpandMode, grow_mask, retinex
 from vsrgtools import (
-    BlurMatrixBase,
+    BlurMatrix,
     box_blur,
     contrasharpening,
     contrasharpening_dehalo,
@@ -498,10 +498,10 @@ def fine_dehalo2(
     mask_h = mask_v = None
 
     if mode in {ConvMode.HV, ConvMode.VERTICAL}:
-        mask_h = BlurMatrixBase([1, 2, 1, 0, 0, 0, -1, -2, -1], ConvMode.V)(work_clip, divisor=4, saturate=False)
+        mask_h = BlurMatrix.custom([1, 2, 1, 0, 0, 0, -1, -2, -1], ConvMode.V)(work_clip, divisor=4, saturate=False)
 
     if mode in {ConvMode.HV, ConvMode.HORIZONTAL}:
-        mask_v = BlurMatrixBase([1, 0, -1, 2, 0, -2, 1, 0, -1], ConvMode.H)(work_clip, divisor=4, saturate=False)
+        mask_v = BlurMatrix.custom([1, 0, -1, 2, 0, -2, 1, 0, -1], ConvMode.H)(work_clip, divisor=4, saturate=False)
 
     if mask_h and mask_v:
         mask_h2 = norm_expr([mask_h, mask_v], ["x 3 * y -", ExprOp.clamp()], func=func)
