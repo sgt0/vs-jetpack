@@ -82,7 +82,7 @@ class BlurMatrixBase(list[_Nb]):
     def __init__(self, iterable: Iterable[_Nb], /, mode: ConvMode = ConvMode.SQUARE) -> None:
         """
         Args:
-            __iterable: Iterable of kernel coefficients.
+            iterable: Iterable of kernel coefficients.
             mode: Convolution mode to use. Default is SQUARE.
         """
         self.mode = mode
