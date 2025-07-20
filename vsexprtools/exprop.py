@@ -251,7 +251,7 @@ class ExprOpBase(CustomStrEnum):
 class ExprOpExtraMeta(EnumMeta):
     @property
     def _extra_op_names_(cls) -> tuple[str, ...]:
-        return ("PI", "SGN", "NEG", "TAN", "ATAN", "ATAN2", "ASIN", "ACOS")
+        return ("PI", "SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS")
 
 
 class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
