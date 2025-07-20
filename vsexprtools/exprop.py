@@ -37,31 +37,89 @@ __all__ = ["ExprList", "ExprOp", "ExprToken", "TupleExprList"]
 
 
 class ExprToken(CustomStrEnum):
+    """
+    Enumeration for symbolic constants used in [norm_expr][vsexprtools.norm_expr].
+    """
+
     LumaMin = "ymin"
+    """The minimum luma value in limited range."""
+
     ChromaMin = "cmin"
+    """The minimum chroma value in limited range."""
+
     LumaMax = "ymax"
+    """The maximum luma value in limited range."""
+
     ChromaMax = "cmax"
+    """The maximum chroma value in limited range."""
+
     Neutral = "neutral"
+    """The neutral value (e.g. 128 for 8-bit limited, 0 for float)."""
+
     RangeHalf = "range_half"
+    """Half of the full range (e.g. 128.0 for 8-bit full range)."""
+
     RangeSize = "range_size"
+    """The size of the full range (e.g. 256 for 8-bit, 65536 for 16-bit)."""
+
     RangeMin = "range_min"
+    """Minimum value in full range (chroma-aware)."""
+
     LumaRangeMin = "yrange_min"
+    """Minimum luma value based on input clip's color range."""
+
     ChromaRangeMin = "crange_min"
+    """Minimum chroma value based on input clip's color range."""
+
     RangeMax = "range_max"
+    """Maximum value in full range (chroma-aware)."""
+
     LumaRangeMax = "yrange_max"
+    """Maximum luma value based on input clip's color range."""
+
     ChromaRangeMax = "crange_max"
+    """Maximum chroma value based on input clip's color range."""
+
     RangeInMin = "range_in_min"
+    """Like `RangeMin`, but adapts to input `range_in` parameter."""
+
     LumaRangeInMin = "yrange_in_min"
+    """Like `LumaRangeMin`, but adapts to input `range_in`."""
+
     ChromaRangeInMin = "crange_in_min"
+    """Like `ChromaRangeMin`, but adapts to input `range_in`."""
+
     RangeInMax = "range_in_max"
+    """Like `RangeMax`, but adapts to input `range_in`."""
+
     LumaRangeInMax = "yrange_in_max"
+    """Like `LumaRangeMax`, but adapts to input `range_in`."""
+
     ChromaRangeInMax = "crange_in_max"
+    """Like `ChromaRangeMax`, but adapts to input `range_in`."""
 
     @property
     def is_chroma(self) -> bool:
+        """
+        Indicates whether the token refers to a chroma-related value.
+
+        Returns:
+            True if the token refers to chroma (e.g. ChromaMin), False otherwise.
+        """
         return "chroma" in self._name_.lower()
 
     def get_value(self, clip: vs.VideoNode, chroma: bool | None = None, range_in: ColorRange | None = None) -> float:
+        """
+        Resolves the numeric value represented by this token based on the input clip and range.
+
+        Args:
+            clip: A clip used to determine bit depth and format.
+            chroma: Optional override for whether to treat the token as chroma-related.
+            range_in: Optional override for the color range.
+
+        Returns:
+            The value corresponding to the symbolic token.
+        """
         if self is ExprToken.LumaMin:
             return get_lowest_value(clip, False, ColorRange.LIMITED)
 
@@ -122,6 +180,18 @@ class ExprToken(CustomStrEnum):
         raise CustomValueError("You are using an unsupported ExprToken!", self.get_value, self)
 
     def __getitem__(self, i: int) -> str:  # type: ignore[override]
+        """
+        Returns a version of the token specific to a clip index.
+
+        This allows referencing the token in expressions targeting multiple clips
+        (e.g., `ExprToken.LumaMax[2]` results in `'ymax_z'` suffix for clip index 2).
+
+        Args:
+            i: An integer index representing the input clip number.
+
+        Returns:
+            An string with an index-specific suffix for use in expressions.
+        """
         return f"{self._value_}_{ExprVars.get_var(i)}"
 
 
