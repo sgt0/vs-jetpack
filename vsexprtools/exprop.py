@@ -319,7 +319,6 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     NEG = "neg", 1
     TAN = "tan", 1
     ATAN = "atan", 1
-    ATAN2 = "atan2", 2
     ASIN = "asin", 1
     ACOS = "acos", 1
 
@@ -343,8 +342,6 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 return "dup sin swap cos /"
             case ExprOp.ATAN:
                 return self.atan().to_str()
-            case ExprOp.ATAN2:
-                return self.atan2().to_str()
             case ExprOp.ASIN:
                 return self.asin().to_str()
             case ExprOp.ACOS:
@@ -554,39 +551,6 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         for i in range(1, n):
             expr.append("__atanfvar@", 2 * i + 1, cls.POW, 2 * i + 1, cls.DIV, cls.SUB if i % 2 else cls.ADD)
 
-        return expr
-
-    @classmethod
-    def atan2(cls, y: SupportsString = "", x: SupportsString = "", n: int = 5) -> ExprList:
-        expr = ExprList(
-            [
-                y,
-                x,
-                "__atan2xvar!",
-                "__atan2yvar!",
-                ExprList(["__atan2xvar@", 0, cls.EQ]),  # if x = 0
-                ExprList([cls.PI.convert_extra(), 2, cls.DIV, "__atan2yvar@", cls.SGN.convert_extra(), cls.MUL]),
-                ExprList(
-                    [
-                        # if x != 0
-                        cls.atan(ExprList(["__atan2yvar@", "__atan2xvar@", cls.DIV]).to_str(), n),  # atan(y/x)
-                        ExprList(["__atan2xvar@", 0, cls.GT]),  # if x > 0
-                        0,
-                        ExprList(
-                            [
-                                ExprList(["__atan2yvar@", 0, cls.GTE]),  # if y >= 0
-                                cls.PI.convert_extra(),
-                                "-" + cls.PI.convert_extra(),  # if y < 0
-                                cls.TERN,
-                            ]
-                        ),
-                        cls.TERN,
-                        cls.ADD,  # Add atan(y/x) + (-)pi
-                    ]
-                ),
-                cls.TERN,
-            ]
-        )
         return expr
 
     @classmethod
