@@ -192,6 +192,9 @@ class ExprToken(CustomStrEnum):
         Returns:
             An string with an index-specific suffix for use in expressions.
         """
+        if i > 25:
+            raise CustomIndexError("Only an index up to 25 is supported", self, i)
+
         return f"{self._value_}_{ExprVars.get_var(i)}"
 
 
