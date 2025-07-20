@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import ceil
-from typing import TYPE_CHECKING, Any, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Iterable, Sequence, TypeAlias, Union
 
 from vstools import (
     ConstantFormatVideoNode,
@@ -10,8 +10,6 @@ from vstools import (
     HoldsVideoFormatT,
     PlanesT,
     ProcessVariableResClip,
-    StrArr,
-    StrArrOpt,
     StrList,
     SupportsString,
     VideoFormatT,
@@ -24,7 +22,7 @@ from vstools import (
     vs,
 )
 
-from .exprop import ExprList, ExprOp, ExprOpBase, TupleExprList
+from .exprop import ExprOp, ExprOpBase, TupleExprList
 from .util import ExprVars, bitdepth_aware_tokenize_expr, extra_op_tokenize_expr, norm_expr_planes
 
 __all__ = ["combine", "expr_func", "norm_expr"]
@@ -84,22 +82,22 @@ def expr_func(
         raise e
 
 
-def _combine_norm__ix(ffix: StrArrOpt, n_clips: int) -> list[SupportsString]:
+def _combine_norm__ix(ffix: SupportsString | Iterable[SupportsString] | None, n_clips: int) -> list[SupportsString]:
     if ffix is None:
         return [""] * n_clips
 
-    ffix = [ffix] if isinstance(ffix, (str, tuple)) else list(ffix)  # type: ignore
+    ffix = to_arr(ffix)
 
-    return ffix * max(1, ceil(n_clips / len(ffix)))  # type: ignore
+    return ffix * max(1, ceil(n_clips / len(ffix)))
 
 
 def combine(
     clips: VideoNodeIterableT[vs.VideoNode],
     operator: ExprOpBase = ExprOp.MAX,
-    suffix: StrArrOpt = None,
-    prefix: StrArrOpt = None,
-    expr_suffix: StrArrOpt = None,
-    expr_prefix: StrArrOpt = None,
+    suffix: SupportsString | Iterable[SupportsString] | None = None,
+    prefix: SupportsString | Iterable[SupportsString] | None = None,
+    expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
+    expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
     planes: PlanesT = None,
     split_planes: bool = False,
     **kwargs: Any,
@@ -121,9 +119,12 @@ def combine(
     return norm_expr(clips, [expr_prefix, args, operators, expr_suffix], planes, **kwargs)
 
 
+ExprLike: TypeAlias = Union[SupportsString | None, Iterable["ExprLike"]]
+
+
 def norm_expr(
     clips: VideoNodeIterableT[vs.VideoNode],
-    expr: str | StrArr | ExprList | tuple[str | StrArr | ExprList, ...] | TupleExprList,
+    expr: ExprLike,
     planes: PlanesT = None,
     format: HoldsVideoFormatT | VideoFormatT | None = None,
     opt: bool | None = None,

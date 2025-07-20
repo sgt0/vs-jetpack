@@ -18,7 +18,6 @@ from vstools import (
     FuncExceptT,
     HoldsVideoFormatT,
     PlanesT,
-    StrArrOpt,
     StrList,
     VideoFormatT,
     VideoNodeIterableT,
@@ -268,10 +267,10 @@ class ExprOpBase(CustomStrEnum):
     def __call__(
         self,
         *clips: VideoNodeIterableT[VideoNodeT],
-        suffix: StrArrOpt = None,
-        prefix: StrArrOpt = None,
-        expr_suffix: StrArrOpt = None,
-        expr_prefix: StrArrOpt = None,
+        suffix: SupportsString | Iterable[SupportsString] | None = None,
+        prefix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
         planes: PlanesT = None,
         **expr_kwargs: Any,
     ) -> VideoNodeT:
@@ -311,10 +310,10 @@ class ExprOpBase(CustomStrEnum):
     def combine(
         self,
         *clips: vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]],
-        suffix: StrArrOpt = None,
-        prefix: StrArrOpt = None,
-        expr_suffix: StrArrOpt = None,
-        expr_prefix: StrArrOpt = None,
+        suffix: SupportsString | Iterable[SupportsString] | None = None,
+        prefix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
         planes: PlanesT = None,
         **expr_kwargs: Any,
     ) -> ConstantFormatVideoNode:
