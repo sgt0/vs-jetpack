@@ -136,10 +136,12 @@ class ExprToken(CustomStrEnum):
             return get_neutral_value(clip)
 
         if self is ExprToken.RangeHalf:
-            return ((val := get_peak_value(clip, range_in=ColorRange.FULL)) + (1 - (val <= 1.0))) / 2
+            val = get_peak_value(clip, range_in=ColorRange.FULL)
+            return (val + 1) / 2 if val > 1.0 else val
 
         if self is ExprToken.RangeSize:
-            return (val := get_peak_value(clip, range_in=ColorRange.FULL)) + (1 - (val <= 1.0))
+            val = get_peak_value(clip, range_in=ColorRange.FULL)
+            return val + 1 if val > 1.0 else val
 
         if self is ExprToken.RangeMin:
             return get_lowest_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
