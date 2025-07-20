@@ -584,7 +584,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return expr
 
     @classmethod
-    def atan(cls, c: SupportsString = "", n: int = 5) -> ExprList:
+    def atan(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         # Using domain reduction when |x| > 1
         expr = ExprList(
             [
@@ -612,7 +612,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return expr
 
     @classmethod
-    def atanf(cls, c: SupportsString = "", n: int = 5) -> ExprList:
+    def atanf(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         # Approximation using Taylor series
         n = max(2, n)
 
@@ -624,9 +624,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return expr
 
     @classmethod
-    def asin(cls, c: SupportsString = "", n: int = 5) -> ExprList:
+    def asin(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         return cls.atan(ExprList([c, cls.DUP, cls.DUP, cls.MUL, 1, cls.SWAP, cls.SUB, cls.SQRT, cls.DIV]).to_str(), n)
 
     @classmethod
-    def acos(cls, c: SupportsString = "", n: int = 5) -> ExprList:
+    def acos(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         return ExprList([c, "__acosvar!", cls.PI.convert_extra(), 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])
