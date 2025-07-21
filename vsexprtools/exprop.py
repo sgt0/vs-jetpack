@@ -200,6 +200,10 @@ class ExprToken(CustomStrEnum):
 
 
 class ExprList(StrList):
+    """
+    A list-based representation of a RPN expression.
+    """
+
     def __call__(
         self,
         *clips: VideoNodeIterableT[vs.VideoNode],
@@ -211,12 +215,35 @@ class ExprList(StrList):
         split_planes: bool = False,
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
+        """
+        Apply the expression to one or more input clips.
+
+        Args:
+            clips: Input clip(s).
+            planes: Plane to process, defaults to all.
+            format: Output format, defaults to the first clip format.
+            opt: Forces integer evaluation as much as possible.
+            boundary: Specifies the default boundary condition for relative pixel accesses:
+
+                   - True (default): Mirrored edges.
+                   - False: Clamped edges.
+            func: Function returned for custom error handling. This should only be set by VS package developers.
+            split_planes: Splits the VideoNodes into their individual planes.
+            kwargs: Additional keyword arguments passed to [norm_expr][vsexprtools.norm_expr].
+
+        Returns:
+            Evaluated clip.
+        """
         from .funcs import norm_expr
 
         return norm_expr(clips, self, planes, format, opt, boundary, func, split_planes, **kwargs)
 
 
 class TupleExprList(tuple[ExprList, ...]):
+    """
+    A tuple of multiple `ExprList` expressions, applied sequentially to the clip(s).
+    """
+
     def __call__(
         self,
         *clips: VideoNodeIterableT[vs.VideoNode],
@@ -228,6 +255,30 @@ class TupleExprList(tuple[ExprList, ...]):
         split_planes: bool = False,
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
+        """
+        Apply a sequence of expressions to the input clip(s), one after another.
+
+        Each `ExprList` in the tuple is applied to the result of the previous one.
+
+        Args:
+            clips: Input clip(s).
+            planes: Plane to process, defaults to all.
+            format: Output format, defaults to the first clip format.
+            opt: Forces integer evaluation as much as possible.
+            boundary: Specifies the default boundary condition for relative pixel accesses:
+
+                   - True (default): Mirrored edges.
+                   - False: Clamped edges.
+            func: Function returned for custom error handling. This should only be set by VS package developers.
+            split_planes: Splits the VideoNodes into their individual planes.
+            kwargs: Extra keyword arguments passed to each `ExprList`.
+
+        Returns:
+            Evaluated clip.
+
+        Raises:
+            CustomRuntimeError: If the `TupleExprList` is empty.
+        """
         if len(self) < 1:
             raise CustomRuntimeError("You need at least one ExprList.", func, self)
 
@@ -252,7 +303,12 @@ class TupleExprList(tuple[ExprList, ...]):
 
 
 class ExprOpBase(CustomStrEnum):
+    """
+    Base class for expression operators used in RPN expressions.
+    """
+
     n_op: int
+    """The number of operands the operator requires."""
 
     def __new__(cls, value: str, n_op: int) -> Self:
         self = str.__new__(cls, value)
@@ -272,19 +328,51 @@ class ExprOpBase(CustomStrEnum):
         expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
         expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
         planes: PlanesT = None,
-        **expr_kwargs: Any,
+        **kwargs: Any,
     ) -> VideoNodeT:
         """
-        Call combine with this ExprOp.
+        Combines multiple video clips using the selected expression operator.
+
+        Args:
+            clips: Input clip(s).
+            suffix: Optional suffix string(s) to append to each input variable in the expression.
+            prefix: Optional prefix string(s) to prepend to each input variable in the expression.
+            expr_suffix: Optional expression to append after the combined input expression.
+            expr_prefix: Optional expression to prepend before the combined input expression.
+            planes: Which planes to process. Defaults to all.
+            **kwargs: Additional keyword arguments forwarded to [combine][vsexprtools.combine].
+
+        Returns:
+            A clip representing the combined result of applying the expression.
         """
 
     @overload
     def __call__(self, *pos_args: Any, **kwargs: Any) -> str:
         """
-        Format this ExprOp into an str.
+        Returns a formatted version of the ExprOp, using substitutions from pos_args and kwargs.
+
+        The substitutions are identified by braces ('{' and '}').
+
+        Args:
+            *pos_args: Positional arguments.
+            **kwargs: Keywords arguments.
+
+        Returns:
+            Formatted version of this ExprOp.
         """
 
     def __call__(self, *pos_args: Any, **kwargs: Any) -> vs.VideoNode | str:
+        """
+        Combines multiple video clips using the selected expression operator
+        or returns a formatted version of the ExprOp, using substitutions from pos_args and kwargs.
+
+        Args:
+            *pos_args: Positional arguments.
+            **kwargs: Keywords arguments.
+
+        Returns:
+            A clip representing the combined result of applying the expression or formatted version of this ExprOp.
+        """
         args = list(flatten(pos_args))
 
         if args and isinstance(args[0], vs.VideoNode):
@@ -315,11 +403,26 @@ class ExprOpBase(CustomStrEnum):
         expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
         expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
         planes: PlanesT = None,
-        **expr_kwargs: Any,
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode:
+        """
+        Combines multiple video clips using the selected expression operator.
+
+        Args:
+            clips: Input clip(s).
+            suffix: Optional suffix string(s) to append to each input variable in the expression.
+            prefix: Optional prefix string(s) to prepend to each input variable in the expression.
+            expr_suffix: Optional expression to append after the combined input expression.
+            expr_prefix: Optional expression to prepend before the combined input expression.
+            planes: Which planes to process. Defaults to all.
+            **kwargs: Additional keyword arguments forwarded to [combine][vsexprtools.combine].
+
+        Returns:
+            A clip representing the combined result of applying the expression.
+        """
         from .funcs import combine
 
-        return combine(clips, self, suffix, prefix, expr_suffix, expr_prefix, planes, **expr_kwargs)
+        return combine(clips, self, suffix, prefix, expr_suffix, expr_prefix, planes, **kwargs)
 
 
 class ExprOpExtraMeta(EnumMeta):
@@ -329,81 +432,204 @@ class ExprOpExtraMeta(EnumMeta):
 
 
 class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
+    """
+    Represents operators used in RPN expressions.
+
+    Each class attribute corresponds to a specific expression operator
+    with its associated symbol and arity (number of required operands).
+
+    Note: format strings can include placeholders for dynamic substitution (e.g., `{N:d}`, `{name:s}`).
+    """
+
     # 0 Argument (akarin)
     N = "N", 0
+    """Current frame number."""
+
     X = "X", 0
+    """Current pixel X-coordinate."""
+
     Y = "Y", 0
+    """Current pixel Y-coordinate."""
+
     WIDTH = "width", 0
+    """Frame width."""
+
     HEIGHT = "height", 0
+    """Frame height."""
 
     # 1 Argument (std)
     EXP = "exp", 1
+    """Exponential function (e^x)."""
+
     LOG = "log", 1
+    """Natural logarithm."""
+
     SQRT = "sqrt", 1
+    """Square root."""
+
     SIN = "sin", 1
+    """Sine (radians)."""
+
     COS = "cos", 1
+    """Cosine (radians)."""
+
     ABS = "abs", 1
+    """Absolute value."""
+
     NOT = "not", 1
+    """Logical NOT."""
+
     DUP = "dup", 1
+    """Duplicate the top of the stack."""
+
     DUPN = "dup{N:d}", 1
+    """Duplicate the top N items on the stack."""
+
     # 1 Argument (akarin)
     TRUNC = "trunc", 1
+    """Truncate to integer (toward zero)."""
+
     ROUND = "round", 1
+    """Round to nearest integer."""
+
     FLOOR = "floor", 1
+    """Round down to nearest integer."""
+
     DROP = "drop", 1
+    """Remove top value from the stack."""
+
     DROPN = "drop{N:d}", 1
-    SORT = "sort", 1
+    """Remove top N values from the stack."""
+
     SORTN = "sort{N:d}", 1
+    """Sort top N values on the stack."""
+
     VAR_STORE = "{name:s}!", 1
+    """Store value in variable named `{name}`."""
+
     VAR_PUSH = "{name:s}@", 1
+    """Push value of variable `{name}` to the stack."""
 
     # 2 Arguments (std)
     MAX = "max", 2
+    """Maximum of two values."""
+
     MIN = "min", 2
+    """Minimum of two values."""
+
     ADD = "+", 2
+    """Addition."""
+
     SUB = "-", 2
+    """Subtraction."""
+
     MUL = "*", 2
+    """Multiplication."""
+
     DIV = "/", 2
+    """Division."""
+
     POW = "pow", 2
+    """Exponentiation (x^y)."""
+
     GT = ">", 2
+    """Greater than (x > y)."""
+
     LT = "<", 2
+    """Less than (x < y)."""
+
     EQ = "=", 2
+    """Equality (x == y)."""
+
     GTE = ">=", 2
+    """Greater than or equal."""
+
     LTE = "<=", 2
+    """Less than or equal."""
+
     AND = "and", 2
+    """Logical AND."""
+
     OR = "or", 2
+    """Logical OR."""
+
     XOR = "xor", 2
+    """Logical XOR."""
+
     SWAP = "swap", 2
+    """Swap top two values on the stack."""
+
     SWAPN = "swap{N:d}", 2
+    """Swap the top N values (custom depth)."""
+
     # 2 Argument (akarin)
     MOD = "%", 2
+    """Modulo operation (remainder)."""
 
     # 3 Arguments (std)
     TERN = "?", 3
+    """Ternary operation: cond ? if_true : if_false."""
+
     # 3 Argument (akarin)
     CLAMP = "clamp", 3
+    """Clamp a value between min and max."""
 
     # Special Operators
     REL_PIX = "{char:s}[{x:d},{y:d}]", 3
+    """Get value of relative pixel at offset ({x},{y}) on clip `{char}`."""
+
     ABS_PIX = "{x:d} {y:d} {char:s}[]", 3
+    """Get value of absolute pixel at coordinates ({x},{y}) on clip `{char}`."""
 
     # Not Implemented in akarin or std
     PI = "pi", 0
+    """Mathematical constant π (pi)."""
+
     SGN = "sgn", 1
+    """Sign function: -1, 0, or 1 depending on value."""
+
     NEG = "neg", 1
+    """Negation (multiply by -1)."""
+
     TAN = "tan", 1
+    """Tangent (radians)."""
+
     ATAN = "atan", 1
+    """Arctangent."""
+
     ASIN = "asin", 1
+    """Arcsine (inverse sine)."""
+
     ACOS = "acos", 1
+    """Arccosine (inverse cosine)."""
 
     @cache
     def is_extra(self) -> bool:
+        """
+        Check if the operator is an 'extra' operator.
+
+        Extra operators are not natively supported by VapourSynth's `std.Expr` or `akarin.Expr`
+        and require conversion to a valid equivalent expression.
+
+        Returns:
+            True if the operator is considered extra and requires conversion.
+        """
         return self.name in ExprOp._extra_op_names_
 
     @cache
     def convert_extra(self) -> str:
+        """
+        Converts an 'extra' operator into a valid `akarin.Expr` expression string.
+
+        Returns:
+            A string representation of the equivalent expression.
+
+        Raises:
+            ValueError: If the operator is not marked as extra.
+            NotImplementedError: If the extra operator has no defined conversion.
+        """
         if not self.is_extra():
-            raise ValueError
+            raise CustomValueError
 
         match self:
             case ExprOp.PI:
@@ -427,12 +653,39 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     def clamp(
         cls, min: float | ExprToken = ExprToken.RangeMin, max: float | ExprToken = ExprToken.RangeMax, c: str = ""
     ) -> ExprList:
+        """
+        Create an expression to clamp a value between `min` and `max`.
+
+        Args:
+            min: The minimum value.
+            max: The maximum value.
+            c: Optional expression variable or prefix to clamp.
+
+        Returns:
+            An `ExprList` containing the clamping expression.
+        """
         return ExprList([c, min, max, ExprOp.CLAMP])
 
     @classmethod
     def matrix(
         cls, var: str | ExprVars, radius: int, mode: ConvMode, exclude: Iterable[tuple[int, int]] | None = None
     ) -> TupleExprList:
+        """
+        Generate a matrix expression layout for convolution-like operations.
+
+        Args:
+            var: The variable or `ExprVars` representing the central pixel(s).
+            radius: The radius of the kernel in pixels (e.g., 1 for 3x3).
+            mode: The convolution mode.
+            exclude: Optional set of (x, y) coordinates to exclude from the matrix.
+
+        Returns:
+            A [TupleExprList][vsexprtools.TupleExprList] representing the matrix of expressions.
+
+        Raises:
+            CustomValueError: If the input variable is not sized correctly for temporal mode.
+            NotImplementedError: If the convolution mode is unsupported.
+        """
         exclude = list(exclude) if exclude else []
 
         match mode:
@@ -484,6 +737,27 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         multiply: float | int | None = None,
         clamp: bool = False,
     ) -> TupleExprList:
+        """
+        Builds an expression that performs a weighted convolution-like operation.
+
+        Args:
+            var: The expression variable or `ExprVars` used as the central value(s).
+            matrix: A flat or 2D iterable representing the convolution weights.
+            bias: A constant value to add to the result after convolution (default: None).
+            divisor: If True, normalizes by the sum of weights; if float, divides by this value;
+                if False, skips division.
+            saturate: If False, applies `abs()` to avoid negatives.
+            mode: The convolution shape.
+            premultiply: Optional scalar to multiply the result before normalization.
+            multiply: Optional scalar to multiply the result at the end.
+            clamp: If True, clamps the final result to [RangeMin, RangeMax].
+
+        Returns:
+            A `TupleExprList` representing the expression-based convolution.
+
+        Raises:
+            CustomValueError: If matrix length is invalid or doesn't match the mode.
+        """
         convolution = list[float](flatten(matrix))
 
         if not (conv_len := len(convolution)) % 2:
@@ -560,6 +834,16 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         planesa: ExprVars | HoldsVideoFormatT | VideoFormatT | SupportsIndex,
         planesb: ExprVars | HoldsVideoFormatT | VideoFormatT | SupportsIndex | None = None,
     ) -> ExprList:
+        """
+        Build an expression to compute the Root Mean Squared Error (RMSE) between two plane sets.
+
+        Args:
+            planesa: The first plane set or clip.
+            planesb: The second plane set or clip. If None, uses same as `planesa`.
+
+        Returns:
+            An `ExprList` representing the RMSE expression across all planes.
+        """
         planesa, planesb = cls._parse_planes(planesa, planesb, cls.rmse)
 
         expr = ExprList()
@@ -577,6 +861,16 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         planesa: ExprVars | HoldsVideoFormatT | VideoFormatT | SupportsIndex,
         planesb: ExprVars | HoldsVideoFormatT | VideoFormatT | SupportsIndex | None = None,
     ) -> ExprList:
+        """
+        Build an expression to compute the Mean Absolute Error (MAE) between two plane sets.
+
+        Args:
+            planesa: The first plane set or clip.
+            planesb: The second plane set or clip. If None, uses same as `planesa`.
+
+        Returns:
+            An `ExprList` representing the MAE expression across all planes.
+        """
         planesa, planesb = cls._parse_planes(planesa, planesb, cls.rmse)
         expr = ExprList()
 
@@ -589,6 +883,16 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
 
     @classmethod
     def atan(cls, c: SupportsString = "", n: int = 10) -> ExprList:
+        """
+        Build an expression to compute arctangent (atan) using domain reduction.
+
+        Args:
+            c: The expression variable or string input.
+            n: The number of terms to use in the Taylor series approximation.
+
+        Returns:
+            An `ExprList` representing the arctangent expression.
+        """
         # Using domain reduction when |x| > 1
         expr = ExprList(
             [
@@ -617,6 +921,18 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
 
     @classmethod
     def atanf(cls, c: SupportsString = "", n: int = 10) -> ExprList:
+        """
+        Approximate atan(x) using a Taylor series centered at 0.
+
+        This is accurate for inputs in [-1, 1]. Use `atan` for full-range values.
+
+        Args:
+            c: The expression variable or string input.
+            n: The number of terms in the Taylor series (min 2).
+
+        Returns:
+            An `ExprList` approximating atan(x).
+        """
         # Approximation using Taylor series
         n = max(2, n)
 
@@ -629,8 +945,30 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
 
     @classmethod
     def asin(cls, c: SupportsString = "", n: int = 10) -> ExprList:
+        """
+        Build an expression to approximate arcsine using an identity:
+            asin(x) = atan(x / sqrt(1 - x²))
+
+        Args:
+            c: The input expression variable.
+            n: Number of terms to use in the internal atan approximation.
+
+        Returns:
+            An `ExprList` representing the asin(x) expression.
+        """
         return cls.atan(ExprList([c, cls.DUP, cls.DUP, cls.MUL, 1, cls.SWAP, cls.SUB, cls.SQRT, cls.DIV]).to_str(), n)
 
     @classmethod
     def acos(cls, c: SupportsString = "", n: int = 10) -> ExprList:
+        """
+        Build an expression to approximate arccosine using an identity:
+            acos(x) = π/2 - asin(x)
+
+        Args:
+            c: The input expression variable.
+            n: Number of terms to use in the internal asin approximation.
+
+        Returns:
+            An `ExprList` representing the acos(x) expression.
+        """
         return ExprList([c, "__acosvar!", cls.PI.convert_extra(), 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])

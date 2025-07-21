@@ -102,9 +102,24 @@ def combine(
     split_planes: bool = False,
     **kwargs: Any,
 ) -> ConstantFormatVideoNode:
-    clips = flatten_vnodes(clips, split_planes=split_planes)
+    """
+    Combines multiple video clips using a specified expression operator.
 
-    assert check_variable_format(clips, combine)
+    Args:
+        clips: Input clip(s).
+        operator: An ExprOpBase enum used to join the clips.
+        suffix: Optional suffix string(s) to append to each input variable in the expression.
+        prefix: Optional prefix string(s) to prepend to each input variable in the expression.
+        expr_suffix: Optional expression to append after the combined input expression.
+        expr_prefix: Optional expression to prepend before the combined input expression.
+        planes: Which planes to process. Defaults to all.
+        split_planes: If True, treats each plane of input clips as separate inputs.
+        **kwargs: Additional keyword arguments forwarded to [norm_expr][vsexprtools.norm_expr].
+
+    Returns:
+        A clip representing the combined result of applying the expression.
+    """
+    clips = flatten_vnodes(clips, split_planes=split_planes)
 
     n_clips = len(clips)
 
@@ -120,6 +135,15 @@ def combine(
 
 
 ExprLike: TypeAlias = Union[SupportsString | None, Iterable["ExprLike"]]
+"""
+A recursive type representing a valid expression input.
+
+Acceptable forms include:
+- A single string (or string-like object): Used as the same expression for all planes.
+- A list of expressions: Concatenated into a single expression for all planes.
+- A tuple of expressions: Interpreted as separate expressions for each plane.
+- A TupleExprList: will make a [norm_expr][vsexprtools.norm_expr] call for each expression within this tuple.
+"""
 
 
 def norm_expr(
