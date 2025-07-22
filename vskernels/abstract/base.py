@@ -57,11 +57,11 @@ def _add_init_kwargs(method: Callable[Concatenate[_BaseScalerT, P], R]) -> Calla
 
                 warnings.simplefilter("always", DeprecationWarning)
                 warnings.warn(
-                    f"The `{method.__name__}` must be called on an instance, not the class. "
+                    f"The `{method.__name__}` method must be called on an instance, not the class. "
                     "For example, use: Bicubic().scale(...) instead of Bicubic.scale(...)",
                     DeprecationWarning,
                     2,
-                    skip_file_prefixes=(str(pathlib.Path(__file__).resolve()),)
+                    skip_file_prefixes=(str(pathlib.Path(__file__).resolve()),),
                 )
 
                 frame_infos = inspect.stack()
