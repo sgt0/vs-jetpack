@@ -3,7 +3,7 @@ name: Test Python code
 on:
   push:
     branches:
-      - v0.5.X
+      - test
     paths:
       - '.github/actions/**'
       - '.github/workflows/test.yml'
@@ -98,3 +98,39 @@ jobs:
         uses: coverallsapp/github-action@v2.3.6
         with:
           parallel-finished: true
+
+  build:
+      runs-on: ubuntu-24.04
+
+      strategy:
+        matrix:
+          vs-versions:
+            - 71
+          python-version:
+            - "3.13"
+
+      steps:
+      - uses: actions/checkout@v4
+
+      - name: Prep Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up VapourSynth
+        uses: ./.github/actions/setup-vapoursynth
+        with:
+          vapoursynth-version: ${{ matrix.vs-versions }}
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Build
+        run: uv build
+
+      - run: tar -tvf dist/*.tar.gz
