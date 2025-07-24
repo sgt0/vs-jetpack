@@ -14,6 +14,7 @@ from vstools import (
     FieldBased,
     FrameRangeN,
     FrameRangesN,
+    InvalidColorFamilyError,
     PlanesT,
     check_progressive,
     check_variable,
@@ -23,6 +24,8 @@ from vstools import (
     fallback,
     get_y,
     join,
+    normalize_param_planes,
+    normalize_planes,
     normalize_ranges,
     normalize_seq,
     plane,
@@ -45,6 +48,7 @@ class dpir(CustomStrEnum):  # noqa: N801
         clip: vs.VideoNode,
         strength: _StrengthT | Sequence[_StrengthT] = 10,
         zones: Sequence[tuple[FrameRangeN | FrameRangesN, _StrengthT]] | None = None,
+        planes: PlanesT = None,
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
@@ -68,19 +72,33 @@ class dpir(CustomStrEnum):  # noqa: N801
 
         assert check_variable_format(clip, func)
 
+        planes = normalize_planes(clip, planes)
+
         if isinstance(strength, Sequence):
+            if clip.format.num_planes < 3:
+                raise InvalidColorFamilyError(
+                    func, vs.GRAY, vs.YUV, "Input clip must be {correct} when passing a sequence of strength."
+                )
+
             if len(strength) == 1:
                 return join(self.__call__(get_y(clip), strength[0], zones, **kwargs), clip)
 
             if len(strength) == 2:
+                plane_0 = get_y(clip)
+
                 return join(
-                    self.__call__(get_y(clip), strength[0], zones, **kwargs),
-                    self.__call__(clip, strength[1], zones, **kwargs),
+                    {
+                        None: clip,
+                        tuple(planes): self.__call__(clip, strength[1], zones, planes, **kwargs),
+                        0: plane_0 if 0 in planes else self.__call__(plane_0, strength[0], zones, **kwargs),
+                    }
                 )
 
             if len(strength) == 3:
+                strength = normalize_param_planes(clip, strength, planes, 0, func)
+
                 return join(
-                    [self.__call__(plane(clip, i), s, zones, **kwargs) for i, s in enumerate(strength)],
+                    (self.__call__(plane(clip, i), s, zones, **kwargs) for i, s in enumerate(strength)),
                     clip.format.color_family,
                 )
 
@@ -110,9 +128,14 @@ class dpir(CustomStrEnum):  # noqa: N801
                 if s is None or (not isinstance(s, vs.VideoNode) and float(s) == 0):
                     no_dpir_zones.extend(normalize_ranges(clip, r))
 
-            dpired = replace_ranges(dpired, clip, no_dpir_zones)
+            out = replace_ranges(dpired, clip, no_dpir_zones)
+        else:
+            out = dpired
 
-        return dpired
+        if planes != normalize_planes(clip, None):
+            out = join({None: clip, tuple(planes): dpired}, family=clip.format.color_family)
+
+        return out
 
 
 def dpir_mask(
