@@ -564,9 +564,6 @@ def mdb_bilateral(
         clip: Input clip.
         radius: Banding detection range.
         thr: Banding detection thr(s) for planes.
-        lthr: Threshold of the limiting. Refer to `vsrgtools.limit_filter`.
-        elast: Elasticity of the limiting. Refer to `vsrgtools.limit_filter`.
-        bright_thr: Limiting over the bright areas. Refer to `vsrgtools.limit_filter`.
         debander: Specifies what debander callable to use.
 
     Returns:
@@ -611,9 +608,6 @@ def pfdeband(
         clip: Input clip.
         radius: Banding detection range.
         thr: Banding detection thr(s) for planes.
-        lthr: Threshold of the limiting. Refer to `vsrgtools.limit_filter`.
-        elast: Elasticity of the limiting. Refer to `vsrgtools.limit_filter`.
-        bright_thr: Limiting over the bright areas. Refer to `vsrgtools.limit_filter`.
         prefilter: Prefilter used to blur the clip before debanding.
         debander: Specifies what debander callable to use.
         planes: Planes to process
