@@ -132,7 +132,8 @@ class InterpolateOverlay(CustomEnum):
 
             mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
-        comp = mv.flow_interpolate(multi=4)
+        comp = mv.flow_fps(fps=clip.fps * 4)
+        comp += comp[-1] * 3
         fixed = core.std.SelectEvery(comp, 40, sorted(offsets))
 
         return (fixed, mv) if export_globals else fixed
