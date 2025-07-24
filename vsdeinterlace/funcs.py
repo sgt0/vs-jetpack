@@ -185,7 +185,7 @@ class FixInterlacedFades(CustomIntEnum):
             check_ref_clip(color, func.work_clip, self.__class__)
 
             expr_clips.append(color)
-            clipb, prop_name, expr_color = color, "Diff", "y"
+            clipb, prop_name, expr_color = color.std.SeparateFields(tff=True), "Diff", "y"
         else:
             fields = norm_expr(fields, "x 0 1 clip {color} - abs", planes, color=color, func=self.__class__)
             clipb, prop_name, expr_color = None, "Average", color
