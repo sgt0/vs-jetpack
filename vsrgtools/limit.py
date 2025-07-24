@@ -17,11 +17,26 @@ def limit_filter(
     elast: float | Sequence[float] = 2.0,
     planes: PlanesT = None,
 ) -> vs.VideoNode:
+    """
+    Performs a soft-limiting between two clips to limit the difference of filtering while avoiding artifacts.
+
+    Args:
+        flt: Filtered clip.
+        src: Source clip.
+        ref: Reference clip, to compute the weight to be applied on filtering diff.
+        dark_thr: Threshold (8-bit scale) to limit dark filtering diff.
+        bright_thr: Threshold (8-bit scale) to limit bright filtering diff.
+        elast: Elasticity of the soft threshold.
+        planes: Planes to process. Defaults to all.
+
+    Returns:
+        Limited clip.
+    """
     ref = fallback(ref, src)
 
     base_expr = "x y - DIFF! x z - abs DIFF_REF_ABS!"
     dark_expr = (
-        "{dark_thr} range_size 256 / * THR1! THR1@ {elast} * THR2! "
+        "{dark_thr} range_max 255 / * THR1! THR1@ {elast} * THR2! "
         "1 THR2@ THR1@ - / SLOPE! "
         "DIFF_REF_ABS@ THR1@ <= x DIFF_REF_ABS@ THR2@ >= y "
         "y DIFF@ THR2@ DIFF_REF_ABS@ - * SLOPE@ * + ? ?"
