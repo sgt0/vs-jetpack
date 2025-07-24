@@ -40,8 +40,13 @@ _StrengthT = SupportsFloat | vs.VideoNode | None
 
 
 class dpir(CustomStrEnum):  # noqa: N801
+    """Deep Plug-and-Play Image Restoration."""
+
     DEBLOCK = cast("dpir", "deblock")
+    """DPIR model for deblocking."""
+
     DENOISE = cast("dpir", "denoise")
+    """DPIR model for denoising."""
 
     def __call__(
         self,
@@ -60,7 +65,7 @@ class dpir(CustomStrEnum):  # noqa: N801
                 This can be:
 
                   - A single value or VideoNode applied to all planes.
-                  - A sequence of values VideoNodes to specify per-plane thresholds.
+                  - A sequence of values or VideoNodes to specify per-plane thresholds.
 
                 If a VideoNode is used, it must be in GRAY8, GRAYH, or GRAYS format,
                 with pixel values representing the 8-bit thresholds.
