@@ -155,6 +155,7 @@ def norm_expr(
     boundary: bool = True,
     func: FuncExceptT | None = None,
     split_planes: bool = False,
+    debug: bool = False,
     **kwargs: Iterable[SupportsString] | SupportsString,
 ) -> ConstantFormatVideoNode:
     """
@@ -178,6 +179,7 @@ def norm_expr(
                - False: Clamped edges.
         func: Function returned for custom error handling. This should only be set by VS package developers.
         split_planes: Splits the VideoNodes into their individual planes.
+        debug: Print out the normalized expr.
         **kwargs: Additional keywords arguments to be passed to the expression function. These arguments are key-value
             pairs, where the keys are placeholders that will be replaced in the expression string. Iterable values
             (except str and bytes types) will be associated with the corresponding plane.
@@ -215,5 +217,8 @@ def norm_expr(
     ]
 
     extra_op_expr = [extra_op_tokenize_expr(e) for e in tokenized_expr]
+
+    if debug:
+        print(extra_op_expr)
 
     return expr_func(clips, extra_op_expr, format, opt, boundary, func)
