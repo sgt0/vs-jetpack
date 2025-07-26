@@ -195,6 +195,21 @@ class BaseScalerMeta(ABCMeta):
       still allowed to be instantiated. It is added to ``partial_abstract_kernels``.
     """
 
+    class cached_property(functools.cached_property[T_co]):  # noqa: N801
+        """
+        Read only version of functools.cached_property.
+        """
+
+        if TYPE_CHECKING:
+
+            def __init__(self, func: Callable[Concatenate[_BaseScalerT, P], T_co]) -> None: ...
+
+        def __set__(self, instance: None, value: Any) -> NoReturn:  # type: ignore[override]
+            """
+            Raise an error when attempting to set a cached property.
+            """
+            raise AttributeError("Can't set attribute")
+
     def __new__(
         mcls: type[_BaseScalerMetaT],
         name: str,
@@ -234,27 +249,27 @@ class BaseScalerMeta(ABCMeta):
             # If partial_abstract is True, add kernel_radius property
             # if it not implemented by _static_kernel_radius or kernel_radius
             if not hasattr(obj, "_static_kernel_radius") and not hasattr(obj, "kernel_radius"):
-
-                @BaseScaler.cached_property
-                def _partial_abstract_kernel_radius(self: BaseScaler) -> int:
-                    raise CustomNotImplementedError("kernel_radius is not implemented!", self.__class__)
-
-                _partial_abstract_kernel_radius.attrname = "kernel_radius"
-
                 setattr(obj, "kernel_radius", _partial_abstract_kernel_radius)
 
         # If a _static_kernel_radius attr is implemented, check if kernel_radius property is there
         if hasattr(obj, "_static_kernel_radius") and not hasattr(obj, "kernel_radius"):
-
-            @BaseScaler.cached_property
-            def _static_kernel_radius_property(self: BaseScaler) -> int:
-                return ceil(self._static_kernel_radius)
-
-            _static_kernel_radius_property.attrname = "kernel_radius"
-
             setattr(obj, "kernel_radius", _static_kernel_radius_property)
 
         return obj
+
+
+@BaseScalerMeta.cached_property
+def _partial_abstract_kernel_radius(self: BaseScaler) -> int:
+    raise CustomNotImplementedError("kernel_radius is not implemented!", self.__class__)
+
+
+@BaseScalerMeta.cached_property
+def _static_kernel_radius_property(self: BaseScaler) -> int:
+    return ceil(self._static_kernel_radius)
+
+
+_partial_abstract_kernel_radius.attrname = "kernel_radius"
+_static_kernel_radius_property.attrname = "kernel_radius"
 
 
 _BaseScalerMetaT = TypeVar("_BaseScalerMetaT", bound=BaseScalerMeta)
@@ -280,21 +295,6 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
 
     These functions determine which keyword arguments will be extracted from the __init__ method.
     """
-
-    class cached_property(functools.cached_property[T_co]):  # noqa: N801
-        """
-        Read only version of functools.cached_property.
-        """
-
-        if TYPE_CHECKING:
-
-            def __init__(self, func: Callable[Concatenate[_BaseScalerT, P], T_co]) -> None: ...
-
-        def __set__(self, instance: None, value: Any) -> NoReturn:  # type: ignore[override]
-            """
-            Raise an error when attempting to set a cached property.
-            """
-            raise AttributeError("Can't set attribute")
 
     if not TYPE_CHECKING:
 
@@ -389,7 +389,7 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
 
     if TYPE_CHECKING:
 
-        @cached_property
+        @BaseScalerMeta.cached_property
         def kernel_radius(self) -> int:
             """
             Return the effective kernel radius for the scaler.
@@ -416,7 +416,7 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
             f"{self.__class__.__name__}" + "(" + ", ".join(f"{k}={v}" for k, v in (attrs | self.kwargs).items()) + ")"
         )
 
-    @cached_property
+    @BaseScalerMeta.cached_property
     def pretty_string(self) -> str:
         """
         Cached property returning a user-friendly string representation.
