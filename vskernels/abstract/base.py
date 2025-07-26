@@ -5,7 +5,8 @@ This module defines the base abstract interfaces for general scaling operations.
 from __future__ import annotations
 
 from abc import ABC, ABCMeta
-from functools import cache, cached_property, wraps
+from functools import cache, wraps
+from functools import cached_property as functools_cached_property
 from inspect import Signature
 from math import ceil
 from types import NoneType
@@ -195,7 +196,7 @@ class BaseScalerMeta(ABCMeta):
       still allowed to be instantiated. It is added to ``partial_abstract_kernels``.
     """
 
-    class cached_property(cached_property[T_co]):  # noqa: N801
+    class cached_property(functools_cached_property[T_co]):  # noqa: N801
         """
         Read only version of functools.cached_property.
         """
