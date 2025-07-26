@@ -4,8 +4,8 @@ This module defines the base abstract interfaces for general scaling operations.
 
 from __future__ import annotations
 
-import functools
 from abc import ABC, ABCMeta
+from functools import cache, cached_property, wraps
 from inspect import Signature
 from math import ceil
 from types import NoneType
@@ -67,7 +67,7 @@ __all__ = ["Descaler", "DescalerLike", "Kernel", "KernelLike", "Resampler", "Res
 def _add_init_kwargs(method: Callable[Concatenate[_BaseScalerT, P], R]) -> Callable[Concatenate[_BaseScalerT, P], R]:
     signature = Signature.from_callable(method)
 
-    @functools.wraps(method)
+    @wraps(method)
     def _wrapped(self: _BaseScalerT, *args: P.args, **kwargs: P.kwargs) -> R:
         # TODO: remove this
         if not TYPE_CHECKING and isinstance(self, vs.VideoNode):
@@ -151,7 +151,7 @@ def _base_ensure_obj(
     return cls.from_param(value, func_except)()  # type: ignore[arg-type]
 
 
-@functools.cache
+@cache
 def _check_kernel_radius(cls: type[BaseScaler]) -> Literal[True]:
     if cls in abstract_kernels:
         raise CustomRuntimeError(f"Can't instantiate abstract class {cls.__name__}!", cls)
@@ -195,7 +195,7 @@ class BaseScalerMeta(ABCMeta):
       still allowed to be instantiated. It is added to ``partial_abstract_kernels``.
     """
 
-    class cached_property(functools.cached_property[T_co]):  # noqa: N801
+    class cached_property(cached_property[T_co]):  # noqa: N801
         """
         Read only version of functools.cached_property.
         """

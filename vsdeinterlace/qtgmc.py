@@ -3,7 +3,6 @@ from math import factorial
 from typing import Any, Iterable, Literal, MutableMapping, Protocol, cast
 
 from jetpytools import CustomIntEnum
-from numpy import linalg, zeros
 from typing_extensions import Self
 
 from vsaa import NNEDI3, Deinterlacer
@@ -729,6 +728,8 @@ class QTempGaussMC(vs_object):
         return clip
 
     def _binomial_degrain(self, clip: vs.VideoNode, tr: int) -> ConstantFormatVideoNode:
+        from numpy import linalg, zeros
+
         def _get_weights(n: int) -> Iterable[Any]:
             k, rhs = 1, list[int]()
             mat = zeros((n + 1, n + 1))
