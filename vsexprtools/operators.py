@@ -26,10 +26,6 @@ from .exprop import ExprOp
 
 if TYPE_CHECKING:
     from .variables import ComputedVar, ExprOtherT, ExprVar
-else:
-    ExprOtherT = Any
-    ExprVar = Any
-
 
 __all__ = [
     "BaseOperator",
@@ -133,7 +129,7 @@ class TernaryOperator(Generic[T, R], TernaryBaseOperator):
     function: Callable[[bool, T, R], T | R]
 
 
-class TernaryIfOperator(TernaryOperator[ExprOtherT, ExprOtherT]):
+class TernaryIfOperator(TernaryOperator["ExprOtherT", "ExprOtherT"]):
     def __call__(self, cond: ExprOtherT, if_true: ExprOtherT, if_false: ExprOtherT) -> ComputedVar:
         return super().__call__(cond, if_true, if_false)
 
