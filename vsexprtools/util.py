@@ -241,7 +241,8 @@ def extra_op_tokenize_expr(expr: str) -> str:
     from .exprop import ExprOp
 
     for extra_op in ExprOp._extra_op_names_:
-        expr = re.sub(rf"\b{extra_op.lower()}\b", getattr(ExprOp, extra_op).convert_extra(), expr)
+        if extra_op.lower() in expr:
+            expr = re.sub(rf"\b{extra_op.lower()}\b", getattr(ExprOp, extra_op).convert_extra(), expr)
 
     return expr
 
