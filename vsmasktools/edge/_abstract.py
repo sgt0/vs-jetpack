@@ -436,7 +436,7 @@ class RidgeDetect(MatrixEdgeDetect):
     def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         return norm_expr(
             clips,
-            "x 2 pow z 2 pow 4 * + x y * 2 * - y 2 pow + sqrt x y + + 0.5 *",
+            "x dup * z dup * 4 * + x y * 2 * - y dup * + sqrt x y + + 0.5 *",
             kwargs.get("planes"),
             func=self.__class__,
         )
