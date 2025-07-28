@@ -109,7 +109,6 @@ class BlurMatrixBase(list[_Nb]):
                     not fp16,
                     len(self) <= 25,
                     all(-1023 <= x <= 1023 for x in self),
-                    self.mode != ConvMode.SQUARE,  # std.Convolution is slower than akarin.Expr for square convolutions
                 ]
             ):
                 return iterate(clip[0], core.std.Convolution, passes, self, bias, divisor, planes, saturate, self.mode)

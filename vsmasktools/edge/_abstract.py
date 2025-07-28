@@ -10,9 +10,11 @@ from jetpytools import inject_kwargs_params
 from typing_extensions import Self
 
 from vsexprtools import ExprOp, ExprToken, norm_expr
+from vsrgtools import BlurMatrix
 from vstools import (
     ColorRange,
     ConstantFormatVideoNode,
+    ConvMode,
     CustomValueError,
     FuncExceptT,
     HoldsVideoFormatT,
@@ -288,7 +290,7 @@ class MatrixEdgeDetect(EdgeDetect):
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         return self._merge_edge(
             [
-                clip.std.Convolution(mat, divisor=div, planes=kwargs.get("planes"), saturate=False, mode=mode)
+                BlurMatrix.custom(mat, ConvMode(mode))(clip, divisor=div, saturate=False, func=self.__class__, **kwargs)
                 for mat, div, mode in zip(self._get_matrices(), self._get_divisors(), self._get_mode_types())
             ]
         )
