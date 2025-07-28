@@ -20,14 +20,13 @@ from vstools import (
     T,
     check_variable,
     depth,
-    get_lowest_values,
+    get_lowest_value,
     get_peak_value,
-    get_peak_values,
     get_subclasses,
     inject_self,
     join,
+    limiter,
     normalize_planes,
-    plane,
     scale_mask,
     vs,
 )
@@ -263,13 +262,12 @@ class EdgeDetect(ABC):
             mask = norm_expr(mask, f"x {hthr} > {ExprToken.RangeMax} x ?", planes, func=self.__class__)
 
         if clamp is True:
-            crange = ColorRange.from_video(clip)
-            clamp = list(zip(get_lowest_values(mask, crange), get_peak_values(mask, crange)))
+            clamp = (get_lowest_value(mask, range_in=ColorRange.FULL), get_peak_value(mask, range_in=ColorRange.FULL))
 
         if isinstance(clamp, list):
-            mask = norm_expr(mask, [ExprOp.clamp(*c, c="x") for c in clamp], planes, func=self.__class__)
+            mask = limiter(mask, *zip(*clamp), planes=planes, func=self.__class__)
         elif isinstance(clamp, tuple):
-            mask = ExprOp.clamp(*clamp, c="x")(mask, planes=planes)
+            mask = limiter(mask, *clamp, planes=planes, func=self.__class__)
 
         if mask.format.num_planes != clip.format.num_planes and not discard_planes:
             return join({None: clip.std.BlankClip(color=[0] * clip.format.num_planes, keep=True), planes[0]: mask})
