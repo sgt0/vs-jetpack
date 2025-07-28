@@ -302,7 +302,7 @@ class FreyChenG41(RidgeDetect, EuclideanDistance, Matrix3x3):
 
 
 # Max
-class Robinson3(Max, Matrix3x3):
+class Robinson3(MagnitudeMatrix, Max, Matrix3x3):
     """
     Robinson compass operator level 3.
     """
