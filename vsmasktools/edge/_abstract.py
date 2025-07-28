@@ -340,7 +340,7 @@ class MagnitudeMatrix(MatrixEdgeDetect):
         self.mag_directions = mag_directions
 
     def _get_matrices(self) -> Sequence[Sequence[float]]:
-        return self.mag_directions.select_matrices(self.matrices)
+        return [m for m in self.mag_directions.select_matrices(self.matrices) if m]
 
 
 class SingleMatrix(MatrixEdgeDetect, ABC):

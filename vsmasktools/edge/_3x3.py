@@ -308,36 +308,48 @@ class Robinson3(Max, Matrix3x3):
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [
-        [1, 1, 1, 0, 0, 0, -1, -1, -1],
-        [1, 1, 0, 1, 0, -1, 0, -1, -1],
-        [1, 0, -1, 1, 0, -1, 1, 0, -1],
-        [0, -1, -1, 1, 0, -1, 1, 1, 0],
+        [1, 1, 1, 0, 0, 0, -1, -1, -1],  # N
+        [1, 1, 0, 1, 0, -1, 0, -1, -1],  # NW
+        [1, 0, -1, 1, 0, -1, 1, 0, -1],  # W
+        [0, -1, -1, 1, 0, -1, 1, 1, 0],  # SW
+        [],
+        [],
+        [],
+        [],
     ]
 
 
-class Robinson5(Max, Matrix3x3):
+class Robinson5(MagnitudeMatrix, Max, Matrix3x3):
     """
     Robinson compass operator level 5.
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [
-        [1, 2, 1, 0, 0, 0, -1, -2, -1],
-        [2, 1, 0, 1, 0, -1, 0, -1, -2],
-        [1, 0, -1, 2, 0, -2, 1, 0, -1],
-        [0, -1, -2, 1, 0, -1, 2, 1, 0],
+        [1, 2, 1, 0, 0, 0, -1, -2, -1],  # N
+        [2, 1, 0, 1, 0, -1, 0, -1, -2],  # NW
+        [1, 0, -1, 2, 0, -2, 1, 0, -1],  # W
+        [0, -1, -2, 1, 0, -1, 2, 1, 0],  # SW
+        [],
+        [],
+        [],
+        [],
     ]
 
 
-class TheToof(Max, Matrix3x3):
+class TheToof(MagnitudeMatrix, Max, Matrix3x3):
     """
     TheToof compass operator from SharpAAMCmod.
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [
-        [5, 10, 5, 0, 0, 0, -5, -10, -5],
-        [10, 5, 0, 5, 0, -5, 0, -5, -10],
-        [5, 0, -5, 10, 0, -10, 5, 0, -5],
-        [0, -5, -10, 5, 0, -5, 10, 5, 0],
+        [5, 10, 5, 0, 0, 0, -5, -10, -5],  # N
+        [10, 5, 0, 5, 0, -5, 0, -5, -10],  # NW
+        [5, 0, -5, 10, 0, -10, 5, 0, -5],  # W
+        [0, -5, -10, 5, 0, -5, 10, 5, 0],  # SW
+        [],
+        [],
+        [],
+        [],
     ]
     divisors: ClassVar[Sequence[float] | None] = [4] * 4
 
