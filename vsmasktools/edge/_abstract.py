@@ -37,6 +37,7 @@ from vstools import (
 from ..exceptions import UnknownEdgeDetectError, UnknownRidgeDetectError
 
 __all__ = [
+    "Difference",
     "EdgeDetect",
     "EdgeDetectT",
     "EuclideanDistance",
@@ -350,6 +351,11 @@ class SingleMatrix(MatrixEdgeDetect, ABC):
 class EuclideanDistance(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         return norm_expr(clips, "x dup * y dup * + sqrt", kwargs.get("planes"), func=self.__class__)
+
+
+class Difference(MatrixEdgeDetect, ABC):
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
+        return norm_expr(clips, "x y -", kwargs.get("planes"), func=self.__class__)
 
 
 class Max(MatrixEdgeDetect, ABC):
