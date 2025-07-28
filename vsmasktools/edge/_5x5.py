@@ -10,9 +10,17 @@ from typing import Any, ClassVar, Sequence
 from jetpytools import KwargsT
 
 from vsexprtools import norm_expr
-from vstools import ColorRange, ConstantFormatVideoNode, depth, vs
+from vstools import ConstantFormatVideoNode, vs
 
-from ._abstract import EdgeDetect, EuclideanDistance, MagnitudeMatrix, Max, RidgeDetect, SingleMatrix
+from ._abstract import (
+    EdgeDetect,
+    EuclideanDistance,
+    MagnitudeMatrix,
+    Max,
+    NormalizeProcessor,
+    RidgeDetect,
+    SingleMatrix,
+)
 
 # ruff: noqa: RUF022
 
@@ -136,7 +144,7 @@ class FDoGTCanny(Matrix5x5, EdgeDetect):
         return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
 
 
-class DoG(EuclideanDistance, Matrix5x5):
+class DoG(NormalizeProcessor, EuclideanDistance, Matrix5x5):
     """
     Zero-cross (of the 2nd derivative) of a Difference of Gaussians
     """
@@ -151,7 +159,7 @@ class DoG(EuclideanDistance, Matrix5x5):
         return norm_expr(clips, "x y -", kwargs.get("planes"), func=self.__class__)
 
 
-class Farid(RidgeDetect, EuclideanDistance, Matrix5x5):
+class Farid(NormalizeProcessor, RidgeDetect, EuclideanDistance, Matrix5x5):
     """
     Farid & Simoncelli operator.
     """

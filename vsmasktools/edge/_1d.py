@@ -7,9 +7,9 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, ClassVar, Sequence
 
-from vstools import ColorRange, ConstantFormatVideoNode, depth, vs
+from vstools import ConstantFormatVideoNode, vs
 
-from ._abstract import EdgeDetect, EuclideanDistance
+from ._abstract import EdgeDetect, EuclideanDistance, NormalizeProcessor
 
 # ruff: noqa: RUF022
 
@@ -150,13 +150,7 @@ class SavitzkyGolay(EuclideanDistance, Matrix1D):
     mode_types: ClassVar[Sequence[str] | None] = ["h", "v"]
 
 
-class SavitzkyGolayNormalise(SavitzkyGolay):
-    def _preprocess(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
-        return depth(clip, 32)
-
-    def _postprocess(self, clip: vs.VideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        return depth(clip, input_bits, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
-
+class SavitzkyGolayNormalise(NormalizeProcessor):
     def _get_matrices(self) -> Sequence[Sequence[float]]:
         assert self.divisors
         return [[c / div for c in mat] for mat, div in zip(self.matrices, self.divisors)]

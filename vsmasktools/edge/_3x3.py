@@ -20,7 +20,16 @@ from vstools import (
 
 from ..morpho import Morpho
 from ..types import XxpandMode
-from ._abstract import EdgeDetect, EuclideanDistance, MagnitudeMatrix, MatrixEdgeDetect, Max, RidgeDetect, SingleMatrix
+from ._abstract import (
+    EdgeDetect,
+    EuclideanDistance,
+    MagnitudeMatrix,
+    MatrixEdgeDetect,
+    Max,
+    NormalizeProcessor,
+    RidgeDetect,
+    SingleMatrix,
+)
 
 # ruff: noqa: RUF022
 
@@ -136,7 +145,7 @@ class Cross(RidgeDetect, EuclideanDistance, Matrix3x3):
     matrices: ClassVar[Sequence[Sequence[float]]] = [[1, 0, 0, 0, 0, 0, 0, 0, -1], [0, 0, -1, 0, 0, 0, 1, 0, 0]]
 
 
-class Prewitt(RidgeDetect, EuclideanDistance, Matrix3x3):
+class Prewitt(RidgeDetect, NormalizeProcessor, EuclideanDistance, Matrix3x3):
     """
     Judith M. S. Prewitt operator.
     """
@@ -258,7 +267,7 @@ class KroonTCanny(Matrix3x3, EdgeDetect):
         return clip.tcanny.TCanny(op=4, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
 
 
-class FreyChen(MatrixEdgeDetect):
+class FreyChen(NormalizeProcessor, MatrixEdgeDetect):
     """
     Chen Frei operator. 3x3 matrices properly implemented.
     """
