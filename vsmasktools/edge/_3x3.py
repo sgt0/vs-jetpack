@@ -6,10 +6,17 @@ from __future__ import annotations
 
 import math
 from abc import ABC
-from typing import Any, ClassVar, NoReturn, Sequence
+from typing import Any, ClassVar, Sequence
 
 from vsexprtools import ExprOp, norm_expr
-from vstools import ColorRange, ConstantFormatVideoNode, KwargsT, depth, get_depth, join, split, vs
+from vstools import (
+    ConstantFormatVideoNode,
+    KwargsT,
+    get_depth,
+    join,
+    split,
+    vs,
+)
 
 from ..morpho import Morpho
 from ..types import XxpandMode
@@ -270,19 +277,10 @@ class FreyChen(MatrixEdgeDetect):
     ]
     divisors: ClassVar[Sequence[float] | None] = [2 * sqrt2, 2 * sqrt2, 2 * sqrt2, 2 * sqrt2, 2, 2, 6, 6, 3]
 
-    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        return depth(clip, 32)
-
-    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        return depth(clip, input_bits, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
-
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         M = "x dup * y dup * + z dup * + a dup * +"  # noqa: N806
         S = f"b dup * c dup * + d dup * + e dup * + f dup * + {M} +"  # noqa: N806
         return norm_expr(clips, f"{M} {S} / sqrt", kwargs.get("planes"), func=self.__class__)
-
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> NoReturn:
-        raise NotImplementedError
 
 
 class FreyChenG41(RidgeDetect, EuclideanDistance, Matrix3x3):

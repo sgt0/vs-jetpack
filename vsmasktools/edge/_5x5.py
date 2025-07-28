@@ -147,12 +147,6 @@ class DoG(EuclideanDistance, Matrix5x5):
     ]
     divisors: ClassVar[Sequence[float] | None] = [4, 6]
 
-    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        return depth(clip, 32)
-
-    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        return depth(clip, input_bits, range_out=ColorRange.FULL, range_in=ColorRange.FULL)
-
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         return norm_expr(clips, "x y -", kwargs.get("planes"), func=self.__class__)
 
@@ -218,12 +212,6 @@ class Farid(RidgeDetect, EuclideanDistance, Matrix5x5):
             -0.004127602875174862,
         ],
     ]
-
-    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        return depth(clip, 32)
-
-    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        return depth(clip, input_bits, range_out=ColorRange.FULL, range_in=ColorRange.FULL)
 
 
 # Max

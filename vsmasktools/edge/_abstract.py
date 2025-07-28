@@ -50,11 +50,6 @@ __all__ = [
 ]
 
 
-class _Feature(Enum):
-    EDGE = auto()
-    RIDGE = auto()
-
-
 class MagDirection(IntFlag):
     """
     Direction of magnitude calculation.
@@ -151,24 +146,6 @@ class EdgeDetect(ABC):
 
         self.kwargs = kwargs
 
-    @classmethod
-    def from_param(
-        cls,
-        edge_detect: type[Self] | Self | str | None = None,
-        /,
-        func_except: FuncExceptT | None = None,
-    ) -> type[Self]:
-        return _base_from_param(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
-
-    @classmethod
-    def ensure_obj(
-        cls,
-        edge_detect: type[Self] | Self | str | None = None,
-        /,
-        func_except: FuncExceptT | None = None,
-    ) -> Self:
-        return _base_ensure_obj(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
-
     @inject_self
     @inject_kwargs_params
     def edgemask(
@@ -196,43 +173,50 @@ class EdgeDetect(ABC):
         Returns:
             Mask clip
         """
-        return self._mask(clip, lthr, hthr, multi, clamp, _Feature.EDGE, planes, **kwargs)
-
-    def _mask(
-        self,
-        clip: vs.VideoNode,
-        lthr: float = 0.0,
-        hthr: float | None = None,
-        multi: float = 1.0,
-        clamp: bool | tuple[float, float] | list[tuple[float, float]] = False,
-        feature: _Feature = _Feature.EDGE,
-        planes: PlanesT = None,
-        **kwargs: Any,
-    ) -> ConstantFormatVideoNode:
         assert check_variable(clip, self.__class__)
-
-        peak = get_peak_value(clip)
-        hthr = 1.0 if hthr is None else hthr
-
-        lthr = scale_mask(lthr, 32, clip)
-        hthr = scale_mask(hthr, 32, clip)
 
         clip_p = self._preprocess(clip)
 
-        if feature == _Feature.EDGE:
-            mask = self._compute_edge_mask(clip_p, planes=planes, **kwargs)
-        elif feature == _Feature.RIDGE:
-            if not isinstance(self, RidgeDetect):
-                raise CustomRuntimeError(
-                    f"Ridge feature has been requested but {self.__class__.__name__} is not a subclass of RidgeDetect",
-                    self.__class__,
-                )
-
-            mask = self._compute_ridge_mask(clip_p, planes=planes, **kwargs)
-        else:
-            raise CustomNotImplementedError
+        mask = self._compute_edge_mask(clip_p, planes=planes, **kwargs)
 
         mask = self._postprocess(mask, clip.format.bits_per_sample)
+
+        return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
+
+
+    @classmethod
+    def from_param(
+        cls,
+        edge_detect: type[Self] | Self | str | None = None,
+        /,
+        func_except: FuncExceptT | None = None,
+    ) -> type[Self]:
+        return _base_from_param(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
+
+    @classmethod
+    def ensure_obj(
+        cls,
+        edge_detect: type[Self] | Self | str | None = None,
+        /,
+        func_except: FuncExceptT | None = None,
+    ) -> Self:
+        return _base_ensure_obj(cls, edge_detect, UnknownEdgeDetectError, [], func_except)
+
+    def _finalize_mask(
+        self,
+        mask: ConstantFormatVideoNode,
+        lthr: float,
+        hthr: float | None,
+        multi: float,
+        clamp: bool | tuple[float, float] | list[tuple[float, float]],
+        planes: PlanesT,
+    ) -> ConstantFormatVideoNode:
+        peak = get_peak_value(mask)
+
+        hthr = 1.0 if hthr is None else hthr
+
+        lthr = scale_mask(lthr, 32, mask)
+        hthr = scale_mask(hthr, 32, mask)
 
         if multi != 1:
             mask = ExprOp.MUL(mask, suffix=str(multi), planes=planes)
@@ -257,8 +241,8 @@ class EdgeDetect(ABC):
         if planes is not None:
             return join(
                 {
-                    None: clip.std.BlankClip(color=[0] * clip.format.num_planes, keep=True),
-                    tuple(normalize_planes(clip, planes)): mask,
+                    None: mask.std.BlankClip(color=[0] * mask.format.num_planes, keep=True),
+                    tuple(normalize_planes(mask, planes)): mask,
                 }
             )
 
@@ -271,7 +255,9 @@ class EdgeDetect(ABC):
     def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return ColorRange.FULL.apply(clip)
 
-    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
+    def _postprocess(
+        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormatT | VideoFormatT | int
+    ) -> ConstantFormatVideoNode:
         return clip
 
 
@@ -288,30 +274,8 @@ class MatrixEdgeDetect(EdgeDetect):
             ]
         )
 
-    def _compute_ridge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        def _x(c: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-            return c.std.Convolution(
-                matrix=self._get_matrices()[0], divisor=self._get_divisors()[0], planes=kwargs.get("planes")
-            )
-
-        def _y(c: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-            return c.std.Convolution(
-                matrix=self._get_matrices()[1], divisor=self._get_divisors()[1], planes=kwargs.get("planes")
-            )
-
-        x = _x(clip)
-        y = _y(clip)
-        xx = _x(x)
-        yy = _y(y)
-        xy = _y(x)
-        return self._merge_ridge([xx, yy, xy])
-
     @abstractmethod
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        raise NotImplementedError
-
-    @abstractmethod
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         raise NotImplementedError
 
     def _get_matrices(self) -> Sequence[Sequence[float]]:
@@ -343,25 +307,22 @@ class MagnitudeMatrix(MatrixEdgeDetect):
         return self.mag_directions.select_matrices(self.matrices)
 
 
+class SingleMatrix(MatrixEdgeDetect, ABC):
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
+        return clips[0]
+
+
+class EuclideanDistance(MatrixEdgeDetect, ABC):
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
+        return norm_expr(clips, "x dup * y dup * + sqrt", kwargs.get("planes"), func=self.__class__)
+
+
+class Max(MatrixEdgeDetect, ABC):
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
+        return ExprOp.MAX.combine(*clips, planes=kwargs.get("planes"))
+
+
 class RidgeDetect(MatrixEdgeDetect):
-    @classmethod
-    def from_param(
-        cls,
-        edge_detect: type[Self] | Self | str | None = None,
-        /,
-        func_except: FuncExceptT | None = None,
-    ) -> type[Self]:
-        return _base_from_param(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
-
-    @classmethod
-    def ensure_obj(
-        cls,
-        edge_detect: type[Self] | Self | str | None = None,
-        /,
-        func_except: FuncExceptT | None = None,
-    ) -> Self:
-        return _base_ensure_obj(cls, edge_detect, UnknownRidgeDetectError, [], func_except)
-
     @inject_self
     def ridgemask(
         self,
@@ -390,7 +351,52 @@ class RidgeDetect(MatrixEdgeDetect):
         Returns:
             Mask clip
         """
-        return self._mask(clip, lthr, hthr, multi, clamp, _Feature.RIDGE, planes, **kwargs)
+
+        assert check_variable(clip, self.__class__)
+
+        clip_p = self._preprocess_ridge(clip)
+
+        mask = self._compute_ridge_mask(clip_p, planes=planes, **kwargs)
+
+        mask = self._postprocess_ridge(mask, clip.format.bits_per_sample)
+
+        return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
+
+    @classmethod
+    def from_param(
+        cls,
+        ridge_detect: type[Self] | Self | str | None = None,
+        /,
+        func_except: FuncExceptT | None = None,
+    ) -> type[Self]:
+        return _base_from_param(cls, ridge_detect, UnknownRidgeDetectError, [], func_except)
+
+    @classmethod
+    def ensure_obj(
+        cls,
+        ridge_detect: type[Self] | Self | str | None = None,
+        /,
+        func_except: FuncExceptT | None = None,
+    ) -> Self:
+        return _base_ensure_obj(cls, ridge_detect, UnknownRidgeDetectError, [], func_except)
+
+    def _compute_ridge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        def _x(c: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+            return c.std.Convolution(
+                matrix=self._get_matrices()[0], divisor=self._get_divisors()[0], planes=kwargs.get("planes")
+            )
+
+        def _y(c: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+            return c.std.Convolution(
+                matrix=self._get_matrices()[1], divisor=self._get_divisors()[1], planes=kwargs.get("planes")
+            )
+
+        x = _x(clip)
+        y = _y(clip)
+        xx = _x(x)
+        yy = _y(y)
+        xy = _y(x)
+        return self._merge_ridge([xx, yy, xy])
 
     def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         return norm_expr(
@@ -400,43 +406,12 @@ class RidgeDetect(MatrixEdgeDetect):
             func=self.__class__,
         )
 
-    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        if self.mode_types is None or self.mode_types[0] == "s":
-            clip = vs.core.resize.Point(clip, clip.width + 4, src_width=clip.width + 4)
+    def _preprocess_ridge(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
+        return depth(super()._preprocess(clip), 32)
 
-        return super()._preprocess(depth(clip, 32))
-
-    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
-        clip = depth(clip, input_bits, dither_type=DitherType.NONE)
-
-        if self.mode_types is None or self.mode_types[0] == "s":
-            return clip.std.Crop(right=4)
-
-        return super()._postprocess(clip, input_bits)
-
-
-class SingleMatrix(MatrixEdgeDetect, ABC):
-    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        return clips[0]
-
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        raise NotImplementedError
-
-
-class EuclideanDistance(MatrixEdgeDetect, ABC):
-    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        return norm_expr(clips, "x dup * y dup * + sqrt", kwargs.get("planes"), func=self.__class__)
-
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        raise NotImplementedError
-
-
-class Max(MatrixEdgeDetect, ABC):
-    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        return ExprOp.MAX.combine(*clips, planes=kwargs.get("planes"))
-
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        raise NotImplementedError
+    def _postprocess_ridge(
+        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormatT | VideoFormatT | int
+    ) -> ConstantFormatVideoNode:
 
 
 EdgeDetectT: TypeAlias = type[EdgeDetect] | EdgeDetect | str
