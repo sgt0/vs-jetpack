@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum, IntFlag, auto
+from inspect import isabstract
 from typing import Any, ClassVar, Sequence, TypeAlias, TypeVar, cast
 
 from jetpytools import CustomNotImplementedError, inject_kwargs_params
@@ -472,24 +473,7 @@ def get_all_edge_detects(
     def _all_subclasses(cls: type[EdgeDetect] = EdgeDetect) -> set[type[EdgeDetect]]:
         return set(cls.__subclasses__()).union(s for c in cls.__subclasses__() for s in _all_subclasses(c))
 
-    all_subclasses = {
-        s
-        for s in _all_subclasses()
-        if s.__name__
-        not in {
-            "MatrixEdgeDetect",
-            "RidgeDetect",
-            "SingleMatrix",
-            "EuclideanDistance",
-            "MagnitudeMatrix",
-            "Max",
-            "Matrix1D",
-            "SavitzkyGolay",
-            "SavitzkyGolayNormalise",
-            "Matrix3x3",
-            "Matrix5x5",
-        }
-    }
+    all_subclasses = {s for s in _all_subclasses() if not isabstract(s) and hasattr(s, "matrices")}
     return [
         edge_detect().edgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs).text.Text(edge_detect.__name__)
         for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__)
@@ -523,24 +507,7 @@ def get_all_ridge_detect(
     def _all_subclasses(cls: type[RidgeDetect] = RidgeDetect) -> set[type[RidgeDetect]]:
         return set(cls.__subclasses__()).union(s for c in cls.__subclasses__() for s in _all_subclasses(c))
 
-    all_subclasses = {
-        s
-        for s in _all_subclasses()
-        if s.__name__
-        not in {
-            "MatrixEdgeDetect",
-            "RidgeDetect",
-            "SingleMatrix",
-            "EuclideanDistance",
-            "MagnitudeMatrix",
-            "Max",
-            "Matrix1D",
-            "SavitzkyGolay",
-            "SavitzkyGolayNormalise",
-            "Matrix3x3",
-            "Matrix5x5",
-        }
-    }
+    all_subclasses = {s for s in _all_subclasses() if not isabstract(s) and hasattr(s, "matrices")}
     return [
         edge_detect().ridgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs).text.Text(edge_detect.__name__)
         for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__)
