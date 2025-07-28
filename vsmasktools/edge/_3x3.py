@@ -276,12 +276,12 @@ class FreyChen(MatrixEdgeDetect):
     def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: int | None = None) -> ConstantFormatVideoNode:
         return depth(clip, input_bits, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
 
-    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode]) -> ConstantFormatVideoNode:
+    def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
         M = "x dup * y dup * + z dup * + a dup * +"  # noqa: N806
         S = f"b dup * c dup * + d dup * + e dup * + f dup * + {M} +"  # noqa: N806
-        return norm_expr(clips, f"{M} {S} / sqrt", func=self.__class__)
+        return norm_expr(clips, f"{M} {S} / sqrt", kwargs.get("planes"), func=self.__class__)
 
-    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode]) -> NoReturn:
+    def _merge_ridge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> NoReturn:
         raise NotImplementedError
 
 
@@ -381,6 +381,7 @@ class MinMax(EdgeDetect):
                 ExprOp.SUB.combine(
                     Morpho.expand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
                     Morpho.inpand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
+                    planes=kwargs.get("planes"),
                 )
                 if rad > 0
                 else p
