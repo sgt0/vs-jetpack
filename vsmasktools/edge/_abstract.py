@@ -388,7 +388,7 @@ class RidgeDetect(MatrixEdgeDetect):
             lthr: Low threshold. Anything below lthr will be set to 0
             hthr: High threshold. Anything above hthr will be set to the range max
             multi: Multiply all pixels by this before thresholding
-            clamp: Clamp to TV or full range if True or specified range `(low, high)`
+            clamp: clamp: Clamp to legal values if True or specified range `(low, high)`
             planes: Which planes to process.
 
         Returns:
@@ -482,7 +482,7 @@ def get_all_edge_detects(
         lthr: See [EdgeDetect.get_mask][vsmasktools.edge.EdgeDetect.edgemask]
         hthr: See [EdgeDetect.get_mask][vsmasktools.edge.EdgeDetect.edgemask]
         multi: See [EdgeDetect.get_mask][vsmasktools.edge.EdgeDetect.edgemask]
-        clamp: Clamp to TV or full range if True or specified range `(low, high)`
+        clamp: Clamp to legal values if True or specified range `(low, high)`
         planes: Which planes to process.
 
     Returns:
@@ -528,7 +528,7 @@ def get_all_ridge_detect(
         lthr: See [RidgeDetect.get_mask][vsmasktools.edge.RidgeDetect.ridgemask]
         hthr: See [RidgeDetect.get_mask][vsmasktools.edge.RidgeDetect.ridgemask]
         multi: See [RidgeDetect.get_mask][vsmasktools.edge.RidgeDetect.ridgemask]
-        clamp: Clamp to TV or full range if True or specified range `(low, high)`
+        clamp: Clamp to legal values if True or specified range `(low, high)`
         planes: Which planes to process.
 
     Returns:
