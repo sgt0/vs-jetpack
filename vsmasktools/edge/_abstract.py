@@ -486,17 +486,29 @@ def get_all_edge_detects(
         planes: Which planes to process.
 
     Returns:
-        A list edge masks
+        A list of edge masks
     """
+    from warnings import warn
 
-    def _all_subclasses(cls: type[EdgeDetect] = EdgeDetect) -> set[type[EdgeDetect]]:
-        return set(cls.__subclasses__()).union(s for c in cls.__subclasses__() for s in _all_subclasses(c))
+    # https://github.com/python/mypy/issues/4717
+    all_subclasses = {
+        s
+        for s in get_subclasses(EdgeDetect)  # type: ignore[type-abstract]
+        if not isabstract(s) and s.__module__.split(".")[-1] != "_abstract"
+    }
 
-    all_subclasses = {s for s in _all_subclasses() if not isabstract(s) and hasattr(s, "matrices")}
-    return [
-        edge_detect().edgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs).text.Text(edge_detect.__name__)
-        for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__)
-    ]
+    out = list[ConstantFormatVideoNode]()
+
+    for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__):
+        try:
+            mask = edge_detect().edgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs)  # pyright: ignore[reportAbstractUsage]
+        except AttributeError as e:
+            warn(str(e), RuntimeWarning)
+            continue
+
+        out.append(mask.text.Text(edge_detect.__name__))
+
+    return out
 
 
 def get_all_ridge_detect(
@@ -522,12 +534,24 @@ def get_all_ridge_detect(
     Returns:
         A list edge masks
     """
+    from warnings import warn
 
-    def _all_subclasses(cls: type[RidgeDetect] = RidgeDetect) -> set[type[RidgeDetect]]:
-        return set(cls.__subclasses__()).union(s for c in cls.__subclasses__() for s in _all_subclasses(c))
+    # https://github.com/python/mypy/issues/4717
+    all_subclasses = {
+        s
+        for s in get_subclasses(RidgeDetect)  # type: ignore[type-abstract]
+        if not isabstract(s) and s.__module__.split(".")[-1] != "_abstract"
+    }
 
-    all_subclasses = {s for s in _all_subclasses() if not isabstract(s) and hasattr(s, "matrices")}
-    return [
-        edge_detect().ridgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs).text.Text(edge_detect.__name__)
-        for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__)
-    ]
+    out = list[ConstantFormatVideoNode]()
+
+    for edge_detect in sorted(all_subclasses, key=lambda x: x.__name__):
+        try:
+            mask = edge_detect().ridgemask(clip, lthr, hthr, multi, clamp, planes, **kwargs)  # pyright: ignore[reportAbstractUsage]
+        except AttributeError as e:
+            warn(str(e), RuntimeWarning)
+            continue
+
+        out.append(mask.text.Text(edge_detect.__name__))
+
+    return out
