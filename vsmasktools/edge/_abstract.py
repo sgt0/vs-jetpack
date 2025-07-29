@@ -184,7 +184,7 @@ class EdgeDetect(ABC):
 
         mask = self._compute_edge_mask(clip_p, planes=planes, **kwargs)
 
-        mask = self._postprocess(mask, clip.format.bits_per_sample)
+        mask = self._postprocess(mask, clip)
 
         return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
 
@@ -364,7 +364,7 @@ class Difference(MatrixEdgeDetect, ABC):
 
 class Max(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        return ExprOp.MAX.combine(*clips, planes=kwargs.get("planes"))
+        return ExprOp.MAX.combine(*clips, planes=kwargs.get("planes"), func=self.__class__)
 
 
 class RidgeDetect(MatrixEdgeDetect):
@@ -403,7 +403,7 @@ class RidgeDetect(MatrixEdgeDetect):
 
         mask = self._compute_ridge_mask(clip_p, planes=planes, **kwargs)
 
-        mask = self._postprocess_ridge(mask, clip.format.bits_per_sample)
+        mask = self._postprocess_ridge(mask, clip)
 
         return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
 
