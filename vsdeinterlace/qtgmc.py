@@ -28,6 +28,7 @@ from vstools import (
     FieldBased,
     FieldBasedT,
     KwargsT,
+    UnsupportedVideoFormatError,
     VSFunctionKwArgs,
     check_variable,
     core,
@@ -329,7 +330,9 @@ class QTempGaussMC(vs_object):
         self.double_rate = self.input_type != self.InputType.REPAIR
 
         if self.clip.format.sample_type is vs.FLOAT:
-            raise CustomRuntimeError("FLOAT input is not supported!", self.__class__)
+            raise UnsupportedVideoFormatError(
+                "FLOAT input is not supported!", self.__class__, self.clip.format.sample_type
+            )
 
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter:
             raise CustomRuntimeError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
