@@ -145,7 +145,7 @@ class Cross(RidgeDetect, EuclideanDistance, Matrix3x3):
     matrices: ClassVar[Sequence[Sequence[float]]] = [[1, 0, 0, 0, 0, 0, 0, 0, -1], [0, 0, -1, 0, 0, 0, 1, 0, 0]]
 
 
-class Prewitt(RidgeDetect, NormalizeProcessor, EuclideanDistance, Matrix3x3):
+class Prewitt(RidgeDetect, EuclideanDistance, Matrix3x3):
     """
     Judith M. S. Prewitt operator.
     """
