@@ -24,10 +24,10 @@ from vsrgtools import BlurMatrix, gauss_blur, median_blur, remove_grain, repair,
 from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
-    CustomRuntimeError,
     FieldBased,
     FieldBasedT,
     KwargsT,
+    UnsupportedFieldBasedError,
     UnsupportedVideoFormatError,
     VSFunctionKwArgs,
     check_variable,
@@ -335,10 +335,10 @@ class QTempGaussMC(vs_object):
             )
 
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter:
-            raise CustomRuntimeError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
+            raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
 
         if self.input_type in (self.InputType.INTERLACE, self.InputType.REPAIR) and not clip_fieldbased.is_inter:
-            raise CustomRuntimeError(f"{self.input_type} incompatible with progressive video!", self.__class__)
+            raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with progressive video!", self.__class__)
 
     def prefilter(
         self,
