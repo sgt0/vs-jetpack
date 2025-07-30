@@ -401,6 +401,7 @@ class MinMax(EdgeDetect):
                     Morpho.expand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
                     Morpho.inpand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
                     planes=kwargs.get("planes"),
+                    func=self.__class__,
                 )
                 if rad > 0
                 else p
