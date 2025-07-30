@@ -12,7 +12,6 @@ from jetpytools import KwargsT
 from vstools import ConstantFormatVideoNode, vs
 
 from ._abstract import (
-    Difference,
     EdgeDetect,
     EuclideanDistance,
     MagnitudeMatrix,
@@ -37,7 +36,6 @@ __all__ = [
     "ExSobel",
     "FDoG",
     "FDoGTCanny",
-    "DoG",
     "Farid",
     # Max
     "ExKirsch",
@@ -142,18 +140,6 @@ class FDoGTCanny(Matrix5x5, EdgeDetect):
         _scale_constant = 0.5 if clip.format.sample_type == vs.FLOAT else (1 - 1 / (7 / 3) * 0.9696)
 
         return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
-
-
-class DoG(NormalizeProcessor, Difference, Matrix5x5):
-    """
-    Zero-cross (of the 2nd derivative) of a Difference of Gaussians
-    """
-
-    matrices: ClassVar[Sequence[Sequence[float]]] = [
-        [0, 0, 5, 0, 0, 0, 5, 10, 5, 0, 5, 10, 20, 10, 5, 0, 5, 10, 5, 0, 0, 0, 5, 0, 0],
-        [0, 25, 0, 25, 50, 25, 0, 25, 0],
-    ]
-    divisors: ClassVar[Sequence[float] | None] = [4, 6]
 
 
 class Farid(NormalizeProcessor, RidgeDetect, EuclideanDistance, Matrix5x5):
