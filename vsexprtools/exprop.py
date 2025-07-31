@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import EnumMeta
 from functools import cache
 from itertools import cycle
-from math import isqrt, pi
+from math import isqrt
 from typing import Any, Iterable, Iterator, Sequence, SupportsFloat, SupportsIndex, overload
 
 from jetpytools import CustomRuntimeError, CustomStrEnum, SupportsString
@@ -428,7 +428,7 @@ class ExprOpBase(CustomStrEnum):
 class ExprOpExtraMeta(EnumMeta):
     @property
     def _extra_op_names_(cls) -> tuple[str, ...]:
-        return ("PI", "SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS")
+        return ("SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS")
 
 
 class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
@@ -456,6 +456,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
 
     HEIGHT = "height", 0
     """Frame height."""
+
+    PI = "pi", 0
+    """Mathematical constant π (pi)."""
 
     # 1 Argument (std)
     EXP = "exp", 1
@@ -582,9 +585,6 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     """Get value of absolute pixel at coordinates ({x},{y}) on clip `{char}`."""
 
     # Not Implemented in akarin or std
-    PI = "pi", 0
-    """Mathematical constant π (pi)."""
-
     SGN = "sgn", 1
     """Sign function: -1, 0, or 1 depending on value."""
 
@@ -632,8 +632,6 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             raise CustomValueError
 
         match self:
-            case ExprOp.PI:
-                return str(pi)
             case ExprOp.SGN:
                 return "dup 0 > swap 0 < -"
             case ExprOp.NEG:
