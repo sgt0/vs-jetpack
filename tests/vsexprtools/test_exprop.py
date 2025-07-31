@@ -174,5 +174,12 @@ def test_expr_op_str_acos(input_clip: vs.VideoNode) -> None:
         assert f[0][0, 0] == pytest.approx(math.acos(f_in[0][0, 0]))
 
 
+def test_expr_op_str_ceil(input_clip: vs.VideoNode = clip_fp32) -> None:
+    clip = expr_func(input_clip, f"x {ExprOp.CEIL.convert_extra()}")
+
+    for f, f_in in zip(clip.frames(close=True), input_clip.frames(close=True)):
+        assert f[0][0, 0] == math.ceil(f_in[0][0, 0])
+
+
 def test_expr_op_clamp() -> None:
     assert ExprOp.clamp(c="x").to_str() == "x ExprToken.RangeMin ExprToken.RangeMax clamp"

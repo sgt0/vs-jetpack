@@ -428,7 +428,7 @@ class ExprOpBase(CustomStrEnum):
 class ExprOpExtraMeta(EnumMeta):
     @property
     def _extra_op_names_(cls) -> tuple[str, ...]:
-        return ("SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS")
+        return ("SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS", "CEIL")
 
 
 class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
@@ -603,6 +603,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     ACOS = "acos", 1
     """Arccosine (inverse cosine)."""
 
+    CEIL = "ceil", 1
+    """Round up to nearest integer."""
+
     @cache
     def is_extra(self) -> bool:
         """
@@ -617,7 +620,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return self.name in ExprOp._extra_op_names_
 
     def convert_extra(  # type: ignore[misc]
-        self: Literal[ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS],  # pyright: ignore[reportGeneralTypeIssues]
+        self: Literal[ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS, ExprOp.CEIL],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> str:
         """
         Converts an 'extra' operator into a valid `akarin.Expr` expression string.
@@ -645,6 +648,8 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 return self.asin().to_str()
             case ExprOp.ACOS:
                 return self.acos().to_str()
+            case ExprOp.CEIL:
+                return "-1 * floor -1 *"
             case _:
                 raise NotImplementedError
 
