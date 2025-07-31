@@ -165,7 +165,7 @@ class Sar(_Xar):
 
         from ..utils import get_prop
 
-        return cls(get_prop(clip, "_SARNum", int, None, 1), get_prop(clip, "_SARDen", int, None, 1))
+        return cls(get_prop(clip, "_SARNum", int, default=1), get_prop(clip, "_SARDen", int, default=1))
 
     @classmethod
     def from_ar(cls, active_area: int | Fraction, height: int, dar: Dar) -> Self:

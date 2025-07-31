@@ -19,7 +19,7 @@ from vstools import (
     core,
     depth,
     fallback,
-    get_prop,
+    get_props,
     normalize_planes,
     normalize_seq,
     scale_delta,
@@ -1313,29 +1313,24 @@ class MVTools(vs_object):
 
         vectors = fallback(vectors, self.vectors)
 
-        props_list = (
-            "Analysis_BlockSize",
-            "Analysis_Pel",
-            "Analysis_LevelCount",
-            "Analysis_CpuFlags",
-            "Analysis_MotionFlags",
-            "Analysis_FrameSize",
-            "Analysis_Overlap",
-            "Analysis_BlockCount",
-            "Analysis_BitsPerSample",
-            "Analysis_ChromaRatio",
-            "Analysis_Padding",
-        )
-
         if not vectors.analysis_data:
             vect = self.get_vector(vectors, direction=MVDirection.BACKWARD, delta=1).manipmv.ExpandAnalysisData()
 
-            analysis_props = dict[str, Any]()
+            props_list = (
+                "Analysis_BlockSize",
+                "Analysis_Pel",
+                "Analysis_LevelCount",
+                "Analysis_CpuFlags",
+                "Analysis_MotionFlags",
+                "Analysis_FrameSize",
+                "Analysis_Overlap",
+                "Analysis_BlockCount",
+                "Analysis_BitsPerSample",
+                "Analysis_ChromaRatio",
+                "Analysis_Padding",
+            )
 
-            for prop in props_list:
-                analysis_props[prop] = get_prop(vect, prop, (int, list))
-
-            vectors.analysis_data = analysis_props
+            vectors.analysis_data = get_props(vect, props_list, (int, list), func=self.expand_analysis_data)
 
     def get_super(self, clip: vs.VideoNode | None = None) -> ConstantFormatVideoNode:
         """
