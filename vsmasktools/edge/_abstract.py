@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import IntFlag, auto
 from inspect import isabstract
-from math import sqrt
 from typing import Any, ClassVar, Sequence, TypeAlias, TypeVar, cast
 
 from jetpytools import inject_kwargs_params
@@ -306,22 +305,6 @@ class MatrixEdgeDetect(EdgeDetect):
 
     def _get_mode_types(self) -> Sequence[str]:
         return self.mode_types if self.mode_types else ["s"] * len(self._get_matrices())
-
-    def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
-        if self.mode_types is None or self.mode_types[0] == "s":
-            radius = int(sqrt(len(self.matrices[0])) // 2)
-            self.offset = (2 * radius) ** clip.format.subsampling_w
-            clip = vs.core.resize.Point(clip, clip.width + self.offset, src_width=clip.width + self.offset)
-
-        return super()._preprocess(clip)
-
-    def _postprocess(
-        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormatT | VideoFormatT | int
-    ) -> ConstantFormatVideoNode:
-        if self.mode_types is None or self.mode_types[0] == "s":
-            clip = clip.std.Crop(right=self.offset)
-
-        return super()._postprocess(clip, input_bits)
 
 
 class NormalizeProcessor(MatrixEdgeDetect):
