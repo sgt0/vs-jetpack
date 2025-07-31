@@ -4,7 +4,7 @@ from enum import EnumMeta
 from functools import cache
 from itertools import cycle
 from math import isqrt
-from typing import Any, Iterable, Iterator, Sequence, SupportsFloat, SupportsIndex, overload
+from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, overload
 
 from jetpytools import CustomRuntimeError, CustomStrEnum, SupportsString
 from typing_extensions import Self
@@ -616,8 +616,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         """
         return self.name in ExprOp._extra_op_names_
 
-    @cache
-    def convert_extra(self) -> str:
+    def convert_extra(  # type: ignore[misc]
+        self: Literal[ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS],  # pyright: ignore[reportGeneralTypeIssues]
+    ) -> str:
         """
         Converts an 'extra' operator into a valid `akarin.Expr` expression string.
 
@@ -899,7 +900,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                     [
                         "__atanvar@",
                         cls.SGN.convert_extra(),
-                        cls.PI.convert_extra(),
+                        cls.PI,
                         cls.MUL,
                         2,
                         cls.DIV,
@@ -969,4 +970,4 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         Returns:
             An `ExprList` representing the acos(x) expression.
         """
-        return ExprList([c, "__acosvar!", cls.PI.convert_extra(), 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])
+        return ExprList([c, "__acosvar!", cls.PI, 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])
