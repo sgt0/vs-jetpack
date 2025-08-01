@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import re
+from functools import cache
 from itertools import count
-from typing import Any, Callable, Iterable, Iterator, Sequence, SupportsIndex, overload
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomTypeError, SupportsString
 from typing_extensions import Self
+
+if TYPE_CHECKING:
+    from vapoursynth._nodes import _ReturnDict_akarin_Version  # pyright: ignore[reportMissingModuleSource]
 
 from vstools import (
     EXPR_VARS,
@@ -254,6 +258,8 @@ def bitdepth_aware_tokenize_expr(
 
     func = func or bitdepth_aware_tokenize_expr
 
+    expr = extra_op_tokenize_expr(expr)
+
     if not expr or len(expr) < 4:
         return expr
 
@@ -305,3 +311,8 @@ def norm_expr_planes(
         exp.format(**({"plane_idx": i} | {key: value[i] for key, value in string_args})) if i in planes else ""
         for i, exp in enumerate(expr_array)
     ]
+
+
+@cache
+def _get_akarin_expr_version() -> _ReturnDict_akarin_Version:
+    return vs.core.akarin.Version()

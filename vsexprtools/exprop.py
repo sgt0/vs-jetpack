@@ -30,7 +30,7 @@ from vstools import (
     vs,
 )
 
-from .util import ExprVars
+from .util import ExprVars, _get_akarin_expr_version
 
 __all__ = ["ExprList", "ExprOp", "ExprToken", "TupleExprList"]
 
@@ -428,7 +428,16 @@ class ExprOpBase(CustomStrEnum):
 class ExprOpExtraMeta(EnumMeta):
     @property
     def _extra_op_names_(cls) -> tuple[str, ...]:
-        return ("SGN", "NEG", "TAN", "ATAN", "ASIN", "ACOS", "CEIL")
+        return (
+            "SGN",
+            "NEG",
+            "TAN",
+            "ATAN",
+            "ASIN",
+            "ACOS",
+            "CEIL",
+            "LERP",
+        )
 
 
 class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
@@ -618,6 +627,10 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     CEIL = "ceil", 1
     """Round up to nearest integer."""
 
+    # Implemented in akarin v0.96g but closed source and only available on Windows.
+    LERP = "lerp", 3
+    """Linear interpolation of a value between two border values."""
+
     @cache
     def is_extra(self) -> bool:
         """
@@ -632,7 +645,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return self.name in ExprOp._extra_op_names_
 
     def convert_extra(  # type: ignore[misc]
-        self: Literal[ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS, ExprOp.CEIL],  # pyright: ignore[reportGeneralTypeIssues]
+        self: Literal[
+            ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS, ExprOp.CEIL, ExprOp.LERP
+        ],  # pyright: ignore[reportGeneralTypeIssues]
     ) -> str:
         """
         Converts an 'extra' operator into a valid `akarin.Expr` expression string.
@@ -662,6 +677,10 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 return self.acos().to_str()
             case ExprOp.CEIL:
                 return "-1 * floor -1 *"
+            case ExprOp.LERP:
+                if bytes(self, "utf-8") in _get_akarin_expr_version()["expr_features"]:
+                    return str(self)
+                return "dup 1 - swap2 * swap2 * - __LERP! range_max 1 <= __LERP@ __LERP@ round ?"
             case _:
                 raise NotImplementedError
 
