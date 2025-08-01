@@ -498,6 +498,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     FLOOR = "floor", 1
     """Round down to nearest integer."""
 
+    BITNOT = "bitnot", 1
+    """Bitwise NOT."""
+
     DROP = "drop", 1
     """Remove top value from the stack."""
 
@@ -568,6 +571,15 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     # 2 Argument (akarin)
     MOD = "%", 2
     """Modulo operation (remainder)."""
+
+    BITAND = "bitand", 2
+    """Bitwise AND."""
+
+    BITOR = "bitor", 2
+    """Bitwise OR."""
+
+    BITXOR = "bitxor", 2
+    """Bitwise XOR."""
 
     # 3 Arguments (std)
     TERN = "?", 3
