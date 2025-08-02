@@ -3,8 +3,8 @@ from __future__ import annotations
 from enum import EnumMeta
 from functools import cache
 from itertools import cycle
-from math import isqrt
-from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, overload
+from math import inf, isqrt
+from typing import Any, Iterable, Iterator, Literal, Sequence, SupportsFloat, SupportsIndex, cast, overload
 
 from jetpytools import CustomRuntimeError, CustomStrEnum, SupportsString
 from typing_extensions import Self
@@ -437,6 +437,7 @@ class ExprOpExtraMeta(EnumMeta):
             "ACOS",
             "CEIL",
             "LERP",
+            "POLYVAL",
         )
 
 
@@ -631,6 +632,8 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     LERP = "lerp", 3
     """Linear interpolation of a value between two border values."""
 
+    POLYVAL = "polyval{N:d}", cast(int, inf)
+
     @cache
     def is_extra(self) -> bool:
         """
@@ -646,11 +649,23 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
 
     def convert_extra(  # type: ignore[misc]
         self: Literal[
-            ExprOp.SGN, ExprOp.NEG, ExprOp.TAN, ExprOp.ATAN, ExprOp.ASIN, ExprOp.ACOS, ExprOp.CEIL, ExprOp.LERP
+            ExprOp.SGN,
+            ExprOp.NEG,
+            ExprOp.TAN,
+            ExprOp.ATAN,
+            ExprOp.ASIN,
+            ExprOp.ACOS,
+            ExprOp.CEIL,
+            ExprOp.LERP,
+            ExprOp.POLYVAL,
         ],  # pyright: ignore[reportGeneralTypeIssues]
+        degree: int | None = None,
     ) -> str:
         """
         Converts an 'extra' operator into a valid `akarin.Expr` expression string.
+
+        Args:
+            degree: If calling from POLYVAL, the degree of the polynomial.
 
         Returns:
             A string representation of the equivalent expression.
@@ -681,6 +696,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 if bytes(self, "utf-8") in _get_akarin_expr_version()["expr_features"]:
                     return str(self)
                 return "dup 1 - swap2 * swap2 * - __LERP! range_max 1 <= __LERP@ __LERP@ round ?"
+            case ExprOp.POLYVAL:
+                assert degree is not None
+                return self.polyval("", [""] * (degree + 1)).to_str()
             case _:
                 raise NotImplementedError
 
@@ -1007,3 +1025,35 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             An `ExprList` representing the acos(x) expression.
         """
         return ExprList([c, "__acosvar!", cls.PI, 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])
+
+    @classmethod
+    def polyval(cls, c: SupportsString, *coeffs: SupportsString) -> ExprList:
+        """
+        Build an expression to evaluate a polynomial at a given value using Horner's method.
+
+        Args:
+            c: The input expression variable at which the polynomial is evaluated (the 'x' value).
+            *coeffs: Coefficients of the polynomial. Must provide at least one coefficient.
+
+        Returns:
+            An `ExprList` representing the polyval expression.
+
+        Raises:
+            CustomValueError: If fewer than one coefficient is provided.
+        """
+        if len(coeffs) < 1:
+            raise CustomValueError("You must provide at least one coefficient.", cls.polyval, coeffs)
+
+        if b"polyval" in _get_akarin_expr_version()["expr_features"]:
+            return ExprList([*coeffs, c, ExprOp.POLYVAL(len(coeffs) - 1)])
+
+        stack_len = len(coeffs) + 1
+
+        expr = ExprList([*coeffs, c, 0])
+
+        for i in range(stack_len, 1, -1):
+            expr.append(ExprOp.DUPN(1), ExprOp.MUL, ExprOp.DUPN(i), ExprOp.ADD)
+
+        expr.append(ExprOp.SWAPN(stack_len), ExprOp.DROPN(stack_len))
+
+        return expr

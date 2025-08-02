@@ -244,9 +244,16 @@ def extra_op_tokenize_expr(expr: str) -> str:
     # Workaround for the not implemented op
     from .exprop import ExprOp
 
+    def _replace_polyval(matched: re.Match[str]) -> str:
+        degree = int(matched.group(1))
+        return ExprOp.POLYVAL.convert_extra(degree)
+
     for extra_op in ExprOp._extra_op_names_:
         if extra_op.lower() in expr:
-            expr = re.sub(rf"\b{extra_op.lower()}\b", getattr(ExprOp, extra_op).convert_extra(), expr)
+            if extra_op == ExprOp.POLYVAL.name:
+                expr = re.sub(rf"\b{extra_op.lower()}\b", _replace_polyval, expr)
+            else:
+                expr = re.sub(rf"\b{extra_op.lower()}\b", getattr(ExprOp, extra_op).convert_extra(), expr)
 
     return expr
 
