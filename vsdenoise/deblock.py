@@ -238,7 +238,7 @@ def deblock_qed(
             deblocked = join(deblocked, strong)
 
     if fieldbased.is_inter:
-        deblocked = reinterlace(deblocked)
+        deblocked = reinterlace(deblocked, fieldbased)
 
     return deblocked
 
