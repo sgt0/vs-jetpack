@@ -1,9 +1,11 @@
+import contextlib
 import math
 from typing import Any
 
 import pytest
 
-from vsexprtools import ExprOp, ExprToken, expr_func
+from vsexprtools import ExprOp, ExprToken, expr_func, norm_expr
+from vsexprtools.util import _get_akarin_expr_version
 from vstools import ColorRange, core, vs
 
 clip_yuv_limited = ColorRange.LIMITED.apply(core.std.BlankClip(width=2, height=2, format=vs.YUV420P8))
@@ -179,6 +181,47 @@ def test_expr_op_str_ceil(input_clip: vs.VideoNode = clip_fp32) -> None:
 
     for f, f_in in zip(clip.frames(close=True), input_clip.frames(close=True)):
         assert f[0][0, 0] == math.ceil(f_in[0][0, 0])
+
+
+@pytest.mark.parametrize(
+    ["clip_a", "clip_b", "t"],
+    [
+        (
+            clip_fp32.std.BlankClip(color=[0.4376836998088198, -0.19098552065281704, 0.3494137182200806]),
+            clip_fp32.std.BlankClip(color=[0.8609435397529109, -0.2693605227534943, -0.055274461226768934]),
+            0.595053469921834,
+        ),
+        (
+            clip_int8.std.BlankClip(color=[25, 196, 106]),
+            clip_int8.std.BlankClip(color=[209, 58, 143]),
+            0.3852455650184188,
+        ),
+    ],
+)
+@pytest.mark.parametrize("legacy", (False, True))
+def test_expr_op_str_lerp(clip_a: vs.VideoNode, clip_b: vs.VideoNode, t: float, legacy: bool) -> None:
+    def lerp(x: float, y: float, z: float) -> float:
+        return (1 - z) * x + z * y
+
+    if not legacy:
+        _get_akarin_expr_version.cache_clear()
+    else:
+        with contextlib.suppress(ValueError):
+            _get_akarin_expr_version()["expr_features"].remove(bytes(ExprOp.LERP.value, "utf-8"))
+
+    expr = norm_expr([clip_a, clip_b], f"x y {t} {ExprOp.LERP.convert_extra()}")
+
+    for f_expr, f_clip_a, f_clip_b in zip(
+        expr.frames(close=True), clip_a.frames(close=True), clip_b.frames(close=True)
+    ):
+        for i in range(f_expr.format.num_planes):
+            result = f_expr[i][0, 0]
+            expected = lerp(f_clip_a[i][0, 0], f_clip_b[i][0, 0], t)
+
+            if expr.format.sample_type == vs.INTEGER:
+                assert result == round(expected)
+            else:
+                assert result == pytest.approx(expected, rel=1e-7)
 
 
 def test_expr_op_clamp() -> None:
