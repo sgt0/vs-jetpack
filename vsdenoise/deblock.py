@@ -6,7 +6,7 @@ from jetpytools import CustomNotImplementedError, CustomRuntimeError, CustomStrE
 
 from vsaa import BWDIF, NNEDI3, Deinterlacer
 from vsexprtools import norm_expr
-from vskernels import Box, Point
+from vskernels import Point
 from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask, strength_zones_mask
 from vsrgtools import MeanMode, gauss_blur, repair
 from vsscale import DPIR
@@ -205,6 +205,8 @@ def deblock_qed(
     Returns:
         Deblocked clip
     """
+    from vsdeinterlace.utils import reinterlace
+
     assert check_variable(clip, deblock_qed)
 
     fieldbased = FieldBased.from_video(clip, func=deblock_qed)
@@ -236,7 +238,7 @@ def deblock_qed(
             deblocked = join(deblocked, strong)
 
     if fieldbased.is_inter:
-        deblocked = Box().scale(deblocked, height=clip.height // 2).std.DoubleWeave()[::2]
+        deblocked = reinterlace(deblocked)
 
     return deblocked
 
