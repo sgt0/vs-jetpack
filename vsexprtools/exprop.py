@@ -698,7 +698,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 return "dup 1 - swap2 * swap2 * - __LERP! range_max 1 <= __LERP@ __LERP@ round ?"
             case ExprOp.POLYVAL:
                 assert degree is not None
-                return self.polyval("", [""] * (degree + 1)).to_str()
+                return self.polyval("", *[""] * (degree + 1)).to_str()
             case _:
                 raise NotImplementedError
 

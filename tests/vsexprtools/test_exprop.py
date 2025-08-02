@@ -298,7 +298,9 @@ def test_expr_op_str_polyval(input_clip: vs.VideoNode, coeffs: Sequence[float], 
         with contextlib.suppress(ValueError):
             _get_akarin_expr_version()["expr_features"].remove(b"polyval")
 
-    expr = expr_func(input_clip, " ".join(str(c) for c in coeffs) + " x " + ExprOp.POLYVAL(len(coeffs) - 1))
+    expr = expr_func(
+        input_clip, " ".join(str(c) for c in coeffs) + " x " + ExprOp.POLYVAL.convert_extra(len(coeffs) - 1)
+    )
 
     for f_expr, f_in in zip(expr.frames(close=True), input_clip.frames(close=True)):
         for i in range(f_expr.format.num_planes):
