@@ -1,52 +1,11 @@
 # vs-source
 
-## DVDs were a mistake, but it doesn't have to feel _that_ bad to work with them
-
-<br>
-
 A wrapper for DVD file structure and ISO files.
 
-## Dependencies
-One of the following plugins is required:
-
-- [dvdsrc2](https://github.com/jsaowji/dvdsrc2/)
-- d2vSource and either DGIndex or [patched d2vwitch](https://gist.github.com/jsaowji/ead18b4f1b90381d558eddaf0336164b)
-
-> _DGIndex is recommended over d2vwitch as the latter has various problems._
->
-> DGIndex can also be used under linux with wine; notice that doing it requires ` binfmt` and `dgindex` in PATH.
->
-> ```bash
-> chmod +x DGIndex.exe
-> sudo ln -s $(pwd)/DGIndex.exe /usr/bin/dgindex
-> ```
-
 <br>
 
-Optional dependecies:
+You can use [dvdtools](https://github.com/Jaded-Encoding-Thaumaturgy/vs-preview-plugins/tree/master/dvdtools) vs-preview plugin to determine chapter splits
 
-- [dvdsrc_dvdnav_title_ptt_test](https://gist.github.com/jsaowji/2bbf9c776a3226d1272e93bb245f7538) to automatically check the chapters against `libdvdnav`.
-- [dvdsrc](https://github.com/jsaowji/dvdsrc/) to automatically double-check the determined dvdstrucut agaist libdvdread.
-- [mpv](https://github.com/mpv-player/mpv) to determine chapter splits by loading the DVD and hitting I or using it like this:
-
-  > ```bash
-  > mpv --dvd-device=<iso> dvd://<title>
-  > # mpv titles are zero-indexed
-  > # vssource titles indices start from 1
-  > # sometimes it is useful to to scale the osc down
-  > # --script-opts=osc-scalewindowed=0.4,osc-scalefullscreen=0.4
-  > ```
-
-  Related to mpv, the [mpv-dvd-browser](https://github.com/CogentRedTester/mpv-dvd-browser) plugin may be useful for this too.
-
-<br>
-
-Getting a `vs.AudioNode` and demuxing AC3 **requires** [dvdsrc2](https://github.com/jsaowji/dvdsrc2/)
-
-**The only offically supported audio codecs are:**
-
-- stereo 16bit LPCM
-- AC3
 
 ## Usage
 
@@ -55,16 +14,12 @@ Getting a `vs.AudioNode` and demuxing AC3 **requires** [dvdsrc2](https://github.
 Previewing a title and dumping AC3 audio:
 
 ```py
-from vssource import IsoFile, D2VWitch, DGIndex
+from vssource import IsoFile
 from vstools import set_output
 
 # Create an IsoFile object from a DVD ISO or folder path
 # This will automatically detect and use the best available indexer
 iso = IsoFile('.\DVD_VIDEOS\Suzumiya_2009_DVD\KABA_6001.ISO')
-
-# You can also explicitly specify which indexer to use
-# This example forces DGIndex even if other indexers are available
-iso = IsoFile('.\SOME_DVD_FOLDER\HARUHI', indexer=DGIndex)
 
 # Get a Title object representing the first title on the DVD
 # Titles are 1-indexed
@@ -77,12 +32,8 @@ print(title)
 # This outputs the entire video track of the title
 title.preview()
 
-# Preview the first audio track
-title.audios[0].preview()
-
 # Extract the AC3 audio from the first audio track (index 0)
 # This dumps the raw AC3 stream to a file
-# Note: Requires the dvdsrc2 plugin
 title.dump_ac3('full_title.ac3', 0)
 ```
 

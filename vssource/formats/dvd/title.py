@@ -5,13 +5,12 @@ from dataclasses import dataclass
 from itertools import count
 from typing import TYPE_CHECKING, Callable, Iterator, Sequence, SupportsIndex, overload
 
-from vstools import CustomValueError, FuncExceptT, T, get_prop, set_output, to_arr, vs, vs_object
+from vstools import CustomValueError, T, get_prop, set_output, to_arr, vs, vs_object
 
-from ...utils import debug_print
 from .utils import AC3_FRAME_LENGTH, PCR_CLOCK, absolute_time_from_timecode
 
 if TYPE_CHECKING:
-    from .IsoFileCore import IsoFileCore
+    from .IsoFile import IsoFile
 
 __all__ = ["Title"]
 
@@ -77,8 +76,6 @@ class TitleAudios(vs_object, list[vs.AudioNode]):
     def __getitem__(self, slicidx: slice, /) -> list[vs.AudioNode]: ...
 
     def __getitem__(self, key: SupportsIndex | slice) -> vs.AudioNode | list[vs.AudioNode]:
-        self.title._assert_dvdsrc2(self.__class__)
-
         if isinstance(key, slice):
             return [self[i] for i in range(*key.indices(len(self)))]
 
@@ -104,14 +101,6 @@ class TitleAudios(vs_object, list[vs.AudioNode]):
         strt = (get_prop(anode, "Stuff_Start_PTS", int) * anode.sample_rate) / PCR_CLOCK
         endd = (get_prop(anode, "Stuff_End_PTS", int) * anode.sample_rate) / PCR_CLOCK
 
-        debug_print(
-            "splice",
-            round((strt / anode.sample_rate) * 1000 * 10) / 10,
-            "ms",
-            round((endd / anode.sample_rate) * 1000 * 10) / 10,
-            "ms",
-        )
-
         start, end = int(strt), int(endd)
 
         if start >= 0:
@@ -120,13 +109,6 @@ class TitleAudios(vs_object, list[vs.AudioNode]):
             anode = vs.core.std.BlankAudio(anode, length=-start) + anode[: len(anode) - end]
 
         self.cache[i] = anode
-        total_dura = self.title._absolute_time[-1] + self.title._duration_times[-1]
-        delta = abs(total_dura - anode.num_samples / anode.sample_rate) * 1000
-
-        debug_print(f"delta {delta}ms")
-
-        if delta > 50:
-            debug_print(f"Rather big audio/video length delta ({delta}) might be indicator that something is off!")
 
         return anode
 
@@ -151,7 +133,7 @@ class Title:
     # only for reference for gui or sth
     cell_changes: list[int]
 
-    _core: IsoFileCore
+    _core: IsoFile
     _title: int
     _vts: int
     _vobidcellids_to_take: list[tuple[int, int]]
@@ -246,13 +228,7 @@ class Title:
                         if audio:
                             set_output(audio, f"split {i} - {j}")
 
-    def _assert_dvdsrc2(self, func: FuncExceptT) -> None:
-        if not self._dvdsrc_ranges:
-            raise CustomValueError("Title needs to be opened with dvdsrc2!", func)
-
     def dump_ac3(self, a: str, audio_i: int = 0, only_calc_delay: bool = False) -> float:
-        self._assert_dvdsrc2(self.dump_ac3)
-
         if not self._audios[audio_i].startswith("ac3"):
             raise CustomValueError(f"Audio at {audio_i} is not ac3", self.dump_ac3)
 
@@ -304,8 +280,6 @@ class SplitHelper:
 
         start, end = (get_prop(nd, f"Stuff_{x}_PTS", int) for x in ("Start", "End"))
 
-        debug_print(f"Stuff_Start_PTS pts {start} Stuff_End_PTS {end}")
-
         raw_start = title._absolute_time[title.chapters[f - 1]] * PCR_CLOCK
         raw_end = (title._absolute_time[title.chapters[t]] + title._duration_times[title.chapters[t]]) * PCR_CLOCK
 
@@ -315,11 +289,7 @@ class SplitHelper:
         audio_offset_pts = 0.0
 
         with open(outfile, "wb") as outf:
-            debug_print(f"start_pts  {start_pts} end_pts {end_pts}")
-
             start = int(start_pts / AC3_FRAME_LENGTH)
-
-            debug_print("first ", start, len(nd))
 
             for i, frame in enumerate(nd.frames(close=True)):
                 pkt_start_pts = i * AC3_FRAME_LENGTH
@@ -334,9 +304,6 @@ class SplitHelper:
 
                 if pkt_end_pts > end_pts:
                     break
-
-        debug_print("wrote", (i - (start_pts // AC3_FRAME_LENGTH)))
-        debug_print("offset is", (audio_offset_pts) / 90, "ms")
 
         return audio_offset_pts / PCR_CLOCK
 

@@ -6,7 +6,7 @@ from os import name as os_name
 from shutil import which
 from subprocess import Popen
 from tempfile import gettempdir
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, Literal, Protocol, Sequence
+from typing import Any, Callable, ClassVar, Iterable, Literal, Protocol, Sequence
 
 from vstools import (
     MISSING,
@@ -31,11 +31,7 @@ from vstools import (
 
 from ..dataclasses import IndexFileType
 
-if TYPE_CHECKING:
-    from ..formats.dvd.parsedvd import IFOX, IFO0Title
-
-
-__all__ = ["DVDExtIndexer", "DVDIndexer", "ExternalIndexer", "Indexer", "VSSourceFunc"]
+__all__ = ["ExternalIndexer", "Indexer", "VSSourceFunc"]
 
 
 class VSSourceFunc(Protocol):
@@ -308,21 +304,3 @@ class ExternalIndexer(Indexer):
             color_range,
             field_based,
         )
-
-
-class DVDIndexer:
-    iso_path: SPath
-
-    def parse_vts(
-        self,
-        title: IFO0Title,
-        disable_rff: bool,
-        vobidcellids_to_take: list[tuple[int, int]],
-        target_vts: IFOX,
-        output_folder: SPath,
-        vob_input_files: Sequence[SPath],
-    ) -> tuple[vs.VideoNode, list[int], list[tuple[int, int]], list[int]]:
-        raise NotImplementedError
-
-
-class DVDExtIndexer(ExternalIndexer, DVDIndexer): ...
