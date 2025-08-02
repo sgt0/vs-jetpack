@@ -6,7 +6,7 @@ from jetpytools import CustomNotImplementedError, CustomRuntimeError, CustomStrE
 
 from vsaa import BWDIF, NNEDI3, Deinterlacer
 from vsexprtools import norm_expr
-from vskernels import Point
+from vskernels import Box, Point
 from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask, strength_zones_mask
 from vsrgtools import MeanMode, gauss_blur, repair
 from vsscale import DPIR
@@ -222,21 +222,21 @@ def deblock_qed(
         clip[0],
         "X 8 % 7 % Y 8 % 7 % and 0 255 ?",
         planes_pp,
-        clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=8),
+        clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=8),  # type: ignore
     )
 
     strong_diff = norm_expr([clip, strong, mask], "z x y - 1.01 * neutral + neutral ?", planes_pp)
     strong_pp = strong_diff.dctf.DCTFilter([1, 1, 0, 0, 0, 0, 0, 0], planes_pp)
     deblocked = norm_expr([clip, normal, strong_pp, mask], "a y x z neutral - - ?", planes_pp)
 
-    if clip.format.color_family is not vs.GRAY:
+    if clip.format.color_family is not vs.GRAY:  # type: ignore
         if chroma_mode == 1:
             deblocked = join(deblocked, normal)
         if chroma_mode == 2:
             deblocked = join(deblocked, strong)
 
     if fieldbased.is_inter:
-        deblocked = Point().scale(deblocked, height=clip.height // 2).std.DoubleWeave()[::2]
+        deblocked = Box().scale(deblocked, height=clip.height // 2).std.DoubleWeave()[::2]
 
     return deblocked
 
