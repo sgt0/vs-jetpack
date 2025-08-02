@@ -637,6 +637,11 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     """Linear interpolation of a value between two border values."""
 
     POLYVAL = "polyval{N:d}", cast(int, inf)
+    """
+    Evaluate a degree-N polynomial at the top value on the stack.
+
+    Uses N coefficients below the top value (x), ordered from highest to lowest degree.
+    """
 
     @cache
     def is_extra(self) -> bool:
