@@ -6,6 +6,7 @@ from jetpytools import CustomNotImplementedError, CustomRuntimeError, CustomStrE
 
 from vsaa import BWDIF, NNEDI3, Deinterlacer
 from vsexprtools import norm_expr
+from vskernels import Point
 from vsmasktools import FDoG, GenericMaskT, Morpho, adg_mask, normalize_mask, strength_zones_mask
 from vsrgtools import MeanMode, gauss_blur, repair
 from vsscale import DPIR
@@ -206,7 +207,11 @@ def deblock_qed(
     """
     assert check_variable(clip, deblock_qed)
 
+    fieldbased = FieldBased.from_video(clip, func=deblock_qed)
     planes_pp = 0 if chroma_mode else planes
+
+    if fieldbased.is_inter:
+        clip = Point().scale(clip.std.SeparateFields(fieldbased.is_tff), height=clip.height)
 
     normal, strong = (
         clip.deblock.Deblock(quant[0], alpha[0], beta[0], planes),
@@ -215,10 +220,11 @@ def deblock_qed(
 
     mask = norm_expr(
         clip[0],
-        "Y 8 % 7 % X 8 % 7 % and 0 255 ?",
+        "X 8 % 7 % Y 8 % 7 % and 0 255 ?",
         planes_pp,
         clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=8),
     )
+
     strong_diff = norm_expr([clip, strong, mask], "z x y - 1.01 * neutral + neutral ?", planes_pp)
     strong_pp = strong_diff.dctf.DCTFilter([1, 1, 0, 0, 0, 0, 0, 0], planes_pp)
     deblocked = norm_expr([clip, normal, strong_pp, mask], "a y x z neutral - - ?", planes_pp)
@@ -228,6 +234,9 @@ def deblock_qed(
             deblocked = join(deblocked, normal)
         if chroma_mode == 2:
             deblocked = join(deblocked, strong)
+
+    if fieldbased.is_inter:
+        deblocked = Point().scale(deblocked, height=clip.height // 2).std.DoubleWeave()[::2]
 
     return deblocked
 
