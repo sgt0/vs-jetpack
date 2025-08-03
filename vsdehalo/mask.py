@@ -366,17 +366,16 @@ def fine_dehalo(
 
     assert check_progressive(clip, func_util.func)
 
-    if pre_ss:
-        pre_kwargs: dict[str, Any]
-
-        if isinstance(pre_ss, dict):
-            pre_kwargs = pre_ss
-        else:
-            pre_kwargs = {
+    if isinstance(pre_ss, dict) or pre_ss > 1.0:
+        pre_kwargs = (
+            pre_ss
+            if isinstance(pre_ss, dict)
+            else {
                 "rfactor": pre_ss,
                 "supersampler": kwargs.pop("pre_supersampler", NNEDI3(noshift=(True, False))),
                 "downscaler": kwargs.pop("pre_downscaler", Point()),
             }
+        )
 
         return pre_supersampling(
             clip,
