@@ -67,7 +67,7 @@ def autoselect_backend(**kwargs: Any) -> Backend:
     Returns:
         The selected backend.
     """
-    import os
+    from os import name
 
     from vsmlrt import Backend
 
@@ -76,14 +76,18 @@ def autoselect_backend(**kwargs: Any) -> Backend:
     if get_nvidia_version():
         if hasattr(core, "trt"):
             backend = Backend.TRT
-        elif hasattr(core, "ort"):
-            backend = Backend.ORT_CUDA
+        elif hasattr(core, "trt_rtx"):
+            backend = Backend.TRT_RTX
+        elif hasattr(core, "ort") and name == "nt":
+            backend = Backend.ORT_DML
         elif hasattr(core, "ncnn"):
             backend = Backend.NCNN_VK
+        elif hasattr(core, "ort"):
+            backend = Backend.ORT_CUDA
         else:
             backend = Backend.OV_GPU
     else:
-        if hasattr(core, "ort") and os.name == "nt":
+        if hasattr(core, "ort") and name == "nt":
             backend = Backend.ORT_DML
         elif hasattr(core, "migx"):
             backend = Backend.MIGX
