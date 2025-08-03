@@ -119,66 +119,65 @@ class ExprToken(CustomStrEnum):
         Returns:
             The value corresponding to the symbolic token.
         """
-        if self is ExprToken.LumaMin:
-            return get_lowest_value(clip, False, ColorRange.LIMITED)
+        match self:
+            case ExprToken.LumaMin:
+                return get_lowest_value(clip, False, ColorRange.LIMITED)
 
-        if self is ExprToken.ChromaMin:
-            return get_lowest_value(clip, True, ColorRange.LIMITED)
+            case ExprToken.ChromaMin:
+                return get_lowest_value(clip, True, ColorRange.LIMITED)
 
-        if self is ExprToken.LumaMax:
-            return get_peak_value(clip, False, ColorRange.LIMITED)
+            case ExprToken.LumaMax:
+                return get_peak_value(clip, False, ColorRange.LIMITED)
 
-        if self is ExprToken.ChromaMax:
-            return get_peak_value(clip, True, ColorRange.LIMITED)
+            case ExprToken.ChromaMax:
+                return get_peak_value(clip, True, ColorRange.LIMITED)
 
-        if self is ExprToken.Neutral:
-            return get_neutral_value(clip)
+            case ExprToken.Neutral:
+                return get_neutral_value(clip)
 
-        if self is ExprToken.RangeHalf:
-            val = get_peak_value(clip, range_in=ColorRange.FULL)
-            return (val + 1) / 2 if val > 1.0 else val
+            case ExprToken.RangeHalf:
+                val = get_peak_value(clip, range_in=ColorRange.FULL)
+                return (val + 1) / 2 if val > 1.0 else val
 
-        if self is ExprToken.RangeSize:
-            val = get_peak_value(clip, range_in=ColorRange.FULL)
-            return val + 1 if val > 1.0 else val
+            case ExprToken.RangeSize:
+                val = get_peak_value(clip, range_in=ColorRange.FULL)
+                return val + 1 if val > 1.0 else val
 
-        if self is ExprToken.RangeMin:
-            return get_lowest_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
+            case ExprToken.RangeMin:
+                return get_lowest_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
 
-        if self is ExprToken.LumaRangeMin:
-            return get_lowest_value(clip, False)
+            case ExprToken.LumaRangeMin:
+                return get_lowest_value(clip, False)
 
-        if self is ExprToken.ChromaRangeMin:
-            return get_lowest_value(clip, True)
+            case ExprToken.ChromaRangeMin:
+                return get_lowest_value(clip, True)
 
-        if self is ExprToken.RangeMax:
-            return get_peak_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
+            case ExprToken.RangeMax:
+                return get_peak_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
 
-        if self is ExprToken.LumaRangeMax:
-            return get_peak_value(clip, False)
+            case ExprToken.LumaRangeMax:
+                return get_peak_value(clip, False)
 
-        if self is ExprToken.ChromaRangeMax:
-            return get_peak_value(clip, True)
+            case ExprToken.ChromaRangeMax:
+                return get_peak_value(clip, True)
 
-        if self is ExprToken.RangeInMin:
-            return get_lowest_value(clip, chroma if chroma is not None else False, range_in)
+            case ExprToken.RangeInMin:
+                return get_lowest_value(clip, chroma if chroma is not None else False, range_in)
 
-        if self is ExprToken.LumaRangeInMin:
-            return get_lowest_value(clip, False, range_in)
+            case ExprToken.LumaRangeInMin:
+                return get_lowest_value(clip, False, range_in)
 
-        if self is ExprToken.ChromaRangeInMin:
-            return get_lowest_value(clip, True, range_in)
+            case ExprToken.ChromaRangeInMin:
+                return get_lowest_value(clip, True, range_in)
 
-        if self is ExprToken.RangeInMax:
-            return get_peak_value(clip, chroma if chroma is not None else False, range_in)
+            case ExprToken.RangeInMax:
+                return get_peak_value(clip, chroma if chroma is not None else False, range_in)
 
-        if self is ExprToken.LumaRangeInMax:
-            return get_peak_value(clip, False, range_in)
+            case ExprToken.LumaRangeInMax:
+                return get_peak_value(clip, False, range_in)
 
-        if self is ExprToken.ChromaRangeInMax:
-            return get_peak_value(clip, True, range_in)
-
-        raise CustomValueError("You are using an unsupported ExprToken!", self.get_value, self)
+            case ExprToken.ChromaRangeInMax:
+                return get_peak_value(clip, True, range_in)
 
     def __getitem__(self, i: int) -> str:  # type: ignore[override]
         """
