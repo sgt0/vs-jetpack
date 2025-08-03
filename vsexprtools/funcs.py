@@ -150,7 +150,7 @@ def norm_expr(
     expr: ExprLike,
     planes: PlanesT = None,
     format: HoldsVideoFormatT | VideoFormatT | None = None,
-    opt: bool | None = None,
+    opt: bool = False,
     boundary: bool = True,
     func: FuncExceptT | None = None,
     split_planes: bool = False,
