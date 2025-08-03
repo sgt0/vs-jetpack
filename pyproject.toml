@@ -153,7 +153,6 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 exclude = [
-    "stubs/pymediainfo",
     "stubs/vspreview",
     "stubs/dfttest2.pyi",
     "stubs/vsmlrt.pyi",
