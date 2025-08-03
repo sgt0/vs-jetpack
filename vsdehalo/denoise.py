@@ -25,6 +25,7 @@ from vstools import (
     check_progressive,
     check_ref_clip,
     core,
+    scale_mask,
     to_arr,
     vs,
 )
@@ -39,22 +40,21 @@ def hq_dering(
     mrad: int = 1,
     msmooth: int = 1,
     minp: int = 1,
-    mthr: float = 0.24,
+    mthr: float = 60,
     incedge: bool = False,
     contra: float = 1.2,
-    drrep: int = 13,
+    drrep: int = 24,
     planes: PlanesT = 0,
     **kwargs: Any,
 ) -> vs.VideoNode:
     """
     Applies deringing by using a smart smoother near edges (where ringing occurs) only.
-    Formerly known as HQDeringmod.
 
     Example usage:
         ```py
         from vsdenoise import Prefilter
 
-        dering = smooth_dering(clip, Prefilter.BILATERAL, ...)
+        dering = hq_dering(clip, Prefilter.BILATERAL, ...)
         ```
 
         - Bringing back the DFTTest smoothed clip from havsfunc
@@ -71,7 +71,7 @@ def hq_dering(
             tbsize=1,
         )
 
-        dering = smooth_dering(clip, smoothed, ...)
+        dering = hq_dering(clip, smoothed, ...)
         ```
 
     Args:
@@ -96,7 +96,7 @@ def hq_dering(
                - 0 means no contra
                - float: represents level for [contrasharpening_dehalo][vsdehalo.contrasharpening_dehalo]
 
-        drrep: Use repair for details retention, recommended values are 13/12/1.
+        drrep: Use repair for details retention, recommended values are 24/23/13/12/1.
 
         planes: Planes to be processed.
 
@@ -119,7 +119,7 @@ def hq_dering(
     limited = limit_filter(repaired, func.work_clip, None, planes=planes, **kwargs)
 
     if ringmask is None:
-        edgemask = PrewittStd.edgemask(func.work_clip, mthr, planes=planes)
+        edgemask = PrewittStd.edgemask(func.work_clip, scale_mask(mthr, 8, 32), planes=planes)
         fmask = median_blur(edgemask, planes=planes).hysteresis.Hysteresis(edgemask, planes)
 
         omask = Morpho.expand(fmask, mrad, planes=planes)

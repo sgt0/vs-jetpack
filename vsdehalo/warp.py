@@ -41,7 +41,7 @@ def edge_cleaner(
         The processed video clip with cleaned edges.
     """
     edgemask = EdgeDetect.ensure_obj(edgemask, edge_cleaner)
-    lthr = scale_mask(4, 8, clip)
+    lthr = scale_mask(4, 8, 32)
     expr = "x {thr} > range_max x ?"
 
     if smode:
