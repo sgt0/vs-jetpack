@@ -42,7 +42,7 @@ def hq_dering(
     minp: int = 1,
     mthr: float = 60,
     incedge: bool = False,
-    contra: float = 1.2,
+    contra: float = 1.4,
     drrep: int = 24,
     planes: PlanesT = 0,
     **kwargs: Any,
