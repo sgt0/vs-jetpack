@@ -140,9 +140,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         if backend is None:
             _fp16 = self.kwargs.pop("fp16", True)
-            _default_args = KwargsT(
-                fp16=_fp16, output_format=int(_fp16), use_cuda_graph=True, use_cublas=True, heuristic=True
-            )
+            _default_args = KwargsT(fp16=_fp16, output_format=int(_fp16), use_cuda_graph=True, use_cublas=True)
             self.backend = autoselect_backend(**_default_args | self.kwargs)
         else:
             self.backend = backend
