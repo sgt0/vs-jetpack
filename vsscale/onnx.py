@@ -206,7 +206,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         if 0 not in {clip.width, clip.height}:
             scaled = self.inference(wclip, **inference_kwargs)
         else:
-            if not isinstance(self.backend, Backend.TRT):
+            if not isinstance(self.backend, (Backend.TRT, Backend.TRT_RTX)):
                 raise CustomValueError(
                     "Variable resolution clips can only be processed with TRT Backend!", self.__class__, self.backend
                 )
