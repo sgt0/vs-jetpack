@@ -32,7 +32,7 @@ def expr_func(
     clips: vs.VideoNode | Sequence[vs.VideoNode],
     expr: str | Sequence[str],
     format: HoldsVideoFormatT | VideoFormatT | None = None,
-    opt: bool | None = None,
+    opt: bool = False,
     boundary: bool = True,
     func: FuncExceptT | None = None,
 ) -> ConstantFormatVideoNode:
@@ -67,7 +67,6 @@ def expr_func(
         assert check_variable_format(clips, func)
 
     fmt = get_video_format(format).id if format is not None else None
-    opt = all(clip.format.sample_type == vs.INTEGER for clip in clips) if opt is None else opt
 
     try:
         return core.akarin.Expr(clips, expr, fmt, opt, boundary)

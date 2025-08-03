@@ -334,9 +334,7 @@ class SingleMatrix(MatrixEdgeDetect, ABC):
 
 class EuclideanDistance(MatrixEdgeDetect, ABC):
     def _merge_edge(self, clips: Sequence[ConstantFormatVideoNode], **kwargs: Any) -> ConstantFormatVideoNode:
-        return norm_expr(
-            clips, "x dup * y dup * + sqrt 0 range_max clamp", kwargs.get("planes"), opt=False, func=self.__class__
-        )
+        return norm_expr(clips, "x dup * y dup * + sqrt 0 range_max clamp", kwargs.get("planes"), func=self.__class__)
 
 
 class Max(MatrixEdgeDetect, ABC):
