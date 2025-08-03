@@ -161,9 +161,9 @@ def mc_degrain(
 
     blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
     thsad_recalc = fallback(thsad_recalc, round((thsad[0] if isinstance(thsad, tuple) else thsad) / 2))
-    mfilter = mfilter(clip) if callable(mfilter) else fallback(mfilter, clip)
 
     mv = MVTools(clip, vectors=vectors, planes=planes, **mv_args)
+    mfilter = mfilter(mv.clip) if callable(mfilter) else fallback(mfilter, mv.clip)
 
     if not vectors:
         mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize))
