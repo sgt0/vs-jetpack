@@ -8,8 +8,6 @@ from subprocess import Popen
 from tempfile import gettempdir
 from typing import Any, Callable, ClassVar, Iterable, Literal, Protocol, Sequence
 
-from jetpytools import norm_display_name
-
 from vstools import (
     MISSING,
     ChromaLocationT,
@@ -112,15 +110,12 @@ class Indexer(ABC):
         chroma_location: ChromaLocationT | None = None,
         color_range: ColorRangeT | None = None,
         field_based: FieldBasedT | None = None,
+        idx_props: bool = True,
         **kwargs: Any,
     ) -> vs.VideoNode:
-        return self._source(
-            [
-                self.source_func(f.to_str(), **self.indexer_kwargs | kwargs).std.SetFrameProps(
-                    IdxFilePath=f.to_str(), Idx=norm_display_name(self.__class__)
-                )
-                for f in self.normalize_filenames(file)
-            ],
+        nfiles = self.normalize_filenames(file)
+        clip = self._source(
+            [self.source_func(f.to_str(), **self.indexer_kwargs | kwargs) for f in nfiles],
             bits,
             matrix,
             transfer,
@@ -129,6 +124,10 @@ class Indexer(ABC):
             color_range,
             field_based,
         )
+        if idx_props:
+            clip = clip.std.SetFrameProps(IdxFilePath=[f.to_str() for f in nfiles], Idx=self.__class__.__name__)
+
+        return clip
 
 
 class ExternalIndexer(Indexer):
@@ -297,17 +296,20 @@ class ExternalIndexer(Indexer):
         chroma_location: ChromaLocationT | None = None,
         color_range: ColorRangeT | None = None,
         field_based: FieldBasedT | None = None,
+        idx_props: bool = True,
         **kwargs: Any,
     ) -> vs.VideoNode:
         index_files = self.index(self.normalize_filenames(file))
 
-        return self._source(
-            (self.source_func(idx_filename.to_str(), **kwargs) for idx_filename in index_files),
+        return super().source(
+            index_files,
             bits,
-            matrix,
-            transfer,
-            primaries,
-            chroma_location,
-            color_range,
-            field_based,
+            matrix=matrix,
+            transfer=transfer,
+            primaries=primaries,
+            chroma_location=chroma_location,
+            color_range=color_range,
+            field_based=field_based,
+            idx_props=idx_props,
+            **kwargs,
         )
