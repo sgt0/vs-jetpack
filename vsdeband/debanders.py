@@ -3,7 +3,7 @@ from __future__ import annotations
 from types import NoneType
 from typing import Any, Callable, Generic, Literal, Protocol, Sequence, TypeVar, overload
 
-from jetpytools import CustomValueError, P, R, fallback, to_arr
+from jetpytools import CustomValueError, P, R, to_arr
 
 from vsdenoise import PrefilterLike
 from vsexprtools import norm_expr
