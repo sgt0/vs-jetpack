@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import auto
 from typing import Any, Literal, overload
 
-from vsexprtools import ExprOp, ExprVars, combine, norm_expr
+from vsexprtools import ExprOp, ExprVars, norm_expr
 from vstools import (
     ConstantFormatVideoNode,
     CustomIntEnum,
@@ -81,10 +81,9 @@ class MeanMode(CustomIntEnum):
         match self:
             case MeanMode.POWER:
                 p = kwargs.get("p", -1)
-                return combine(
+                return ExprOp.ADD(
                     clips,
-                    ExprOp.ADD,
-                    f"neutral - {p} pow",
+                    suffix=f"neutral - {p} pow",
                     expr_suffix=f"{n_clips} / {1 / p} pow neutral +",
                     planes=planes,
                     func=func,
