@@ -640,9 +640,8 @@ def pfdeband(
     clip, bits = expect_bits(clip, 16)
 
     blur = prefilter(clip, planes=planes)
+    smooth = debander(blur, radius, thr, planes=planes)
+    limit = limit_filter(smooth, blur, ref, dark_thr, bright_thr, elast, planes)
+    merge = norm_expr([clip, blur, limit], "z x y - +", planes, func=pfdeband)
 
-    merge = norm_expr([clip, blur, debander(blur, radius, thr, planes=planes)], "z x y - +", planes, func=pfdeband)
-
-    limit = limit_filter(merge, clip, ref, dark_thr, bright_thr, elast, planes)
-
-    return depth(limit, bits)
+    return depth(merge, bits)
