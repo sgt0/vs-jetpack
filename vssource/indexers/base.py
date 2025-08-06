@@ -8,6 +8,8 @@ from subprocess import Popen
 from tempfile import gettempdir
 from typing import Any, Callable, ClassVar, Iterable, Literal, Protocol, Sequence
 
+from jetpytools import norm_display_name
+
 from vstools import (
     MISSING,
     ChromaLocationT,
@@ -113,7 +115,11 @@ class Indexer(ABC):
         **kwargs: Any,
     ) -> vs.VideoNode:
         return self._source(
-            [self.source_func(f.to_str(), **self.indexer_kwargs | kwargs) for f in self.normalize_filenames(file)],
+            [
+                self.source_func(f.to_str(), **self.indexer_kwargs | kwargs)
+                .std.SetFrameProps(IdxFilePath=f.to_str(), Idx=norm_display_name(self.__class__))
+                for f in self.normalize_filenames(file)
+            ],
             bits,
             matrix,
             transfer,
@@ -295,7 +301,11 @@ class ExternalIndexer(Indexer):
         index_files = self.index(self.normalize_filenames(file))
 
         return self._source(
-            (self.source_func(idx_filename.to_str(), **kwargs) for idx_filename in index_files),
+            (
+                self.source_func(idx_filename.to_str(), **kwargs)
+                .std.SetFrameProps(IdxFilePath=idx_filename.to_str(),Idx=norm_display_name(self.__class__))
+                for idx_filename in index_files
+            ),
             bits,
             matrix,
             transfer,
