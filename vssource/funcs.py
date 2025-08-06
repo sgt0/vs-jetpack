@@ -203,12 +203,8 @@ def source(
         else:
             raise CustomRuntimeError(f'None of the indexers you have installed work on this file! "{filepath}"')
 
-    props = {"IdxFilePath": str(filepath), "Idx": norm_display_name(indexer)}
-
     if name:
-        props["Name"] = name
-
-    clip = clip.std.SetFrameProps(**props)
+        clip = clip.std.SetFrameProps(Name=name)
 
     if ref:
         clip = match_clip(clip, ref, length=file.file_type is FileType.IMAGE)

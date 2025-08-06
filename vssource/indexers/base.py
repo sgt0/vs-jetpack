@@ -301,11 +301,7 @@ class ExternalIndexer(Indexer):
         index_files = self.index(self.normalize_filenames(file))
 
         return self._source(
-            (
-                self.source_func(idx_filename.to_str(), **kwargs)
-                .std.SetFrameProps(IdxFilePath=idx_filename.to_str(),Idx=norm_display_name(self.__class__))
-                for idx_filename in index_files
-            ),
+            (self.source_func(idx_filename.to_str(), **kwargs) for idx_filename in index_files),
             bits,
             matrix,
             transfer,
