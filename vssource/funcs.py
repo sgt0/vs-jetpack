@@ -4,8 +4,6 @@ from functools import partial
 from os import PathLike
 from typing import Any, Callable, Iterable, Literal, overload
 
-from jetpytools import norm_display_name
-
 from vstools import (
     ChromaLocationT,
     ColorRangeT,
