@@ -107,7 +107,7 @@ class MeanMode(CustomIntEnum):
                 return MeanMode.LEHMER(clips, p=2, planes=planes, func=func)
 
             case MeanMode.ARITHMETIC:
-                return combine(clips, ExprOp.ADD, expr_suffix=f"{n_clips} /", planes=planes, func=func)
+                return ExprOp.ADD(clips, expr_suffix=f"{n_clips} /", planes=planes, func=func)
 
             case MeanMode.MINIMUM:
                 return ExprOp.MIN(clips, planes=planes, func=func)
