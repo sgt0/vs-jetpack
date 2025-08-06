@@ -116,8 +116,9 @@ class Indexer(ABC):
     ) -> vs.VideoNode:
         return self._source(
             [
-                self.source_func(f.to_str(), **self.indexer_kwargs | kwargs)
-                .std.SetFrameProps(IdxFilePath=f.to_str(), Idx=norm_display_name(self.__class__))
+                self.source_func(f.to_str(), **self.indexer_kwargs | kwargs).std.SetFrameProps(
+                    IdxFilePath=f.to_str(), Idx=norm_display_name(self.__class__)
+                )
                 for f in self.normalize_filenames(file)
             ],
             bits,
