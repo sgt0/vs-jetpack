@@ -3,9 +3,10 @@ from __future__ import annotations
 from types import NoneType
 from typing import Any, Callable, Generic, Literal, Protocol, Sequence, TypeVar, overload
 
-from jetpytools import CustomValueError, P, R, to_arr
+from jetpytools import CustomValueError, P, R, fallback, to_arr
 
 from vsdenoise import PrefilterLike
+from vsexprtools import norm_expr
 from vsrgtools import gauss_blur, limit_filter
 from vstools import (
     ConstantFormatVideoNode,
@@ -545,7 +546,10 @@ def mdb_bilateral(
     radius: int = 16,
     thr: float = 260,
     debander: _DebanderFunc[Any] = f3k_deband,
-    **kwargs: Any,
+    dark_thr: float | Sequence[float] = (0.6, 0),
+    bright_thr: float | Sequence[float] = (0.6, 0),
+    elast: float | Sequence[float] = 3.0,
+    planes: PlanesT = None,
 ) -> vs.VideoNode:
     """
     Multi stage debanding, bilateral-esque filter.
@@ -557,7 +561,7 @@ def mdb_bilateral(
     from vsdeband import mdb_bilateral, f3k_deband
     from functools import partial
 
-    debanded = mdb_bilateral(clip, 17, 320, debander=partial(f3k_deband, split_planes=True))
+    debanded = mdb_bilateral(clip, 17, 320)
     ```
 
     Args:
@@ -565,6 +569,13 @@ def mdb_bilateral(
         radius: Banding detection range.
         thr: Banding detection thr(s) for planes.
         debander: Specifies what debander callable to use.
+        dark_thr: [limit_filter][vsrgtools.limit_filter] parameter.
+            Threshold (8-bit scale) to limit dark filtering diff.
+        bright_thr: [limit_filter][vsrgtools.limit_filter] parameter.
+            Threshold (8-bit scale) to limit bright filtering diff.
+        elast: [limit_filter][vsrgtools.limit_filter] parameter.
+            Elasticity of the soft threshold.
+        planes: Which planes to process.
 
     Returns:
         Debanded clip.
@@ -575,11 +586,11 @@ def mdb_bilateral(
 
     rad1, rad2, rad3 = round(radius * 4 / 3), round(radius * 2 / 3), round(radius / 3)
 
-    db1 = debander(clip, rad1, [max(1, th // 2) for th in to_arr(thr)], 0.0)
-    db2 = debander(db1, rad2, thr, 0)
-    db3 = debander(db2, rad3, thr, 0)
+    db1 = debander(clip, rad1, [max(1, th // 2) for th in to_arr(thr)], 0, planes)
+    db2 = debander(db1, rad2, thr, 0, planes)
+    db3 = debander(db2, rad3, thr, 0, planes)
 
-    limit = limit_filter(db3, db2, clip, **kwargs)
+    limit = limit_filter(db3, clip, db1, dark_thr, bright_thr, elast, planes)
 
     return depth(limit, bits)
 
@@ -598,8 +609,11 @@ def pfdeband(
     thr: float | Sequence[float] = 96,
     prefilter: PrefilterLike | _SupportPlanesParam = gauss_blur,
     debander: _DebanderFunc[Any] = f3k_deband,
+    ref: vs.VideoNode | None = None,
+    dark_thr: float | Sequence[float] = 0.3,
+    bright_thr: float | Sequence[float] = 0.3,
+    elast: float | Sequence[float] = 2.5,
     planes: PlanesT = None,
-    **kwargs: Any,
 ) -> vs.VideoNode:
     """
     Prefilter and deband a clip.
@@ -611,6 +625,14 @@ def pfdeband(
         prefilter: Prefilter used to blur the clip before debanding.
         debander: Specifies what debander callable to use.
         planes: Planes to process
+        ref: [limit_filter][vsrgtools.limit_filter] parameter.
+            Reference clip, to compute the weight to be applied on filtering diff.
+        dark_thr: [limit_filter][vsrgtools.limit_filter] parameter.
+            Threshold (8-bit scale) to limit dark filtering diff.
+        bright_thr: [limit_filter][vsrgtools.limit_filter] parameter.
+            Threshold (8-bit scale) to limit bright filtering diff.
+        elast: [limit_filter][vsrgtools.limit_filter] parameter.
+            Elasticity of the soft threshold.
 
     Returns:
         Debanded clip.
@@ -618,11 +640,9 @@ def pfdeband(
     clip, bits = expect_bits(clip, 16)
 
     blur = prefilter(clip, planes=planes)
-    diff = clip.std.MakeDiff(blur, planes=planes)
 
-    deband = debander(blur, radius, thr, planes=planes)
+    merge = norm_expr([clip, blur, debander(blur, radius, thr, planes=planes)], "z x y - +", planes, func=pfdeband)
 
-    merge = deband.std.MergeDiff(diff, planes=planes)
-    limit = limit_filter(merge, clip, planes=planes, **kwargs)
+    limit = limit_filter(merge, clip, ref, dark_thr, bright_thr, elast, planes)
 
     return depth(limit, bits)
