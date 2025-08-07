@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import Any, Callable, Concatenate, Generic, Iterable, overload
 
-from jetpytools import P0, R, SupportsString
+from jetpytools import P, R, SupportsString
 
 from vsexprtools import ExprOp, norm_expr
 from vskernels import Bilinear, Kernel, KernelLike
@@ -15,7 +15,6 @@ from vstools import (
     FrameRangeN,
     FrameRangesN,
     FuncExceptT,
-    P,
     PlanesT,
     check_ref_clip,
     check_variable,
@@ -446,13 +445,13 @@ class RektPartial(Generic[P, R]):
     def abs(
         self,
         clip: vs.VideoNode,
-        func: Callable[Concatenate[vs.VideoNode, P0], vs.VideoNode],
+        func: Callable[Concatenate[vs.VideoNode, ...], vs.VideoNode],
         width: int,
         height: int,
         offset_x: int = 0,
         offset_y: int = 0,
-        *args: P0.args,
-        **kwargs: P0.kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
         Creates a rectangular mask to apply fixes only within the masked area,
@@ -470,19 +469,19 @@ class RektPartial(Generic[P, R]):
             A new clip with the applied mask.
         """
         nargs = (clip, func, offset_x, clip.width - width - offset_x, offset_y, clip.height - height - offset_y)
-        return self._func(*nargs, *args, **kwargs)  # type: ignore
+        return self._func(*nargs, *args, **kwargs)  # type: ignore[return-value, arg-type]
 
 
 @RektPartial
 def rekt_partial(
     clip: vs.VideoNode,
-    func: Callable[Concatenate[vs.VideoNode, P0], vs.VideoNode],
+    func: Callable[Concatenate[vs.VideoNode, ...], vs.VideoNode],
     left: int = 0,
     right: int = 0,
     top: int = 0,
     bottom: int = 0,
-    *args: P0.args,
-    **kwargs: P0.kwargs,
+    *args: Any,
+    **kwargs: Any,
 ) -> ConstantFormatVideoNode:
     """
     Creates a rectangular mask to apply fixes only within the masked area,
@@ -502,8 +501,8 @@ def rekt_partial(
 
     assert check_variable(clip, rekt_partial._func)
 
-    def _filtered_func(clip: vs.VideoNode, *args: P0.args, **kwargs: P0.kwargs) -> ConstantFormatVideoNode:
-        return func(clip, *args, **kwargs)  # type: ignore
+    def _filtered_func(clip: vs.VideoNode, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
+        return func(clip, *args, **kwargs)  # type: ignore[return-value]
 
     if left == top == right == bottom == 0:
         return _filtered_func(clip, *args, **kwargs)
