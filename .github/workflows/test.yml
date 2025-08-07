@@ -80,7 +80,7 @@ jobs:
           flag-name: ${{ join(matrix.*, ' - ') }}
 
       - name: Post webhook for failure
-        if: failure()
+        if: failure() && github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
