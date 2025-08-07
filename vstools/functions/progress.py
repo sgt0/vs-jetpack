@@ -55,15 +55,6 @@ class RenderProgressCTX:
     ) -> None:
         self.progress.__exit__(exc_type, exc_val, exc_tb)
 
-    @overload
-    def update(self) -> None: ...
-
-    @overload
-    def update(self, *, advance: int, **kwargs: Any) -> None: ...
-
-    @overload
-    def update(self, completed: int, total: int, **kwargs: Any) -> None: ...
-
     def update(self, completed: int | None = None, total: int | None = None, advance: int = 1, **kwargs: Any) -> None:
         return self.progress.update(self.task_id, completed=completed, total=total, advance=advance, **kwargs)
 
