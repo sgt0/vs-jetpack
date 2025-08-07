@@ -174,7 +174,7 @@ def dehalo_alpha(
         # Limiting the dehalo clip to control the bright and dark halos
         work_clip = dehalo = norm_expr(
             [work_clip, dehalo],
-            "x y - D! x x y < D@ {darkstr} * D@ {brightstr} * ? -",
+            "x x y - dup {brightstr} * dup1 {darkstr} * ? -",
             planes,
             func=util.func,
             darkstr=darkstr_i,

@@ -511,7 +511,7 @@ def fine_dehalo2(
     if darkstr != brightstr != 1.0:
         dehaloed = norm_expr(
             [work_clip, dehaloed],
-            "x y - D! x x y < D@ {darkstr} * D@ {brightstr} * ? -",
+            "x x y - dup {brightstr} * dup1 {darkstr} * ? -",
             func=func,
             darkstr=darkstr,
             brightstr=brightstr,
