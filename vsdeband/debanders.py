@@ -546,8 +546,8 @@ def mdb_bilateral(
     radius: int = 16,
     thr: float = 260,
     debander: _DebanderFunc[Any] = f3k_deband,
-    dark_thr: float | Sequence[float] = (0.6, 0),
-    bright_thr: float | Sequence[float] = (0.6, 0),
+    dark_thr: float | Sequence[float] = 0.6,
+    bright_thr: float | Sequence[float] = 0.6,
     elast: float | Sequence[float] = 3.0,
     planes: PlanesT = None,
 ) -> vs.VideoNode:
