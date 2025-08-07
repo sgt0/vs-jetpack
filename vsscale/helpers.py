@@ -4,9 +4,10 @@ from dataclasses import dataclass
 from functools import partial
 from math import ceil, floor
 from types import NoneType
-from typing import Any, Callable, NamedTuple, Self, TypeAlias, overload
+from typing import Any, Callable, NamedTuple, TypeAlias, overload
 
 from jetpytools import FuncExceptT, mod_x
+from typing_extensions import Self
 
 from vskernels import Bilinear, Point, Scaler, ScalerLike
 from vstools import FunctionUtil, KwargsT, Resolution, VSFunctionNoArgs, get_w, mod2, vs

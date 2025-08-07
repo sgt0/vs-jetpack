@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Iterable, Iterator, MutableMapping, Self, TypedDict, overload
+from typing import Any, Iterable, Iterator, MutableMapping, TypedDict, overload
 
-from typing_extensions import deprecated
+from typing_extensions import Self, deprecated
 
 from vstools import T1, T2, KwargsT, PlanesT, SupportsKeysAndGetItem, VSFunctionNoArgs, classproperty, vs, vs_object
 

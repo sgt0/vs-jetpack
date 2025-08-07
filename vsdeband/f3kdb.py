@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, NamedTuple, NoReturn, Self, overload
+from typing import Any, Literal, NamedTuple, NoReturn, overload
 
-from typing_extensions import deprecated
+from typing_extensions import Self, deprecated
 
 from vstools import (
     CustomIntEnum,
