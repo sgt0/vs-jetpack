@@ -32,19 +32,10 @@ def limit_filter(
     Returns:
         Limited clip.
     """
-    ref = fallback(ref, src)
-
-    base_expr = "x y - DIFF! x z - abs DIFF_REF_ABS!"
-    dark_expr = (
-        "{dark_thr} {elast} * THR! 1 THR@ {dark_thr} - / SLOPE! "
-        "DIFF_REF_ABS@ {dark_thr} <= x DIFF_REF_ABS@ THR@ >= y "
-        "y DIFF@ THR@ DIFF_REF_ABS@ - * SLOPE@ * + ? ?"
-    )
-    bright_expr = dark_expr.replace("dark_thr", "bright_thr")
-
     return norm_expr(
-        [flt, src, ref],
-        f"{base_expr} x z < {dark_expr} {bright_expr} ?",
+        [flt, src, fallback(ref, src)],
+        "x z - dup {bright_thr} {dark_thr} ? THR1! abs DIFF! THR1@ {elast} * THR2! "
+        "DIFF@ THR1@ <= x DIFF@ THR2@ >= y y x y - THR2@ DIFF@ - * 1 THR2@ THR1@ - / * + ? ?",
         dark_thr=[scale_delta(x, 8, flt) for x in to_arr(dark_thr)],
         bright_thr=[scale_delta(x, 8, flt) for x in to_arr(bright_thr)],
         elast=elast,
