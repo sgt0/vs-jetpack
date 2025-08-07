@@ -59,7 +59,7 @@ doc = [
     # Additional packages to be documented.
     "vsadjust @ git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-adjust.git ; python_version >= '3.12'",
     "vspreview==0.15.0 ; python_version >= '3.12'",
-    "vstransitions==0.1.2 ; python_version >= '3.12'",
+    "vstransitions==0.1.3 ; python_version >= '3.12'",
 ]
 
 [build-system]
