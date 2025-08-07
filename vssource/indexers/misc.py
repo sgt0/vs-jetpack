@@ -20,7 +20,7 @@ def _add_handler_func_bs() -> None:
     from logging import WARNING, getLogger
 
     def handler_func_best_source(m_type: vs.MessageType, msg: str) -> None:
-        if all([m_type == vs.MESSAGE_TYPE_INFORMATION, msg.startswith("VideoSource "), getLogger().level <= WARNING]):
+        if m_type == vs.MESSAGE_TYPE_INFORMATION and msg.startswith("VideoSource ") and getLogger().level <= WARNING:
             _bs_msgs.add(msg)
             print(msg, end="\r", flush=True)
 
