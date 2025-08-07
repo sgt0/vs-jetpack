@@ -218,8 +218,8 @@ class AlphaBlur:
             func: An optional function to use for error handling.
             **kwargs: Optional keyword arguments:
 
-               - downscaler: Custom downscaler Scaler object.
-               - upscaler: Custom upscaler Scaler object.
+                   - downscaler: Custom downscaler Scaler object.
+                   - upscaler: Custom upscaler Scaler object.
         """
         self.rx = rx
         self.ry = self.rx if ry is None else ry

@@ -350,7 +350,7 @@ def fine_dehalo(
         thlima: Maximum threshold for the inclusion of additional, less distinct edges.
         exclude: Whether to exclude edges that are too close together.
         edgeproc: If greater than 0, adds the edge mask into the final processing. Defaults to 0.0.
-        contra: Contra-sharpening level in [contrasharpening_dehalo][vsdehalo.contrasharpening_dehalo].
+        contra: Contra-sharpening level in [contrasharpening_dehalo][vsdehalo.contra.contrasharpening_dehalo].
         pre_ss: Scaling factor for supersampling before processing.
             If > 1.0, supersamples the clip with NNEDI3, applies dehalo processing, and then downscales back with Point.
         planes: Planes to process.
