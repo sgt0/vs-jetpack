@@ -35,7 +35,7 @@ def limit_filter(
     return norm_expr(
         [flt, src, fallback(ref, src)],
         "x z - dup {bright_thr} {dark_thr} ? THR1! abs DIFF! THR1@ {elast} * THR2! "
-        "DIFF@ THR1@ <= x DIFF@ THR2@ >= y y x y - THR2@ DIFF@ - * 1 THR2@ THR1@ - / * + ? ?",
+        "DIFF@ THR1@ <= x DIFF@ THR2@ >= y y x y - THR2@ DIFF@ - * THR2@ THR1@ - / + ? ?",
         dark_thr=[scale_delta(x, 8, flt) for x in to_arr(dark_thr)],
         bright_thr=[scale_delta(x, 8, flt) for x in to_arr(bright_thr)],
         elast=elast,
