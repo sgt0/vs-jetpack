@@ -16,7 +16,6 @@ import vsexprtools
 import vskernels
 import vsmasktools
 import vspreview
-import vspyplugin
 import vsrgtools
 import vsscale
 import vssource
@@ -35,7 +34,6 @@ MODULES = [
     vskernels,
     vsmasktools,
     vspreview,
-    vspyplugin,
     vsrgtools,
     vsscale,
     vssource,
