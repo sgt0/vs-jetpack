@@ -1,11 +1,12 @@
 import enum
 import typing
+import vapoursynth as vs
 from dataclasses import dataclass
 from fractions import Fraction
-import vapoursynth as vs
 
 if typing.TYPE_CHECKING:
     from vstools import ConstantFormatVideoNode
+
 __all__ = [
     "Backend",
     "BackendV2",
@@ -34,6 +35,12 @@ __all__ = [
     "flexible_inference",
 ]
 
+plugins_path: str
+trtexec_path: str
+migraphx_driver_path: str
+tensorrt_rtx_path: str
+models_path: str
+
 class Backend:
     @dataclass(frozen=False)
     class ORT_CPU:
@@ -41,6 +48,7 @@ class Backend:
         verbosity: int = ...
         fp16: bool = ...
         fp16_blacklist_ops: typing.Sequence[str] | None = ...
+        output_format: int = ...
         supports_onnx_serialization: bool = ...
 
     @dataclass(frozen=False)
@@ -123,6 +131,7 @@ class Backend:
         verbosity: int = ...
         fp16: bool = ...
         fp16_blacklist_ops: typing.Sequence[str] | None = ...
+        output_format: int = ...
         supports_onnx_serialization: bool = ...
 
     @dataclass(frozen=False)
@@ -149,6 +158,7 @@ class Backend:
         fp16: bool = ...
         fp16_blacklist_ops: typing.Sequence[str] | None = ...
         ml_program: int = ...
+        output_format: int = ...
         supports_onnx_serialization: bool = ...
 
     @dataclass(frozen=False)
