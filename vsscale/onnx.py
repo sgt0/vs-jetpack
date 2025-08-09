@@ -59,8 +59,9 @@ def _clean_keywords(kwargs: dict[str, Any], backend: Backend) -> dict[str, Any]:
 def autoselect_backend(**kwargs: Any) -> Backend:
     """
     Try to select the best backend for the current system.
-    If the system has an NVIDIA GPU: TRT > CUDA (ORT) > Vulkan > OpenVINO GPU
-    Else: DirectML (D3D12) > MIGraphX > Vulkan > CPU (ORT) > CPU OpenVINO
+
+    If the system has an NVIDIA GPU: TRT > TRT_RTX > DirectML (D3D12) > NCNN (Vulkan) > CUDA (ORT) > OpenVINO GPU.
+    Else: DirectML (D3D12) > MIGraphX > NCNN (Vulkan) > CPU (ORT) > CPU OpenVINO
 
     Args:
         **kwargs: Additional arguments to pass to the backend.
