@@ -128,6 +128,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
+        multiple: int = 1,
         max_instances: int = 2,
         *,
         kernel: KernelLike = Catrom,
@@ -146,6 +147,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
                 model's behavior may vary when they are used.
             tilesize: The size of each tile when splitting the image (if tiles are enabled).
             overlap: The size of overlap between tiles.
+            multiple: Multiple of the tiles.
             max_instances: Maximum instances to spawn when scaling a variable resolution clip.
             kernel: Base kernel to be used for certain scaling/shifting/resampling operations. Defaults to Catrom.
             scaler: Scaler used for scaling operations. Defaults to kernel.
@@ -170,6 +172,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         self.tiles = tiles
         self.tilesize = tilesize
         self.overlap = overlap
+        self.multiple = multiple
 
         if self.overlap is None:
             self.overlap_w = self.overlap_h = 8
@@ -265,7 +268,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
             "tilesize": self.tilesize,
             "width": clip.width,
             "height": clip.height,
-            "multiple": 1,
+            "multiple": self.multiple,
             "overlap_w": self.overlap_w,
             "overlap_h": self.overlap_h,
         } | kwargs
@@ -371,6 +374,7 @@ class BaseArtCNN(BaseOnnxScaler):
             tiles,
             tilesize,
             overlap,
+            1,
             max_instances,
             kernel=kernel,
             scaler=scaler,
@@ -745,6 +749,7 @@ class BaseWaifu2x(BaseOnnxScaler):
             tiles,
             tilesize,
             overlap,
+            1,
             max_instances,
             kernel=kernel,
             scaler=scaler,
@@ -1067,7 +1072,6 @@ class BaseDPIR(BaseOnnxScaler):
             **kwargs: Additional arguments to pass to the backend. See the vsmlrt backend's docstring for more details.
         """
         self.strength = strength
-        self.multiple = 8
 
         super().__init__(
             None,
@@ -1075,6 +1079,7 @@ class BaseDPIR(BaseOnnxScaler):
             tiles,
             tilesize,
             16 if overlap is None else overlap,
+            8,
             -1,
             kernel=kernel,
             scaler=scaler,
@@ -1093,9 +1098,6 @@ class BaseDPIR(BaseOnnxScaler):
         assert check_variable_resolution(clip, self.__class__)
 
         return super().scale(clip, width, height, shift, **kwargs)
-
-    def calc_tilesize(self, clip: vs.VideoNode, **kwargs: Any) -> tuple[tuple[int, int], tuple[int, int]]:
-        return super().calc_tilesize(clip, **{"multiple": self.multiple} | kwargs)
 
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         if get_color_family(clip) == vs.GRAY:
