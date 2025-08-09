@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import Field, asdict, fields, replace
 from importlib.util import find_spec
+from logging import DEBUG, debug, getLogger, warning
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
 
 from jetpytools import CustomImportError
@@ -183,6 +184,19 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         self.max_instances = max_instances
 
+        if getLogger().level <= DEBUG:
+            debug(f"{self}: Using {self.backend.__class__.__name__} backend")
+
+            valid_fields = _get_backend_fields(self.backend)
+
+            for k, v in asdict(self.backend).items():
+                debug(f"{self}: {k}={v}, default is {valid_fields[k].default}")
+
+            debug(f"{self}: User tiles: {self.tiles}")
+            debug(f"{self}: User tilesize: {self.tilesize}")
+            debug(f"{self}: User overlap: {(self.overlap_w, self.overlap_h)}")
+            debug(f"{self}: User multiple: {self.multiple}")
+
     def scale(
         self,
         clip: vs.VideoNode,
@@ -224,11 +238,17 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
                     ckwargs[k.removeprefix(prefix)] = kwargs.pop(k)
                     break
 
+        debug(f"{self}: Preprocess kwargs: {preprocess_kwargs}")
+        debug(f"{self}: Postprocess kwargs: {postprocess_kwargs}")
+        debug(f"{self}: Inference kwargs: {inference_kwargs}")
+
         wclip = self.preprocess_clip(clip, **preprocess_kwargs)
 
         if 0 not in {clip.width, clip.height}:
             scaled = self.inference(wclip, **inference_kwargs)
         else:
+            debug(f"{self}: Variable resolution clip detected!")
+
             if not isinstance(self.backend, (Backend.TRT, Backend.TRT_RTX)):
                 raise CustomValueError(
                     "Variable resolution clips can only be processed with TRT Backend!", self.__class__, self.backend
@@ -279,21 +299,30 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         """
         Performs preprocessing on the clip prior to inference.
         """
+        debug(f"{self}.pre: Before pp; Clip format is {clip.format!r}")
 
         clip = depth(clip, self._pick_precision(16, 32), vs.FLOAT, **kwargs)
+
+        debug(f"{self}.pre: After pp; Clip format is {clip.format!r}")
+
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Handles postprocessing of the model's output after inference.
         """
+        debug(f"{self}.post: Before pp; Clip format is {clip.format!r}")
 
-        return depth(
+        clip = depth(
             clip,
             input_clip,
             dither_type=DitherType.ORDERED if 0 in {clip.width, clip.height} else DitherType.AUTO,
             **kwargs,
         )
+
+        debug(f"{self}.post: After pp; Clip format is {clip.format!r}")
+
+        return clip
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         """
@@ -302,14 +331,20 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
 
         from vsmlrt import inference
 
-        tiles, overlaps = self.calc_tilesize(clip)
+        tilesize, overlaps = self.calc_tilesize(clip)
 
-        return inference(clip, self.model, overlaps, tiles, self.backend, **kwargs)
+        debug(f"{self}: Passing clip to inference: {clip.format!r}")
+        debug(f"{self}: Passing model: {self.model}")
+        debug(f"{self}: Passing tiles size: {tilesize}")
+        debug(f"{self}: Passing overlaps: {overlaps}")
+        debug(f"{self}: Passing extra kwargs: {kwargs}")
+
+        return inference(clip, self.model, overlaps, tilesize, self.backend, **kwargs)
 
     def _pick_precision(self, fp16: _IntT, fp32: _IntT) -> _IntT:
         from vsmlrt import Backend
 
-        return (
+        precision = (
             fp16
             if (isinstance(self.backend, _SupportsFP16) and self.backend.fp16)
             and isinstance(
@@ -317,6 +352,10 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
             )
             else fp32
         )
+
+        debug(f"{self}: Selecting precision: {get_video_format(precision) if precision > 32 else precision!r}")
+
+        return precision
 
 
 class GenericOnnxScaler(BaseOnnxScaler, partial_abstract=True):
