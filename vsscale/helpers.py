@@ -10,7 +10,7 @@ from jetpytools import FuncExceptT, mod_x
 from typing_extensions import Self
 
 from vskernels import Bilinear, Point, Scaler, ScalerLike
-from vstools import FunctionUtil, KwargsT, Resolution, VSFunctionNoArgs, get_w, mod2, vs
+from vstools import FunctionUtil, KwargsT, PlanesT, Resolution, VSFunctionNoArgs, get_w, mod2, vs
 
 __all__ = ["CropAbs", "CropRel", "ScalingArgs", "pre_ss", "scale_var_clip"]
 
@@ -285,6 +285,7 @@ def pre_ss(
     supersampler: ScalerLike = Bilinear,
     downscaler: ScalerLike = Point,
     mod: int = 4,
+    planes: PlanesT = None,
     func: FuncExceptT | None = None,
     **kwargs: Any,
 ) -> vs.VideoNode:
@@ -309,6 +310,7 @@ def pre_ss(
             Defaults to `Bilinear`.
         downscaler: Downscaler used for undoing the upscaling done by the supersampler. Defaults to `Point`.
         mod: Ensures the supersampled resolution is a multiple of this value. Defaults to 4.
+        planes: Which planes to process.
         func: An optional function to use for error handling.
         **kwargs: Additional keyword arguments passed to the provided `function`.
 
@@ -318,7 +320,7 @@ def pre_ss(
     if rfactor == 1.0:
         return function(clip, **kwargs)
 
-    func_util = FunctionUtil(clip, func or pre_ss)
+    func_util = FunctionUtil(clip, func or pre_ss, planes)
 
     ss = Scaler.ensure_obj(supersampler, func_util.func).scale(
         clip, mod_x(func_util.work_clip.width * rfactor, mod), mod_x(func_util.work_clip.height * rfactor, mod)
