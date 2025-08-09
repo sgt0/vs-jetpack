@@ -1107,7 +1107,7 @@ _DPIRColorModel: TypeAlias = int
 
 class BaseDPIR(BaseOnnxScaler):
     _model: ClassVar[tuple[_DPIRGrayModel, _DPIRColorModel]]
-    _static_kernel_radius = 2
+    _static_kernel_radius = 8
 
     def __init__(
         self,
@@ -1139,6 +1139,8 @@ class BaseDPIR(BaseOnnxScaler):
             shifter: Kernel used for shifting operations. Defaults to kernel.
             **kwargs: Additional arguments to pass to the backend. See the vsmlrt backend's docstring for more details.
         """
+        from vsmlrt import Backend
+
         self.strength = strength
 
         super().__init__(
@@ -1154,6 +1156,9 @@ class BaseDPIR(BaseOnnxScaler):
             shifter=shifter,
             **kwargs,
         )
+
+        if isinstance(self.backend, Backend.TRT) and not self.backend.force_fp16:
+            self.backend.custom_args.extend(["--precisionConstraints=obey", "--layerPrecisions=Conv_123:fp32"])
 
     def scale(
         self,
@@ -1193,31 +1198,44 @@ class BaseDPIR(BaseOnnxScaler):
         return clip
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        from vsmlrt import DPIR as mlrt_dpir  # noqa: N811
-        from vsmlrt import DPIRModel
+        from vsmlrt import DPIRModel, inference, models_path
 
-        args = (
-            self.tiles,
-            self.tilesize,
-            self.overlap,
-            DPIRModel(self._model[0] if clip.format.color_family == vs.GRAY else self._model[1]),
-            self.backend,
-        )
+        # Normalizing the strength clip
+        strength_fmt = clip.format.replace(color_family=vs.GRAY)
+
+        if isinstance(self.strength, vs.VideoNode):
+            self.strength = norm_expr(self.strength, "x 255 /", format=strength_fmt, func=self.__class__)
+        else:
+            self.strength = clip.std.BlankClip(format=strength_fmt.id, color=float(self.strength) / 255, keep=True)
+
+        debug(f"{self}: Passing strength clip format: {self.strength.format!r}")
+
+        # Get model name
+        self.model = (
+            SPath(models_path) / "dpir" / f"{DPIRModel(self._model[clip.format.color_family != vs.GRAY]).name}.onnx"
+        ).to_str()
+
+        # Basic inference args
+        tilesize, overlaps = self.calc_tilesize(clip)
+
+        debug(f"{self}: Passing model: {self.model}")
+        debug(f"{self}: Passing tiles size: {tilesize}")
+        debug(f"{self}: Passing overlaps: {overlaps}")
+        debug(f"{self}: Passing extra kwargs: {kwargs}")
+
+        # Padding
         padding = padder.mod_padding(clip, self.multiple, 0)
 
         if not any(padding) or kwargs.pop("no_pad", False):
-            return mlrt_dpir(clip, self.strength, *args)
+            return inference([clip, self.strength], self.model, overlaps, tilesize, self.backend, **kwargs)
 
         clip = padder.MIRROR(clip, *padding)
-        strength = padder.MIRROR(self.strength, *padding) if isinstance(self.strength, vs.VideoNode) else self.strength
+        strength = padder.MIRROR(self.strength, *padding)
 
-        inferenced = mlrt_dpir(clip, strength, *args)
-
-        return inferenced.std.Crop(*padding)
+        return inference([clip, strength], self.model, overlaps, tilesize, self.backend, **kwargs).std.Crop(*padding)
 
     def __vs_del__(self, core_id: int) -> None:
-        if not TYPE_CHECKING:
-            self.strength = None
+        del self.strength
 
 
 class DPIR(BaseDPIR):
