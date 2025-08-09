@@ -13,6 +13,7 @@ from jetpytools import KwargsT
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelLike, ScalerLike
 from vstools import (
+    ColorRange,
     ConstantFormatVideoNode,
     CustomValueError,
     DitherType,
@@ -259,7 +260,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         Performs preprocessing on the clip prior to inference.
         """
 
-        clip = depth(clip, self._pick_precision(16, 32), vs.FLOAT)
+        clip = depth(clip, self._pick_precision(16, 32), vs.FLOAT, **kwargs)
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -268,7 +269,10 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         """
 
         return depth(
-            clip, input_clip, dither_type=DitherType.ORDERED if 0 in {clip.width, clip.height} else DitherType.AUTO
+            clip,
+            input_clip,
+            dither_type=DitherType.ORDERED if 0 in {clip.width, clip.height} else DitherType.AUTO,
+            **kwargs,
         )
 
     def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -409,6 +413,7 @@ class BaseArtCNNChroma(BaseArtCNN):
                 clip.format.replace(
                     subsampling_h=0, subsampling_w=0, sample_type=vs.FLOAT, bits_per_sample=self._pick_precision(16, 32)
                 ),
+                **kwargs,
             )
             return limiter(clip, func=self.__class__)
 
@@ -714,7 +719,7 @@ class BaseWaifu2x(BaseOnnxScaler):
 
 class BaseWaifu2xRGB(BaseWaifu2x):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB)
+        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB, **kwargs)
         return limiter(clip, func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -1044,7 +1049,7 @@ class BaseDPIR(BaseOnnxScaler):
         if get_color_family(clip) == vs.GRAY:
             return super().preprocess_clip(clip, **kwargs)
 
-        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB)
+        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB, **kwargs)
 
         return limiter(clip, func=self.__class__)
 
