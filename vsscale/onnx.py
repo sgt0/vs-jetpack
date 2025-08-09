@@ -438,6 +438,11 @@ class BaseArtCNNLuma(BaseArtCNN):
         matrix: MatrixT | None = None,
         copy_props: bool = False,
     ) -> ConstantFormatVideoNode:
+        # Changes compared to BaseGenericScaler are:
+        # - extract luma if input clip is luma only is removed  since this is a no op here
+        # - Chroma planes are scaled accordingly with the artcnn'd luma,
+        #   avoiding getting a luma plane when passing a YUV clip.
+
         if (clip.width, clip.height) != (width, height):
             clip = self.scaler.scale(clip, width, height)  # type: ignore[assignment]
 
