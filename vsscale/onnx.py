@@ -5,11 +5,11 @@ This module implements scalers for ONNX models.
 from __future__ import annotations
 
 from abc import ABC
-from logging import warning
+from importlib.util import find_spec
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
 
-from jetpytools import KwargsT
-from typing_extensions import deprecated
+from jetpytools import CustomImportError
+from typing_extensions import Self, deprecated
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelLike, ScalerLike
@@ -108,6 +108,12 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     """
     Abstract generic scaler class for an ONNX model.
     """
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+        if find_spec("vsmlrt") is None:
+            raise CustomImportError(cls, "vsmlrt")
+
+        return super().__new__(cls, *args, **kwargs)
 
     def __init__(
         self,
