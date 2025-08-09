@@ -427,6 +427,7 @@ class ArtCNNModel(enum.IntEnum):
     ArtCNN_R8F64_Chroma = 9
     ArtCNN_C4F16 = 10
     ArtCNN_C4F16_DS = 11
+    ArtCNN_R16F96_Chroma = 12
 
 def ArtCNN(
     clip: vs.VideoNode,

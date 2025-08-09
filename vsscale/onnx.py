@@ -645,6 +645,22 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 11
 
+    class R16F96_Chroma(BaseArtCNNChroma):  # noqa: N801
+        """
+        The biggest and fancy chroma model. Shows almost biblical results on the right sources.
+
+        These don't double the input clip and rather just try to enhance the chroma using luma information.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        chroma_upscaled = ArtCNN.R16F96_Chroma().scale(clip)
+        ```
+        """
+
+        _model = 12
+
 
 class BaseWaifu2x(BaseOnnxScaler):
     scale_w2x: Literal[1, 2, 4]
