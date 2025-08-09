@@ -5,6 +5,7 @@ This module implements scalers for ONNX models.
 from __future__ import annotations
 
 from abc import ABC
+from dataclasses import Field, asdict, fields, replace
 from importlib.util import find_spec
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
 
@@ -53,8 +54,13 @@ class _SupportsFP16(Protocol):
     fp16: bool
 
 
-def _clean_keywords(kwargs: dict[str, Any], backend: Backend) -> dict[str, Any]:
-    return {k: v for k, v in kwargs.items() if k in backend.__dataclass_fields__}
+def _clean_keywords(kwargs: dict[str, Any], backend: Any) -> dict[str, Any]:
+    valid_fields = _get_backend_fields(backend)
+    return {k: v for k, v in kwargs.items() if k in valid_fields}
+
+
+def _get_backend_fields(backend: Any) -> dict[str, Field[Any]]:
+    return {f.name: f for f in fields(backend)}
 
 
 def autoselect_backend(**kwargs: Any) -> Backend:
@@ -118,7 +124,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     def __init__(
         self,
         model: SPathLike | None = None,
-        backend: Backend | None = None,
+        backend: Backend | type[Backend] | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -151,12 +157,15 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         if model is not None:
             self.model = str(SPath(model).resolve())
 
+        fp16 = self.kwargs.pop("fp16", True)
+        default_args = {"fp16": fp16, "output_format": int(fp16), "use_cuda_graph": True, "use_cublas": True}
+
         if backend is None:
-            _fp16 = self.kwargs.pop("fp16", True)
-            _default_args = KwargsT(fp16=_fp16, output_format=int(_fp16), use_cuda_graph=True, use_cublas=True)
-            self.backend = autoselect_backend(**_default_args | self.kwargs)
+            self.backend = autoselect_backend(**default_args | self.kwargs)
+        elif isinstance(backend, type):
+            self.backend = backend(**_clean_keywords(default_args | self.kwargs, backend))
         else:
-            self.backend = backend
+            self.backend = replace(backend, **_clean_keywords(self.kwargs, backend))
 
         self.tiles = tiles
         self.tilesize = tilesize
@@ -329,7 +338,7 @@ class BaseArtCNN(BaseOnnxScaler):
 
     def __init__(
         self,
-        backend: Backend | None = None,
+        backend: Backend | type[Backend] | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -699,7 +708,7 @@ class BaseWaifu2x(BaseOnnxScaler):
         self,
         scale: Literal[1, 2, 4] = 2,
         noise: Literal[-1, 0, 1, 2, 3] = -1,
-        backend: Backend | None = None,
+        backend: Backend | type[Backend] | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -1030,7 +1039,7 @@ class BaseDPIR(BaseOnnxScaler):
     def __init__(
         self,
         strength: SupportsFloat | vs.VideoNode = 10,
-        backend: Backend | None = None,
+        backend: Backend | type[Backend] | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
