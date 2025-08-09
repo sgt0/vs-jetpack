@@ -450,8 +450,8 @@ class ArtCNN(BaseArtCNNLuma):
     """
     Super-Resolution Convolutional Neural Networks optimised for anime.
 
-    A quick reminder that vs-mlrt does not ship these in the base package.\n
-    You will have to grab the extended models pack or get it from the repo itself.\n
+    A quick reminder that vs-mlrt does not ship these in the base package.
+    You will have to grab the extended models pack or get it from the repo itself.
     (And create an "ArtCNN" folder in your models folder yourself)
 
     https://github.com/Artoriuz/ArtCNN/releases/latest
@@ -470,7 +470,8 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F32(BaseArtCNNLuma):
         """
-        This has 4 internal convolution layers with 32 filters each.\n
+        This has 4 internal convolution layers with 32 filters each.
+
         If you need an even faster model.
 
         Example usage:
@@ -503,7 +504,8 @@ class ArtCNN(BaseArtCNNLuma):
     )
     class C16F64(BaseArtCNNLuma):
         """
-        Very fast and good enough for AA purposes but the onnx variant is officially deprecated.\n
+        Very fast and good enough for AA purposes but the onnx variant is officially deprecated.
+
         This has 16 internal convolution layers with 64 filters each.
 
         ONNX files available at https://github.com/Artoriuz/ArtCNN/tree/388b91797ff2e675fd03065953cc1147d6f972c2/ONNX
@@ -538,7 +540,8 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
-        The smaller of the two chroma models.\n
+        The smaller of the two chroma models.
+
         These don't double the input clip and rather just try to enhance the chroma using luma information.
 
         Example usage:
@@ -557,7 +560,8 @@ class ArtCNN(BaseArtCNNLuma):
     )
     class C16F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
-        The bigger of the two chroma models.\n
+        The bigger of the two chroma models.
+
         These don't double the input clip and rather just try to enhance the chroma using luma information.
 
         Example usage:
@@ -572,7 +576,8 @@ class ArtCNN(BaseArtCNNLuma):
 
     class R16F96(BaseArtCNNLuma):
         """
-        The biggest model. Can compete with or outperform Waifu2x Cunet.\n
+        The biggest model. Can compete with or outperform Waifu2x Cunet.
+
         Also quite a bit slower but is less heavy on vram.
 
         Example usage:
@@ -615,7 +620,8 @@ class ArtCNN(BaseArtCNNLuma):
 
     class R8F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
-        The new and fancy big chroma model.\n
+        The new and fancy big chroma model.
+
         These don't double the input clip and rather just try to enhance the chroma using luma information.
 
         Example usage:
@@ -630,8 +636,9 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F16(BaseArtCNNLuma):
         """
-        This has 4 internal convolution layers with 16 filters each.\n
-        The currently fastest variant. Not really recommended for any filtering.\n
+        This has 4 internal convolution layers with 16 filters each.
+
+        The currently fastest variant. Not really recommended for any filtering.
         Should strictly be used for real-time applications and even then the other non R ones should be fast enough...
 
         Example usage:
