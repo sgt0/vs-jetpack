@@ -720,9 +720,17 @@ class BaseWaifu2xRGB(BaseWaifu2x):
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         assert check_variable_format(clip, self.__class__)
 
-        if clip.format != get_video_format(input_clip):
-            kwargs = {"dither_type": DitherType.ORDERED} | kwargs
-            clip = self.kernel.resample(clip, input_clip, Matrix.from_video(input_clip, func=self.__class__), **kwargs)
+        if get_video_format(clip) != get_video_format(input_clip):
+            kwargs = (
+                dict[str, Any](
+                    format=input_clip,
+                    matrix=Matrix.from_video(input_clip, func=self.__class__),
+                    range=ColorRange.from_video(input_clip, func=self.__class__),
+                    dither_type=DitherType.ORDERED,
+                )
+                | kwargs
+            )
+            clip = self.kernel.resample(clip, **kwargs)
 
         return clip
 
@@ -1044,8 +1052,16 @@ class BaseDPIR(BaseOnnxScaler):
         assert check_variable_format(clip, self.__class__)
 
         if get_video_format(clip) != get_video_format(input_clip):
-            kwargs = {"dither_type": DitherType.ORDERED} | kwargs
-            clip = self.kernel.resample(clip, input_clip, Matrix.from_video(input_clip, func=self.__class__), **kwargs)
+            kwargs = (
+                dict[str, Any](
+                    format=input_clip,
+                    matrix=Matrix.from_video(input_clip, func=self.__class__),
+                    range=ColorRange.from_video(input_clip, func=self.__class__),
+                    dither_type=DitherType.ORDERED,
+                )
+                | kwargs
+            )
+            clip = self.kernel.resample(clip, **kwargs)
 
         return clip
 
