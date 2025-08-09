@@ -302,7 +302,7 @@ def fine_dehalo(
     # Final post processing
     contra: float = 0.0,
     # Misc params
-    pre_ss: float | dict[str, Any] = 1.0,
+    pre_ss: int | dict[str, Any] = 1,
     planes: PlanesT = 0,
     attach_masks: bool = False,
     func: FuncExceptT | None = None,
@@ -366,7 +366,7 @@ def fine_dehalo(
 
     assert check_progressive(clip, func_util.func)
 
-    if isinstance(pre_ss, dict) or pre_ss > 1.0:
+    if isinstance(pre_ss, dict) or pre_ss > 1:
         pre_kwargs = (
             pre_ss
             if isinstance(pre_ss, dict)
@@ -403,6 +403,7 @@ def fine_dehalo(
                 **kwargs,
             ),
             **pre_kwargs,
+            planes=planes,
             func=func_util.func,
         )
 
