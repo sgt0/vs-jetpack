@@ -407,8 +407,10 @@ class BaseArtCNN(BaseOnnxScaler):
             shifter: Kernel used for shifting operations. Defaults to kernel.
             **kwargs: Additional arguments to pass to the backend. See the vsmlrt backend's docstring for more details.
         """
+        from vsmlrt import ArtCNNModel, models_path
+
         super().__init__(
-            None,
+            (SPath(models_path) / "ArtCNN" / f"{ArtCNNModel(self._model).name}.onnx").to_str(),
             backend,
             tiles,
             tilesize,
@@ -420,12 +422,6 @@ class BaseArtCNN(BaseOnnxScaler):
             shifter=shifter,
             **kwargs,
         )
-
-    def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        from vsmlrt import ArtCNN as mlrt_ArtCNN
-        from vsmlrt import ArtCNNModel
-
-        return mlrt_ArtCNN(clip, self.tiles, self.tilesize, self.overlap, ArtCNNModel(self._model), self.backend)
 
 
 class BaseArtCNNLuma(BaseArtCNN):
@@ -464,20 +460,53 @@ class BaseArtCNNLuma(BaseArtCNN):
 class BaseArtCNNChroma(BaseArtCNN):
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         assert check_variable_format(clip, self.__class__)
+        assert clip.format.color_family == vs.YUV
 
         if clip.format.subsampling_h != 0 or clip.format.subsampling_w != 0:
             chroma_scaler = Kernel.ensure_obj(kwargs.pop("chroma_scaler", Bilinear))
 
-            clip = chroma_scaler.resample(
-                clip,
-                clip.format.replace(
-                    subsampling_h=0, subsampling_w=0, sample_type=vs.FLOAT, bits_per_sample=self._pick_precision(16, 32)
-                ),
-                **kwargs,
+            format = clip.format.replace(
+                subsampling_h=0,
+                subsampling_w=0,
+                sample_type=vs.FLOAT,
+                bits_per_sample=self._pick_precision(16, 32),
             )
-            return limiter(clip, func=self.__class__)
+            dither_type = DitherType.ORDERED if DitherType.should_dither(clip.format, format) else DitherType.NONE
 
-        return super().preprocess_clip(clip, **kwargs)
+            debug(f"{self}.pre: Before pp; Clip format is {clip.format!r}")
+
+            clip = limiter(
+                chroma_scaler.resample(clip, **dict[str, Any](format=format, dither_type=dither_type) | kwargs),
+                func=self.__class__,
+            )
+
+            debug(f"{self}.pre: Before pp; Clip format is {clip.format!r}")
+
+            return norm_expr(clip, "x 0.5 +", [1, 2], func=self.__class__)
+
+        return super().preprocess_clip(norm_expr(clip, "x 0.5 +", [1, 2], func=self.__class__), **kwargs)
+
+    def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        clip = norm_expr(clip, "x 0.5 -", [1, 2], func=self.__class__)
+        return super().postprocess_clip(clip, input_clip, **kwargs)
+
+    def inference(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        from vsmlrt import flexible_inference
+
+        tilesize, overlaps = self.calc_tilesize(clip)
+
+        debug(f"{self}: Passing clip to inference: {clip.format!r}")
+        debug(f"{self}: Passing model: {self.model}")
+        debug(f"{self}: Passing tiles size: {tilesize}")
+        debug(f"{self}: Passing overlaps: {overlaps}")
+        debug(f"{self}: Passing extra kwargs: {kwargs}")
+
+        u, v = flexible_inference(clip, self.model, overlaps, tilesize, self.backend, **kwargs)
+
+        debug(f"{self}: Inferenced clip: {u.format!r}")
+        debug(f"{self}: Inferenced clip: {v.format!r}")
+
+        return core.std.ShufflePlanes([clip, u, v], [0, 0, 0], vs.YUV, clip)
 
     def _finish_scale(
         self,
