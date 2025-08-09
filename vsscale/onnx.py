@@ -9,6 +9,7 @@ from logging import warning
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
 
 from jetpytools import KwargsT
+from typing_extensions import deprecated
 
 from vsexprtools import norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelLike, ScalerLike
@@ -496,6 +497,10 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 1
 
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
+        category=DeprecationWarning,
+    )
     class C16F64(BaseArtCNNLuma):
         """
         Very fast and good enough for AA purposes but the onnx variant is officially deprecated.\n
@@ -513,6 +518,10 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 2
 
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
+        category=DeprecationWarning,
+    )
     class C16F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
         The same as C16F64 but intended to also sharpen and denoise.
@@ -542,6 +551,10 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 4
 
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
+        category=DeprecationWarning,
+    )
     class C16F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
         The bigger of the two chroma models.\n
