@@ -23,7 +23,7 @@ jobs:
     env:
       PROD: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: qoomon/actions--context@v3
         id: context
