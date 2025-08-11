@@ -155,9 +155,9 @@ class FineDehalo(Generic[P, R]):
 
             InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
 
-            work_clip = get_y(clip) if planes == [0] else clip
             thmif, thmaf, thlimif, thlimaf = [scale_mask(x, 8, clip) for x in [thmi, thma, thlimi, thlima]]
             planes = normalize_planes(clip, planes)
+            work_clip = get_y(clip) if planes == [0] else clip
 
             # Main edges #
             # Basic edge detection, thresholding will be applied later.
