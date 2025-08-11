@@ -28,7 +28,7 @@ jobs:
         vszip-version: [7]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: qoomon/actions--context@v3
         id: context
