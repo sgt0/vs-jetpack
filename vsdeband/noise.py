@@ -50,6 +50,7 @@ Tuple representing lower and upper edge limits for each plane.
 Format: (low, high)
 
 Each element can be:
+
 - A float: the same limit is applied to all planes.
 - A sequence of floats: individual limits for each plane.
 - True: use the default legal range per plane.
