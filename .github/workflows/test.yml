@@ -78,6 +78,7 @@ jobs:
           format: cobertura
           parallel: true
           flag-name: ${{ join(matrix.*, ' - ') }}
+          fail-on-error: false
 
       - name: Post webhook for failure
         if: failure() && github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login
@@ -98,3 +99,4 @@ jobs:
         uses: coverallsapp/github-action@v2.3.6
         with:
           parallel-finished: true
+          fail-on-error: false
