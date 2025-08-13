@@ -7,7 +7,9 @@
   -#}
   {% if config.show_source and function.source %}
     <details class="quote">
-      <summary>Source code</summary>
+      <summary>{{ lang.t("Source code in") }} <code>
+        {{ function.relative_package_filepath }}
+      </code></summary>
       {{ function.source|highlight(language="python", linestart=function.lineno or 0, linenums=True) }}
     </details>
   {% endif %}
