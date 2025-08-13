@@ -73,7 +73,7 @@ class CustomMaskFromClipsAndRanges(GeneralMask, _BaseCMaskCar):
     """
 
     processing: VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = field(
-        default=core.lazy.std.Binarize, kw_only=True
+        default=core.lazy.std.BinarizeMask, kw_only=True
     )
     idx: Indexer | Type[Indexer] = field(default=IMWRI, kw_only=True)
 
@@ -488,7 +488,7 @@ class HardsubASS(HardsubMask):
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         mask = core.sub.TextFile(ref, self.filename, fontdir=self.fontdir, blend=False).std.PropToClip("_Alpha")
 
-        mask = mask.std.Binarize(1)
+        mask = mask.std.BinarizeMask(1)
 
         mask = iterate(mask, core.lazy.std.Maximum, 3)
         mask = iterate(mask, core.lazy.std.Inflate, 3)

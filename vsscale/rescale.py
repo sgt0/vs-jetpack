@@ -576,7 +576,7 @@ class Rescale(RescaleBase):
                 else:
                     weights, thr = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1], 0.24
 
-                credit_mask = BlurMatrix.custom(weights, ConvMode.T)(credit_mask, scenechange=True).std.Binarize(
+                credit_mask = BlurMatrix.custom(weights, ConvMode.T)(credit_mask, scenechange=True).std.BinarizeMask(
                     scale_mask(thr, 32, credit_mask)
                 )
 

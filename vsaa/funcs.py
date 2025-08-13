@@ -131,7 +131,7 @@ def clamp_aa(
             bin_thr = scale_mask(mthr, 32, clip)
 
             mask = EdgeDetect.ensure_obj(mask).edgemask(func.work_clip)
-            mask = box_blur(mask.std.Binarize(bin_thr).std.Maximum())
+            mask = box_blur(mask.std.BinarizeMask(bin_thr).std.Maximum())
             mask = mask.std.Minimum().std.Deflate()
 
         clamped = func.work_clip.std.MaskedMerge(clamped, mask, func.norm_planes)
@@ -203,7 +203,7 @@ def based_aa(
 
     if mask is not False and not isinstance(mask, vs.VideoNode):
         mask = EdgeDetect.ensure_obj(mask, based_aa).edgemask(func.work_clip, 0)
-        mask = mask.std.Binarize(scale_mask(mask_thr, 8, func.work_clip))
+        mask = mask.std.BinarizeMask(scale_mask(mask_thr, 8, func.work_clip))
 
         mask = box_blur(mask.std.Maximum())
         mask = limiter(mask, func=based_aa)
