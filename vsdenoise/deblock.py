@@ -205,6 +205,8 @@ def deblock_qed(
     Returns:
         Deblocked clip
     """
+    from vsdeinterlace import weave
+
     assert check_variable(clip, deblock_qed)
 
     fieldbased = FieldBased.from_video(clip, func=deblock_qed)
@@ -236,7 +238,7 @@ def deblock_qed(
             deblocked = join(deblocked, strong)
 
     if fieldbased.is_inter:
-        deblocked = core.std.DoubleWeave(Box().scale(deblocked, height=clip.height // 2), fieldbased.is_tff)[::2]
+        deblocked = weave(Box().scale(deblocked, height=clip.height // 2), fieldbased)
 
     return deblocked
 
@@ -266,6 +268,7 @@ def mpeg2stinx(
     Returns:
         Clip with cross-field noise reduced.
     """
+    from vsdeinterlace import weave
 
     def _crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
         clip = core.std.Interleave([clip] * 2)
@@ -276,7 +279,7 @@ def mpeg2stinx(
             inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
             repaired = MeanMode.MEDIAN([clip, inpand, expand])
 
-        return repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)).std.DoubleWeave(tff)[::2]
+        return weave(repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)), tff)
 
     def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode, adj: vs.VideoNode | None) -> vs.VideoNode:
         if limit is None:
@@ -286,7 +289,7 @@ def mpeg2stinx(
 
         diff = norm_expr([core.std.Interleave([src] * 2), adj], "x y - abs", func=mpeg2stinx).std.SeparateFields(tff)
         diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))])
-        diff = Morpho.expand(diff, sw=2, sh=1).std.DoubleWeave(tff)[::2]
+        diff = weave(Morpho.expand(diff, sw=2, sh=1), tff)
 
         return norm_expr([flt, src, diff], "z {limit} * LIM! x y LIM@ - y LIM@ + clip", limit=limit, func=mpeg2stinx)
 

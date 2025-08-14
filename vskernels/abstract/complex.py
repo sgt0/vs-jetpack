@@ -743,6 +743,8 @@ class ComplexDescaler(LinearDescaler):
         sample_grid_model = SampleGridModel(sample_grid_model)
 
         if field_based.is_inter:
+            from vsdeinterlace import reweave
+
             shift_y, shift_x = _descale_shift_norm(shift, False, self.descale)
 
             kwargs_tf, shift = sample_grid_model.for_src(clip, width, height, (shift_y[0], shift_x[0]), **kwargs)
@@ -766,9 +768,7 @@ class ComplexDescaler(LinearDescaler):
                 fields[1::2],
                 **de_kwargs_bf | {"src_top": de_kwargs_bf.get("src_top", 0.0) - field_shift},
             )
-            interleaved = vs.core.std.Interleave([descaled_tf, descaled_bf])
-
-            descaled = interleaved.std.DoubleWeave(field_based.is_tff)[::2]
+            descaled = reweave(descaled_tf, descaled_bf, field_based)
         else:
             shift = _descale_shift_norm(shift, True, self.descale)
 

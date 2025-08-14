@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vstools import ConstantFormatVideoNode, FieldBased, FieldBasedT, check_variable, core, vs
 
-__all__ = ["get_field_difference", "reinterlace", "reweave", "telecine_patterns"]
+__all__ = ["get_field_difference", "reinterlace", "reweave", "telecine_patterns", "weave"]
 
 
 def telecine_patterns(clipa: vs.VideoNode, clipb: vs.VideoNode, length: int = 5) -> list[ConstantFormatVideoNode]:
@@ -27,18 +27,24 @@ def get_field_difference(clip: vs.VideoNode, tff: FieldBasedT | bool | None = No
     )
 
 
-def reinterlace(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> ConstantFormatVideoNode:
-    assert check_variable(clip, reinterlace)
+def weave(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> ConstantFormatVideoNode:
+    assert check_variable(clip, weave)
 
-    tff = FieldBased.from_param_or_video(tff, clip, True, reinterlace).is_tff
+    tff = FieldBased.from_param_or_video(tff, clip, True, weave).is_tff
 
-    return clip.std.SeparateFields(tff).std.SelectEvery(4, (0, 3)).std.DoubleWeave(tff)[::2]
+    return clip.std.DoubleWeave(tff)[::2]
 
 
 def reweave(clipa: vs.VideoNode, clipb: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> ConstantFormatVideoNode:
     assert check_variable(clipa, reweave)
     assert check_variable(clipb, reweave)
 
-    tff = FieldBased.from_param_or_video(tff, clipa, True, reweave).is_tff
+    return weave(core.std.Interleave([clipa, clipb]), tff)
 
-    return core.std.Interleave([clipa, clipb]).std.SelectEvery(4, (0, 1, 3, 2)).std.DoubleWeave(tff)[::2]
+
+def reinterlace(clip: vs.VideoNode, tff: FieldBasedT | bool | None = None) -> ConstantFormatVideoNode:
+    assert check_variable(clip, reinterlace)
+
+    tff = FieldBased.from_param_or_video(tff, clip, True, reinterlace).is_tff
+
+    return weave(clip.std.SeparateFields(tff).std.SelectEvery(4, (0, 3)), tff)

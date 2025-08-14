@@ -878,7 +878,7 @@ class QTempGaussMC(vs_object):
                             )
                             noise_new = norm_expr([noise_max, noise_min, noise_new], "x y - z * range_size / y +")
 
-                            noise = core.std.Interleave([noise_source, noise_new]).std.DoubleWeave(self.tff)[::2]
+                            noise = reweave(noise_source, noise_new, self.tff)
 
                 if self.denoise_stabilize:
                     weight1, weight2 = self.denoise_stabilize
