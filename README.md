@@ -44,9 +44,10 @@ for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 |                                        | [imwri](https://github.com/vapoursynth/vs-imwri) | [chickendream](https://gitlab.com/EleonoreMizo/chickendream/) / [fgrain_cuda](https://github.com/AmusementClub/vs-fgrain-cuda) |
 |                                        | [carefulsource](https://github.com/wwww-wwww/carefulsource) | [vs-noise](https://github.com/wwww-wwww/vs-noise) |
 |                                        |                                        | [vivtc](https://github.com/vapoursynth/vivtc) |
-|                                        |                                        | [wnnm](https://github.com/WolframRhodium/VapourSynth-WNNM) |
+|                                        |                                        | [wnnm](https://github.com/AmusementClub/VapourSynth-WNNM) |
 |                                        |                                        | [bm3d](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D) / [bm3dcuda](https://github.com/WolframRhodium/VapourSynth-BM3DCUDA) |
 |                                        |                                        | [dctfilter](https://github.com/AmusementClub/VapourSynth-DCTFilter) |
+|                                        |                                        | [deblock](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Deblock) |
 |                                        |                                        | [mlrt](https://github.com/AmusementClub/vs-mlrt) |
 |                                        |                                        | [dfttest2](https://github.com/AmusementClub/vs-dfttest2) / [dfttest](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DFTTest) |
 |                                        |                                        | [mvtools](https://github.com/dubhater/vapoursynth-mvtools) / [mvtools-sf](https://github.com/IFeelBloated/vapoursynth-mvtools-sf) |
