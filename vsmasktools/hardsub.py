@@ -190,7 +190,7 @@ class HardsubMask(DeferredMask):
             )
             partials_dehardsubbed.append(partials_dehardsubbed[-1].std.MaskedMerge(p, dehardsub_masks[-1]))
 
-            masks[-1] = masks[-1].std.MaskedMerge(masks[-1].std.Invert(), masks[-2])
+            masks[-1] = masks[-1].std.MaskedMerge(masks[-1].std.InvertMask(), masks[-2])
 
         return partials_dehardsubbed, dehardsub_masks
 
