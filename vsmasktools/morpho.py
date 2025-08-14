@@ -666,30 +666,59 @@ class Morpho:
     def binarize(
         self,
         clip: vs.VideoNode,
-        midthr: float | list[float] | None = None,
-        lowval: float | list[float] | None = None,
-        highval: float | list[float] | None = None,
+        midthr: float | Sequence[float] | None = None,
+        lowval: float | Sequence[float] | None = None,
+        highval: float | Sequence[float] | None = None,
         planes: PlanesT = None,
     ) -> ConstantFormatVideoNode:
         """
-        Turns every pixel in the image into either lowval, if it's below midthr, or highval, otherwise.
+        Turns every pixel in the image into either `lowval`, if it's below `midthr`, or `highval` otherwise.
 
         Args:
             clip: Clip to process.
-            midthr: Defaults to the middle point of range allowed by the format. Can be specified for each plane
-                individually.
-            lowval: Value given to pixels that are below threshold. Can be specified for each plane individually.
-                Defaults to the lower bound of the format.
-            highval: Value given to pixels that are greater than or equal to threshold. Defaults to the maximum value
-                allowed by the format. Can be specified for each plane individually. Defaults to the upper bound of the
-                format.
-            planes: Specifies which planes will be processed. Any unprocessed planes will be simply copied.
+            midthr: Threshold separating `lowval` and `highval`. Defaults to the midpoint of the
+                format's range. Can be specified per plane.
+            lowval: Value assigned to pixels below `midthr`. Defaults to the lower bound of the
+                format's range. Can be specified per plane.
+            highval: Value assigned to pixels greater than or equal to `midthr`. Defaults to the
+                upper bound of the format's range. Can be specified per plane.
+            planes: Specifies which planes to process. Unprocessed planes are copied unchanged.
         """
         midthr, lowval, highval = (
             thr and [scale_value(t, 32, clip) for t in to_arr(thr)] for thr in (midthr, lowval, highval)
         )
 
         return core.std.Binarize(clip, midthr, lowval, highval, planes)
+
+    @inject_self
+    def binarize_mask(
+        self,
+        clip: vs.VideoNode,
+        midthr: float | Sequence[float] | None = None,
+        lowval: float | Sequence[float] | None = None,
+        highval: float | Sequence[float] | None = None,
+        planes: PlanesT = None,
+    ) -> ConstantFormatVideoNode:
+        """
+        Turns every pixel in the mask clip into either `lowval` if it's below `midthr`, or `highval` otherwise.
+
+        This variant is intended for use on mask clips where all planes share the same value range.
+
+        Args:
+            clip: Mask clip to process.
+            midthr: Threshold separating `lowval` and `highval`. Defaults to the midpoint of the
+                format's range. Can be specified per plane.
+            lowval: Value assigned to pixels below `midthr`. Defaults to the lower bound of the
+                format's range for mask clips. Can be specified per plane.
+            highval: Value assigned to pixels greater than or equal to `midthr`. Defaults to the
+                upper bound of the format's range for mask clips. Can be specified per plane.
+            planes: Specifies which planes to process. Unprocessed planes are copied unchanged.
+        """
+        midthr, lowval, highval = (
+            thr and [scale_value(t, 32, clip) for t in to_arr(thr)] for thr in (midthr, lowval, highval)
+        )
+
+        return core.std.BinarizeMask(clip, midthr, lowval, highval, planes)
 
     @classmethod
     def _morpho_xx_imum(
