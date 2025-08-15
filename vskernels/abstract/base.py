@@ -887,37 +887,6 @@ class Kernel(Scaler, Descaler, Resampler):
 
         return core.std.ShufflePlanes(shifted_planes, [0, 0, 0], clip.format.color_family)
 
-    @classmethod
-    def from_param(cls, kernel: KernelLike | None = None, /, func_except: FuncExceptT | None = None) -> type[Self]:
-        """
-        Resolve and return a kernel class from a string name, class type, or instance.
-
-        Args:
-            kernel: Kernel identifier as a string, class type, or instance. If None, defaults to the current class.
-            func_except: Function returned for custom error handling.
-
-        Returns:
-            The resolved kernel class.
-
-        Raises:
-            UnknownKernelError: If the kernel could not be identified.
-        """
-        return _base_from_param(cls, kernel, cls._err_class, func_except)
-
-    @classmethod
-    def ensure_obj(cls, kernel: KernelLike | None = None, /, func_except: FuncExceptT | None = None) -> Self:
-        """
-        Ensure that the given kernel input is returned as a kernel instance.
-
-        Args:
-            kernel: Kernel name, class, or instance. Defaults to current class if None.
-            func_except: Function returned for custom error handling.
-
-        Returns:
-            The resolved and instantiated kernel.
-        """
-        return _base_ensure_obj(cls, kernel, func_except)
-
     def get_params_args(
         self, is_descale: bool, clip: vs.VideoNode, width: int | None = None, height: int | None = None, **kwargs: Any
     ) -> dict[str, Any]:
