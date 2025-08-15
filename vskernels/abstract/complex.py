@@ -101,13 +101,13 @@ def _check_dynamic_keeparscaler_params(
 
 @overload
 def _descale_shift_norm(
-    shift: ShiftT, assume_progressive: Literal[True] = ..., func: FuncExceptT | None = None
+    shift: ShiftT, assume_progressive: Literal[True], func: FuncExceptT | None = None
 ) -> tuple[TopShift, LeftShift]: ...
 
 
 @overload
 def _descale_shift_norm(
-    shift: ShiftT, assume_progressive: Literal[False] = ..., func: FuncExceptT | None = None
+    shift: ShiftT, assume_progressive: Literal[False], func: FuncExceptT | None = None
 ) -> tuple[tuple[TopFieldTopShift, BotFieldTopShift], tuple[TopFieldLeftShift, BotFieldLeftShift]]: ...
 
 
