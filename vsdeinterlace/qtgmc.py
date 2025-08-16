@@ -949,7 +949,7 @@ class QTempGaussMC(vs_object):
             binomial_coeff = factorial(tr_f) // factorial(tr) // factorial(tr_f - tr)
             error_adj = 2**tr_f / (binomial_coeff + self.match_similarity * (2**tr_f - binomial_coeff))
 
-            return norm_expr([clip, ref], "y {adj} 1 + * x {adj} * -", adj=error_adj)
+            return norm_expr([clip, ref], "y 1 {adj} + * x {adj} * -", adj=error_adj)
 
         if self.input_type == self.InputType.INTERLACE:
             clip = reinterlace(clip, self.tff)
@@ -1023,7 +1023,7 @@ class QTempGaussMC(vs_object):
 
                 clamp = norm_expr(
                     [clip, source_min, source_max],
-                    "y z + 2 / AVG! AVG@ x {undershoot} - x {overshoot} + clip",
+                    "y z + 2 / x {undershoot} - x {overshoot} + clip",
                     undershoot=scale_delta(undershoot, 8, clip),
                     overshoot=scale_delta(overshoot, 8, clip),
                 )
@@ -1037,7 +1037,7 @@ class QTempGaussMC(vs_object):
 
             resharp = norm_expr(
                 [resharp, blurred_diff, BlurMatrix.BINOMIAL()(blurred_diff)],
-                "y neutral - Y! Y@ abs z neutral - abs < x Y@ + x ?",
+                "y neutral - dup abs z neutral - abs < swap x + x ?",
             )
 
         return resharp
@@ -1080,7 +1080,7 @@ class QTempGaussMC(vs_object):
         assert check_variable(clip, self._apply_noise_restore)
 
         if restore and hasattr(self, "noise"):
-            clip = norm_expr([clip, self.noise], "y neutral - {restore} * x +", restore=restore)
+            clip = norm_expr([clip, self.noise], "x y neutral - {restore} * +", restore=restore)
 
         return clip
 
