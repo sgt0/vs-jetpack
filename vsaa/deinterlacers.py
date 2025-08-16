@@ -266,7 +266,10 @@ class SuperSampler(AntiAliaser, Scaler, ABC):
         for x, dim in enumerate(dest_dimensions):
             is_width = (not x and self.transpose_first) or (not self.transpose_first and x)
 
-            while (clip.width if is_width else clip.height) < dim:
+            if is_width:
+                clip = self.transpose(clip)
+
+            while clip.height < dim:
                 delta = max(nshift[x], key=lambda y: abs(y))
                 tff = False if delta < 0 else True if delta > 0 else self.tff
                 offset = -0.25 if tff else 0.25
@@ -277,13 +280,10 @@ class SuperSampler(AntiAliaser, Scaler, ABC):
                     else:
                         nshift[x][y] = (nshift[x][y] + offset) * 2 - cloc[x] / subsampling[x]
 
-                if is_width:
-                    clip = self.transpose(clip)
-
                 clip = self._interpolate(clip, tff, False, True, **kwargs)
 
-                if is_width:
-                    clip = self.transpose(clip)
+            if is_width:
+                clip = self.transpose(clip)
 
         if not self.transpose_first:
             nshift.reverse()
