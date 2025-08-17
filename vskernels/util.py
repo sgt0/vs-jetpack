@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager, suppress
 from dataclasses import dataclass
-from functools import partial, wraps
+from functools import cache, partial, wraps
 from math import exp
 from types import GenericAlias
 from typing import (
@@ -79,6 +79,12 @@ __all__ = [
 ]
 
 
+@cache
+def _add_specializer_in_str(cls: BaseScalerSpecializerMeta) -> None:
+    if cls.__specializer__:
+        cls.__name__ += f"[{cls.__specializer__.__name__}]"
+
+
 class BaseScalerSpecializerMeta(BaseScalerMeta):
     """
     Meta class for BaseScalerSpecializer to handle specialization logic.
@@ -97,7 +103,6 @@ class BaseScalerSpecializerMeta(BaseScalerMeta):
         **kwargs: Any,
     ) -> _BaseScalerSpecializerMetaT:
         if specializer is not None:
-            name = f"{name}[{specializer.__name__}]"
             bases = (specializer, *bases)
             namespace["__orig_bases__"] = (specializer, *namespace["__orig_bases__"])
 
@@ -143,6 +148,10 @@ class BaseScalerSpecializer(BaseScaler, Generic[_BaseScalerT], metaclass=BaseSca
                 setattr(self, k, kwargs.pop(k))
 
         self.kwargs = kwargs
+
+    def __str__(self) -> str:
+        _add_specializer_in_str(self.__class__)
+        return super().__str__()
 
     def __class_getitem__(cls, base_scaler: Any) -> GenericAlias:
         """
