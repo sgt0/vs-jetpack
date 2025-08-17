@@ -845,6 +845,7 @@ def limiter(
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
+    mask: bool = False,
     planes: PlanesT = None,
     func: FuncExceptT | None = None,
 ) -> ConstantFormatVideoNode:
@@ -859,6 +860,7 @@ def limiter(
         max_val: Upper bound. Defaults to the highest allowed value for the input. Can be specified for each plane
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
+        mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
         planes: Planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
@@ -875,6 +877,7 @@ def limiter(
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
+    mask: bool = False,
     planes: PlanesT = None,
     func: FuncExceptT | None = None,
 ) -> Callable[P, ConstantFormatVideoNode]:
@@ -891,6 +894,7 @@ def limiter(
         max_val: Upper bound. Defaults to the highest allowed value for the input. Can be specified for each plane
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
+        mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
         planes: Planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
@@ -905,6 +909,7 @@ def limiter(
     min_val: float | Sequence[float] | None = None,
     max_val: float | Sequence[float] | None = None,
     tv_range: bool = False,
+    mask: bool = False,
     planes: PlanesT = None,
     func: FuncExceptT | None = None,
 ) -> Callable[[Callable[P, ConstantFormatVideoNode]], Callable[P, ConstantFormatVideoNode]]:
@@ -920,6 +925,7 @@ def limiter(
         max_val: Upper bound. Defaults to the highest allowed value for the input. Can be specified for each plane
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
+        mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
         planes: Planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
@@ -935,6 +941,7 @@ def limiter(
     max_val: float | Sequence[float] | None = None,
     *,
     tv_range: bool = False,
+    mask: bool = False,
     planes: PlanesT = None,
     func: FuncExceptT | None = None,
 ) -> Union[
@@ -953,6 +960,7 @@ def limiter(
         max_val: Upper bound. Defaults to the highest allowed value for the input. Can be specified for each plane
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
+        mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
         planes: Planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
@@ -965,7 +973,13 @@ def limiter(
         @wraps(_func)
         def _wrapper(*args: P.args, **kwargs: P.kwargs) -> ConstantFormatVideoNode:
             return limiter(
-                _func(*args, **kwargs), min_val, max_val, tv_range=tv_range, planes=planes, func=func or _func
+                _func(*args, **kwargs),
+                min_val,
+                max_val,
+                tv_range=tv_range,
+                mask=mask,
+                planes=planes,
+                func=func or _func,
             )
 
         return _wrapper
@@ -987,7 +1001,7 @@ def limiter(
         min_val = normalize_seq(min_val or get_lowest_values(clip, clip), clip.format.num_planes)
         max_val = normalize_seq(max_val or get_peak_values(clip, clip), clip.format.num_planes)
 
-    return clip.vszip.Limiter(min_val, max_val, tv_range, None, planes)
+    return clip.vszip.Limiter(min_val, max_val, tv_range, mask, planes)
 
 
 def sc_detect(clip: vs.VideoNode, threshold: float = 0.1) -> ConstantFormatVideoNode:
