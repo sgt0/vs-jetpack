@@ -14,7 +14,6 @@ from vstools import (
     CustomValueError,
     FormatsMismatchError,
     FunctionUtil,
-    KwargsT,
     PlanesT,
     VSFunctionNoArgs,
     check_variable_format,
@@ -149,7 +148,7 @@ def based_aa(
     supersampler: ScalerLike | Literal[False] = ArtCNN,
     antialiaser: AntiAliaser | None = None,
     prefilter: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | Literal[False] = False,
-    postfilter: VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | Literal[False] | KwargsT | None = None,
+    postfilter: VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] | Literal[False] | dict[str, Any] | None = None,
     show_mask: bool = False,
     **aa_kwargs: Any,
 ) -> vs.VideoNode:
@@ -212,8 +211,8 @@ def based_aa(
             return mask
 
     if supersampler is False:
-        supersampler = downscaler = NoScale[Catrom]
-        rfactor = 1.0
+        supersampler = downscaler = NoScale[Catrom]()
+        rfactor = pscale = 1.0
 
     aaw, aah = [round(dimension * rfactor) for dimension in (func.work_clip.width, func.work_clip.height)]
 
@@ -257,7 +256,7 @@ def based_aa(
         mclip = None
 
         if mask:
-            mclip = mask if isinstance(supersampler, NoScale) else vs.core.resize.Bilinear(mask, ss.width, ss.height)
+            mclip = mask if rfactor == 1 else vs.core.resize.Bilinear(mask, ss.width, ss.height)
 
         aa_kwargs.update(mclip=mclip)
 
@@ -265,14 +264,14 @@ def based_aa(
 
     aa = downscaler.scale(aa, func.work_clip.width, func.work_clip.height)
 
-    if pscale != 1.0 and not isinstance(supersampler, NoScale):
+    if pscale != 1.0:
         no_aa = downscaler.scale(ss, func.work_clip.width, func.work_clip.height)
         aa = norm_expr([ss_clip, aa, no_aa], "x z x - {pscale} * + y z - +", pscale=pscale, func=func.func)
 
     if callable(postfilter):
         aa = postfilter(aa)
     elif postfilter is not False:
-        postfilter_args = KwargsT(sigmaS=2, sigmaR=1 / 255) | fallback(postfilter, KwargsT())
+        postfilter_args = {"sigmaS": 2, "sigmaR": 1 / 255} | fallback(postfilter, {})
         aa = MeanMode.MEDIAN(aa, ss_clip, bilateral(aa, func.work_clip, **postfilter_args))
 
     if mask:
