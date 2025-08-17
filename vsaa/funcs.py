@@ -4,7 +4,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Literal
 
 from vsexprtools import norm_expr
-from vskernels import Box, Catrom, NoScale, Scaler, ScalerLike
+from vskernels import Box, Catrom, NoScale, Scaler, ScalerLike, is_noscale_like
 from vsmasktools import EdgeDetect, EdgeDetectT, Prewitt
 from vsrgtools import MeanMode, bilateral, box_blur, gauss_blur, unsharpen
 from vsscale import ArtCNN
@@ -210,7 +210,7 @@ def based_aa(
         if show_mask:
             return mask
 
-    if supersampler is False:
+    if supersampler is False or is_noscale_like(supersampler):
         supersampler = downscaler = NoScale[Catrom]()
         rfactor = pscale = 1.0
 

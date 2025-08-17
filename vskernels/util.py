@@ -67,12 +67,14 @@ __all__ = [
     "LinearLight",
     "MixedScalerProcess",
     "NoScale",
+    "NoScaleLike",
     "is_complex_descaler_like",
     "is_complex_kernel_like",
     "is_complex_scaler_like",
     "is_custom_complex_kernel_like",
     "is_descaler_like",
     "is_kernel_like",
+    "is_noscale_like",
     "is_resampler_like",
     "is_scaler_like",
     "resample_to",
@@ -229,6 +231,17 @@ class NoScale(BaseScalerSpecializer[_ScalerWithCatromDefaultT], Scaler, partial_
             A dynamically created NoScale subclass based on the given scaler.
         """
         return NoScale[Scaler.from_param(scaler)]  # type: ignore[return-value,misc]
+
+
+NoScaleLike = str | type[NoScale[_ScalerT]] | NoScale[_ScalerT]
+"""
+Type alias for anything that can resolve to a NoScale scaler.
+
+This includes:
+ - A string identifier.
+ - A class type subclassing `NoScale`.
+ - An instance of `NoScale`.
+"""
 
 
 class BaseMixedScalerMeta(BaseScalerSpecializerMeta, Generic[Unpack[_BaseScalerTs]]):
@@ -611,3 +624,8 @@ def is_complex_kernel_like(obj: Any) -> TypeIs[ComplexKernelLike]:
 def is_custom_complex_kernel_like(obj: Any) -> TypeIs[CustomComplexKernelLike]:
     """Returns true if obj is a CustomComplexKernelLike"""
     return _is_base_scaler_like(obj, CustomComplexKernel)
+
+
+def is_noscale_like(obj: Any) -> TypeIs[NoScaleLike[Scaler]]:
+    """Returns true if obj is a CustomComplexKernelLike"""
+    return _is_base_scaler_like(obj, NoScale)
