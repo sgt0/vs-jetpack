@@ -17,7 +17,6 @@ from vsmasktools import Morpho, PrewittStd
 from vsrgtools import (
     contrasharpening_dehalo,
     gauss_blur,
-    limit_filter,
     median_blur,
     repair,
 )
@@ -96,17 +95,14 @@ def hq_dering(
         drrep: Use repair for details retention, recommended values are 24/23/13/12/1.
             See the [repair modes][vsrgtools.rgtools.Repair.Mode] for more information.
         planes: Planes to be processed.
-        ref: [limit_filter][vsrgtools.limit_filter] parameter.
-            Reference clip, to compute the weight to be applied on filtering diff.
-        dark_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit dark filtering diff.
+        ref: LimitFilter parameter. Reference clip, to compute the weight to be applied on filtering diff.
+        dark_thr: LimitFilter parameter. Threshold (8-bit scale) to limit dark filtering diff.
             Since `dark_thr` is "how much to limit undershoot", increasing this threshold
             will effectively remove more light halos.
-        bright_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit bright filtering diff.
+        bright_thr: LimitFilter parameter. Threshold (8-bit scale) to limit bright filtering diff.
             Since `bright_thr` is "how much to limit overshoot", increasing this threshold
             will effectively remove more dark halos.
-        elast: [limit_filter][vsrgtools.limit_filter] parameter. Elasticity of the soft threshold.
+        elast: LimitFilter parameter. Elasticity of the soft threshold.
 
     Returns:
         Deringed clip.
@@ -125,12 +121,12 @@ def hq_dering(
 
     repaired = repair(func.work_clip, smoothed, drrep, planes)
 
-    limited = limit_filter(
+    limited = core.vszip.LimitFilter(
         repaired,
         func.work_clip,
         ref,
         dark_thr,
-        fallback(bright_thr, [t / 4 for t in to_arr(dark_thr)]),  # type: ignore[arg-type]
+        fallback(bright_thr, [t / 4 for t in to_arr(dark_thr)]),  # type: ignore
         elast,
         planes,
     )

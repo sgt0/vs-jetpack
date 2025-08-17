@@ -7,7 +7,7 @@ from jetpytools import CustomValueError, P, R, to_arr
 
 from vsdenoise import PrefilterLike
 from vsexprtools import norm_expr
-from vsrgtools import gauss_blur, limit_filter
+from vsrgtools import gauss_blur
 from vstools import (
     ConstantFormatVideoNode,
     CustomIntEnum,
@@ -569,12 +569,9 @@ def mdb_bilateral(
         radius: Banding detection range.
         thr: Banding detection thr(s) for planes.
         debander: Specifies what debander callable to use.
-        dark_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit dark filtering diff.
-        bright_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit bright filtering diff.
-        elast: [limit_filter][vsrgtools.limit_filter] parameter.
-            Elasticity of the soft threshold.
+        dark_thr: LimitFilter parameter. Threshold (8-bit scale) to limit dark filtering diff.
+        bright_thr: LimitFilter parameter. Threshold (8-bit scale) to limit bright filtering diff.
+        elast: LimitFilter parameter. Elasticity of the soft threshold.
         planes: Which planes to process.
 
     Returns:
@@ -590,7 +587,7 @@ def mdb_bilateral(
     db2 = debander(db1, rad2, thr, 0, planes)
     db3 = debander(db2, rad3, thr, 0, planes)
 
-    limit = limit_filter(db3, clip, db1, dark_thr, bright_thr, elast, planes)
+    limit = core.vszip.LimitFilter(db3, clip, db1, dark_thr, bright_thr, elast, planes)
 
     return depth(limit, bits)
 
@@ -625,14 +622,10 @@ def pfdeband(
         prefilter: Prefilter used to blur the clip before debanding.
         debander: Specifies what debander callable to use.
         planes: Planes to process
-        ref: [limit_filter][vsrgtools.limit_filter] parameter.
-            Reference clip, to compute the weight to be applied on filtering diff.
-        dark_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit dark filtering diff.
-        bright_thr: [limit_filter][vsrgtools.limit_filter] parameter.
-            Threshold (8-bit scale) to limit bright filtering diff.
-        elast: [limit_filter][vsrgtools.limit_filter] parameter.
-            Elasticity of the soft threshold.
+        ref: LimitFilter parameter. Reference clip, to compute the weight to be applied on filtering diff.
+        dark_thr: LimitFilter parameter. Threshold (8-bit scale) to limit dark filtering diff.
+        bright_thr: LimitFilter parameter. Threshold (8-bit scale) to limit bright filtering diff.
+        elast: LimitFilter parameter. Elasticity of the soft threshold.
 
     Returns:
         Debanded clip.
@@ -641,7 +634,7 @@ def pfdeband(
 
     blur = prefilter(clip, planes=planes)
     smooth = debander(blur, radius, thr, planes=planes)
-    limit = limit_filter(smooth, blur, ref, dark_thr, bright_thr, elast, planes)
+    limit = core.vszip.LimitFilter(smooth, blur, ref, dark_thr, bright_thr, elast, planes)
     merge = norm_expr([clip, blur, limit], "z x y - +", planes, func=pfdeband)
 
     return depth(merge, bits)
