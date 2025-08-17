@@ -114,7 +114,10 @@ class BaseScalerSpecializerMeta(BaseScalerMeta):
         return bool(self.__specializer__)
 
 
+_BaseScalerTs = TypeVarTuple("_BaseScalerTs")
 _BaseScalerSpecializerMetaT = TypeVar("_BaseScalerSpecializerMetaT", bound=BaseScalerSpecializerMeta)
+_ScalerT = TypeVar("_ScalerT", bound=Scaler)
+_ScalerWithCatromDefaultT = TypeVar("_ScalerWithCatromDefaultT", bound=Scaler, default=Catrom)
 
 
 class BaseScalerSpecializer(BaseScaler, Generic[_BaseScalerT], metaclass=BaseScalerSpecializerMeta, abstract=True):
@@ -161,10 +164,7 @@ class BaseScalerSpecializer(BaseScaler, Generic[_BaseScalerT], metaclass=BaseSca
         return GenericAlias(specialized_scaler, (base_scaler,))
 
 
-_ScalerT = TypeVar("_ScalerT", bound=Scaler)
-
-
-class NoScale(BaseScalerSpecializer[_ScalerT], Scaler, partial_abstract=True):
+class NoScale(BaseScalerSpecializer[_ScalerWithCatromDefaultT], Scaler, partial_abstract=True):
     """
     A utility scaler class that performs no scaling on the input clip.
 
@@ -220,9 +220,6 @@ class NoScale(BaseScalerSpecializer[_ScalerT], Scaler, partial_abstract=True):
             A dynamically created NoScale subclass based on the given scaler.
         """
         return NoScale[Scaler.from_param(scaler)]  # type: ignore[return-value,misc]
-
-
-_BaseScalerTs = TypeVarTuple("_BaseScalerTs")
 
 
 class BaseMixedScalerMeta(BaseScalerSpecializerMeta, Generic[Unpack[_BaseScalerTs]]):
