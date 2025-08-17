@@ -12,13 +12,12 @@ from typing import (
     ClassVar,
     Concatenate,
     Generic,
-    TypeVar,
     Union,
     overload,
 )
 
 from jetpytools import P, classproperty
-from typing_extensions import Self, TypeIs, TypeVarTuple, Unpack
+from typing_extensions import Self, TypeIs, TypeVar, TypeVarTuple, Unpack
 
 from vsexprtools import norm_expr
 from vstools import (
