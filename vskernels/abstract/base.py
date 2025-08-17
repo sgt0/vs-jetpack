@@ -122,10 +122,10 @@ def _base_from_param(
     func_except: FuncExceptT | None,
 ) -> type[_BaseScalerT]:
     if isinstance(value, str):
-        all_scalers = {s.__name__.lower(): s for s in get_subclasses(BaseScaler)}
+        all_scalers = {s.__name__.lower(): s for s in [*get_subclasses(cls), cls]}
 
         try:
-            return cast(type[_BaseScalerT], all_scalers[value.lower().strip()])
+            return all_scalers[value.lower().strip()]
         except KeyError:
             raise exception_cls(func_except or cls.from_param, value)
 
@@ -139,9 +139,7 @@ def _base_from_param(
 
 
 def _base_ensure_obj(
-    cls: type[_BaseScalerT],
-    value: str | type[BaseScaler] | BaseScaler | None,
-    func_except: FuncExceptT | None,
+    cls: type[_BaseScalerT], value: str | type[BaseScaler] | BaseScaler | None, func_except: FuncExceptT | None
 ) -> _BaseScalerT:
     if value is None:
         return cls()
