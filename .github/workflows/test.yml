@@ -25,7 +25,7 @@ jobs:
       matrix:
         vs-versions: [67]
         python-version: ['3.10', '3.13']
-        vszip-version: [7]
+        vszip-version: [9]
 
     steps:
       - uses: actions/checkout@v5
@@ -54,7 +54,7 @@ jobs:
       - name: Set up akarin
         uses: ./.github/actions/setup-akarin
         with:
-          akarin-version: 6d7c733b3014a42be75299427b5c35f56f02a47a
+          akarin-version: 4dfe3db68c2a393736c7667d935dd3332ef68593
 
       - name: Set up vszip
         uses: ./.github/actions/setup-vszip
