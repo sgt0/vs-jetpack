@@ -583,7 +583,18 @@ def resample_to(
 
 
 def _is_base_scaler_like(obj: Any, base_scaler: type[BaseScaler]) -> bool:
-    return isinstance(obj, (str, base_scaler)) or (isinstance(obj, BaseScalerMeta) and base_scaler in obj.mro())
+    if isinstance(obj, base_scaler) or (isinstance(obj, BaseScalerMeta) and issubclass(obj, base_scaler)):
+        return True
+
+    if isinstance(obj, str):
+        try:
+            base_scaler.from_param(obj)
+        except base_scaler._err_class:
+            return False
+        else:
+            return True
+
+    return False
 
 
 def is_scaler_like(obj: Any) -> TypeIs[ScalerLike]:
@@ -627,5 +638,5 @@ def is_custom_complex_kernel_like(obj: Any) -> TypeIs[CustomComplexKernelLike]:
 
 
 def is_noscale_like(obj: Any) -> TypeIs[NoScaleLike[Scaler]]:
-    """Returns true if obj is a CustomComplexKernelLike"""
+    """Returns true if obj is a NoScaleLike"""
     return _is_base_scaler_like(obj, NoScale)
