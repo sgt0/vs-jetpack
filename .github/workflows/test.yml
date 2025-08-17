@@ -54,7 +54,7 @@ jobs:
       - name: Set up akarin
         uses: ./.github/actions/setup-akarin
         with:
-          akarin-version: 4dfe3db68c2a393736c7667d935dd3332ef68593
+          akarin-version: 6d7c733b3014a42be75299427b5c35f56f02a47a
 
       - name: Set up vszip
         uses: ./.github/actions/setup-vszip
