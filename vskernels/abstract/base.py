@@ -129,7 +129,7 @@ def _base_from_param(
         except KeyError:
             raise exception_cls(func_except or cls.from_param, value)
 
-    if isinstance(value, type) or isinstance(get_origin(value), type):
+    if isinstance(value, BaseScalerMeta) or isinstance(get_origin(value), BaseScalerMeta):
         return cast(type[_BaseScalerT], value)
 
     if isinstance(value, cls):
