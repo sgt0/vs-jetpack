@@ -20,7 +20,6 @@ from typing import (
     NoReturn,
     TypeVar,
     Union,
-    cast,
     get_origin,
     overload,
 )
@@ -117,10 +116,23 @@ def _add_init_kwargs(method: Callable[Concatenate[_BaseScalerT, P], R]) -> Calla
 
 def _base_from_param(
     cls: type[_BaseScalerT],
-    value: str | type[BaseScaler] | BaseScaler | None,
+    value: str | type[_BaseScalerT] | _BaseScalerT | None,
     exception_cls: type[_UnknownBaseScalerError],
     func_except: FuncExceptT | None,
 ) -> type[_BaseScalerT]:
+    # If value is an instance returns the class
+    if isinstance(value, cls):
+        return value.__class__
+
+    # If value is a type and a subclass of the caller returns the value itself
+    if isinstance(value, BaseScalerMeta) and issubclass(value, cls):
+        return value
+
+    # The value could be a GenericAlias
+    if origin := get_origin(value):
+        return _base_from_param(cls, origin, exception_cls, func_except)
+
+    # Search for the subclasses of the caller and the caller itself
     if isinstance(value, str):
         all_scalers = {s.__name__.lower(): s for s in [*get_subclasses(cls), cls]}
 
@@ -129,25 +141,19 @@ def _base_from_param(
         except KeyError:
             raise exception_cls(func_except or cls.from_param, value)
 
-    if isinstance(value, BaseScalerMeta) or isinstance(get_origin(value), BaseScalerMeta):
-        return cast(type[_BaseScalerT], value)
+    if value is None:
+        return cls
 
-    if isinstance(value, cls):
-        return value.__class__
-
-    return cls
+    raise exception_cls(func_except or cls.from_param, str(value))
 
 
 def _base_ensure_obj(
-    cls: type[_BaseScalerT], value: str | type[BaseScaler] | BaseScaler | None, func_except: FuncExceptT | None
+    cls: type[_BaseScalerT], value: str | type[_BaseScalerT] | _BaseScalerT | None, func_except: FuncExceptT | None
 ) -> _BaseScalerT:
-    if value is None:
-        return cls()
-
     if isinstance(value, cls):
         return value
 
-    return cls.from_param(value, func_except)()  # type: ignore[arg-type]
+    return cls.from_param(value, func_except)()
 
 
 @cache
