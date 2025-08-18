@@ -291,7 +291,7 @@ def inline_expr(
     ie._compute_expr(**kwargs)
 
 
-class InlineExprWrapper(tuple[Sequence[ClipVar], Operators, "InlineExprWrapper"], vs_object):
+class InlineExprWrapper(vs_object):
     """
     A wrapper class for constructing and evaluating VapourSynth expressions inline using Python syntax.
 
@@ -313,19 +313,6 @@ class InlineExprWrapper(tuple[Sequence[ClipVar], Operators, "InlineExprWrapper"]
 
     result = ie.clip
     ```
-
-    Note:
-        The `InlineExprWrapper` also behaves like a tuple containing:
-
-        - The clip variables (`vars`).
-        - Expression operator functions (`op`).
-        - The wrapper itself (`ie`).
-
-        This allows unpacking like:
-        ```py
-        with inline_expr([clip_a, clip_b]) as (vars, op, ie):
-            ...
-        ```
     """
 
     op = Operators()
@@ -337,9 +324,6 @@ class InlineExprWrapper(tuple[Sequence[ClipVar], Operators, "InlineExprWrapper"]
     """
     [Tokens][vsexprtools.inline.helpers.Tokens] object providing access to all `Expr` tokens.
     """
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
-        return super().__new__(cls)
 
     def __init__(self, clips: Sequence[vs.VideoNode], format: HoldsVideoFormatT | VideoFormatT | None = None) -> None:
         """
@@ -356,13 +340,13 @@ class InlineExprWrapper(tuple[Sequence[ClipVar], Operators, "InlineExprWrapper"]
         self._final_clip: vs.VideoNode | None = None
 
     @overload
-    def __getitem__(self, i: SupportsIndex, /) -> Sequence[ClipVar] | Operators | Self: ...
+    def __getitem__(self, i: SupportsIndex, /) -> Any: ...
     @overload
-    def __getitem__(self, i: slice[Any, Any, Any], /) -> tuple[Sequence[ClipVar] | Operators | Self]: ...
+    def __getitem__(self, i: slice[Any, Any, Any], /) -> tuple[Any, ...]: ...
     def __getitem__(self, i: SupportsIndex | slice[Any, Any, Any]) -> Any:
         return self._inner[i]
 
-    def __iter__(self) -> Iterator[Sequence[ClipVar] | Operators | Self]:
+    def __iter__(self) -> Iterator[Any]:
         yield from self._inner
 
     def __next__(self) -> Any:
