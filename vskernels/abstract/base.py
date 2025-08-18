@@ -24,7 +24,7 @@ from typing import (
     overload,
 )
 
-from jetpytools import P, R, T_co
+from jetpytools import P, R, T_co, classproperty
 from typing_extensions import Self, deprecated
 
 from vstools import (
@@ -237,7 +237,7 @@ class BaseScalerMeta(ABCMeta):
 
         obj = super().__new__(mcls, name, bases, namespace, **kwargs)
 
-        # Decorate the `_implemented_funcs` with `_add_init_kwargs` to add the init kwargs to the funcs.
+        # Decorate the `implemented_funcs` with `_add_init_kwargs` to add the init kwargs to the funcs.
         for impl_func_name in getattr(obj, "_implemented_funcs"):
             func = getattr(obj, impl_func_name)
 
@@ -296,7 +296,7 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
 
     _implemented_funcs: ClassVar[tuple[str, ...]] = ()
     """
-    Tuple of function names that are implemented.
+    Tuple of function names that are implemented in the current class.
 
     These functions determine which keyword arguments will be extracted from the __init__ method.
     """
@@ -316,9 +316,9 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
         """
         Initialize the scaler with optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
+        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `_implemented_funcs`,
+        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
         the one passed to `func` takes precedence.
 
         Args:
@@ -430,6 +430,19 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
             Pretty-printed string with arguments.
         """
         return self._pretty_string()
+
+    @classproperty
+    @classmethod
+    def implemented_funcs(cls) -> frozenset[str]:
+        """
+        Returns a set of function names that are implemented in the current class and the parent classes.
+
+        These functions determine which keyword arguments will be extracted from the __init__ method.
+
+        Returns:
+            Frozen set of function names.
+        """
+        return frozenset(func for klass in cls.mro() for func in getattr(klass, "_implemented_funcs", ()))
 
     def __vs_del__(self, core_id: int) -> None:
         self.kwargs.clear()

@@ -121,9 +121,9 @@ class CustomComplexTapsKernel(CustomComplexKernel):
         """
         Initialize the kernel with a specific number of taps and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `_implemented_funcs` methods
+        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
         but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `_implemented_funcs`,
+        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
         the one passed to `func` takes precedence.
 
         Args:
