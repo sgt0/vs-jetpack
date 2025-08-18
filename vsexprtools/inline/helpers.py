@@ -15,7 +15,8 @@ from typing import (
     cast,
 )
 
-from jetpytools import Singleton, SupportsString, to_arr
+from jetpytools import SupportsString, to_arr
+from jetpytools.types.utils import SingletonMeta
 from typing_extensions import Self
 
 from vstools import ConvMode, OnePassConvModeT, flatten, vs, vs_object
@@ -25,7 +26,7 @@ from ..exprop import ExprOp, ExprToken
 __all__ = ["ClipVar", "ComputedVar", "ExprVar", "ExprVarLike", "LiteralVar", "Operators", "Tokens"]
 
 
-class Operators(Singleton):
+class Operators(metaclass=SingletonMeta):
     """
     A singleton class that defines the expression operators used in [inline_expr][vsexprtools.inline_expr].
     """
@@ -836,10 +837,12 @@ class Token(LiteralVar):
         return ComputedVar(f"{self.value}_{var.char}")
 
 
-class Tokens(Singleton):
+class Tokens(metaclass=SingletonMeta):
     """
     A singleton class that defines the expression tokens used in [inline_expr][vsexprtools.inline_expr].
     """
+
+    __slots__ = ()
 
     if TYPE_CHECKING:
         LumaMin: Final[Token] = cast(Token, ...)
