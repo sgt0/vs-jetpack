@@ -661,7 +661,7 @@ class ComputedVar(ExprVar):
         Returns:
             A list of strings, one for each plane.
         """
-        return [p.to_str(plane=i) for x, i in zip(self._operations_per_plane, range(num_planes)) for p in x]
+        return [" ".join(p.to_str(plane=i) for p in x) for x, i in zip(self._operations_per_plane, range(num_planes))]
 
     def to_str(self, *, plane: int = 0, **kwargs: Any) -> str:
         """
