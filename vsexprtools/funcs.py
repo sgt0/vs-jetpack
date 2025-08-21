@@ -115,14 +115,15 @@ def combine_expr(
         A expression representing the combined result.
     """
     evars = ExprVars(n)
+    n = evars.stop - evars.start
 
-    prefixes, suffixes = (_combine_norm__ix(x, evars.stop) for x in (prefix, suffix))
+    prefixes, suffixes = (_combine_norm__ix(x, n) for x in (prefix, suffix))
 
     args = zip(prefixes, evars, suffixes)
 
-    has_op = (evars.stop >= operator.n_op) or any(x is not None for x in (suffix, prefix, expr_suffix, expr_prefix))
+    has_op = (n >= operator.n_op) or any(x is not None for x in (suffix, prefix, expr_suffix, expr_prefix))
 
-    operators = operator * max(evars.stop - 1, int(has_op))
+    operators = operator * max(n - 1, int(has_op))
 
     return ExprList([to_arr(expr_prefix), args, operators, to_arr(expr_suffix)])
 
