@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from math import ceil
-from typing import TYPE_CHECKING, Any, Iterable, Sequence, TypeAlias, Union
+from typing import TYPE_CHECKING, Any, Iterable, Sequence, SupportsIndex, TypeAlias, Union
 
 from vstools import (
     ConstantFormatVideoNode,
@@ -22,10 +22,10 @@ from vstools import (
     vs,
 )
 
-from .exprop import ExprOp, ExprOpBase, TupleExprList
+from .exprop import ExprList, ExprOp, ExprOpBase, TupleExprList
 from .util import ExprVars, bitdepth_aware_tokenize_expr, norm_expr_planes
 
-__all__ = ["combine", "expr_func", "norm_expr"]
+__all__ = ["combine", "combine_expr", "expr_func", "norm_expr"]
 
 
 def expr_func(
@@ -90,6 +90,43 @@ def _combine_norm__ix(ffix: SupportsString | Iterable[SupportsString] | None, n_
     return ffix * max(1, ceil(n_clips / len(ffix)))
 
 
+def combine_expr(
+    n: SupportsIndex | ExprVars | HoldsVideoFormatT | VideoFormatT,
+    operator: ExprOpBase = ExprOp.MAX,
+    suffix: SupportsString | Iterable[SupportsString] | None = None,
+    prefix: SupportsString | Iterable[SupportsString] | None = None,
+    expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
+    expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
+) -> ExprList:
+    """
+    Builds a combine expression using a specified expression operator.
+
+    For combining multiple clips, see [combine][vsexprtools.combine].
+
+    Args:
+        n: Object from which to infer the number of variables.
+        operator: An ExprOpBase enum used to join the variables.
+        suffix: Optional suffix string(s) to append to each input variable in the expression.
+        prefix: Optional prefix string(s) to prepend to each input variable in the expression.
+        expr_suffix: Optional expression to append after the combined input expression.
+        expr_prefix: Optional expression to prepend before the combined input expression.
+
+    Returns:
+        A expression representing the combined result.
+    """
+    evars = ExprVars(n)
+
+    prefixes, suffixes = (_combine_norm__ix(x, evars.stop) for x in (prefix, suffix))
+
+    args = zip(prefixes, evars, suffixes)
+
+    has_op = (evars.stop >= operator.n_op) or any(x is not None for x in (suffix, prefix, expr_suffix, expr_prefix))
+
+    operators = operator * max(evars.stop - 1, int(has_op))
+
+    return ExprList([to_arr(expr_prefix), args, operators, to_arr(expr_suffix)])
+
+
 def combine(
     clips: VideoNodeIterableT[vs.VideoNode],
     operator: ExprOpBase = ExprOp.MAX,
@@ -120,17 +157,9 @@ def combine(
     """
     clips = flatten_vnodes(clips, split_planes=split_planes)
 
-    n_clips = len(clips)
-
-    prefixes, suffixes = (_combine_norm__ix(x, n_clips) for x in (prefix, suffix))
-
-    args = zip(prefixes, ExprVars(n_clips), suffixes)
-
-    has_op = (n_clips >= operator.n_op) or any(x is not None for x in (suffix, prefix, expr_suffix, expr_prefix))
-
-    operators = operator * max(n_clips - 1, int(has_op))
-
-    return norm_expr(clips, [expr_prefix, args, operators, expr_suffix], planes, **kwargs)
+    return norm_expr(
+        clips, combine_expr(len(clips), operator, suffix, prefix, expr_suffix, expr_prefix), planes, **kwargs
+    )
 
 
 ExprLike: TypeAlias = Union[SupportsString | None, Iterable["ExprLike"]]
