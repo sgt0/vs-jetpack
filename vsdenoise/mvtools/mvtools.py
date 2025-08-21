@@ -1470,7 +1470,7 @@ class MVTools(vs_object):
         return (vectors_backward, vectors_forward)
 
     def __vs_del__(self, core_id: int) -> None:
-        for k, v in self.__dict__.items():
+        for k, v in self.__dict__.copy().items():
             if isinstance(v, vs.VideoNode):
                 delattr(self, k)
 

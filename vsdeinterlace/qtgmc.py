@@ -1151,11 +1151,9 @@ class QTempGaussMC(vs_object):
         return self.motion_blur_output
 
     def __vs_del__(self, core_id: int) -> None:
-        for k, v in self.__dict__.items():
-            if isinstance(v, MutableMapping):
-                for k2, v2 in v.items():
-                    if isinstance(v2, vs.VideoNode):
-                        v[k2] = None
-
+        for k, v in self.__dict__.copy().items():
             if isinstance(v, vs.VideoNode):
-                setattr(self, k, None)
+                delattr(self, k)
+
+            if isinstance(v, MutableMapping):
+                v.clear()
