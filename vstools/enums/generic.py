@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, TypeAlias, Union
+from typing import TYPE_CHECKING, Any, TypeAlias, Union, overload
 
 import vapoursynth as vs
 from jetpytools import FuncExceptT
+from typing_extensions import Self
 
 from ..exceptions import (
     UndefinedChromaLocationError,
@@ -11,13 +12,13 @@ from ..exceptions import (
     UnsupportedChromaLocationError,
     UnsupportedFieldBasedError,
 )
-from ..types import HoldsVideoFormatT, VideoFormatT
-from .stubs import _base_from_video, _ChromaLocationMeta, _FieldBasedMeta
+from ..types import HoldsVideoFormatT, VideoFormatT, VideoNodeT
+from .stubs import PropEnum, _base_from_video
 
 __all__ = ["ChromaLocation", "ChromaLocationT", "FieldBased", "FieldBasedT"]
 
 
-class ChromaLocation(_ChromaLocationMeta):  # type: ignore[misc]
+class ChromaLocation(PropEnum):
     """
     Chroma sample position in YUV formats.
     """
@@ -25,7 +26,7 @@ class ChromaLocation(_ChromaLocationMeta):  # type: ignore[misc]
     _value_: int
 
     @classmethod
-    def _missing_(cls: type[ChromaLocation], value: Any) -> ChromaLocation | None:
+    def _missing_(cls, value: Any) -> ChromaLocation | None:
         if value is None:
             return cls.LEFT
 
@@ -40,6 +41,43 @@ class ChromaLocation(_ChromaLocationMeta):  # type: ignore[misc]
     TOP = 3
     BOTTOM_LEFT = 4
     BOTTOM = 5
+
+    if TYPE_CHECKING:
+
+        @overload
+        @classmethod
+        def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: ChromaLocationT, func_except: FuncExceptT | None = None) -> Self: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: ChromaLocationT | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+        @classmethod
+        def from_param(cls, value: Any, func_except: Any = None) -> Self | None:
+            """
+            Determine the ChromaLocation through a parameter.
+
+            Args:
+                value: Value or ChromaLocation object.
+                func_except: Function returned for custom error handling. This should only be set by VS package
+                    developers.
+
+            Returns:
+                ChromaLocation object or None.
+            """
+
+        @classmethod
+        def from_param_or_video(
+            cls,
+            value: ChromaLocationT | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> ChromaLocation: ...
 
     @classmethod
     def from_res(cls, frame: vs.VideoNode | vs.VideoFrame) -> ChromaLocation:
@@ -99,7 +137,7 @@ class ChromaLocation(_ChromaLocationMeta):  # type: ignore[misc]
         return off_left, off_top
 
 
-class FieldBased(_FieldBasedMeta):  # type: ignore[misc]
+class FieldBased(PropEnum):
     """
     Whether the frame is composed of two independent fields (interlaced) and their order if so.
     """
@@ -133,14 +171,54 @@ class FieldBased(_FieldBasedMeta):  # type: ignore[misc]
     The frame is interlaced and the field order is top field first.
     """
 
-    if not TYPE_CHECKING:
+    @overload
+    @classmethod
+    def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+    @overload
+    @classmethod
+    def from_param(cls, value: FieldBasedT | bool, func_except: FuncExceptT | None = None) -> Self: ...
+
+    @overload
+    @classmethod
+    def from_param(cls, value: FieldBasedT | bool | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+    @classmethod
+    def from_param(cls, value: FieldBasedT | bool | None, func_except: FuncExceptT | None = None) -> Self | None:
+        """
+        Determine the type of field through a parameter.
+
+        Args:
+            value: Value or FieldBased object. If it's bool, it specifies whether it's TFF or BFF.
+            func_except: Function returned for custom error handling. This should only be set by VS package
+                developers.
+
+        Returns:
+            FieldBased object or None.
+        """
+        if isinstance(value, bool):
+            return cls(1 + value)
+
+        return super().from_param(value)
+
+    if TYPE_CHECKING:
 
         @classmethod
-        def from_param(cls: Any, value_or_tff: Any, func_except: Any = None) -> FieldBased | None:
-            if isinstance(value_or_tff, bool):
-                return FieldBased(1 + value_or_tff)
+        def from_param_or_video(
+            cls,
+            value: FieldBasedT | bool | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> FieldBased: ...
 
-            return super().from_param(value_or_tff)
+    @classmethod
+    def ensure_presence(
+        cls, clip: VideoNodeT, tff: FieldBasedT | bool | None, func: FuncExceptT | None = None
+    ) -> VideoNodeT:
+        field_based = cls.from_param_or_video(tff, clip, True, func)
+
+        return vs.core.std.SetFieldBased(clip, field_based.value)
 
     @classmethod
     def from_res(cls, frame: vs.VideoNode | vs.VideoFrame) -> FieldBased:

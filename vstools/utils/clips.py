@@ -180,14 +180,20 @@ def initialize_clip(
         (FieldBased, field_based),
     ]
 
-    clip = PropEnum.ensure_presences(
-        clip,
-        [
-            (cls if strict else cls.from_video(clip, False, func)) if value is None else cls.from_param(value, func)
-            for cls, value in values
-        ],
-        func,
-    )
+    to_ensure_presence = list[type[PropEnum] | PropEnum]()
+
+    for prop_t, prop_v in values:
+        if strict:
+            to_ensure_presence.append(prop_t)
+        else:
+            p = prop_t.from_param(prop_v, func)
+
+            if p is None:
+                to_ensure_presence.append(prop_t.from_video(clip, False, func))
+            else:
+                to_ensure_presence.append(p)
+
+    clip = PropEnum.ensure_presences(clip, to_ensure_presence, func)
 
     if bits is None:
         bits = max(get_depth(clip), 16)

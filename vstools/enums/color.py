@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, TypeAlias, Union
+from typing import TYPE_CHECKING, Any, TypeAlias, Union, overload
 
 import vapoursynth as vs
 from jetpytools import FuncExceptT
+from typing_extensions import Self
 
 from ..exceptions import (
     ReservedMatrixError,
@@ -18,7 +19,7 @@ from ..exceptions import (
     UnsupportedTransferError,
 )
 from ..types import HoldsPropValueT, KwargsT
-from .stubs import PropEnum, _base_from_video, _ColorRangeMeta, _MatrixMeta, _PrimariesMeta, _TransferMeta
+from .stubs import PropEnum, _base_from_video
 
 __all__ = [
     "ColorRange",
@@ -33,7 +34,7 @@ __all__ = [
 ]
 
 
-class Matrix(_MatrixMeta):  # type: ignore[misc]
+class Matrix(PropEnum):
     """
     Matrix coefficients ([ITU-T H.265](https://www.itu.int/rec/T-REC-H.265) Table E.5).
     """
@@ -41,7 +42,7 @@ class Matrix(_MatrixMeta):  # type: ignore[misc]
     _value_: int
 
     @classmethod
-    def _missing_(cls: type[Matrix], value: Any) -> Matrix | None:
+    def _missing_(cls, value: Any) -> Matrix | None:
         value = super()._missing_(value)
 
         if value is None:
@@ -196,6 +197,42 @@ class Matrix(_MatrixMeta):  # type: ignore[misc]
     See ITU-T H.265 Equations E-65 to E-67 for `transfer_characteristics` value 18 (HLG)
     """
 
+    if TYPE_CHECKING:
+
+        @overload
+        @classmethod
+        def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: MatrixT, func_except: FuncExceptT | None = None) -> Self: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: MatrixT | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+        @classmethod
+        def from_param(cls, value: Any, func_except: Any = None) -> Self | None:
+            """
+            Determine the Matrix through a parameter.
+
+            Args:
+                value: Value or Matrix object.
+                func_except: Function returned for custom error handling.
+
+            Returns:
+                Matrix object or None.
+            """
+
+        @classmethod
+        def from_param_or_video(
+            cls,
+            value: MatrixT | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> Matrix: ...
+
     @classmethod
     def is_unknown(cls, value: int | Matrix) -> bool:
         """
@@ -309,7 +346,7 @@ class Matrix(_MatrixMeta):  # type: ignore[misc]
         return _matrix_name_map.get(self, super().string)
 
 
-class Transfer(_TransferMeta):  # type: ignore[misc]
+class Transfer(PropEnum):
     """
     Transfer characteristics ([ITU-T H.265](https://www.itu.int/rec/T-REC-H.265) Table E.4).
     """
@@ -317,7 +354,7 @@ class Transfer(_TransferMeta):  # type: ignore[misc]
     _value_: int
 
     @classmethod
-    def _missing_(cls: type[Transfer], value: Any) -> Transfer | None:
+    def _missing_(cls, value: Any) -> Transfer | None:
         value = super()._missing_(value)
 
         if value is None:
@@ -486,6 +523,43 @@ class Transfer(_TransferMeta):  # type: ignore[misc]
     Sony S-Log2
     """
 
+    if TYPE_CHECKING:
+
+        @overload
+        @classmethod
+        def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: TransferT, func_except: FuncExceptT | None = None) -> Self: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: TransferT | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+        @classmethod
+        def from_param(cls, value: Any, func_except: Any = None) -> Self | None:
+            """
+            Determine the Transfer through a parameter.
+
+            Args:
+                value: Value or Transfer object.
+                func_except: Function returned for custom error handling. This should only be set by VS package
+                    developers.
+
+            Returns:
+                Transfer object or None.
+            """
+
+        @classmethod
+        def from_param_or_video(
+            cls,
+            value: TransferT | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> Transfer: ...
+
     @classmethod
     def is_unknown(cls, value: int | Transfer) -> bool:
         """
@@ -629,7 +703,7 @@ class Transfer(_TransferMeta):  # type: ignore[misc]
         return _transfer_name_map.get(self, super().string)
 
 
-class Primaries(_PrimariesMeta):  # type: ignore[misc]
+class Primaries(PropEnum):
     """
     Color primaries ([ITU-T H.265](https://www.itu.int/rec/T-REC-H.265) Table E.3).
     """
@@ -637,7 +711,7 @@ class Primaries(_PrimariesMeta):  # type: ignore[misc]
     _value_: int
 
     @classmethod
-    def _missing_(cls: type[Primaries], value: Any) -> Primaries | None:
+    def _missing_(cls, value: Any) -> Primaries | None:
         value = super()._missing_(value)
 
         if value is None:
@@ -873,6 +947,43 @@ class Primaries(_PrimariesMeta):  # type: ignore[misc]
     ACES Primaries #1
     """
 
+    if TYPE_CHECKING:
+
+        @overload
+        @classmethod
+        def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: PrimariesT, func_except: FuncExceptT | None = None) -> Self: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: PrimariesT | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+        @classmethod
+        def from_param(cls, value: Any, func_except: Any = None) -> Self | None:
+            """
+            Determine the Primaries through a parameter.
+
+            Args:
+                value: Value or Primaries object.
+                func_except: Function returned for custom error handling. This should only be set by VS package
+                    developers.
+
+            Returns:
+                Primaries object or None.
+            """
+
+        @classmethod
+        def from_param_or_video(
+            cls,
+            value: PrimariesT | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> Primaries: ...
+
     @classmethod
     def is_unknown(cls, value: int | Primaries) -> bool:
         """
@@ -1019,7 +1130,7 @@ class Primaries(_PrimariesMeta):  # type: ignore[misc]
         return _primaries_name_map.get(self, super().string)
 
 
-class ColorRange(_ColorRangeMeta):  # type: ignore[misc]
+class ColorRange(PropEnum):
     """
     Pixel Range ([ITU-T H.265](https://www.itu.int/rec/T-REC-H.265) Equations E-10 through E-20.
     """
@@ -1027,7 +1138,7 @@ class ColorRange(_ColorRangeMeta):  # type: ignore[misc]
     _value_: int
 
     @classmethod
-    def _missing_(cls: type[ColorRange], value: Any) -> ColorRange | None:
+    def _missing_(cls, value: Any) -> ColorRange | None:
         value = super()._missing_(value)
 
         if value is None:
@@ -1056,6 +1167,43 @@ class ColorRange(_ColorRangeMeta):  # type: ignore[misc]
     | RGB clips will ALWAYS be FULL range!
     """
     PC = FULL
+
+    if TYPE_CHECKING:
+
+        @overload
+        @classmethod
+        def from_param(cls, value: None, func_except: FuncExceptT | None = None) -> None: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: ColorRangeT, func_except: FuncExceptT | None = None) -> Self: ...
+
+        @overload
+        @classmethod
+        def from_param(cls, value: ColorRangeT | None, func_except: FuncExceptT | None = None) -> Self | None: ...
+
+        @classmethod
+        def from_param(cls, value: Any, func_except: Any = None) -> Self | None:
+            """
+            Determine the ColorRange through a parameter.
+
+            Args:
+                value: Value or ColorRange object.
+                func_except: Function returned for custom error handling. This should only be set by VS package
+                    developers.
+
+            Returns:
+                ColorRange object or None.
+            """
+
+        @classmethod
+        def from_param_or_video(
+            cls,
+            value: ColorRangeT | None,
+            src: vs.VideoNode | vs.VideoFrame | vs.FrameProps,
+            strict: bool = False,
+            func_except: FuncExceptT | None = None,
+        ) -> ColorRange: ...
 
     @classmethod
     def from_res(cls, frame: vs.VideoNode | vs.VideoFrame) -> ColorRange:
