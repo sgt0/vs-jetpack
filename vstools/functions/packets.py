@@ -8,7 +8,7 @@ import warnings
 from functools import cache
 from subprocess import PIPE, Popen
 from tempfile import NamedTemporaryFile
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import vapoursynth as vs
 from jetpytools import CustomValueError, DependencyNotFoundError, FileWasNotFoundError, FuncExceptT, SPath, SPathLike
@@ -241,29 +241,39 @@ class VideoPackets(list[int]):
         Returns:
             A clip with the packet size properties applied.
         """
-
         func = func or self.apply_props
 
-        def _set_sizes_props(n: int) -> vs.VideoNode:
+        def _set_sizes_props(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
             if (pkt_size := self[n]) < 0:
-                warnings.warn(f"{func}: 'Frame {n} bitrate could not be determined!'")
+                warnings.warn(f"{func}: 'Frame {n} bitrate could not be determined!'", UserWarning)
 
-            return clip.std.SetFrameProps(PktSize=pkt_size)
+            f = f.copy()
+            f.props["PktSize"] = pkt_size
+
+            return f
 
         if not keyframes:
-            return vs.core.std.FrameEval(clip, _set_sizes_props)
-
-        def _set_scene_stats(n: int, keyframes: Keyframes) -> vs.VideoNode:
-            if (pkt_size := self[n]) < 0:
-                warnings.warn(f"{func}: 'Frame {n} bitrate could not be determined!'")
-
-            try:
-                return clip.std.SetFrameProps(PktSize=pkt_size, **scenestats[keyframes.scenes.indices[n]])
-            except Exception:
-                warnings.warn(f"{func}: 'Could not find stats for a section... (Frame: {n})'")
-
-                return clip.std.SetFrameProps(PktSize=-1, PktSceneAvgSize=-1, PktSceneMaxSize=-1, PktSceneMinSize=-1)
+            return vs.core.std.ModifyFrame(clip, clip, _set_sizes_props)
 
         scenestats = self.get_scenestats(keyframes)
 
-        return vs.core.std.FrameEval(clip, lambda n: _set_scene_stats(n, keyframes))
+        def _set_scene_stats(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
+            if (pkt_size := self[n]) < 0:
+                warnings.warn(f"{func}: 'Frame {n} bitrate could not be determined!'", UserWarning)
+
+            f = f.copy()
+            pkt: dict[str, Any] = {"PktSize": pkt_size}
+
+            try:
+                stats = scenestats[keyframes.scenes.indices[n]]
+            except Exception:
+                warnings.warn(f"{func}: 'Could not find stats for a section... (Frame: {n})'")
+                pkt = {"PktSize": -1, "PktSceneAvgSize": -1, "PktSceneMaxSize": -1, "PktSceneMinSize": -1}
+            else:
+                pkt |= stats
+
+            f.props.update(**pkt)
+
+            return f
+
+        return vs.core.std.ModifyFrame(clip, clip, _set_scene_stats)
