@@ -7,7 +7,6 @@ from typing import (
     Callable,
     Iterable,
     Literal,
-    Sequence,
     TypeAlias,
     TypeVar,
     Union,
@@ -15,7 +14,6 @@ from typing import (
     get_origin,
     overload,
 )
-from typing import cast as typing_cast
 
 import vapoursynth as vs
 from jetpytools import (
@@ -25,15 +23,13 @@ from jetpytools import (
     MissingT,
     SPath,
     SPathLike,
-    SupportsString,
     T,
-    normalize_seq,
     to_arr,
 )
 
 from ..enums import PropEnum
 from ..exceptions import FramePropError
-from ..types import BoundVSMapValue, ConstantFormatVideoNode, HoldsPropValueT
+from ..types import ConstantFormatVideoNode, HoldsPropValueT
 from .cache import NodesPropsCache
 
 __all__ = ["get_clip_filepath", "get_prop", "get_props", "merge_clip_props"]
@@ -357,66 +353,31 @@ def get_clip_filepath(
 @overload
 def get_props(
     obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: type[BoundVSMapValue],
-    *,
+    keys: Iterable[str | type[PropEnum]],
+    t: type[_PropValueT],
+    cast: Callable[[_PropValueT], CT] = ...,  # pyright: ignore[reportInvalidTypeVarUse]
+    default: DT = ...,  # pyright: ignore[reportInvalidTypeVarUse]
     func: FuncExceptT | None = None,
-) -> dict[str, BoundVSMapValue]: ...
+) -> dict[str, _PropValueT | CT | DT]: ...
 
 
 @overload
 def get_props(
     obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: type[BoundVSMapValue],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT],
-    *,
+    keys: Iterable[str | type[PropEnum]],
+    t: tuple[type[Any], ...],
+    cast: Callable[[Any], CT] = ...,  # pyright: ignore[reportInvalidTypeVarUse]
+    default: DT = ...,  # pyright: ignore[reportInvalidTypeVarUse]
     func: FuncExceptT | None = None,
-) -> dict[str, CT]: ...
-
-
-@overload
-def get_props(
-    obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: type[BoundVSMapValue],
-    *,
-    default: DT,
-    func: FuncExceptT | None = None,
-) -> dict[str, BoundVSMapValue | DT]: ...
-
-
-@overload
-def get_props(
-    obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: type[BoundVSMapValue],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT],
-    default: DT,
-    func: FuncExceptT | None = None,
-) -> dict[str, CT | DT]: ...
-
-
-@overload
-def get_props(
-    obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: Sequence[type[BoundVSMapValue]],
-    cast: Sequence[type[CT] | Callable[[BoundVSMapValue], CT]] | None = None,
-    default: DT | Sequence[DT] | MissingT = ...,
-    func: FuncExceptT | None = None,
-) -> dict[str, Any]: ...
+) -> dict[str, Any | DT | CT]: ...
 
 
 def get_props(
     obj: HoldsPropValueT,
-    keys: Sequence[SupportsString | PropEnum],
-    t: type[BoundVSMapValue] | Sequence[type[BoundVSMapValue]],
-    cast: type[CT]
-    | Callable[[BoundVSMapValue], CT]
-    | Sequence[type[CT] | Callable[[BoundVSMapValue], CT]]
-    | None = None,
-    default: DT | Sequence[DT] | MissingT = MISSING,
+    keys: Iterable[str | type[PropEnum]],
+    t: type[Any] | tuple[type[Any], ...],
+    cast: Callable[[Any], CT] | MissingT = MISSING,
+    default: Any | MissingT = MISSING,
     func: FuncExceptT | None = None,
 ) -> dict[str, Any]:
     """
@@ -425,33 +386,34 @@ def get_props(
     Args:
         obj: Clip or frame containing props.
         keys: List of props to get.
-        t: Type of prop or list of types of props. If fewer types are provided than props, the last type will be used
-            for the remaining props.
-        cast: Cast value to this type, if specified.
-        default: Fallback value. Can be a single value or a list of values. If a list is provided, it must be the same
-            length as keys.
+        t: Expected type of the prop.
+        cast: Optional cast to apply to the value.
+        default: Fallback value if missing or invalid.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
         Dictionary mapping property names to their values. Values will be of type specified by cast if provided,
         otherwise of the type(s) specified in ``t`` or a default value if provided.
     """
-
-    func = func or "get_props"
+    func = func or get_props
 
     if not keys:
         return {}
 
-    t = normalize_seq(t, len(keys))
-    ncast = typing_cast(list[type[CT | Callable[[BoundVSMapValue], CT]]], normalize_seq(cast, len(keys)))
-    ndefault = normalize_seq(default, len(keys))
-
     props = dict[str, Any]()
     exceptions = list[Exception]()
 
-    for k, t_, cast_, default_ in zip(keys, t, ncast, ndefault):
+    kwargs: dict[str, Any] = {"t": t, "func": func}
+
+    if cast is not MISSING:
+        kwargs["cast"] = cast
+
+    if default is not MISSING:
+        kwargs["default"] = default
+
+    for k in keys:
         try:
-            prop = get_prop(obj, k, t_, cast_, default_, func)
+            prop = get_prop(obj, k, **kwargs)
         except Exception as e:
             exceptions.append(e)
         else:
@@ -459,7 +421,7 @@ def get_props(
 
     if exceptions:
         if sys.version_info >= (3, 11):
-            raise ExceptionGroup("Multiple exceptions occurred!", exceptions)  # noqa: F821
+            raise ExceptionGroup("Multiple exceptions occurred!", exceptions) from None  # noqa: F821
 
         raise Exception(exceptions)
 
