@@ -15,6 +15,7 @@ from vstools import (
     MISSING,
     ColorRange,
     ConstantFormatVideoNode,
+    CustomValueError,
     InvalidColorFamilyError,
     MissingT,
     PlanesT,
@@ -593,18 +594,18 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
 
     InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), prefilter_to_full_range)
 
+    if smooth < 0 or not 0 <= slope <= (1 + 2 * smooth) / smooth:
+        raise CustomValueError("Curve parameters out of range", prefilter_to_full_range, (slope, smooth))
+
     clip_range = ColorRange.from_video(clip)
 
     curve = (slope - 1) * smooth
     luma_expr = (
-        "x yrange_in_min - 1 yrange_in_max yrange_in_min - / * 0 1 clip LUMA! "
-        "{k} 1 {c} + {c} sin LUMA@ {c} + / - * LUMA@ 1 {k} - * + range_max * "
+        "x plane_min - plane_max plane_min - / 0 1 clip LUMA! "
+        "{k} 1 {c} + dup {c} * LUMA@ {c} + / - * LUMA@ 1 {k} - * + range_max *"
     )
-    chroma_expr = "x neutral - range_max crange_in_max crange_in_min - / * range_half + round"
-
-    if clip.format.sample_type is vs.INTEGER:
-        luma_expr += "round"
+    chroma_expr = "x neutral - plane_max plane_min - / 0.5 + range_max *"
 
     planes = 0 if clip_range.is_full or clip.format.sample_type is vs.FLOAT else None
 
-    return ColorRange.FULL.apply(norm_expr(clip, (luma_expr, chroma_expr), k=curve, c=smooth, planes=planes))
+    return ColorRange.FULL.apply(norm_expr(clip, (luma_expr, chroma_expr), planes, k=curve, c=smooth))

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import warnings
 from enum import EnumMeta
 from functools import cache
+from inspect import currentframe
 from itertools import cycle
 from math import inf, isqrt
 from typing import Any, Collection, Iterable, Iterator, Literal, Sequence, SupportsIndex, cast, overload
@@ -22,6 +24,7 @@ from vstools import (
     VideoFormatT,
     VideoNodeIterableT,
     VideoNodeT,
+    check_variable,
     flatten,
     flatten_vnodes,
     get_lowest_value,
@@ -35,79 +38,105 @@ from .util import ExprVars, _get_akarin_expr_version
 __all__ = ["ExprList", "ExprOp", "ExprToken", "TupleExprList"]
 
 
-class ExprToken(CustomStrEnum):
+# TODO: remove this
+_deprecated_tokens = frozenset(
+    {
+        "LumaMin",
+        "ChromaMin",
+        "LumaMax",
+        "ChromaMax",
+        "RangeHalf",
+        "LumaRangeMin",
+        "ChromaRangeMin",
+        "LumaRangeMax",
+        "ChromaRangeMax",
+        "RangeInMin",
+        "RangeInMax",
+        "LumaRangeInMin",
+        "LumaRangeInMax",
+        "ChromaRangeInMin",
+        "ChromaRangeInMax",
+    }
+)
+
+
+class _TokenDeprecation(DeprecationWarning): ...
+
+
+warnings.filterwarnings("default", category=_TokenDeprecation)
+
+
+class _ExprTokenMeta(EnumMeta):
+    def __getattribute__(cls, name: str) -> Any:
+        if name in _deprecated_tokens:
+            # Checks if the get attribute has been triggered by ExprToken.get_value
+            frame = currentframe()
+            assert frame
+            frame_back = frame.f_back
+            assert frame_back
+
+            try:
+                if frame_back.f_code.co_name != "get_value":
+                    warnings.warn(
+                        f"This {name} ExprToken is deprecated and will be removed in a future version.",
+                        _TokenDeprecation,
+                    )
+            finally:
+                del frame
+                del frame_back
+        return super().__getattribute__(name)
+
+
+class ExprToken(CustomStrEnum, metaclass=_ExprTokenMeta):
     """
     Enumeration for symbolic constants used in [norm_expr][vsexprtools.norm_expr].
     """
 
-    LumaMin = "ymin"
-    """The minimum luma value in limited range."""
+    PlaneMin = "plane_min"
+    """Minimum value in the clip's range (chroma-aware)."""
 
-    ChromaMin = "cmin"
-    """The minimum chroma value in limited range."""
+    PlaneMax = "plane_max"
+    """Maximum value in the clip's range (chroma-aware)."""
 
-    LumaMax = "ymax"
-    """The maximum luma value in limited range."""
-
-    ChromaMax = "cmax"
-    """The maximum chroma value in limited range."""
+    MaskMax = "mask_max"
+    """Maximum value in mask clips."""
 
     Neutral = "neutral"
-    """The neutral value (e.g. 128 for 8-bit limited, 0 for float)."""
-
-    RangeHalf = "range_half"
-    """Half of the full range (e.g. 128.0 for 8-bit full range)."""
-
-    RangeSize = "range_size"
-    """The size of the full range (e.g. 256 for 8-bit, 65536 for 16-bit)."""
+    """Neutral value (e.g. 128 for 8-bit limited, 0 for float)."""
 
     RangeMin = "range_min"
     """Minimum value in full range (chroma-aware)."""
 
-    LumaRangeMin = "yrange_min"
-    """Minimum luma value based on input clip's color range."""
-
-    ChromaRangeMin = "crange_min"
-    """Minimum chroma value based on input clip's color range."""
-
     RangeMax = "range_max"
     """Maximum value in full range (chroma-aware)."""
 
-    LumaRangeMax = "yrange_max"
-    """Maximum luma value based on input clip's color range."""
+    RangeSize = "range_size"
+    """Size of the full range (e.g. 256 for 8-bit, 65536 for 16-bit)."""
 
+    # Deprecated
+    LumaMin = "ymin"
+    ChromaMin = "cmin"
+    LumaMax = "ymax"
+    ChromaMax = "cmax"
+
+    RangeHalf = "range_half"
+
+    LumaRangeMin = "yrange_min"
+    ChromaRangeMin = "crange_min"
+    LumaRangeMax = "yrange_max"
     ChromaRangeMax = "crange_max"
-    """Maximum chroma value based on input clip's color range."""
 
     RangeInMin = "range_in_min"
-    """Like `RangeMin`, but adapts to input `range_in` parameter."""
+    RangeInMax = "range_in_max"
 
     LumaRangeInMin = "yrange_in_min"
-    """Like `LumaRangeMin`, but adapts to input `range_in`."""
+    LumaRangeInMax = "yrange_in_max"
 
     ChromaRangeInMin = "crange_in_min"
-    """Like `ChromaRangeMin`, but adapts to input `range_in`."""
-
-    RangeInMax = "range_in_max"
-    """Like `RangeMax`, but adapts to input `range_in`."""
-
-    LumaRangeInMax = "yrange_in_max"
-    """Like `LumaRangeMax`, but adapts to input `range_in`."""
-
     ChromaRangeInMax = "crange_in_max"
-    """Like `ChromaRangeMax`, but adapts to input `range_in`."""
 
-    @property
-    def is_chroma(self) -> bool:
-        """
-        Indicates whether the token refers to a chroma-related value.
-
-        Returns:
-            True if the token refers to chroma (e.g. ChromaMin), False otherwise.
-        """
-        return "chroma" in self._name_.lower()
-
-    def get_value(self, clip: vs.VideoNode, chroma: bool | None = None, range_in: ColorRange | None = None) -> float:
+    @cache
+    def get_value(self, clip: vs.VideoNode, chroma: bool = False, range_in: ColorRange | None = None) -> float:
         """
         Resolves the numeric value represented by this token based on the input clip and range.
 
@@ -119,72 +148,89 @@ class ExprToken(CustomStrEnum):
         Returns:
             The value corresponding to the symbolic token.
         """
-        match self:
-            case ExprToken.LumaMin:
-                return get_lowest_value(clip, False, ColorRange.LIMITED)
+        assert check_variable(clip, self.get_value)
 
-            case ExprToken.ChromaMin:
-                return get_lowest_value(clip, True, ColorRange.LIMITED)
+        if self is ExprToken.PlaneMin:
+            return get_lowest_value(clip, chroma, range_in)
 
-            case ExprToken.LumaMax:
-                return get_peak_value(clip, False, ColorRange.LIMITED)
+        if self is ExprToken.PlaneMax:
+            return get_peak_value(clip, chroma, range_in)
 
-            case ExprToken.ChromaMax:
-                return get_peak_value(clip, True, ColorRange.LIMITED)
+        if self is ExprToken.MaskMax:
+            return get_peak_value(clip, range_in=ColorRange.FULL)
 
-            case ExprToken.Neutral:
-                return get_neutral_value(clip)
+        if self is ExprToken.Neutral:
+            return get_neutral_value(clip)
 
-            case ExprToken.RangeHalf:
-                val = get_peak_value(clip, range_in=ColorRange.FULL)
-                return (val + 1) / 2 if val > 1.0 else val
+        if self is ExprToken.RangeMin:
+            return get_lowest_value(clip, chroma, ColorRange.FULL)
 
-            case ExprToken.RangeSize:
-                val = get_peak_value(clip, range_in=ColorRange.FULL)
-                return val + 1 if val > 1.0 else val
+        if self is ExprToken.RangeMax:
+            return get_peak_value(clip, chroma, ColorRange.FULL)
 
-            case ExprToken.RangeMin:
-                return get_lowest_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
+        if self is ExprToken.RangeSize:
+            val = get_peak_value(clip, range_in=ColorRange.FULL)
+            return val if clip.format.sample_type is vs.FLOAT else val + 1
 
-            case ExprToken.LumaRangeMin:
-                return get_lowest_value(clip, False)
+        # TODO: remove this
+        warnings.warn(
+            f"This {self.name} ExprToken is deprecated and will be removed in a future version.", _TokenDeprecation
+        )
 
-            case ExprToken.ChromaRangeMin:
-                return get_lowest_value(clip, True)
+        if self is ExprToken.LumaMin:
+            return get_lowest_value(clip, False, ColorRange.LIMITED)
 
-            case ExprToken.RangeMax:
-                return get_peak_value(clip, chroma if chroma is not None else False, ColorRange.FULL)
+        if self is ExprToken.ChromaMin:
+            return get_lowest_value(clip, True, ColorRange.LIMITED)
 
-            case ExprToken.LumaRangeMax:
-                return get_peak_value(clip, False)
+        if self is ExprToken.LumaMax:
+            return get_peak_value(clip, False, ColorRange.LIMITED)
 
-            case ExprToken.ChromaRangeMax:
-                return get_peak_value(clip, True)
+        if self is ExprToken.ChromaMax:
+            return get_peak_value(clip, True, ColorRange.LIMITED)
 
-            case ExprToken.RangeInMin:
-                return get_lowest_value(clip, chroma if chroma is not None else False, range_in)
+        if self is ExprToken.RangeHalf:
+            val = get_peak_value(clip, range_in=ColorRange.FULL)
+            return (val + 1) / 2 if val > 1.0 else val
 
-            case ExprToken.LumaRangeInMin:
-                return get_lowest_value(clip, False, range_in)
+        if self is ExprToken.LumaRangeMin:
+            return get_lowest_value(clip, False)
 
-            case ExprToken.ChromaRangeInMin:
-                return get_lowest_value(clip, True, range_in)
+        if self is ExprToken.ChromaRangeMin:
+            return get_lowest_value(clip, True)
 
-            case ExprToken.RangeInMax:
-                return get_peak_value(clip, chroma if chroma is not None else False, range_in)
+        if self is ExprToken.LumaRangeMax:
+            return get_peak_value(clip, False)
 
-            case ExprToken.LumaRangeInMax:
-                return get_peak_value(clip, False, range_in)
+        if self is ExprToken.ChromaRangeMax:
+            return get_peak_value(clip, True)
 
-            case ExprToken.ChromaRangeInMax:
-                return get_peak_value(clip, True, range_in)
+        if self is ExprToken.RangeInMin:
+            return get_lowest_value(clip, chroma if chroma is not None else False, range_in)
+
+        if self is ExprToken.LumaRangeInMin:
+            return get_lowest_value(clip, False, range_in)
+
+        if self is ExprToken.ChromaRangeInMin:
+            return get_lowest_value(clip, True, range_in)
+
+        if self is ExprToken.RangeInMax:
+            return get_peak_value(clip, chroma if chroma is not None else False, range_in)
+
+        if self is ExprToken.LumaRangeInMax:
+            return get_peak_value(clip, False, range_in)
+
+        if self is ExprToken.ChromaRangeInMax:
+            return get_peak_value(clip, True, range_in)
+
+        raise NotImplementedError
 
     def __getitem__(self, i: int) -> str:  # type: ignore[override]
         """
         Returns a version of the token specific to a clip index.
 
         This allows referencing the token in expressions targeting multiple clips
-        (e.g., `ExprToken.LumaMax[2]` results in `'ymax_z'` suffix for clip index 2).
+        (e.g., `ExprToken.PlaneMax[2]` results in `'plane_max_z'` suffix for clip index 2).
 
         Args:
             i: An integer index representing the input clip number.
@@ -196,6 +242,17 @@ class ExprToken(CustomStrEnum):
             raise CustomIndexError("Only an index up to 25 is supported", self, i)
 
         return f"{self._value_}_{ExprVars.get_var(i)}"
+
+
+def _cache_clear_expr_token(core_id: int) -> None:
+    def cache_clear() -> None:
+        for token in ExprToken:
+            token.get_value.cache_clear()
+
+    vs.core.register_on_destroy(cache_clear)
+
+
+vs.register_on_creation(_cache_clear_expr_token)
 
 
 class ExprList(StrList):

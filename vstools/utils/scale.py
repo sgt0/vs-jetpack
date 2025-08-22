@@ -206,15 +206,18 @@ def get_lowest_values(
     clip_or_depth: int | VideoFormatT | HoldsVideoFormatT,
     range_in: ColorRangeT | None = None,
     family: vs.ColorFamily | None = None,
+    mask: bool = False,
 ) -> list[float]:
     """
     Get the lowest values of all planes of a specified format.
     """
 
+    range_in = ColorRange.FULL if mask else range_in
+
     return normalize_seq(
         [
             get_lowest_value(clip_or_depth, False, range_in, family),
-            get_lowest_value(clip_or_depth, True, range_in, family),
+            get_lowest_value(clip_or_depth, not mask, range_in, family),
         ],
         get_video_format(clip_or_depth).num_planes,
     )
@@ -294,12 +297,18 @@ def get_peak_values(
     clip_or_depth: int | VideoFormatT | HoldsVideoFormatT,
     range_in: ColorRangeT | None = None,
     family: vs.ColorFamily | None = None,
+    mask: bool = False,
 ) -> list[float]:
     """
     Get the peak values of all planes of a specified format.
     """
 
+    range_in = ColorRange.FULL if mask else range_in
+
     return normalize_seq(
-        [get_peak_value(clip_or_depth, False, range_in, family), get_peak_value(clip_or_depth, True, range_in, family)],
+        [
+            get_peak_value(clip_or_depth, False, range_in, family),
+            get_peak_value(clip_or_depth, not mask, range_in, family),
+        ],
         get_video_format(clip_or_depth).num_planes,
     )
