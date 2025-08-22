@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import sys
 from types import UnionType
-from typing import (  # type: ignore[attr-defined]
+from typing import (
     Any,
     Callable,
     Iterable,
     Literal,
     Sequence,
     TypeVar,
-    _UnionGenericAlias,  # pyright: ignore[reportAttributeAccessIssue]
+    Union,
     get_args,
     get_origin,
     overload,
@@ -52,7 +52,7 @@ def _normalize_types(types: type[T] | Iterable[type[T]]) -> tuple[type[T], ...]:
         t_origin = get_origin(tt)
 
         if t_origin is not None:
-            if isinstance(tt, (_UnionGenericAlias, UnionType)):
+            if isinstance(tt, UnionType) or t_origin is Union:
                 norm_t.extend(_normalize_types(get_args(tt)))
             else:
                 norm_t.append(t_origin)
