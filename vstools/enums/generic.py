@@ -13,7 +13,7 @@ from ..exceptions import (
     UnsupportedFieldBasedError,
 )
 from ..types import HoldsVideoFormatT, VideoFormatT, VideoNodeT
-from .stubs import PropEnum, _base_from_video
+from .base import PropEnum, _base_from_video
 
 __all__ = ["ChromaLocation", "ChromaLocationT", "FieldBased", "FieldBasedT"]
 

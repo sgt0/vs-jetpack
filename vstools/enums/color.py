@@ -19,7 +19,7 @@ from ..exceptions import (
     UnsupportedTransferError,
 )
 from ..types import HoldsPropValueT, KwargsT
-from .stubs import PropEnum, _base_from_video
+from .base import PropEnum, _base_from_video
 
 __all__ = [
     "ColorRange",
