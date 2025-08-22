@@ -8,6 +8,7 @@ from typing import (
     Iterable,
     Literal,
     Sequence,
+    TypeAlias,
     TypeVar,
     Union,
     get_args,
@@ -33,13 +34,33 @@ from jetpytools import (
 from ..enums import PropEnum
 from ..exceptions import FramePropError
 from ..types import BoundVSMapValue, ConstantFormatVideoNode, HoldsPropValueT
-from ..types.generic import BoundVSMapValue_0, BoundVSMapValue_1
 from .cache import NodesPropsCache
 
 __all__ = ["get_clip_filepath", "get_prop", "get_props", "merge_clip_props"]
 
+_PropValue: TypeAlias = (
+    int
+    | float
+    | str
+    | bytes
+    | vs.VideoFrame
+    | vs.VideoNode
+    | vs.AudioFrame
+    | vs.AudioNode
+    | Callable[..., Any]
+    | list[int]
+    | list[float]
+    | list[str]
+    | list[bytes]
+    | list[vs.AudioFrame]
+    | list[vs.AudioNode]
+    | list[Callable[..., Any]]
+)
 DT = TypeVar("DT")
 CT = TypeVar("CT")
+_PropValueT = TypeVar("_PropValueT", bound=_PropValue)
+_PropValueT0 = TypeVar("_PropValueT0", bound=_PropValue)
+_PropValueT1 = TypeVar("_PropValueT1", bound=_PropValue)
 
 
 _get_prop_cache = NodesPropsCache[vs.RawNode]()
@@ -64,35 +85,35 @@ def _normalize_types(types: type[T] | Iterable[type[T]]) -> tuple[type[T], ...]:
 
 @overload
 def get_prop(
-    obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[BoundVSMapValue], *, func: FuncExceptT | None = None
-) -> BoundVSMapValue: ...
+    obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[_PropValueT], *, func: FuncExceptT | None = None
+) -> _PropValueT: ...
 
 
 @overload
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: tuple[type[BoundVSMapValue], type[BoundVSMapValue_0]],
+    t: tuple[type[_PropValueT], type[_PropValueT0]],
     *,
     func: FuncExceptT | None = None,
-) -> BoundVSMapValue | BoundVSMapValue_0: ...
+) -> _PropValueT | _PropValueT0: ...
 
 
 @overload
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: tuple[type[BoundVSMapValue], type[BoundVSMapValue_0], type[BoundVSMapValue_1]],
+    t: tuple[type[_PropValueT], type[_PropValueT0], type[_PropValueT1]],
     *,
     func: FuncExceptT | None = None,
-) -> BoundVSMapValue | BoundVSMapValue_0 | BoundVSMapValue_1: ...
+) -> _PropValueT | _PropValueT0 | _PropValueT1: ...
 
 
 @overload
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: tuple[type[BoundVSMapValue], ...],
+    t: tuple[type[_PropValueT], ...],
     *,
     func: FuncExceptT | None = None,
 ) -> Any: ...
@@ -102,8 +123,29 @@ def get_prop(
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT],
+    t: Literal["Callable"],
+    *,
+    func: FuncExceptT | None = None,
+) -> Callable[..., Any]: ...
+
+
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: SupportsString | PropEnum,
+    t: Literal["Callable"],
+    *,
+    default: DT,
+    func: FuncExceptT | None = None,
+) -> Callable[..., Any] | DT: ...
+
+
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: SupportsString | PropEnum,
+    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
+    cast: Callable[[_PropValueT], CT],
     *,
     func: FuncExceptT | None = None,
 ) -> CT: ...
@@ -113,67 +155,55 @@ def get_prop(
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
+    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
     *,
-    default: DT | MissingT = ...,
+    default: DT,
     func: FuncExceptT | None = None,
-) -> BoundVSMapValue | DT: ...
+) -> _PropValueT | DT: ...
 
 
 @overload
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT],
-    default: DT | MissingT = ...,
+    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
+    cast: Callable[[_PropValueT], CT],
+    default: DT,
     func: FuncExceptT | None = None,
 ) -> CT | DT: ...
 
 
-@overload
 def get_prop(
     obj: HoldsPropValueT,
     key: SupportsString | PropEnum,
-    t: type[BoundVSMapValue],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT] | None,
-    default: DT | MissingT,
-    func: FuncExceptT | None = None,
-) -> BoundVSMapValue | CT | DT: ...
-
-
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: type[BoundVSMapValue] | tuple[type[BoundVSMapValue], ...],
-    cast: type[CT] | Callable[[BoundVSMapValue], CT] | None = None,
+    t: type[_PropValueT] | tuple[type[_PropValueT], ...] | Literal["Callable"],
+    cast: Callable[[_PropValueT], CT] | MissingT = MISSING,
     default: DT | MissingT = MISSING,
     func: FuncExceptT | None = None,
-) -> BoundVSMapValue | CT | DT:
+) -> _PropValueT | CT | DT | Callable[..., Any] | str:
     """
-    Get FrameProp ``prop`` from frame ``frame`` with expected type ``t`` to satisfy the type checker.
+    Get FrameProp ``prop`` from frame ``frame`` with expected type ``t``.
 
     Args:
         obj: Clip or frame containing props.
         key: Prop to get.
-        t: type of prop.
-        cast: Cast value to this type, if specified.
-        default: Fallback value.
+        t: Expected type of the prop.
+        cast: Optional cast to apply to the value.
+        default: Fallback value if missing or invalid.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
-        frame.prop[key].
+        The property value (possibly cast).
 
     Raises:
-        FramePropError: ``key`` is not found in props.
-        FramePropError: ``key`` is of the wrong type.
+        FramePropError if key is missing or wrong type and no default is provided.
     """
     func = func or get_prop
 
     if isinstance(obj, vs.RawNode):
-        props = _get_prop_cache.get((obj, 0))
+        props = _get_prop_cache.get((obj, 0), MISSING)
 
-        if props is None:
+        if props is MISSING:
             with obj.get_frame(0) as f:
                 props = f.props.copy()
 
@@ -186,38 +216,46 @@ def get_prop(
 
     resolved_key = key.prop_key if isinstance(key, type) and issubclass(key, PropEnum) else str(key)
 
-    try:
-        prop = props[resolved_key]
-    except KeyError as e:
+    prop = props.get(resolved_key, MISSING)
+
+    if prop is MISSING:
         if default is not MISSING:
             return default
 
-        raise FramePropError(func, resolved_key, f'Key "{resolved_key}" not present in props!') from e
+        raise FramePropError(func, resolved_key, f'Key "{resolved_key}" not present in props!')
+
+    if t == "Callable":
+        if callable(prop):
+            return prop
+        if default is not MISSING:
+            return default
+
+        raise FramePropError(func, resolved_key)
 
     norm_t = _normalize_types(t)
 
-    if not isinstance(prop, norm_t):
-        if all(issubclass(ty, str) for ty in norm_t) and isinstance(prop, bytes):
-            return prop.decode("utf-8")  # type: ignore[return-value]
+    if isinstance(prop, norm_t):
+        if cast is MISSING:
+            return prop
+        try:
+            # pyright is wrong here
+            return cast(prop)  # pyright: ignore[reportArgumentType]
+        except Exception:
+            if default is not MISSING:
+                return default
+            raise FramePropError(func, resolved_key)
 
-        if default is not MISSING:
-            return default
+    if all(issubclass(ty, str) for ty in norm_t) and isinstance(prop, bytes):
+        return prop.decode("utf-8")
 
-        raise FramePropError(
-            func,
-            resolved_key,
-            'Key "{key}" did not contain expected type: Expected "{t}" got "{prop_t}"!',
-            t=t,
-            prop_t=type(prop),
-        )
+    if default is not MISSING:
+        return default
 
-    try:
-        return cast(prop) if cast else prop  # type: ignore
-    except Exception as e:
-        if default is not MISSING:
-            return default
-
-        raise FramePropError(func, resolved_key) from e
+    raise FramePropError(
+        func,
+        resolved_key,
+        f'Key "{resolved_key}" did not contain expected type: Expected "{t}" got "{type(prop)}"!',
+    )
 
 
 @overload

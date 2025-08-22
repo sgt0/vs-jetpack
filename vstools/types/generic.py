@@ -60,9 +60,6 @@ BoundVSMapValue = TypeVar("BoundVSMapValue", bound=VSMapValue)
 Type variable that can be one of the types in a VSMapValue.
 """
 
-BoundVSMapValue_0 = TypeVar("BoundVSMapValue_0", bound=VSMapValue)
-BoundVSMapValue_1 = TypeVar("BoundVSMapValue_1", bound=VSMapValue)
-
 VSMapValueCallback = Callable[..., VSMapValue]
 """
 Callback that can be held in a VSMap. It can only return values representable in a VSMap.
