@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 from typing import TypedDict
 
 import vapoursynth as vs
-from jetpytools import CustomValueError, DependencyNotFoundError, FuncExceptT, SPath, SPathLike
+from jetpytools import CustomValueError, DependencyNotFoundError, FileWasNotFoundError, FuncExceptT, SPath, SPathLike
 from typing_extensions import Self
 
 from ..types import VideoNodeT
@@ -147,7 +147,7 @@ class VideoPackets(list[int]):
         return cls(pkt_sizes)
 
     @classmethod
-    def from_file(cls, file: SPathLike, *, func: FuncExceptT | None = None) -> Self | None:
+    def from_file(cls, file: SPathLike, *, func: FuncExceptT | None = None) -> Self:
         """
         Obtain packet sizes from a given file.
 
@@ -159,17 +159,16 @@ class VideoPackets(list[int]):
             A VideoPackets object containing the packet sizes.
         """
 
-        if file is not None:
-            file = _get_packet_storage().get_file(file, ext=".txt")
+        file = _get_packet_storage().get_file(file, ext=".txt")
 
-            if file.exists() and not file.stat().st_size:
-                file.unlink()
+        if not file.exists():
+            raise FileWasNotFoundError("File not found!", func)
 
-        if file is not None and file.exists():
-            with file.open("r+") as f:
-                return cls(map(int, f.readlines()))
+        if file.stat().st_size:
+            file.unlink()
 
-        return None
+        with file.open("r+") as f:
+            return cls(map(int, f.readlines()))
 
     @classmethod
     def from_clip(
@@ -190,20 +189,13 @@ class VideoPackets(list[int]):
             src_file: The path to the source video file. If None, the source file will be obtained from the clip.
                 Default: None.
         """
-
         from ..utils import get_clip_filepath
 
         func = func or cls.from_video
 
         out_file = SPath(str(out_file)).stem + f"_{clip.num_frames}_{clip.fps_num}_{clip.fps_den}"
 
-        if video_packets := cls.from_file(out_file, func=func):
-            return video_packets
-
-        if (src_file := get_clip_filepath(clip, src_file, func=func)) is None:
-            raise CustomValueError("You must provide a source file!", func)
-
-        return cls.from_video(src_file, out_file, offset, func=func)
+        return cls.from_video(get_clip_filepath(clip, src_file, func=func), out_file, offset, func=func)
 
     def get_scenestats(self, keyframes: Keyframes) -> list[ScenePacketStats]:
         """

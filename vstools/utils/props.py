@@ -287,31 +287,7 @@ def merge_clip_props(*clips: vs.VideoNode, main_idx: int = 0) -> vs.VideoNode:
     return clips[0].std.ModifyFrame(clips, _merge_props)
 
 
-@overload
-def get_clip_filepath(
-    clip: vs.VideoNode,
-    fallback: SPathLike | None = ...,
-    strict: Literal[False] = ...,
-    *,
-    func: FuncExceptT | None = ...,
-) -> SPath | None: ...
-
-
-@overload
-def get_clip_filepath(
-    clip: vs.VideoNode, fallback: SPathLike | None = ..., strict: Literal[True] = ..., *, func: FuncExceptT | None = ...
-) -> SPath: ...
-
-
-@overload
-def get_clip_filepath(
-    clip: vs.VideoNode, fallback: SPathLike | None = ..., strict: bool = ..., *, func: FuncExceptT | None = ...
-) -> SPath | None: ...
-
-
-def get_clip_filepath(
-    clip: vs.VideoNode, fallback: SPathLike | None = None, strict: bool = False, *, func: FuncExceptT | None = None
-) -> SPath | None:
+def get_clip_filepath(clip: vs.VideoNode, fallback: SPathLike | None = None, func: FuncExceptT | None = None) -> SPath:
     """
     Helper function to get the file path from a clip.
 
@@ -321,33 +297,23 @@ def get_clip_filepath(
     Args:
         clip: The clip to get the file path from.
         fallback: Fallback file path to use if the `prop` is not found.
-        strict: If True, will raise an error if the `prop` is not found. This makes it so the function will NEVER return
-            False. Default: False.
+        strict: If True, will raise an error if the `prop` is not found. Default: False.
         func: Function returned for error handling. This should only be set by VS package developers.
 
     Raises:
         FileWasNotFoundError: The file path was not found.
         FramePropError: The property was not found in the clip.
     """
-
     func = func or get_clip_filepath
 
-    if fallback is not None and not (fallback_path := SPath(fallback)).exists() and strict:
-        raise FileWasNotFoundError("Fallback file not found!", func, fallback_path.absolute())
+    path = get_prop(
+        clip, "IdxFilePath", str, SPath, default=SPath(fallback) if fallback is not None else None, func=func
+    )
 
-    if not (path := get_prop(clip, "IdxFilePath", str, default=MISSING if strict else False, func=func)):
-        return fallback_path if fallback is not None else None
+    if path is None or not path.exists():
+        raise FileWasNotFoundError("File not found!", func)
 
-    if not (spath := SPath(str(path))).exists() and not fallback:
-        raise FileWasNotFoundError("File not found!", func, spath.absolute())
-
-    if spath.exists():
-        return spath
-
-    if fallback is not None and fallback_path.exists():
-        return fallback_path
-
-    raise FileWasNotFoundError("File not found!", func, spath.absolute())
+    return path
 
 
 @overload
