@@ -83,104 +83,98 @@ def _normalize_types(types: type[T] | Iterable[type[T]]) -> tuple[type[T], ...]:
     return tuple(norm_t)
 
 
-@overload
-def get_prop(
-    obj: HoldsPropValueT, key: SupportsString | PropEnum, t: type[_PropValueT], *, func: FuncExceptT | None = None
-) -> _PropValueT: ...
-
-
+# One type signature
 @overload
 def get_prop(
     obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: tuple[type[_PropValueT], type[_PropValueT0]],
+    key: str | type[PropEnum],
+    t: type[_PropValueT],
     *,
-    func: FuncExceptT | None = None,
-) -> _PropValueT | _PropValueT0: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: tuple[type[_PropValueT], type[_PropValueT0], type[_PropValueT1]],
-    *,
-    func: FuncExceptT | None = None,
-) -> _PropValueT | _PropValueT0 | _PropValueT1: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: tuple[type[_PropValueT], ...],
-    *,
-    func: FuncExceptT | None = None,
-) -> Any: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: Literal["Callable"],
-    *,
-    func: FuncExceptT | None = None,
-) -> Callable[..., Any]: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: Literal["Callable"],
-    *,
-    default: DT,
-    func: FuncExceptT | None = None,
-) -> Callable[..., Any] | DT: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
-    cast: Callable[[_PropValueT], CT],
-    *,
-    func: FuncExceptT | None = None,
-) -> CT: ...
-
-
-@overload
-def get_prop(
-    obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
-    *,
-    default: DT,
+    default: DT = ...,
     func: FuncExceptT | None = None,
 ) -> _PropValueT | DT: ...
 
 
+# Tuple of two types signature
 @overload
 def get_prop(
     obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: type[_PropValueT] | tuple[type[_PropValueT], ...],
+    key: str | type[PropEnum],
+    t: tuple[type[_PropValueT], type[_PropValueT0]],
+    *,
+    default: DT = ...,
+    func: FuncExceptT | None = None,
+) -> _PropValueT | _PropValueT0 | DT: ...
+
+
+# Tuple of three types signature
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: str | type[PropEnum],
+    t: tuple[type[_PropValueT], type[_PropValueT0], type[_PropValueT1]],
+    *,
+    default: DT = ...,
+    func: FuncExceptT | None = None,
+) -> _PropValueT | _PropValueT0 | _PropValueT1 | DT: ...
+
+
+# Tuple of four types or more signature
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: str | type[PropEnum],
+    t: tuple[type[_PropValueT], ...],
+    *,
+    default: DT = ...,
+    func: FuncExceptT | None = None,
+) -> Any | DT: ...
+
+
+# Signature when cast is specified
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: str | type[PropEnum],
+    t: type[_PropValueT] | tuple[type[_PropValue], ...],
     cast: Callable[[_PropValueT], CT],
-    default: DT,
+    default: DT = ...,
     func: FuncExceptT | None = None,
 ) -> CT | DT: ...
 
 
+# Signature for callable
+@overload
 def get_prop(
     obj: HoldsPropValueT,
-    key: SupportsString | PropEnum,
-    t: type[_PropValueT] | tuple[type[_PropValueT], ...] | Literal["Callable"],
-    cast: Callable[[_PropValueT], CT] | MissingT = MISSING,
+    key: str | type[PropEnum],
+    t: Literal["Callable"],
+    *,
+    default: DT = ...,
+    func: FuncExceptT | None = None,
+) -> Callable[..., Any] | DT: ...
+
+
+# Generic signature
+@overload
+def get_prop(
+    obj: HoldsPropValueT,
+    key: str | type[PropEnum],
+    t: type[Any] | tuple[type[Any], ...] | Literal["Callable"],
+    cast: Callable[[Any], CT] = ...,
+    default: DT = ...,
+    func: FuncExceptT | None = None,
+) -> Any | CT | DT: ...
+
+
+def get_prop(
+    obj: HoldsPropValueT,
+    key: str | type[PropEnum],
+    t: type[Any] | tuple[type[Any], ...] | Literal["Callable"],
+    cast: Callable[[Any], CT] | MissingT = MISSING,
     default: DT | MissingT = MISSING,
     func: FuncExceptT | None = None,
-) -> _PropValueT | CT | DT | Callable[..., Any] | str:
+) -> Any | CT | DT:
     """
     Get FrameProp ``prop`` from frame ``frame`` with expected type ``t``.
 
@@ -238,8 +232,7 @@ def get_prop(
         if cast is MISSING:
             return prop
         try:
-            # pyright is wrong here
-            return cast(prop)  # pyright: ignore[reportArgumentType]
+            return cast(prop)
         except Exception:
             if default is not MISSING:
                 return default
