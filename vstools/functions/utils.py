@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import string
 from functools import partial, wraps
 from typing import Any, Callable, Iterable, Literal, Mapping, Sequence, Union, overload
 from weakref import WeakValueDictionary
@@ -36,7 +35,34 @@ __all__ = [
 ]
 
 
-EXPR_VARS = (alph := list(string.ascii_lowercase))[(idx := alph.index("x")) :] + alph[:idx]
+EXPR_VARS = [
+    "x",
+    "y",
+    "z",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+    "v",
+    "w",
+]
 """
 Variables to access clips in Expr.
 """
