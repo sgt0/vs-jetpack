@@ -383,7 +383,7 @@ def get_props(
         except Exception as e:
             exceptions.append(e)
         else:
-            props[str(k)] = prop
+            props[k if isinstance(k, str) else k.prop_key] = prop
 
     if exceptions:
         if sys.version_info >= (3, 11):
