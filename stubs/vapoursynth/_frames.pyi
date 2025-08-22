@@ -90,7 +90,6 @@ _PropValue: TypeAlias = (
     | float
     | str
     | bytes
-    | bytearray
     | RawFrame
     | RawNode
     | Callable[..., Any]
@@ -98,7 +97,6 @@ _PropValue: TypeAlias = (
     | list[float]
     | list[str]
     | list[bytes]
-    | list[bytearray]
     | list[RawFrame]
     | list[RawNode]
     | list[Callable[..., Any]]
