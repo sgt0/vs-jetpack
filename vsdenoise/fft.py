@@ -206,22 +206,6 @@ class DFTTest:
 
             @overload
             def __call__(
-                self, location: SLocationT | None, /, *, res: int = 20, digits: int = 3
-            ) -> DFTTest.SLocation | None:
-                """
-                Interpolates sigma values for a given location or returns `None` if no location is provided.
-
-                Args:
-                    location: The frequency location or `None` for no interpolation.
-                    res: The resolution of the interpolation (default is 20).
-                    digits: The precision of the frequency values (default is 3 decimal places).
-
-                Returns:
-                    The interpolated `SLocation` object or `None` if no location is provided.
-                """
-
-            @overload
-            def __call__(
                 self,
                 h_loc: SLocationT | None,
                 v_loc: SLocationT | None,
@@ -246,8 +230,8 @@ class DFTTest:
                 """
 
             def __call__(
-                self, *locations: SLocationT | None, res: int = 20, digits: int = 3
-            ) -> DFTTest.SLocation | None | DFTTest.SLocation.MultiDim:
+                self, location: SLocationT | None = None, *locations: SLocationT | None, res: int = 20, digits: int = 3
+            ) -> DFTTest.SLocation | DFTTest.SLocation.MultiDim:
                 """
                 Interpolates sigma values for given frequency locations. Can handle multiple locations for horizontal,
                 vertical, and temporal frequencies.
@@ -260,15 +244,12 @@ class DFTTest:
                 Returns:
                     The interpolated `SLocation` object or a `MultiDim` object if multiple locations are provided.
                 """
-                if len(locations) == 1:
-                    sloc = DFTTest.SLocation.from_param(locations[0])
+                if not locations and location is not None:
+                    return DFTTest.SLocation.from_param(location).interpolate(self, res, digits)
 
-                    if sloc is not None:
-                        sloc = sloc.interpolate(self, res, digits)
-
-                    return sloc
-
-                return DFTTest.SLocation.MultiDim(*(self(x, res=res, digits=digits) for x in locations))
+                return DFTTest.SLocation.MultiDim(
+                    *(self(x, res=res, digits=digits) if x is not None else None for x in (location, *locations))
+                )
 
         frequencies: tuple[Frequency, ...]
         """
@@ -436,35 +417,23 @@ class DFTTest:
 
             return values
 
-        @overload
         @classmethod
-        def from_param(cls, location: SLocationT | Literal[False]) -> Self: ...
-
-        @overload
-        @classmethod
-        def from_param(cls, location: SLocationT | Literal[False] | None) -> Self | None: ...
-
-        @classmethod
-        def from_param(cls, location: SLocationT | Literal[False] | None) -> Self | None:
+        def from_param(cls, location: SLocationT | Literal[False]) -> Self:
             """
             Converts a frequency-sigma pair or a literal `False` to an `SLocation` instance.
-            Returns `None` if no processing.
 
             Args:
-                location: A frequency-sigma pair, `False` for no processing, or `None`.
+                location: A frequency-sigma pair, `False` for no processing.
 
             Returns:
-                An `SLocation` instance or `None`.
+                An `SLocation` instance`.
             """
-            if isinstance(location, SupportsFloatOrIndex) and location is not False:
-                location = float(location)
-                location = {0: location, 1: location}
-
-            if location is None:
-                return None
-
             if location is False:
                 return cls.NoProcess
+
+            if isinstance(location, SupportsFloatOrIndex):
+                location = float(location)
+                location = {0: location, 1: location}
 
             return cls(location)
 
@@ -540,9 +509,9 @@ class DFTTest:
                 if not (horizontal or vertical or temporal):
                     raise CustomValueError("You must specify at least one dimension!", self.__class__)
 
-                self.horizontal = DFTTest.SLocation.from_param(horizontal)
-                self.vertical = DFTTest.SLocation.from_param(vertical)
-                self.temporal = DFTTest.SLocation.from_param(temporal)
+                self.horizontal = DFTTest.SLocation.from_param(horizontal) if horizontal is not None else horizontal
+                self.vertical = DFTTest.SLocation.from_param(vertical) if vertical is not None else vertical
+                self.temporal = DFTTest.SLocation.from_param(temporal) if temporal is not None else temporal
 
     class FilterType(CustomIntEnum):
         """
@@ -895,7 +864,7 @@ class DFTTest:
                 ...
 
             @cache
-            def resolve(self) -> Self:
+            def resolve(self) -> Self:  # pyright: ignore[reportIncompatibleVariableOverride]
                 """
                 Resolves the appropriate DFTTest backend to use based on availability.
 
@@ -1053,7 +1022,7 @@ class DFTTest:
 
         if isinstance(nsloc, DFTTest.SLocation.MultiDim):
             ckwargs.update(ssx=nsloc.horizontal, ssy=nsloc.vertical, sst=nsloc.temporal)
-        else:
+        elif nsloc is not None:
             ckwargs.update(slocation=DFTTest.SLocation.from_param(nsloc))
 
         for k, v in ckwargs.items():
