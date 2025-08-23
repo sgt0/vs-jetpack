@@ -15,7 +15,7 @@ from ..exceptions import (
 from ..types import HoldsVideoFormat, VideoFormatLike, VideoNodeT
 from .base import PropEnum, _base_from_video
 
-__all__ = ["ChromaLocation", "ChromaLocationLike", "FieldBased", "FieldBasedLike"]
+__all__ = ["ChromaLocation", "ChromaLocationLike", "ChromaLocationT", "FieldBased", "FieldBasedLike", "FieldBasedT"]
 
 
 class ChromaLocation(PropEnum):
