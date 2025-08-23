@@ -893,14 +893,6 @@ class Kernel(Scaler, Descaler, Resampler):
         shifts_left = normalize_seq(shift_left, n_planes)
 
         if n_planes == 1:
-            if len(set(shifts_top)) > 1 or len(set(shifts_left)) > 1:
-                raise CustomValueError(
-                    "Inconsistent shift values detected for a single plane. "
-                    "All shift values must be identical when passing a GRAY clip.",
-                    self.shift,
-                    (shifts_top, shifts_left),
-                )
-
             return _shift(clip, (shifts_top[0], shifts_left[0]))
 
         shifted_planes = [
@@ -908,7 +900,7 @@ class Kernel(Scaler, Descaler, Resampler):
             for plane, top, left in zip(split(clip), shifts_top, shifts_left)
         ]
 
-        return core.std.ShufflePlanes(shifted_planes, [0, 0, 0], clip.format.color_family)
+        return core.std.ShufflePlanes(shifted_planes, [0, 0, 0], clip.format.color_family, clip)
 
     def get_params_args(
         self, is_descale: bool, clip: vs.VideoNode, width: int | None = None, height: int | None = None, **kwargs: Any

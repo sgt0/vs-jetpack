@@ -599,14 +599,6 @@ class ComplexScaler(KeepArScaler, LinearScaler):
         shift_left = normalize_seq(shift_left, n_planes)
 
         if n_planes == 1:
-            if len(set(shift_top)) > 1 or len(set(shift_left)) > 1:
-                raise CustomValueError(
-                    "Inconsistent shift values detected for a single plane. "
-                    "All shift values must be identical when passing a GRAY clip.",
-                    self.scale,
-                    (shift_top, shift_left),
-                )
-
             return super().scale(clip, width, height, (shift_top[0], shift_left[0]), **kwargs)
 
         width, height = self._wh_norm(clip, width, height)
