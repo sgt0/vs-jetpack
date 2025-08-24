@@ -130,7 +130,7 @@ class InterpolateOverlay(CustomEnum):
                 blksize = _floor_div_tuple(blksize)
                 overlap = _floor_div_tuple(blksize)
 
-            mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
+                mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
         comp = mv.flow_fps(fps=clip.fps * 4)
         comp += comp[-1] * 3
