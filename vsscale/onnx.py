@@ -390,7 +390,8 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
             fp16
             if (isinstance(self.backend, _SupportsFP16) and self.backend.fp16)
             and isinstance(
-                self.backend, (Backend.TRT, Backend.ORT_CPU, Backend.ORT_CUDA, Backend.ORT_DML, Backend.ORT_COREML)
+                self.backend,
+                (Backend.TRT, Backend.TRT_RTX, Backend.ORT_CPU, Backend.ORT_CUDA, Backend.ORT_DML, Backend.ORT_COREML),
             )
             else fp32
         )
