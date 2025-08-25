@@ -194,7 +194,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         fp16 = self.kwargs.pop("fp16", True)
         default_args = {"fp16": fp16, "output_format": int(fp16), "use_cuda_graph": True, "use_cublas": True}
 
-        from vsmlrt import Backend, backendT
+        from vsmlrt import backendT
 
         if backend is None:
             self.backend = autoselect_backend(**default_args | self.kwargs)
@@ -211,19 +211,6 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
             self.backend = backend_t(**_clean_keywords(default_args | self.kwargs, backend_t))
         else:
             self.backend = replace(backend, **_clean_keywords(self.kwargs, backend))
-
-        # FIXME
-        # https://github.com/AmusementClub/vs-mlrt/blob/1404bba1ef9a71c29dfd279ce53fc8db8ef5af17/scripts/vsmlrt.py#L2374
-        # https://github.com/microsoft/onnxconverter-common/blob/05005c742b6d47d59520d9644378ccbf1beeee68/onnxconverter_common/float16.py#L29-L88
-        if isinstance(self.backend, Backend.TRT_RTX) and self.backend.fp16:
-            from warnings import filterwarnings
-
-            filterwarnings(
-                "ignore",
-                category=UserWarning,
-                module="onnxconverter_common",
-                message=r"the float32 number .* will be truncated to .*",
-            )
 
         self.tiles = tiles
         self.tilesize = tilesize
