@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import contextlib
+from contextlib import suppress
 from typing import Any, Callable, Generic, Literal, Protocol, Sequence, TypeGuard, TypeVar, Union, overload
 
 import vapoursynth as vs
@@ -51,7 +51,7 @@ _RangesCallBackLike = Union[
 def _is_cb_nf(
     cb: Callable[..., bool], params: set[str]
 ) -> TypeGuard[_RangesCallBackNF[vs.VideoFrame] | _RangesCallBackNF[Sequence[vs.VideoFrame]]]:
-    return bool("f" in params and "n" in params)
+    return "f" in params and "n" in params
 
 
 def _is_cb_f(
@@ -236,7 +236,7 @@ def replace_ranges(
         return clip_a
 
     if not mismatch:
-        check_ref_clip(clip_a, clip_b)
+        check_ref_clip(clip_a, clip_b, replace_ranges)
 
     if callable(ranges):
         from inspect import Signature
@@ -273,7 +273,7 @@ def replace_ranges(
 
     b_ranges = normalize_ranges(clip_b, ranges, exclusive)
 
-    with contextlib.suppress(AttributeError):
+    with suppress(AttributeError):
         return vs.core.vszip.RFS(
             clip_a, clip_b, [y for (s, e) in b_ranges for y in range(s, e + (not exclusive))], mismatch, planes
         )
