@@ -186,7 +186,7 @@ def replace_ranges(
         replace_ranges(black, white, [(200, -1)])
         ```
 
-    A callback function can be used to replace frames based on frame properties.
+    A callback function can be used to replace frames based on frame properties or frame numbers.
     The function must return a boolean value.
 
     Example of using a callback function:
