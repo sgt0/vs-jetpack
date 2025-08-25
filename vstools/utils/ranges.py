@@ -7,7 +7,7 @@ import vapoursynth as vs
 from jetpytools import CustomValueError, P, R, fallback, flatten, interleave_arr, ranges_product
 
 from ..functions import check_ref_clip
-from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, VideoNodeT
+from ..types import ConstantFormatVideoNode, FrameRangeN, FrameRangesN, Planes, VideoNodeT
 
 __all__ = [
     "interleave_arr",
@@ -92,6 +92,7 @@ class ReplaceRanges(Generic[P, R]):
         ranges: FrameRangeN | FrameRangesN,
         exclusive: bool | None = None,
         mismatch: Literal[False] = ...,
+        planes: Planes = None,
     ) -> ConstantFormatVideoNode: ...
 
     @overload
@@ -102,6 +103,7 @@ class ReplaceRanges(Generic[P, R]):
         ranges: FrameRangeN | FrameRangesN,
         exclusive: bool | None = None,
         mismatch: bool = ...,
+        planes: Planes = None,
     ) -> VideoNodeT: ...
 
     @overload
@@ -139,6 +141,7 @@ class ReplaceRanges(Generic[P, R]):
         ranges: FrameRangeN | FrameRangesN | _RangesCallBackLike | None,
         exclusive: bool | None = None,
         mismatch: bool = False,
+        planes: Planes = None,
         *,
         prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None,
     ) -> vs.VideoNode: ...
@@ -154,6 +157,7 @@ def replace_ranges(
     ranges: FrameRangeN | FrameRangesN | _RangesCallBackLike | None,
     exclusive: bool | None = None,
     mismatch: bool = False,
+    planes: Planes = None,
     *,
     prop_src: vs.VideoNode | Sequence[vs.VideoNode] | None = None,
 ) -> vs.VideoNode:
@@ -213,12 +217,14 @@ def replace_ranges(
 
         exclusive: Force the use of exclusive (Python-style) ranges.
         mismatch: Accept format or resolution mismatch between clips.
+        planes: Which planes to process. Only available when `vs-zip` is installed.
         prop_src: Source clip(s) to use for frame properties in the callback.
             This is required if you're using a callback.
 
     Raises:
         CustomValueError: If ``prop_src`` isn't specified and a callback needs it.
         CustomValueError: If a wrong callback signature is provided.
+        CustomValueError: If ``planes`` is specified and `vs-zip` is not installed..
 
     Returns:
         Clip with ranges from clip_a replaced with clip_b.
@@ -269,7 +275,12 @@ def replace_ranges(
 
     with contextlib.suppress(AttributeError):
         return vs.core.vszip.RFS(
-            clip_a, clip_b, [y for (s, e) in b_ranges for y in range(s, e + (not exclusive))], mismatch=mismatch
+            clip_a, clip_b, [y for (s, e) in b_ranges for y in range(s, e + (not exclusive))], mismatch, planes
+        )
+
+    if planes is not None:
+        raise CustomValueError(
+            "The `planes` argument is only available when vszip is installed.", replace_ranges, planes
         )
 
     a_ranges = invert_ranges(clip_a, clip_b, b_ranges, exclusive)
