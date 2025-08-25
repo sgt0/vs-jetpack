@@ -531,7 +531,7 @@ class BaseArtCNNChroma(BaseArtCNN):
 
             return norm_expr(clip, "x 0.5 +", [1, 2], func=self.__class__)
 
-        return super().preprocess_clip(norm_expr(clip, "x 0.5 +", [1, 2], func=self.__class__), **kwargs)
+        return norm_expr(super().preprocess_clip(clip, **kwargs), "x 0.5 +", [1, 2], func=self.__class__)
 
     def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         clip = norm_expr(clip, "x 0.5 -", [1, 2], func=self.__class__)
