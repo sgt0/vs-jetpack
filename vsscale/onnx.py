@@ -8,7 +8,18 @@ from abc import ABC
 from dataclasses import Field, asdict, fields, replace
 from importlib.util import find_spec
 from logging import DEBUG, debug, getLogger, warning
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, SupportsFloat, TypeAlias, TypeVar, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Literal,
+    Protocol,
+    SupportsFloat,
+    TypeAlias,
+    TypeVar,
+    get_args,
+    runtime_checkable,
+)
 
 from jetpytools import CustomImportError
 from typing_extensions import Self, deprecated
@@ -42,9 +53,29 @@ from vstools import (
 if TYPE_CHECKING:
     from vsmlrt import backendT as Backend
 
+    BackendLike = Backend | type[Backend] | str
+    """
+    Type alias for anything that can resolve to a Backend from vs-mlrt.
+
+    This includes:
+    - A string identifier.
+    - A class type subclassing `Backend`.
+    - An instance of a `Backend`.
+    """
+else:
+    BackendLike = Any
+
 from .generic import BaseGenericScaler
 
-__all__ = ["DPIR", "ArtCNN", "BaseOnnxScaler", "GenericOnnxScaler", "Waifu2x", "autoselect_backend"]
+__all__ = [
+    "DPIR",
+    "ArtCNN",
+    "BackendLike",
+    "BaseOnnxScaler",
+    "GenericOnnxScaler",
+    "Waifu2x",
+    "autoselect_backend",
+]
 
 
 _IntT = TypeVar("_IntT", bound=int)
@@ -125,7 +156,7 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     def __init__(
         self,
         model: SPathLike | None = None,
-        backend: Backend | type[Backend] | None = None,
+        backend: BackendLike | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -163,14 +194,23 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         fp16 = self.kwargs.pop("fp16", True)
         default_args = {"fp16": fp16, "output_format": int(fp16), "use_cuda_graph": True, "use_cublas": True}
 
+        from vsmlrt import Backend, backendT
+
         if backend is None:
             self.backend = autoselect_backend(**default_args | self.kwargs)
         elif isinstance(backend, type):
             self.backend = backend(**_clean_keywords(default_args | self.kwargs, backend))
+        elif isinstance(backend, str):
+            backends_map = {b.__name__.lower(): b for b in get_args(backendT)}
+
+            try:
+                backend_t = backends_map[backend.lower().strip()]
+            except KeyError:
+                raise CustomValueError("Unknown backend!", self.__class__, backend)
+
+            self.backend = backend_t(**_clean_keywords(default_args | self.kwargs, backend_t))
         else:
             self.backend = replace(backend, **_clean_keywords(self.kwargs, backend))
-
-        from vsmlrt import Backend
 
         # FIXME
         # https://github.com/AmusementClub/vs-mlrt/blob/1404bba1ef9a71c29dfd279ce53fc8db8ef5af17/scripts/vsmlrt.py#L2374
@@ -395,7 +435,7 @@ class BaseArtCNN(BaseOnnxScaler):
 
     def __init__(
         self,
-        backend: Backend | type[Backend] | None = None,
+        backend: BackendLike | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -791,7 +831,10 @@ class ArtCNN(BaseArtCNNLuma):
 
 class BaseWaifu2x(BaseOnnxScaler):
     scale_w2x: Literal[1, 2, 4]
+    """Upscaling factor."""
+
     noise: Literal[-1, 0, 1, 2, 3]
+    """Noise reduction level"""
 
     _model: ClassVar[int]
     _static_kernel_radius = 2
@@ -800,7 +843,7 @@ class BaseWaifu2x(BaseOnnxScaler):
         self,
         scale: Literal[1, 2, 4] = 2,
         noise: Literal[-1, 0, 1, 2, 3] = -1,
-        backend: Backend | type[Backend] | None = None,
+        backend: BackendLike | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
@@ -1132,7 +1175,7 @@ class BaseDPIR(BaseOnnxScaler):
     def __init__(
         self,
         strength: SupportsFloat | vs.VideoNode = 10,
-        backend: Backend | type[Backend] | None = None,
+        backend: BackendLike | None = None,
         tiles: int | tuple[int, int] | None = None,
         tilesize: int | tuple[int, int] | None = None,
         overlap: int | tuple[int, int] | None = None,
