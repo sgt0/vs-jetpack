@@ -1068,7 +1068,7 @@ class QTempGaussMC(vs_object):
                     clip,
                     self.bobbed,
                     self.mv,
-                    clamp=self.limit_clamp,
+                    self.limit_clamp,
                     tr=self.limit_radius,
                     thscd=self.analyze_thscd,
                     **self.limit_comp_args,

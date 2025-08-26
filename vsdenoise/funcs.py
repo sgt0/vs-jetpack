@@ -182,18 +182,15 @@ def mc_clamp(
     flt: vs.VideoNode,
     src: vs.VideoNode,
     mv_obj: MVTools,
-    ref: vs.VideoNode | None = None,
     clamp: int | float | tuple[int | float, int | float] = 0,
     **kwargs: Any,
 ) -> ConstantFormatVideoNode:
     check_ref_clip(src, flt, mc_clamp)
 
-    ref = fallback(ref, src)
-
     undershoot, overshoot = normalize_seq(clamp, 2)
 
-    backward_comp, forward_comp = mv_obj.compensate(ref, interleave=False, **kwargs)
-    comp_clips = [ref, *backward_comp, *forward_comp]
+    backward_comp, forward_comp = mv_obj.compensate(src, interleave=False, **kwargs)
+    comp_clips = [src, *backward_comp, *forward_comp]
 
     evars = ExprVars(1, len(comp_clips) + 1, expr_src=True)
 
