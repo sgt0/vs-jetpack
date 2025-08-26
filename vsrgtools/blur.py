@@ -418,12 +418,10 @@ def median_blur(
         expr_passes = list[str]()
 
         for mat in ExprOp.matrix("x", r, mode, [(0, 0)]):
-            rb = len(mat) + 1
-            st = rb - 1
-            sp = rb // 2 - 1
-            dp = st - 2
+            n_samples = len(mat) + 1
+            n_op = n_samples // 2
 
-            expr_passes.append(f"{mat} sort{st} swap{sp} min! swap{sp} max! drop{dp} x min@ max@ clip")
+            expr_passes.append(f"x {mat} sort{n_samples} drop{n_op} swap{n_op} drop{n_op}")
 
         expr_plane.append(expr_passes)
 
