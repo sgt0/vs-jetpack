@@ -127,7 +127,7 @@ def fine_sharp(
     pstr: float = 1.272,
     ldmp: float | None = None,
     hdmp: float = 0.01,
-    planes: Planes = None,
+    planes: Planes = 0,
 ) -> ConstantFormatVideoNode:
     func = FunctionUtil(clip, fine_sharp, planes)
 
