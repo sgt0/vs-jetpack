@@ -417,11 +417,11 @@ def median_blur(
     for r in radius:
         expr_passes = list[str]()
 
-        for mat in ExprOp.matrix("x", r, mode, [(0, 0)]):
-            n_samples = len(mat) + 1
+        for mat in ExprOp.matrix("x", r, mode):
+            n_samples = len(mat)
             n_op = n_samples // 2
 
-            expr_passes.append(f"x {mat} sort{n_samples} drop{n_op} swap{n_op} drop{n_op}")
+            expr_passes.append(f"{mat} sort{n_samples} drop{n_op} swap{n_op} drop{n_op}")
 
         expr_plane.append(expr_passes)
 
