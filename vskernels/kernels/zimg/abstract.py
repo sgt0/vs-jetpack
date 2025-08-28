@@ -59,7 +59,7 @@ class ZimgBobber(BaseScaler):
         Args:
             clip: The source clip
             tff: Field order of the clip.
-            double_rate: Wether to double the frame rate (True) of retain the original rate (False).
+            double_rate: Whether to double the frame rate (True) or retain the original rate (False).
 
         Returns:
             The bobbed clip.
