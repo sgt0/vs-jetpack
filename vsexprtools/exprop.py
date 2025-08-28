@@ -794,6 +794,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         radius: int,
         mode: ConvMode,
         exclude: Iterable[tuple[int, int]] | None = None,
+        include: Iterable[tuple[int, int]] | None = None,
     ) -> TupleExprList:
         """
         Generate a matrix expression layout for convolution-like operations.
@@ -804,6 +805,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             radius: The radius of the kernel in pixels (e.g., 1 for 3x3).
             mode: The convolution mode.
             exclude: Optional set of (x, y) coordinates to exclude from the matrix.
+            include: Optional set of (x, y) coordinates to include from the matrix.
 
         Returns:
             A [TupleExprList][vsexprtools.TupleExprList] representing the matrix of expressions.
@@ -813,6 +815,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             NotImplementedError: If the convolution mode is unsupported.
         """
         exclude = list(exclude) if exclude else []
+        include = list(include) if include else []
 
         match mode:
             case ConvMode.SQUARE:
@@ -824,8 +827,8 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             case ConvMode.HV:
                 return TupleExprList(
                     [
-                        cls.matrix(var, radius, ConvMode.VERTICAL, exclude)[0],
-                        cls.matrix(var, radius, ConvMode.HORIZONTAL, exclude)[0],
+                        cls.matrix(var, radius, ConvMode.VERTICAL, exclude, include)[0],
+                        cls.matrix(var, radius, ConvMode.HORIZONTAL, exclude, include)[0],
                     ]
                 )
             case ConvMode.TEMPORAL:
@@ -848,7 +851,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                     [
                         var if x == y == 0 else ExprOp.REL_PIX(var, x, y)
                         for (x, y) in coordinates
-                        if (x, y) not in exclude
+                        if (x, y) not in exclude and (x, y) in include
                     ]
                 )
             ]
