@@ -229,6 +229,7 @@ class Operators(metaclass=SingletonMeta):
         radius: int,
         mode: Literal[ConvMode.SQUARE, ConvMode.HORIZONTAL, ConvMode.VERTICAL, ConvMode.TEMPORAL],
         exclude: Iterable[tuple[int, int]] | None = None,
+        include: Iterable[tuple[int, int]] | None = None,
     ) -> list[LiteralVar]:
         """
         Convenience method wrapping [ExprOp.matrix][vsexprtools.ExprOp.matrix].
@@ -238,12 +239,13 @@ class Operators(metaclass=SingletonMeta):
             radius: The radius of the kernel in pixels (e.g., 1 for 3x3).
             mode: The convolution mode. `HV` is not supported.
             exclude: Optional set of (x, y) coordinates to exclude from the matrix.
+            include: Optional set of (x, y) coordinates to include in the matrix.
 
         Returns:
             A list of [LiteralVar][vsexprtools.inline.helpers.LiteralVar] instances
             representing the matrix of expressions.
         """
-        matrix, *_ = ExprOp.matrix(char, radius, mode, exclude)
+        matrix, *_ = ExprOp.matrix(char, radius, mode, exclude, include)
 
         return [LiteralVar(str(m)) for m in matrix]
 

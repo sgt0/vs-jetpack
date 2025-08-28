@@ -4,7 +4,7 @@ import warnings
 from enum import EnumMeta
 from functools import cache
 from inspect import currentframe
-from itertools import cycle
+from itertools import cycle, product
 from math import inf, isqrt
 from typing import Any, Collection, Iterable, Iterator, Literal, Sequence, SupportsIndex, cast, overload
 
@@ -805,7 +805,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             radius: The radius of the kernel in pixels (e.g., 1 for 3x3).
             mode: The convolution mode.
             exclude: Optional set of (x, y) coordinates to exclude from the matrix.
-            include: Optional set of (x, y) coordinates to include from the matrix.
+            include: Optional set of (x, y) coordinates to include in the matrix.
 
         Returns:
             A [TupleExprList][vsexprtools.TupleExprList] representing the matrix of expressions.
@@ -814,16 +814,13 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             CustomValueError: If the input variable is not sized correctly for temporal mode.
             NotImplementedError: If the convolution mode is unsupported.
         """
-        exclude = list(exclude) if exclude else []
-        include = list(include) if include else []
-
         match mode:
             case ConvMode.SQUARE:
-                coordinates = [(x, y) for y in range(-radius, radius + 1) for x in range(-radius, radius + 1)]
+                coordinates = list(product(range(-radius, radius + 1), range(-radius, radius + 1)))
             case ConvMode.VERTICAL:
-                coordinates = [(0, xy) for xy in range(-radius, radius + 1)]
+                coordinates = [(0, y) for y in range(-radius, radius + 1)]
             case ConvMode.HORIZONTAL:
-                coordinates = [(xy, 0) for xy in range(-radius, radius + 1)]
+                coordinates = [(x, 0) for x in range(-radius, radius + 1)]
             case ConvMode.HV:
                 return TupleExprList(
                     [
@@ -844,6 +841,9 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
                 raise NotImplementedError
 
         assert isinstance(var, SupportsString)
+
+        exclude = list(exclude) if exclude else []
+        include = list(include) if include else coordinates
 
         return TupleExprList(
             [
