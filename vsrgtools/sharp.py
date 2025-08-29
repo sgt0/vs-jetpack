@@ -145,8 +145,10 @@ def fine_sharp(
 
     if mode == 0:
         blurred = median_blur(BlurMatrix.BINOMIAL()(func.work_clip, planes), planes=planes)
-    if mode == 1:
+    elif mode == 1:
         blurred = BlurMatrix.BINOMIAL()(median_blur(func.work_clip, planes=planes), planes)
+    else:
+        raise NotImplementedError
 
     sharp = func.work_clip
 
