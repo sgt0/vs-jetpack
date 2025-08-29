@@ -120,7 +120,6 @@ class IsoFile:
                 warnings.warn("The program chain does not include all ptts\n")
 
             current_angle = 1
-            angle_start_cell_i: int
 
             for cell_i in range(len(target_pgc.cell_position)):
                 cell_position = target_pgc.cell_position[cell_i]
@@ -142,7 +141,7 @@ class IsoFile:
 
                 if take_cell:
                     vobidcellids_to_take += [(cell_position.vob_id_nr, cell_position.cell_nr)]
-                    is_chapter += [(angle_start_cell_i + 1) in target_programs]
+                    is_chapter += [(angle_start_cell_i + 1) in target_programs]  # pyright: ignore[reportPossiblyUnboundVariable]
 
             i += ptt_to_take_for_pgc
 
@@ -227,7 +226,7 @@ class IsoFile:
         #            output_chapters += [lastchpt]
 
         audios = list[str]()
-        for i, ac in enumerate(target_pgc.audio_control):
+        for i, ac in enumerate(target_pgc.audio_control):  # pyright: ignore[reportPossiblyUnboundVariable]
             if ac.available:
                 audio = target_vts.vtsi_mat.vts_audio_attr[i]
 
@@ -345,7 +344,7 @@ def dvdsrc_parse_vts(
             rnode = rawnode
             _vobids = staff.vobids
 
-    return rnode, staff.rff, _vobids, vts_indices
+    return rnode, staff.rff, _vobids, vts_indices  # pyright: ignore[reportPossiblyUnboundVariable]
 
 
 def dvdsrc_extract_data(rawnode: vs.VideoNode) -> AllNeddedDvdFrameData:

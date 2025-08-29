@@ -155,8 +155,8 @@ def scale_delta(
         if isinstance(output_depth, vs.VideoNode):
             clip_range = ColorRange.from_video(output_depth)
 
-        range_in = clip_range if range_in is None else range_in
-        range_out = clip_range if range_out is None else range_out
+        range_in = clip_range if range_in is None else range_in  # pyright: ignore[reportPossiblyUnboundVariable]
+        range_out = clip_range if range_out is None else range_out  # pyright: ignore[reportPossiblyUnboundVariable]
 
     return scale_value(value, input_depth, output_depth, range_in, range_out, False)
 

@@ -18,7 +18,7 @@ def video_heuristics(
     clip: vs.VideoNode,
     props: vs.FrameProps | bool | None = None,
     prop_in: bool = True,
-    assumed_return: Literal[False] = ...,
+    assumed_return: Literal[False] = False,
 ) -> dict[str, PropEnum]: ...
 
 
@@ -27,7 +27,8 @@ def video_heuristics(
     clip: vs.VideoNode,
     props: vs.FrameProps | bool | None = None,
     prop_in: bool = True,
-    assumed_return: Literal[True] = ...,
+    *,
+    assumed_return: Literal[True],
 ) -> tuple[dict[str, PropEnum], list[str]]: ...
 
 

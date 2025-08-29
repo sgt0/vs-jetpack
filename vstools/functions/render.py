@@ -34,7 +34,7 @@ class AsyncRenderConf:
 
 
 @overload
-def clip_async_render(
+def clip_async_render(  # pyright: ignore[reportOverlappingOverload]
     clip: vs.VideoNode,
     outfile: BinaryIO | SPathLike | None = None,
     progress: str | Callable[[int, int], None] | None = None,
@@ -388,7 +388,7 @@ def prop_compare_cb(
 
 
 @overload
-def find_prop(
+def find_prop(  # pyright: ignore[reportOverlappingOverload]
     src: vs.VideoNode,
     prop: str,
     op: str | Callable[[float, float], bool] | None,

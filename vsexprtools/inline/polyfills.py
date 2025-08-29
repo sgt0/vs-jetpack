@@ -283,7 +283,7 @@ def _curse(klass: Any, attr: Any, func: Any) -> None:
             if fname == impl_method:
                 cfunc_t = ftype
 
-        cfunc = cfunc_t(wrapper)
+        cfunc = cfunc_t(wrapper)  # pyright: ignore[reportPossiblyUnboundVariable]
         tp_func_dict[(klass, attr)] = cfunc
 
         setattr(tp_as, impl_method, cfunc)
@@ -295,7 +295,7 @@ def _curse(klass: Any, attr: Any, func: Any) -> None:
         if (klass, attr) not in tp_as_dict:
             tp_as_dict[(klass, attr)] = ctypes.cast(getattr(tyobj, impl_method), cfunc_t)  # type: ignore[type-var]
 
-        cfunc = cfunc_t(wrapper)
+        cfunc = cfunc_t(wrapper)  # pyright: ignore[reportPossiblyUnboundVariable]
         tp_func_dict[(klass, attr)] = cfunc
         setattr(tyobj, impl_method, cfunc)
 

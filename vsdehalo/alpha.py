@@ -183,7 +183,7 @@ def dehalo_alpha(
             brightstr=brightstr_i,
         )
 
-    out = util.return_clip(dehalo)
+    out = util.return_clip(dehalo)  # pyright: ignore[reportPossiblyUnboundVariable]
 
     for i, mask in enumerate(masks_to_prop):
         out = out.std.ClipToProp(mask, f"DehaloAlphaMask_{i}")

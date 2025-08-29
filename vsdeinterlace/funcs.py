@@ -51,7 +51,7 @@ class InterpolateOverlay(CustomEnum):
         blksize: int | tuple[int, int] = 8,
         refine: int = 1,
         thsad_recalc: int | None = None,
-        export_globals: Literal[False] = ...,
+        export_globals: Literal[False] = False,
     ) -> ConstantFormatVideoNode: ...
 
     @overload
@@ -64,7 +64,8 @@ class InterpolateOverlay(CustomEnum):
         blksize: int | tuple[int, int] = 8,
         refine: int = 1,
         thsad_recalc: int | None = None,
-        export_globals: Literal[True] = ...,
+        *,
+        export_globals: Literal[True],
     ) -> tuple[ConstantFormatVideoNode, MVTools]: ...
 
     @overload

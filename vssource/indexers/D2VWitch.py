@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from fractions import Fraction
-from functools import lru_cache, partial
+from functools import partial
 from typing import Callable, ClassVar
 
 from vstools import SPath, core, vs
@@ -49,7 +49,6 @@ class D2VWitch(ExternalIndexer):
         with open(index_path, "w") as file:
             file.write("\n".join(lines))
 
-    @lru_cache
     def get_info(self, index_path: SPath, file_idx: int = -1) -> D2VIndexFileInfo:
         with open(index_path, "r") as f:
             file_content = f.read()
