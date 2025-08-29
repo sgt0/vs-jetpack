@@ -535,6 +535,8 @@ class Keyframes(list[int]):
                     lut_self.remove(i)
                 else:
                     out_text.append("b")
+        else:
+            raise NotImplementedError
 
         out_path.unlink(True)
         out_path.touch()

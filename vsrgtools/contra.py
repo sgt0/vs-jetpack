@@ -51,16 +51,14 @@ def contrasharpening(
     check_ref_clip(src, flt, contrasharpening)
 
     # Damp down remaining spots of the denoised clip
-    if callable(sharp):
-        sharp = sharp(flt)
-    if isinstance(sharp, vs.VideoNode):
-        sharp = sharp
+    # Difference of a simple kernel blur
+    if sharp:
+        sharp = sharp(flt) if callable(sharp) else sharp
+        diff_blur = core.std.MakeDiff(sharp, flt, planes)
     else:
         damp = min_blur(flt, radius, planes=planes)
         blurred = BlurMatrix.BINOMIAL(taps=radius)(damp, planes=planes)
-
-    # Difference of a simple kernel blur
-    diff_blur = core.std.MakeDiff(sharp if sharp else damp, flt if sharp else blurred, planes)
+        diff_blur = core.std.MakeDiff(damp, blurred, planes)
 
     # Difference achieved by the filtering
     diff_flt = src.std.MakeDiff(flt, planes)
