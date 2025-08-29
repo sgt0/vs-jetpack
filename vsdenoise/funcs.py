@@ -54,7 +54,7 @@ def mc_degrain(
     thsad_recalc: int | None = None,
     limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None,
-    export_globals: Literal[False] = ...,
+    export_globals: Literal[False] = False,
     planes: Planes = None,
 ) -> vs.VideoNode: ...
 
@@ -74,7 +74,8 @@ def mc_degrain(
     thsad_recalc: int | None = None,
     limit: int | tuple[int | None, int | None] | None = None,
     thscd: int | tuple[int | None, int | None] | None = None,
-    export_globals: Literal[True] = ...,
+    *,
+    export_globals: Literal[True],
     planes: Planes = None,
 ) -> tuple[vs.VideoNode, MVTools]: ...
 

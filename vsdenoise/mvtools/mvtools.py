@@ -562,7 +562,8 @@ class MVTools(vs_object):
         time: float | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = None,
         interleave: Literal[True] = True,
-        temporal_func: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] = ...,
+        *,
+        temporal_func: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode],
     ) -> ConstantFormatVideoNode: ...
 
     @overload
@@ -578,7 +579,8 @@ class MVTools(vs_object):
         thsad2: int | None = None,
         time: float | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = None,
-        interleave: Literal[False] = False,
+        *,
+        interleave: Literal[False],
         temporal_func: None = None,
     ) -> tuple[list[ConstantFormatVideoNode], list[ConstantFormatVideoNode]]: ...
 
@@ -710,7 +712,8 @@ class MVTools(vs_object):
         mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = None,
         interleave: Literal[True] = True,
-        temporal_func: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode] = ...,
+        *,
+        temporal_func: VSFunctionNoArgs[vs.VideoNode, vs.VideoNode],
     ) -> ConstantFormatVideoNode: ...
 
     @overload
@@ -724,7 +727,8 @@ class MVTools(vs_object):
         time: float | None = None,
         mode: FlowMode | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = None,
-        interleave: Literal[False] = False,
+        *,
+        interleave: Literal[False],
         temporal_func: None = None,
     ) -> tuple[list[ConstantFormatVideoNode], list[ConstantFormatVideoNode]]: ...
 
@@ -1403,7 +1407,8 @@ class MVTools(vs_object):
         vectors: MotionVectors | None = None,
         direction: MVDirection = MVDirection.BOTH,
         tr: int | None = None,
-        multi: Literal[True] = ...,
+        *,
+        multi: Literal[True],
     ) -> ConstantFormatVideoNode: ...
 
     @overload
