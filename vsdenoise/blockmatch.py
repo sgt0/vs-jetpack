@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cache
 from inspect import signature
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Sequence
 
 from jetpytools import (
     CustomEnum,
@@ -91,13 +91,13 @@ def wnnm(
         ref = depth(ref, 32)
         ref = get_y(ref) if func.luma_only else ref
 
-    denoised = cast(ConstantFormatVideoNode, None)
     dkwargs = dict[str, Any](radius=tr, rclip=ref) | kwargs
 
-    for i in range(refine + 1):
+    previous = func.work_clip
+    denoised = core.wnnm.WNNM(func.work_clip, sigma, **dkwargs)
+
+    for i in range(refine):
         if i == 0:
-            previous = func.work_clip
-        elif i == 1:
             previous = denoised
         else:
             previous = norm_expr(
@@ -108,7 +108,7 @@ def wnnm(
                 func=func.func,
             )
 
-        if self_refine and denoised:
+        if self_refine:
             dkwargs.update(rclip=denoised)
 
         denoised = core.wnnm.WNNM(previous, sigma, **dkwargs)
