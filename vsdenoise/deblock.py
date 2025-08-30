@@ -271,13 +271,13 @@ def mpeg2stinx(
     from vsdeinterlace import weave
 
     def _crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
-        clip = core.std.Interleave([clip] * 2)
+        clip = core.std.Interleave([clip, clip])
 
         if sw == 1 and sh == 1:
             repaired = repair(clip, bobbed, 1)
         else:
             inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
-            repaired = MeanMode.MEDIAN([clip, inpand, expand])
+            repaired = norm_expr([clip, inpand, expand], "x y z clip")
 
         return weave(repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)), tff)
 
@@ -287,7 +287,7 @@ def mpeg2stinx(
 
         assert adj
 
-        diff = norm_expr([core.std.Interleave([src] * 2), adj], "x y - abs", func=mpeg2stinx).std.SeparateFields(tff)
+        diff = norm_expr([core.std.Interleave([src, src]), adj], "x y - abs", func=mpeg2stinx).std.SeparateFields(tff)
         diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))])
         diff = weave(Morpho.expand(diff, sw=2, sh=1), tff)
 

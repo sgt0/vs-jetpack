@@ -12,7 +12,7 @@ from vsdenoise import Prefilter
 from vsexprtools import norm_expr
 from vskernels import BSpline, Lanczos, Mitchell, Scaler
 from vsmasktools import Morpho
-from vsrgtools import MeanMode, gauss_blur, repair
+from vsrgtools import gauss_blur, repair
 from vstools import (
     ConstantFormatVideoNode,
     CustomIndexError,
@@ -170,7 +170,7 @@ def dehalo_alpha(
             inpand = sser_ref_i.scale(Morpho.minimum(dehalo, planes=planes), ss_width, ss_height)
             expand = sser_ref_i.scale(Morpho.maximum(dehalo, planes=planes), ss_width, ss_height)
             dehalo = sser_i.scale(
-                MeanMode.MEDIAN(clip_ss, inpand, expand, planes=planes), work_clip.width, work_clip.height
+                norm_expr([clip_ss, inpand, expand], "x y z clip", planes), work_clip.width, work_clip.height
             )
 
         # Limiting the dehalo clip to control the bright and dark halos
