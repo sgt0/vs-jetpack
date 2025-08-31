@@ -186,7 +186,7 @@ def get_prop(
         The property value (possibly cast).
 
     Raises:
-        FramePropError if key is missing or wrong type and no default is provided.
+        FramePropError: If key is missing or wrong type and no default is provided.
     """
     func = func or get_prop
 
