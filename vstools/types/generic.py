@@ -14,7 +14,7 @@ __all__ = [
     "ConstantFormatVideoNode",
     "DataType",
     "FuncExcept",
-    "FuncExcept",
+    "FuncExceptT",  # Deprecated alias
     "GenericVSFunction",
     "HoldsPropValue",
     "HoldsPropValueT",  # Deprecated alias
@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 
-FuncExcept = FuncExcept
+FuncExceptT = FuncExcept
 
 VideoNodeT = TypeVar("VideoNodeT", bound=vs.VideoNode)
 VideoNodeT_contra = TypeVar("VideoNodeT_contra", bound=vs.VideoNode, contravariant=True)
