@@ -308,7 +308,7 @@ class DFTTest:
                         self.__class__,
                     )
 
-                frequencies, sigmas = list(locations[0::2]), list(locations[1::2])
+                frequencies, sigmas = locations[0::2], locations[1::2]
 
             frequencies = self.bounds_check(frequencies, (0, 1), strict)
             sigmas = self.bounds_check(sigmas, (0, math.inf), strict)
@@ -913,7 +913,7 @@ class DFTTest:
 
         Args:
             clip: Source clip.
-            backend: The backend to use processing.
+            backend: The backend to use for processing.
             sloc: The frequency location for denoising.
             tr: Temporal radius for denoising (`tr` * 2 + 1 == `tbsize`).
                 Note: Unlike the default plugin implementation, the default value here is tr=0 (i.e. `tbsize=1`).
