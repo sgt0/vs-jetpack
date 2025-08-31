@@ -35,3 +35,6 @@ venv/
 # Repository-specific files (Python cache files, build artifacts,
 # coverage reports, etc.) should go in here, user-specific files
 # (IDE folders, video index files, etc.) shouldn't.
+
+# JET files
+/.vsjet
