@@ -296,7 +296,6 @@ class Resolution(NamedTuple):
         """
         Create a Resolution object using a given clip's dimensions.
         """
-
         from ..functions import check_variable_resolution
 
         assert check_variable_resolution(clip, cls.from_video)
@@ -307,7 +306,6 @@ class Resolution(NamedTuple):
         """
         Flip the Resolution matrix over its diagonal.
         """
-
         return self.__class__(self.height, self.width)
 
     def __str__(self) -> str:
@@ -344,7 +342,6 @@ class SceneChangeMode(CustomIntEnum):
         """
         Check whether a mode that uses wwxd is used.
         """
-
         return self in (
             SceneChangeMode.WWXD,
             SceneChangeMode.WWXD_SCXVID_UNION,
@@ -356,20 +353,19 @@ class SceneChangeMode(CustomIntEnum):
         """
         Check whether a mode that uses scxvid is used.
         """
-
         return self in (
             SceneChangeMode.SCXVID,
             SceneChangeMode.WWXD_SCXVID_UNION,
             SceneChangeMode.WWXD_SCXVID_INTERSECTION,
         )
 
-    def ensure_presence(self, clip: vs.VideoNode, akarin: bool | None = None) -> ConstantFormatVideoNode:
+    def ensure_presence(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         """
         Ensures all the frame properties necessary for scene change detection are created.
         """
-
         from ..exceptions import CustomRuntimeError
         from ..functions import check_variable_format
+        from ..utils import merge_clip_props
 
         assert check_variable_format(clip, self.ensure_presence)
 
@@ -391,7 +387,16 @@ class SceneChangeMode(CustomIntEnum):
                 )
             stats_clip.append(clip.wwxd.WWXD())
 
-        return self._prepare_akarin(clip, stats_clip, akarin)
+        keys = tuple(self.prop_keys)
+
+        expr = " ".join([f"x.{k}" for k in keys]) + (" and" * (len(keys) - 1))
+
+        blank = clip.std.BlankClip(1, 1, vs.GRAY8, keep=True)
+
+        if len(stats_clip) > 1:
+            return merge_clip_props(blank, *stats_clip).akarin.Expr(expr)
+
+        return blank.std.CopyFrameProps(stats_clip[0]).akarin.Expr(expr)
 
     @property
     def prop_keys(self) -> Iterator[str]:
@@ -401,31 +406,10 @@ class SceneChangeMode(CustomIntEnum):
         if self.is_SCXVID:
             yield "_SceneChangePrev"
 
-    def check_cb(self, akarin: bool | None = None) -> Callable[[vs.VideoFrame], bool]:
-        if akarin is None:
-            akarin = hasattr(vs.core, "akarin")
+    def lambda_cb(self) -> Callable[[int, vs.VideoFrame], SentinelT | int]:
+        return lambda n, f: Sentinel.check(n, bool(f[0][0, 0]))
 
-        if akarin:
-            return lambda f: bool(f[0][0, 0])
-
-        keys = set(self.prop_keys)
-        prop_key = next(iter(keys))
-
-        if self is SceneChangeMode.WWXD_SCXVID_UNION:
-            return lambda f: any(f.props[key] == 1 for key in keys)
-
-        if self is SceneChangeMode.WWXD_SCXVID_INTERSECTION:
-            return lambda f: all(f.props[key] == 1 for key in keys)
-
-        return lambda f: f.props[prop_key] == 1
-
-    def lambda_cb(self, akarin: bool | None = None) -> Callable[[int, vs.VideoFrame], SentinelT | int]:
-        callback = self.check_cb(akarin)
-        return lambda n, f: Sentinel.check(n, callback(f))
-
-    def prepare_clip(
-        self, clip: vs.VideoNode, height: int | Literal[False] = 360, akarin: bool | None = None
-    ) -> ConstantFormatVideoNode:
+    def prepare_clip(self, clip: vs.VideoNode, height: int | Literal[False] = 360) -> ConstantFormatVideoNode:
         """
         Prepare a clip for scene change metric calculations.
 
@@ -437,8 +421,6 @@ class SceneChangeMode(CustomIntEnum):
             height: Output height of the clip. Smaller frame sizes are faster to process, but may miss more scene
                 changes or introduce more false positives. Width is automatically calculated. `False` means no resizing
                 operation is performed. Default: 360.
-            akarin: Use the akarin plugin for speed optimizations. `None` means it will check if its available, and if
-                it is, use it. Default: None.
 
         Returns:
             A prepared clip for performing scene change metric calculations on.
@@ -450,29 +432,4 @@ class SceneChangeMode(CustomIntEnum):
         elif not clip.format or (clip.format and clip.format.id != vs.YUV420P8):
             clip = clip.resize.Bilinear(format=vs.YUV420P8)
 
-        return self.ensure_presence(clip, akarin)
-
-    def _prepare_akarin(
-        self, clip: ConstantFormatVideoNode, stats_clip: list[ConstantFormatVideoNode], akarin: bool | None = None
-    ) -> ConstantFormatVideoNode:
-        from ..utils import merge_clip_props
-
-        if akarin is None:
-            akarin = hasattr(vs.core, "akarin")
-
-        if akarin:
-            keys = list(self.prop_keys)
-
-            expr = " ".join([f"x.{k}" for k in keys]) + (" and" * (len(keys) - 1))
-
-            blank = clip.std.BlankClip(1, 1, vs.GRAY8, keep=True)
-
-            if len(stats_clip) > 1:
-                return merge_clip_props(blank, *stats_clip).akarin.Expr(expr)
-
-            return blank.std.CopyFrameProps(stats_clip[0]).akarin.Expr(expr)
-
-        if len(stats_clip) > 1:
-            return merge_clip_props(clip, *stats_clip)
-
-        return stats_clip[0]
+        return self.ensure_presence(clip)

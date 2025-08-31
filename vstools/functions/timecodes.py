@@ -441,9 +441,9 @@ class Keyframes(list[int]):
         if self._dummy:
             mode = SceneChangeMode(mode)
 
-            prop_clip, callback = mode.prepare_clip(clip, height), mode.check_cb()
+            prop_clip = mode.prepare_clip(clip, height)
 
-            out = replace_ranges(clip, propset_clip, callback, prop_src=prop_clip)
+            out = replace_ranges(clip, propset_clip, lambda f: bool(f[0][0, 0]), prop_src=prop_clip)
         else:
             out = replace_ranges(clip, propset_clip, self)
 
