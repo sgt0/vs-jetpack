@@ -50,13 +50,13 @@ _RangesCallBackLike = Union[
 
 def _is_cb_nf(
     cb: Callable[..., bool], params: set[str]
-) -> TypeGuard[_RangesCallBackNF[vs.VideoFrame] | _RangesCallBackNF[Sequence[vs.VideoFrame]]]:
+) -> TypeGuard[_RangesCallBackNF[vs.VideoFrame | Sequence[vs.VideoFrame]]]:
     return "f" in params and "n" in params
 
 
 def _is_cb_f(
     cb: Callable[..., bool], params: set[str]
-) -> TypeGuard[_RangesCallBackF[vs.VideoFrame] | _RangesCallBackF[Sequence[vs.VideoFrame]]]:
+) -> TypeGuard[_RangesCallBackF[vs.VideoFrame | Sequence[vs.VideoFrame]]]:
     return "f" in params
 
 
