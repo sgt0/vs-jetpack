@@ -5,8 +5,6 @@ from gc import get_referents, get_referrers
 from inspect import Parameter, Signature, stack
 from logging import NOTSET as LOGLEVEL_NOTSET
 from logging import Handler, LogRecord
-from math import ceil
-from multiprocessing import cpu_count
 from pathlib import Path
 from sys import modules
 from sys import path as sys_path
@@ -16,7 +14,6 @@ from weakref import ReferenceType
 from weakref import ref as weakref_ref
 
 import vapoursynth as vs
-from jetpytools import CustomValueError
 from vapoursynth import (
     AUDIO,
     BACK_CENTER,
@@ -1130,6 +1127,7 @@ class VSCoreProxy(CoreProxyBase):
             threads: Defines how many and which CPU cores to use.
 
                 Accepted formats:
+
                    - ``None``: Use all available CPU cores.
                    - ``int``: Use cores ``0`` through ``threads - 1``.
                    - ``float``: A fraction of available cores (e.g., ``0.5`` = half the cores).
@@ -1143,6 +1141,10 @@ class VSCoreProxy(CoreProxyBase):
         Raises:
             CustomValueError: If ``threads`` is lower than or equal to 0.
         """
+        from math import ceil
+        from multiprocessing import cpu_count
+
+        from jetpytools import CustomValueError
         from psutil import Process
 
         if threads is None:
