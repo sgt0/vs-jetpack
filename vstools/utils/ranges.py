@@ -297,6 +297,33 @@ def replace_ranges(
 
 
 def remap_frames(clip: vs.VideoNode, ranges: Sequence[int | tuple[int, int]]) -> ConstantFormatVideoNode:
+    """
+    Remap frames of a clip according to specified ranges.
+
+    This function creates a new clip where frames are reordered or repeated based on the given ranges.
+    Ranges can be specified as single frame indices or as ranges of frames.
+
+    Example:
+        Remap frames 0, 5, and frames 10 through 15
+        ```
+        new_clip = remap_frames(clip, [0, 5, (10, 15)])
+        ```
+
+        This will produce a new clip containing frames:
+        `[0, 5, 10, 11, 12, 13, 14, 15]` from the original.
+
+    Args:
+        clip: The source clip to remap frames from.
+        ranges: A sequence of frame indices or tuples representing ranges.
+
+               - If an element is an integer, that frame is included.
+               - If an element is a tuple ``(start, end)``, all frames from
+                ``start`` through ``end`` (inclusive, the default, or exclusive through `replace_ranges.exclusive`)
+                are included.
+
+    Returns:
+        A new clip with frames reordered according to the given ranges.
+    """
     frame_map = list[int](
         flatten(f if isinstance(f, int) else range(f[0], f[1] + (not replace_ranges.exclusive)) for f in ranges)
     )
@@ -309,6 +336,32 @@ def remap_frames(clip: vs.VideoNode, ranges: Sequence[int | tuple[int, int]]) ->
 def replace_every(
     clipa: vs.VideoNode, clipb: vs.VideoNode, cycle: int, offsets: Sequence[int], modify_duration: bool = True
 ) -> ConstantFormatVideoNode:
+    """
+    Replace frames in one clip with frames from another at regular intervals.
+
+    This function interleaves two clips and then selects frames so that, within each cycle, frames from `clipa`
+    are replaced with frames from `clipb` at the specified offsets.
+
+    Example:
+        Replace every 3rd frame with a frame from another clip:
+        ```
+        new_clip = replace_every(clipa, clipb, cycle=3, offsets=[2])
+        ```
+
+        In this example, within every group of 3 frames:
+        - Frame 0 and 1 come from `clipa`.
+        - Frame 2 comes from `clipb`.
+
+    Args:
+        clipa: The base clip to use as the primary source.
+        clipb: The replacement clip to take frames from.
+        cycle: The size of the repeating cycle in frames.
+        offsets: The positions within each cycle where frames from `clipb` should replace frames from `clipa`.
+        modify_duration: Whether to adjust the clip's duration to reflect inserted frames.
+
+    Returns:
+        A new clip where frames from `clipb` replace frames in `clipa` at the specified offsets.
+    """
     offsets_a = [x * 2 for x in range(cycle) if x not in offsets]
     offsets_b = [x * 2 + 1 for x in offsets]
     offsets = sorted(offsets_a + offsets_b)
