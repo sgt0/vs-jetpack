@@ -196,7 +196,6 @@ def replace_ranges(
         ```
 
     Optional Dependencies:
-
         - [vs-zip](https://github.com/dnjulek/vapoursynth-zip) (highly recommended!)
 
     Args:
