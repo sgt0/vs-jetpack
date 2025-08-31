@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import gc
-import weakref
 from ctypes import Structure
+from gc import get_referents, get_referrers
 from inspect import Parameter, Signature, stack
 from logging import NOTSET as LOGLEVEL_NOTSET
 from logging import Handler, LogRecord
@@ -14,6 +13,7 @@ from sys import path as sys_path
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, NoReturn
 from weakref import ReferenceType
+from weakref import ref as weakref_ref
 
 import vapoursynth as vs
 from jetpytools import CustomValueError
@@ -786,7 +786,7 @@ def register_on_creation(callback: Callable[..., None], strict: bool = False) ->
     Register a callback on every core creation.
     """
 
-    core_on_creation_callbacks.update({id(callback): weakref.ref(callback)})
+    core_on_creation_callbacks.update({id(callback): weakref_ref(callback)})
 
     if not strict and core.active:
         try:
@@ -873,7 +873,7 @@ class PluginProxy(PluginProxyBase):
 class CoreProxy(CoreProxyBase):
     def __init__(self, core: Core | None, vs_proxy: VSCoreProxy, lazy: bool) -> None:
         self.lazy = lazy
-        self.__dict__["vs_core_ref"] = (core and weakref.ref(core), vs_proxy)
+        self.__dict__["vs_core_ref"] = (core and weakref_ref(core), vs_proxy)
 
     def __getattr__(self, name: str) -> Plugin:
         if self.lazy and name not in vs.Core.__dict__:
@@ -899,7 +899,7 @@ class proxy_utils:  # noqa: N801
                 raise CustomRuntimeError("The VapourSynth core has been freed!", CoreProxy)
 
             vs_core = _get_core(vs_proxy)
-            core.__dict__["vs_core_ref"] = (vs_core and weakref.ref(vs_core), vs_proxy)
+            core.__dict__["vs_core_ref"] = (vs_core and weakref_ref(vs_core), vs_proxy)
 
         return vs_core or _get_core_with_cb()
 
@@ -934,7 +934,7 @@ def _get_core(self: VSCoreProxy) -> Core | None:
 
 
 if TYPE_CHECKING:
-    core_on_creation_callbacks = dict[int, weakref.ReferenceType[Callable[..., None]]]()
+    core_on_creation_callbacks = dict[int, ReferenceType[Callable[..., None]]]()
 else:
     core_on_creation_callbacks = {}
 
@@ -969,7 +969,7 @@ def _find_ref(start_data: Any, to_return: type | tuple[type, ...], it: int = 3) 
     if not it:
         return None
 
-    for objects in [gc.get_referents(start_data), gc.get_referrers(start_data)]:
+    for objects in [get_referents(start_data), get_referrers(start_data)]:
         for obj in objects:
             if isinstance(obj, to_return):
                 return obj
@@ -980,7 +980,7 @@ def _find_ref(start_data: Any, to_return: type | tuple[type, ...], it: int = 3) 
             if isinstance(obj, (Core, _CoreProxy, CoreProxy, _FastManager)):
                 continue
 
-            for obj_obj in gc.get_referents(obj):
+            for obj_obj in get_referents(obj):
                 if isinstance(obj_obj, to_return):
                     return obj_obj
 
@@ -1019,7 +1019,7 @@ class EnvironmentProxy(EnvironmentProxyBase):
 
     @property
     def has_core(self) -> bool:
-        return any(isinstance(ref, (Core, CoreProxy)) for ref in gc.get_referents(self.data))
+        return any(isinstance(ref, (Core, CoreProxy)) for ref in get_referents(self.data))
 
 
 _curr_env_proxy = EnvironmentProxy()
@@ -1032,7 +1032,7 @@ class VSCoreProxy(CoreProxyBase):
 
     def __init__(self, core: Core | None = None) -> None:
         object.__setattr__(self, "_own_core", core is not None)
-        object.__setattr__(self, "_core", core and weakref.ref(core))
+        object.__setattr__(self, "_core", core and weakref_ref(core))
 
     def __getattr__(self, name: str) -> Plugin:
         return getattr(_get_core_with_cb(self), name)
