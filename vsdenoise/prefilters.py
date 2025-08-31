@@ -608,4 +608,6 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
 
     planes = 0 if clip_range.is_full or clip.format.sample_type is vs.FLOAT else None
 
-    return ColorRange.FULL.apply(norm_expr(clip, (luma_expr, chroma_expr), planes, k=curve, c=smooth))
+    return ColorRange.FULL.apply(
+        norm_expr(clip, (luma_expr, chroma_expr), planes, k=curve, c=smooth, func=prefilter_to_full_range)
+    )

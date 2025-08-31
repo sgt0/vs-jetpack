@@ -75,7 +75,7 @@ def descale_error_mask(
     error = norm_expr([y, rescaled], "x y - abs", func=descale_error_mask)
 
     if bwbias > 1 and chroma:
-        chroma_abs = norm_expr(chroma, "x neutral - abs y neutral - abs max")
+        chroma_abs = norm_expr(chroma, "x neutral - abs y neutral - abs max", func=descale_error_mask)
         chroma_abs = core.resize.Bicubic(chroma_abs, y.width, y.height)
 
         bias = norm_expr(

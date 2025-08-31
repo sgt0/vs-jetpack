@@ -50,7 +50,7 @@ def ringing_mask(
     blur_kernel = BlurMatrix.BINOMIAL(1, mode=ConvMode.SQUARE)
 
     edgemask = normalize_mask(credit_mask, plane(clip, 0), **kwargs)
-    edgemask = limiter(edgemask, mask=True)
+    edgemask = limiter(edgemask, mask=True, func=ringing_mask)
 
     light = norm_expr(edgemask, f"x {thlimi} - {thma - thmi} / {ExprToken.RangeMax} *", func=ringing_mask)
 

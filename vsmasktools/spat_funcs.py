@@ -168,7 +168,7 @@ def retinex(
     if not is_float:
         expr_balance = f"{expr_balance} plane_max plane_min - * plane_min + round plane_min plane_max clamp"
 
-    return norm_expr(msr_stats, expr_balance, None, y)
+    return norm_expr(msr_stats, expr_balance, None, y, func=func)
 
 
 def flat_mask(src: vs.VideoNode, radius: int = 5, thr: float = 0.011, gauss: bool = False) -> ConstantFormatVideoNode:

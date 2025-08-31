@@ -125,7 +125,9 @@ def side_box_blur(clip: vs.VideoNode, radius: int = 1, planes: Planes = None) ->
         if not i == j == 2
     )
 
-    return reduce(lambda x, y: norm_expr([x, y, clip], "x z - abs y z - abs < x y ?", planes=planes), intermediates)
+    return reduce(
+        lambda x, y: norm_expr([x, y, clip], "x z - abs y z - abs < x y ?", planes, func=side_box_blur), intermediates
+    )
 
 
 def gauss_blur(

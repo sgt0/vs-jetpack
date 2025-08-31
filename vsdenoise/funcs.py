@@ -202,6 +202,7 @@ def mc_clamp(
         overshoot=scale_delta(overshoot, 8, flt),
         comp_min=combine_expr(evars, ExprOp.MIN).to_str(),
         comp_max=combine_expr(evars, ExprOp.MAX).to_str(),
+        func=mc_clamp,
     )
 
 

@@ -225,11 +225,12 @@ def deblock_qed(
         "X 8 % 7 % Y 8 % 7 % and 0 255 ?",
         planes_pp,
         clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=8),  # type: ignore
+        func=deblock_qed,
     )
 
-    strong_diff = norm_expr([clip, strong, mask], "z x y - 1.01 * neutral + neutral ?", planes_pp)
+    strong_diff = norm_expr([clip, strong, mask], "z x y - 1.01 * neutral + neutral ?", planes_pp, func=deblock_qed)
     strong_pp = strong_diff.dctf.DCTFilter([1, 1, 0, 0, 0, 0, 0, 0], planes_pp)
-    deblocked = norm_expr([clip, normal, strong_pp, mask], "a y x z neutral - - ?", planes_pp)
+    deblocked = norm_expr([clip, normal, strong_pp, mask], "a y x z neutral - - ?", planes_pp, func=deblock_qed)
 
     if clip.format.color_family is not vs.GRAY:  # type: ignore
         if chroma_mode == 1:
@@ -273,11 +274,11 @@ def mpeg2stinx(
     def _crossfield_repair(clip: vs.VideoNode, bobbed: vs.VideoNode) -> vs.VideoNode:
         clip = core.std.Interleave([clip, clip])
 
-        if sw == 1 and sh == 1:
+        if sw == sh == 1:
             repaired = repair(clip, bobbed, 1)
         else:
             inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
-            repaired = norm_expr([clip, inpand, expand], "x y z clip")
+            repaired = norm_expr([clip, inpand, expand], "x y z clip", func=mpeg2stinx)
 
         return weave(repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)), tff)
 
