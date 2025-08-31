@@ -63,8 +63,6 @@ class MotionVectors(defaultdict[MVDirection, dict[int, ConstantFormatVideoNode]]
         for v in self.values():
             v.clear()
 
-        super().clear()
-
         with suppress(AttributeError):
             del self.mv_multi
 
