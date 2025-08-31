@@ -3,11 +3,15 @@ from __future__ import annotations
 import gc
 import weakref
 from ctypes import Structure
-from inspect import Parameter, Signature
+from inspect import Parameter, Signature, stack
 from logging import NOTSET as LOGLEVEL_NOTSET
 from logging import Handler, LogRecord
 from math import ceil
 from multiprocessing import cpu_count
+from pathlib import Path
+from sys import modules
+from sys import path as sys_path
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, NoReturn
 from weakref import ReferenceType
 
@@ -761,31 +765,20 @@ __all__ = [
 ]
 
 
-if not TYPE_CHECKING:
-    import inspect
-    import re
-    import sys
-    import warnings
-    from pathlib import Path
-    from types import ModuleType
+import __main__
 
-    import __main__
+if not hasattr(__main__, "__file__") and "__vapoursynth__" not in modules:
+    first_stack = stack()[-1]
 
-    if not hasattr(__main__, "__file__") and "__vapoursynth__" not in sys.modules:
-        first_stack = inspect.stack()[-1]
+    modules["__vapoursynth__"] = ModuleType("__vapoursynth__")
 
-        sys.modules["__vapoursynth__"] = ModuleType("__vapoursynth__")
+    cope = (Path.cwd() / first_stack.filename).resolve()
 
-        cope = (Path.cwd() / first_stack.filename).resolve()
+    first_stack = None
 
-        first_stack = None
+    modules["__vapoursynth__"].__file__ = __main__.__file__ = str(cope)
 
-        sys.modules["__vapoursynth__"].__file__ = __main__.__file__ = str(cope)
-
-        sys.path.append(str(cope.parent))
-
-    warnings._add_filter("ignore", re.compile(".*smallest subnormal.*numpy.*"), Warning, None, 0, append=False)
-    warnings._add_filter("ignore", re.compile(".*divide by zero.*"), Warning, None, 0, append=False)
+    sys_path.append(str(cope.parent))
 
 
 def register_on_creation(callback: Callable[..., None], strict: bool = False) -> None:
