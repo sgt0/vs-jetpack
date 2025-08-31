@@ -297,7 +297,9 @@ def replace_ranges(
 
 
 def remap_frames(clip: vs.VideoNode, ranges: Sequence[int | tuple[int, int]]) -> ConstantFormatVideoNode:
-    frame_map = list[int](flatten(f if isinstance(f, int) else range(f[0], f[1] + 1) for f in ranges))
+    frame_map = list[int](
+        flatten(f if isinstance(f, int) else range(f[0], f[1] + (not replace_ranges.exclusive)) for f in ranges)
+    )
 
     base = vs.core.std.BlankClip(clip, length=len(frame_map))
 
