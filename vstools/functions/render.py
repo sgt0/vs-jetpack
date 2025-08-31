@@ -320,7 +320,7 @@ def prop_compare_cb(
     prop: str,
     op: str | Callable[[float, float], bool] | None,
     ref: float | bool,
-    return_frame_n: Literal[False] = ...,
+    return_frame_n: Literal[False] = False,
 ) -> tuple[VideoNodeT, Callable[[int, vs.VideoFrame], bool]]: ...
 
 
@@ -330,7 +330,8 @@ def prop_compare_cb(
     prop: str,
     op: str | Callable[[float, float], bool] | None,
     ref: float | bool,
-    return_frame_n: Literal[True] = ...,
+    *,
+    return_frame_n: Literal[True],
 ) -> tuple[VideoNodeT, Callable[[int, vs.VideoFrame], int | SentinelT]]: ...
 
 
@@ -351,7 +352,6 @@ def prop_compare_cb(
     if isinstance(op, str):
         assert op in _operators
 
-    callback: Callable[[int, vs.VideoFrame], SentinelT | int]
     if one_pix:
         clip = (
             vs.core.std.BlankClip(None, 1, 1, vs.GRAY8 if bool_check else vs.GRAYS, length=src.num_frames)
@@ -440,7 +440,7 @@ def find_prop(
         Frame ranges at the specified conditions.
     """
 
-    prop_src, callback = prop_compare_cb(src, prop, op, ref, True)
+    prop_src, callback = prop_compare_cb(src, prop, op, ref, return_frame_n=True)
 
     aconf = AsyncRenderConf(async_requests, (prop_src.width, prop_src.height) == (1, 1), False)
 
