@@ -12,7 +12,6 @@ from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
     CustomValueError,
-    KwargsT,
     Planes,
     check_variable_format,
     core,
@@ -63,8 +62,8 @@ class BlurMatrixBase(list[_Nb]):
         saturate: bool = True,
         passes: int = 1,
         func: FuncExcept | None = None,
-        expr_kwargs: KwargsT | None = None,
-        **conv_kwargs: Any,
+        expr_kwargs: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
         Apply the blur kernel to the given clip via spatial or temporal convolution.
@@ -81,7 +80,7 @@ class BlurMatrixBase(list[_Nb]):
             passes: Number of convolution passes to apply.
             func: Function returned for custom error handling. This should only be set by VS package developers.
             expr_kwargs: Extra kwargs passed to ExprOp.convolution when used.
-            **conv_kwargs: Any other args passed to the underlying VapourSynth function.
+            **kwargs: Any other args passed to the underlying VapourSynth function.
 
         Returns:
             Processed (blurred) video clip.
@@ -113,7 +112,8 @@ class BlurMatrixBase(list[_Nb]):
                 ExprOp.convolution("x", self, bias, fallback(divisor, True), saturate, self.mode, **expr_kwargs),
                 passes,
                 planes=planes,
-                **conv_kwargs,
+                func=func,
+                **kwargs,
             )
 
         # Temporal mode
@@ -138,30 +138,31 @@ class BlurMatrixBase(list[_Nb]):
 
             return ExprOp.convolution(
                 ExprVars(len(clip)), self, bias, fallback(divisor, True), saturate, self.mode, **expr_kwargs
-            )(clip, planes=planes, **conv_kwargs)
+            )(clip, planes=planes, func=func, **kwargs)
 
         # std.AverageFrames doesn't support premultiply, multiply and clamp from ExprOp.convolution
-        if use_std and conv_kwargs.keys() <= {"scenechange"}:
-            return iterate(clip[0], core.std.AverageFrames, passes, self, divisor, planes=planes, **conv_kwargs)
+        if use_std and not expr_kwargs and kwargs.keys() <= {"scenechange"}:
+            return iterate(clip[0], core.std.AverageFrames, passes, self, divisor, planes=planes, **kwargs)
 
-        return self._averageframes_akarin(clip[0], planes, bias, divisor, saturate, passes, expr_kwargs, **conv_kwargs)
+        return self._averageframes_akarin(
+            clip[0], planes, bias, divisor, saturate, passes, expr_kwargs, func=func, **kwargs
+        )
 
     def _averageframes_akarin(self, *args: Any, **kwargs: Any) -> ConstantFormatVideoNode:
         clip, planes, bias, divisor, saturate, passes, expr_kwargs = args
-        conv_kwargs = kwargs
 
         r = len(self) // 2
 
-        if conv_kwargs.pop("scenechange", False) is False:
+        if kwargs.pop("scenechange", False) is False:
             expr_conv = ExprOp.convolution(
-                ExprVars(len(self)), self, bias, fallback(divisor, True), saturate, self.mode, **conv_kwargs
+                ExprVars(len(self)), self, bias, fallback(divisor, True), saturate, self.mode, **expr_kwargs
             )
-            out = iterate(clip, lambda x: expr_conv(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes)
+            out = iterate(clip, lambda x: expr_conv(shift_clip_multi(x, (-r, r)), planes=planes, **kwargs), passes)
             return core.std.CopyFrameProps(out, clip)
 
         expr = ExprList()
 
-        vars_ = [[f"{v}"] for v in ExprOp.matrix(ExprVars(len(self), akarin=True), r, self.mode)[0]]
+        vars_ = [[f"{v}"] for v in ExprOp.matrix(ExprVars(len(self), expr_src=True), r, self.mode)[0]]
 
         back_vars = vars_[:r]
 
@@ -203,7 +204,7 @@ class BlurMatrixBase(list[_Nb]):
 
         expr.append(ExprOp.ADD * r * 2, ExprOp.MUL, ExprOp.ADD * r * 2)
 
-        if premultiply := conv_kwargs.get("premultiply", None):
+        if premultiply := expr_kwargs.get("premultiply", None):
             expr.append(premultiply, ExprOp.MUL)
 
         if divisor:
@@ -217,13 +218,13 @@ class BlurMatrixBase(list[_Nb]):
         if not saturate:
             expr.append(ExprOp.ABS)
 
-        if multiply := conv_kwargs.get("multiply", None):
+        if multiply := expr_kwargs.get("multiply", None):
             expr.append(multiply, ExprOp.MUL)
 
-        if conv_kwargs.get("clamp", False):
+        if expr_kwargs.get("clamp", False):
             expr.append(ExprOp.clamp(ExprToken.RangeMin, ExprToken.RangeMax))
 
-        out = iterate(clip, lambda x: expr(shift_clip_multi(x, (-r, r)), planes=planes, **expr_kwargs), passes)
+        out = iterate(clip, lambda x: expr(shift_clip_multi(x, (-r, r)), planes=planes, **kwargs), passes)
 
         return core.std.CopyFrameProps(out, clip)
 
