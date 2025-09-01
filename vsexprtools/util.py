@@ -6,7 +6,7 @@ from itertools import count
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomTypeError, SupportsString
-from typing_extensions import Self
+from typing_extensions import Self, deprecated
 
 if TYPE_CHECKING:
     from vapoursynth._nodes import _ReturnDict_akarin_Version  # pyright: ignore[reportMissingModuleSource]
@@ -100,40 +100,28 @@ class ExprVars(Iterable[str]):
             )
         else:
             if isinstance(start_stop, HoldsVideoFormat | VideoFormatLike):
-                raise CustomTypeError("start cannot be a video format when stop is provided.", self, start_stop)
+                raise CustomTypeError(
+                    "start cannot be a video format when stop is provided.", self.__class__, start_stop
+                )
             self.start = start_stop.__index__()
             self.stop = stop.__index__()
 
         self.step = step.__index__()
 
         if self.start < 0:
-            raise CustomIndexError('"start" must be greater than or equal to 0.', self, self.start)
+            raise CustomIndexError('"start" must be greater than or equal to 0.', self.__class__, self.start)
 
         if self.stop <= self.start:
-            raise CustomIndexError('"stop" must be greater than "start".', self, (self.start, self.stop))
+            raise CustomIndexError('"stop" must be greater than "start".', self.__class__, (self.start, self.stop))
 
         self.expr_src = expr_src
         self.curr = self.start
 
-    @overload
-    def __call__(
-        self, stop: SupportsIndex | Self | HoldsVideoFormat | VideoFormatLike, /, *, expr_src: bool = False
-    ) -> Self: ...
-
-    @overload
-    def __call__(
-        self, start: SupportsIndex, stop: SupportsIndex, step: SupportsIndex = 1, /, *, expr_src: bool = False
-    ) -> Self: ...
-
-    def __call__(
-        self,
-        start_stop: SupportsIndex | Self | HoldsVideoFormat | VideoFormatLike,
-        stop: SupportsIndex | MissingT = MISSING,
-        step: SupportsIndex = 1,
-        /,
-        *,
-        expr_src: bool = False,
-    ) -> Self:
+    @deprecated(
+        "Invoking a ExprVars as a callable is deprecated and will be removed in a future version.",
+        category=DeprecationWarning,
+    )
+    def __call__(self, *args: Any, **kwargs: Any) -> Self:
         """
         Allows an ExprVars instance to be called like a function to create a new instance with new parameters.
 
@@ -146,8 +134,7 @@ class ExprVars(Iterable[str]):
         Returns:
             A new instance with the specified parameters.
         """
-
-        return self.__class__(start_stop, stop, step, expr_src=expr_src)
+        return self.__class__(*args, **kwargs)
 
     def __iter__(self) -> Iterator[str]:
         """
