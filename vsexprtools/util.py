@@ -61,9 +61,6 @@ class ExprVars(Iterable[str]):
         self, start: SupportsIndex, stop: SupportsIndex, step: SupportsIndex = 1, /, *, expr_src: bool = False
     ) -> None: ...
 
-    @overload
-    def __init__(self, /, *args: Any, **kwargs: Any) -> None: ...
-
     def __init__(
         self,
         start_stop: SupportsIndex | Self | HoldsVideoFormat | VideoFormatLike,
