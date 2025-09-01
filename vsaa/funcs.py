@@ -20,7 +20,6 @@ from vstools import (
     fallback,
     get_peak_value,
     get_y,
-    limiter,
     scale_mask,
     vs,
 )
@@ -203,9 +202,7 @@ def based_aa(
     if mask is not False and not isinstance(mask, vs.VideoNode):
         mask = EdgeDetect.ensure_obj(mask, based_aa).edgemask(func.work_clip, 0)
         mask = mask.std.BinarizeMask(scale_mask(mask_thr, 8, func.work_clip))
-
         mask = box_blur(mask.std.Maximum())
-        mask = limiter(mask, mask=True, func=based_aa)
 
         if show_mask:
             return mask
