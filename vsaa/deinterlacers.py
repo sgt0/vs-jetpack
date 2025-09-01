@@ -648,9 +648,6 @@ class EEDI3(SuperSampler):
     by limiting edge-directed interpolation to certain pixels.
     """
 
-    opencl: bool = False
-    """Enables the use of the OpenCL variant for processing."""
-
     def _set_sclip_mclip(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         sclip, mclip = kwargs.pop("sclip", MISSING), kwargs.pop("mclip", MISSING)
 
@@ -664,7 +661,7 @@ class EEDI3(SuperSampler):
 
     @property
     def _deinterlacer_function(self) -> VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode]:
-        return core.lazy.eedi3m.EEDI3CL if self.opencl else core.lazy.eedi3m.EEDI3
+        return core.lazy.eedi3m.EEDI3
 
     def _interpolate(
         self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any
@@ -730,10 +727,8 @@ class EEDI3(SuperSampler):
             "vthresh1": self.vthresh[1],
             "vthresh2": self.vthresh[2],
             "sclip": self.sclip,
+            "mclip": self.mclip,
         }
-
-        if not self.opencl:
-            eedi3_kwargs.update(mclip=self.mclip)
 
         return eedi3_kwargs | kwargs
 
