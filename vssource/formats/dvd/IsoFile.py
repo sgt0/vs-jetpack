@@ -344,7 +344,7 @@ def dvdsrc_parse_vts(
         rnode = rawnode
         _vobids = staff.vobids
 
-    return rnode, staff.rff, _vobids, vts_indices  # pyright: ignore[reportPossiblyUnboundVariable]
+    return rnode, staff.rff, _vobids, vts_indices
 
 
 def dvdsrc_extract_data(rawnode: vs.VideoNode) -> AllNeddedDvdFrameData:
