@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import Sequence
-
-from vstools import CustomValueError
+from vstools import CustomValueError, Planes, normalize_planes, vs
 
 __all__ = ["normalize_thscd", "planes_to_mvtools"]
 
 
-def planes_to_mvtools(input_planes: Sequence[int]) -> int:
+def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
     """
     Convert a sequence of plane indices to MVTools' plane parameter value.
 
@@ -25,15 +23,15 @@ def planes_to_mvtools(input_planes: Sequence[int]) -> int:
         Integer value used by MVTools to specify which planes to process.
     """
 
-    planes = set(input_planes)
+    norm_planes = set(normalize_planes(clip, planes))
 
-    if planes == {0, 1, 2}:
+    if norm_planes == {0, 1, 2}:
         return 4
 
-    if len(planes) == 1 and planes.intersection({0, 1, 2}):
-        return planes.pop()
+    if len(norm_planes) == 1 and norm_planes.intersection({0, 1, 2}):
+        return norm_planes.pop()
 
-    if planes == {1, 2}:
+    if norm_planes == {1, 2}:
         return 3
 
     raise CustomValueError("Invalid planes specified!", planes_to_mvtools)

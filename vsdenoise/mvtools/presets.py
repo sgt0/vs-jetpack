@@ -4,7 +4,7 @@ from typing import Any, Iterable, Iterator, MutableMapping, TypedDict, overload
 
 from typing_extensions import Self, deprecated
 
-from vstools import T1, T2, KwargsT, Planes, SupportsKeysAndGetItem, VSFunctionNoArgs, classproperty, vs, vs_object
+from vstools import T1, T2, KwargsT, SupportsKeysAndGetItem, VSFunctionNoArgs, classproperty, vs, vs_object
 
 from ..prefilters import prefilter_to_full_range
 from .enums import FlowMode, MaskMode, MotionMode, PenaltyMode, RFilterMode, SADMode, SearchMode, SharpMode, SmoothMode
@@ -100,6 +100,7 @@ class DegrainArgs(TypedDict, total=False):
     limitc: int | None
     thscd1: int | None
     thscd2: int | None
+    plane: int | None
 
 
 class FlowInterpolateArgs(TypedDict, total=False):
@@ -157,7 +158,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
     tr: int
     pel: int
     pad: int | tuple[int | None, int | None]
-    planes: Planes
+    chroma: bool
     super_args: SuperArgs | KwargsT
     analyze_args: AnalyzeArgs | KwargsT
     recalculate_args: RecalculateArgs | KwargsT
@@ -178,7 +179,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
         tr: int | None = None,
         pel: int | None = None,
         pad: int | tuple[int | None, int | None] | None = None,
-        planes: Planes | None = None,
+        chroma: bool | None = None,
         super_args: SuperArgs | KwargsT | None = None,
         analyze_args: AnalyzeArgs | KwargsT | None = None,
         recalculate_args: RecalculateArgs | KwargsT | None = None,
@@ -197,7 +198,7 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
             tr=tr,
             pel=pel,
             pad=pad,
-            planes=planes,
+            chroma=chroma,
             super_args=super_args,
             analyze_args=analyze_args,
             recalculate_args=recalculate_args,

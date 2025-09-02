@@ -48,6 +48,7 @@ def mc_degrain(
     preset: MVToolsPreset = ...,
     tr: int = 1,
     blksize: int | tuple[int, int] = 16,
+    overlap: int | tuple[int, int] = 2,
     refine: int = 1,
     thsad: int | tuple[int, int] = 400,
     thsad2: int | tuple[int | None, int | None] | None = None,
@@ -68,6 +69,7 @@ def mc_degrain(
     preset: MVToolsPreset = ...,
     tr: int = 1,
     blksize: int | tuple[int, int] = 16,
+    overlap: int | tuple[int, int] = 2,
     refine: int = 1,
     thsad: int | tuple[int, int] = 400,
     thsad2: int | tuple[int | None, int | None] | None = None,
@@ -89,6 +91,7 @@ def mc_degrain(
     preset: MVToolsPreset = ...,
     tr: int = 1,
     blksize: int | tuple[int, int] = 16,
+    overlap: int | tuple[int, int] = 2,
     refine: int = 1,
     thsad: int | tuple[int, int] = 400,
     thsad2: int | tuple[int | None, int | None] | None = None,
@@ -108,6 +111,7 @@ def mc_degrain(
     preset: MVToolsPreset = MVToolsPreset.HQ_SAD,
     tr: int = 1,
     blksize: int | tuple[int, int] = 16,
+    overlap: int | tuple[int, int] = 2,
     refine: int = 1,
     thsad: int | tuple[int, int] = 400,
     thsad2: int | tuple[int | None, int | None] | None = None,
@@ -131,6 +135,7 @@ def mc_degrain(
         preset: MVTools preset defining base values for the MVTools object. Default is HQ_SAD.
         tr: The temporal radius. This determines how many frames are analyzed before/after the current frame.
         blksize: Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
+        overlap: The blksize divisor for block overlap. Larger overlapping reduces blocking artifacts.
         refine: Number of times to recalculate motion vectors with halved block size.
         thsad: Defines the soft threshold of block sum absolute differences. Blocks with SAD above this threshold have
             zero weight for averaging (denoising). Blocks with low SAD have highest weight. The remaining weight is
@@ -154,27 +159,28 @@ def mc_degrain(
         containing the processed clip and the MVTools object.
     """
 
-    def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
-        return x[0] // 2, x[1] // 2
+    def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
+        return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
 
     mv_args = preset | KwargsNotNone(search_clip=prefilter)
 
     blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
+    overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
     thsad_recalc = fallback(thsad_recalc, round((thsad[0] if isinstance(thsad, tuple) else thsad) / 2))
 
-    mv = MVTools(clip, vectors=vectors, planes=planes, **mv_args)
+    mv = MVTools(clip, vectors=vectors, **mv_args)
     mfilter = mfilter(mv.clip) if callable(mfilter) else fallback(mfilter, mv.clip)
 
     if not vectors:
-        mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize))
+        mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
 
         for _ in range(refine):
             blksize = _floor_div_tuple(blksize)
-            overlap = _floor_div_tuple(blksize)
+            overlap = _floor_div_tuple(blksize, overlap)
 
             mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
-    den = mv.degrain(mfilter, mv.clip, None, tr, thsad, thsad2, limit, thscd)
+    den = mv.degrain(mfilter, mv.clip, None, tr, thsad, thsad2, limit, thscd, planes=planes)
 
     return (den, mv) if export_globals else den
 

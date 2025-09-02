@@ -381,6 +381,7 @@ class QTempGaussMC(vs_object):
         force_tr: int = 1,
         preset: MVToolsPreset = MVToolsPreset.HQ_SAD,
         blksize: int | tuple[int, int] = 16,
+        overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = (180, 38.5),
@@ -392,6 +393,7 @@ class QTempGaussMC(vs_object):
             force_tr: Always analyze motion to at least this, even if otherwise unnecessary.
             preset: MVTools preset defining base values for the MVTools object.
             blksize: Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
+            overlap: The blksize divisor for block overlap. Larger overlapping reduces blocking artifacts.
             refine: Number of times to recalculate motion vectors with halved block size.
             thsad_recalc: Only bad quality new vectors with a SAD above this will be re-estimated by search. thsad value
                 is scaled to 8x8 block size.
@@ -404,6 +406,7 @@ class QTempGaussMC(vs_object):
         self.analyze_tr = force_tr
         self.analyze_preset = preset
         self.analyze_blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
+        self.analyze_overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
         self.analyze_refine = refine
         self.analyze_thsad_recalc = thsad_recalc
         self.analyze_thscd = thscd
@@ -417,6 +420,7 @@ class QTempGaussMC(vs_object):
         func: _DenoiseFuncTr | VSFunctionKwArgs[vs.VideoNode, vs.VideoNode] = partial(DFTTest().denoise, sigma=8),
         mode: NoiseProcessMode = NoiseProcessMode.IDENTIFY,
         deint: NoiseDeintMode = NoiseDeintMode.GENERATE,
+        mc_denoise: bool = True,
         stabilize: tuple[float, float] | Literal[False] = (0.6, 0.2),
         func_comp_args: KwargsT | None = None,
         stabilize_comp_args: KwargsT | None = None,
@@ -429,6 +433,7 @@ class QTempGaussMC(vs_object):
             func: Denoising function to use.
             mode: Noise handling method to use.
             deint: Noise deinterlacing method to use.
+            mc_denoise: Whether to perform motion-compensated denoising.
             stabilize: Weights to use when blending source noise with compensated noise.
             func_comp_args: Arguments passed to [MVTools.compensate][vsdenoise.mvtools.mvtools.MVTools.compensate] for
                 denoising.
@@ -440,6 +445,7 @@ class QTempGaussMC(vs_object):
         self.denoise_func = func
         self.denoise_mode = mode
         self.denoise_deint = deint
+        self.denoise_mc_denoise = mc_denoise
         self.denoise_stabilize: tuple[float, float] | Literal[False] = stabilize
         self.denoise_func_comp_args = fallback(func_comp_args, KwargsT())
         self.denoise_stabilize_comp_args = fallback(stabilize_comp_args, KwargsT())
@@ -810,8 +816,8 @@ class QTempGaussMC(vs_object):
         self.prefilter_output = blurred
 
     def _apply_analyze(self) -> None:
-        def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
-            return x[0] // 2, x[1] // 2
+        def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
+            return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
 
         tr = max(
             1,
@@ -825,18 +831,18 @@ class QTempGaussMC(vs_object):
             self.final_tr,
         )
 
-        blksize = self.analyze_blksize
+        blksize, overlap = self.analyze_blksize, self.analyze_overlap
         thsad_recalc = fallback(
             self.analyze_thsad_recalc,
             round((self.basic_thsad[0] if isinstance(self.basic_thsad, tuple) else self.basic_thsad) / 2),
         )
 
         self.mv = MVTools(self.draft, self.prefilter_output, **self.analyze_preset)
-        self.mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize))
+        self.mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
 
         for _ in range(self.analyze_refine):
             blksize = _floor_div_tuple(blksize)
-            overlap = _floor_div_tuple(blksize)
+            overlap = _floor_div_tuple(blksize, overlap)
 
             self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
@@ -845,14 +851,19 @@ class QTempGaussMC(vs_object):
             self.denoise_output = self.clip
         else:
             if self.denoise_tr:
-                denoised = self.mv.compensate(
-                    tr=self.denoise_tr,
-                    thscd=self.analyze_thscd,
-                    temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
-                    **self.denoise_func_comp_args,
-                )
+                if self.denoise_mc_denoise:
+                    denoised = self.mv.compensate(
+                        tr=self.denoise_tr,
+                        thscd=self.analyze_thscd,
+                        temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
+                        **self.denoise_func_comp_args,
+                    )
+                else:
+                    denoised = self.denoise_func(self.draft, tr=self.denoise_tr)
             else:
-                denoised = cast(ConstantFormatVideoNode, self.denoise_func(self.draft))
+                denoised = self.denoise_func(self.draft)
+
+            denoised = cast(ConstantFormatVideoNode, denoised)
 
             if self.input_type == self.InputType.INTERLACE:
                 denoised = reinterlace(denoised, self.tff)

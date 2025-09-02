@@ -20,7 +20,6 @@ from vstools import (
     depth,
     fallback,
     get_props,
-    normalize_planes,
     normalize_seq,
     scale_delta,
     vs,
@@ -100,7 +99,7 @@ class MVTools(vs_object):
         vectors: MotionVectors | None = None,
         pad: int | tuple[int | None, int | None] | None = None,
         pel: int | None = None,
-        planes: Planes = None,
+        chroma: bool | None = None,
         *,
         super_args: KwargsT | None = None,
         analyze_args: KwargsT | None = None,
@@ -137,7 +136,7 @@ class MVTools(vs_object):
             pad: How much padding to add to the source frame. Small padding is added to help with motion estimation near
                 frame borders.
             pel: Subpixel precision for motion estimation (1=pixel, 2=half-pixel, 4=quarter-pixel). Default: 1.
-            planes: Which planes to process. Default: None (all planes).
+            chroma: Whether to consider chroma in motion vector calculations.
             super_args: Arguments passed to every [MVToolsPlugin.Super][vsdenoise.MVToolsPlugin.Super] calls.
             analyze_args: Arguments passed to every [MVToolsPlugin.Analyze][vsdenoise.MVToolsPlugin.Analyze] calls.
             recalculate_args: Arguments passed to every [MVToolsPlugin.Recalculate][vsdenoise.MVToolsPlugin.Recalculate]
@@ -166,13 +165,11 @@ class MVTools(vs_object):
         self.fieldbased = FieldBased.from_video(clip, False, self.__class__)
         self.clip = clip.std.SeparateFields(self.fieldbased.is_tff) if self.fieldbased.is_inter else clip
 
-        self.planes = normalize_planes(self.clip, planes)
-        self.mv_plane = planes_to_mvtools(self.planes)
-        self.chroma = self.mv_plane != 0
-        self.disable_compensate = False
-
         self.pel = pel
         self.pad = normalize_seq(pad, 2)
+        self.chroma = chroma
+
+        self.disable_compensate = False
 
         if callable(search_clip):
             self.search_clip = search_clip(self.clip)
@@ -833,6 +830,7 @@ class MVTools(vs_object):
         thsad2: int | tuple[int | None, int | None] | None = None,
         limit: int | tuple[int | None, int | None] | None = None,
         thscd: int | tuple[int | None, int | float | None] | None = None,
+        planes: Planes = None,
     ) -> ConstantFormatVideoNode:
         """
         Perform temporal denoising using motion compensation.
@@ -857,6 +855,7 @@ class MVTools(vs_object):
 
                    - First value: SAD threshold for considering a block changed between frames.
                    - Second value: Percentage of changed blocks needed to trigger a scene change.
+            planes: Which planes to process. Default: None (all planes).
 
         Returns:
             Motion compensated and temporally filtered clip with reduced noise.
@@ -870,7 +869,7 @@ class MVTools(vs_object):
 
         thscd1, thscd2 = normalize_thscd(thscd)
 
-        degrain_args = dict[str, Any](thscd1=thscd1, thscd2=thscd2, plane=self.mv_plane)
+        degrain_args = dict[str, Any](thscd1=thscd1, thscd2=thscd2, plane=planes_to_mvtools(clip, planes))
 
         if self.mvtools is MVToolsPlugin.FLOAT:
             if tr == 1:

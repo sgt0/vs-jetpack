@@ -49,6 +49,7 @@ class InterpolateOverlay(CustomEnum):
         vectors: MotionVectors | None = None,
         preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
         blksize: int | tuple[int, int] = 8,
+        overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
         export_globals: Literal[False] = False,
@@ -62,6 +63,7 @@ class InterpolateOverlay(CustomEnum):
         vectors: MotionVectors | None = None,
         preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
         blksize: int | tuple[int, int] = 8,
+        overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
         *,
@@ -76,6 +78,7 @@ class InterpolateOverlay(CustomEnum):
         vectors: MotionVectors | None = None,
         preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
         blksize: int | tuple[int, int] = 8,
+        overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
         export_globals: bool = ...,
@@ -88,6 +91,7 @@ class InterpolateOverlay(CustomEnum):
         vectors: MotionVectors | None = None,
         preset: MVToolsPreset = MVToolsPreset.HQ_COHERENCE,
         blksize: int | tuple[int, int] = 8,
+        overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
         export_globals: bool = False,
@@ -102,6 +106,7 @@ class InterpolateOverlay(CustomEnum):
             pattern: First frame of any clean-combed-combed-clean-clean sequence.
             preset: MVTools preset defining base values for the MVTools object. Default is HQ_COHERENCE.
             blksize: Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
+            overlap: The blksize divisor for block overlap. Larger overlapping reduces blocking artifacts.
             refine: Number of times to recalculate motion vectors with halved block size.
             thsad_recalc: Only bad quality new vectors with a SAD above this will be re-estimated by search. thsad value
                 is scaled to 8x8 block size.
@@ -111,8 +116,8 @@ class InterpolateOverlay(CustomEnum):
             Decimated clip with text resampled down to 24p.
         """
 
-        def _floor_div_tuple(x: tuple[int, int]) -> tuple[int, int]:
-            return x[0] // 2, x[1] // 2
+        def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
+            return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
 
         assert check_variable(clip, self.__class__)
 
@@ -121,15 +126,16 @@ class InterpolateOverlay(CustomEnum):
         offsets = [(offset + i * step) % 40 for i in range(4)]
 
         blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
+        overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
 
         mv = MVTools(clip, vectors=vectors, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
 
         if not vectors:
-            mv.analyze(tr=1, blksize=blksize, overlap=_floor_div_tuple(blksize))
+            mv.analyze(tr=1, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
 
             for _ in range(refine):
                 blksize = _floor_div_tuple(blksize)
-                overlap = _floor_div_tuple(blksize)
+                overlap = _floor_div_tuple(blksize, overlap)
 
                 mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
