@@ -850,18 +850,15 @@ class QTempGaussMC(vs_object):
         if not self.denoise_mode:
             self.denoise_output = self.clip
         else:
-            if self.denoise_tr:
-                if self.denoise_mc_denoise:
-                    denoised = self.mv.compensate(
-                        tr=self.denoise_tr,
-                        thscd=self.analyze_thscd,
-                        temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
-                        **self.denoise_func_comp_args,
-                    )
-                else:
-                    denoised = self.denoise_func(self.draft, tr=self.denoise_tr)
+            if self.denoise_mc_denoise:
+                denoised = self.mv.compensate(
+                    tr=self.denoise_tr,
+                    thscd=self.analyze_thscd,
+                    temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
+                    **self.denoise_func_comp_args,
+                )
             else:
-                denoised = self.denoise_func(self.draft)
+                denoised = self.denoise_func(self.draft, tr=self.denoise_tr)
 
             denoised = cast(ConstantFormatVideoNode, denoised)
 
