@@ -33,6 +33,7 @@ from vstools import (
     check_variable,
     core,
     fallback,
+    get_y,
     normalize_seq,
     sc_detect,
     scale_delta,
@@ -380,6 +381,7 @@ class QTempGaussMC(vs_object):
         *,
         force_tr: int = 1,
         preset: MVToolsPreset = MVToolsPreset.HQ_SAD,
+        chroma: bool = True,
         blksize: int | tuple[int, int] = 16,
         overlap: int | tuple[int, int] = 2,
         refine: int = 1,
@@ -392,6 +394,7 @@ class QTempGaussMC(vs_object):
         Args:
             force_tr: Always analyze motion to at least this, even if otherwise unnecessary.
             preset: MVTools preset defining base values for the MVTools object.
+            chroma: Whether to consider chroma in motion vector calculations.
             blksize: Size of a block. Larger blocks are less sensitive to noise, are faster, but also less accurate.
             overlap: The blksize divisor for block overlap. Larger overlapping reduces blocking artifacts.
             refine: Number of times to recalculate motion vectors with halved block size.
@@ -405,6 +408,7 @@ class QTempGaussMC(vs_object):
 
         self.analyze_tr = force_tr
         self.analyze_preset = preset
+        self.analyze_chroma = chroma
         self.analyze_blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
         self.analyze_overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
         self.analyze_refine = refine
@@ -776,10 +780,13 @@ class QTempGaussMC(vs_object):
     def _apply_prefilter(self) -> None:
         self.draft = Catrom(tff=self.tff).bob(self.clip) if self.input_type == self.InputType.INTERLACE else self.clip
 
+        search = self.draft
+
+        if not self.analyze_chroma:
+            search = get_y(search)
+
         if self.input_type == self.InputType.REPAIR:
-            search = BlurMatrix.BINOMIAL()(self.draft, mode=ConvMode.VERTICAL)
-        else:
-            search = self.draft
+            search = BlurMatrix.BINOMIAL()(search, mode=ConvMode.VERTICAL)
 
         if self.prefilter_tr:
             scenechange = self.prefilter_sc_threshold is not False
@@ -837,7 +844,7 @@ class QTempGaussMC(vs_object):
             round((self.basic_thsad[0] if isinstance(self.basic_thsad, tuple) else self.basic_thsad) / 2),
         )
 
-        self.mv = MVTools(self.draft, self.prefilter_output, **self.analyze_preset)
+        self.mv = MVTools(self.draft, self.prefilter_output, chroma=self.analyze_chroma, **self.analyze_preset)
         self.mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
 
         for _ in range(self.analyze_refine):
