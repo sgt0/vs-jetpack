@@ -851,9 +851,7 @@ class QTempGaussMC(vs_object):
             self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
     def _apply_denoise(self) -> None:
-        if not self.denoise_mode:
-            self.denoise_output = self.clip
-        else:
+        if self.denoise_mode:
             if self.denoise_mc_denoise:
                 denoised = self.mv.compensate(
                     tr=self.denoise_tr,
@@ -916,7 +914,7 @@ class QTempGaussMC(vs_object):
                     )
 
             self.noise = noise
-            self.denoise_output = denoised if self.denoise_mode == self.NoiseProcessMode.DENOISE else self.clip
+        self.denoise_output = denoised if self.denoise_mode == self.NoiseProcessMode.DENOISE else self.clip
 
     def _apply_basic(self) -> None:
         self.bobbed = self._interpolate(self.denoise_output, self.basic_bobber)
