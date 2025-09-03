@@ -74,10 +74,10 @@ def refine_blksize(blksize: int | tuple[int, int], divisor: int | tuple[int, int
         Normalized and refined blksize tuple.
     """
 
-    norm_blksize = normalize_seq(blksize, 2)
-    norm_divisor = normalize_seq(divisor, 2)
+    nblksize = normalize_seq(blksize, 2)
+    ndivisor = normalize_seq(divisor, 2)
 
     return (
-        norm_blksize[0] // norm_divisor[0] if norm_divisor[0] else 0,
-        norm_blksize[1] // norm_divisor[1] if norm_divisor[1] else 0,
+        nblksize[0] // nblksize[0] if nblksize[0] else 0,
+        ndivisor[1] // ndivisor[1] if ndivisor[1] else 0,
     )

@@ -825,14 +825,13 @@ class QTempGaussMC(vs_object):
 
     def _apply_analyze(self) -> None:
         tr = max(
-            1,
             self.analyze_tr,
             self.denoise_tr,
             self.basic_tr,
             self.match_tr,
             self.limit_radius
             if self.limit_mode in (self.SharpLimitMode.TEMPORAL_PRESMOOTH, self.SharpLimitMode.TEMPORAL_POSTSMOOTH)
-            else 0,
+            else 1,
             self.final_tr,
         )
 
