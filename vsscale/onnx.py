@@ -491,7 +491,7 @@ class BaseArtCNNLuma(BaseArtCNN):
 
         if input_clip.format.color_family == vs.YUV:
             scaled_chroma = self.scaler.scale(input_clip, clip.width, clip.height)
-            clip = join(clip, scaled_chroma, vs.YUV)
+            clip = join(clip, scaled_chroma, prop_src=scaled_chroma)
 
         if shift != (0, 0):
             clip = self.shifter.shift(clip, shift)
