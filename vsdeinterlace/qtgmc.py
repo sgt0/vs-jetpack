@@ -16,6 +16,7 @@ from vsdenoise import (
     MVToolsPreset,
     mc_clamp,
     prefilter_to_full_range,
+    refine_blksize,
 )
 from vsexprtools import norm_expr
 from vskernels import Catrom
@@ -409,8 +410,8 @@ class QTempGaussMC(vs_object):
         self.analyze_tr = force_tr
         self.analyze_preset = preset
         self.analyze_chroma = chroma
-        self.analyze_blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
-        self.analyze_overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
+        self.analyze_blksize = blksize
+        self.analyze_overlap = overlap
         self.analyze_refine = refine
         self.analyze_thsad_recalc = thsad_recalc
         self.analyze_thscd = thscd
@@ -823,9 +824,6 @@ class QTempGaussMC(vs_object):
         self.prefilter_output = blurred
 
     def _apply_analyze(self) -> None:
-        def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
-            return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
-
         tr = max(
             1,
             self.analyze_tr,
@@ -845,11 +843,11 @@ class QTempGaussMC(vs_object):
         )
 
         self.mv = MVTools(self.draft, self.prefilter_output, chroma=self.analyze_chroma, **self.analyze_preset)
-        self.mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
+        self.mv.analyze(tr=tr, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
         for _ in range(self.analyze_refine):
-            blksize = _floor_div_tuple(blksize)
-            overlap = _floor_div_tuple(blksize, overlap)
+            blksize = refine_blksize(blksize)
+            overlap = refine_blksize(blksize, overlap)
 
             self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 

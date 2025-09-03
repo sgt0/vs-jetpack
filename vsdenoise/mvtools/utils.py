@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from vstools import CustomValueError, Planes, normalize_planes, vs
+from vstools import CustomValueError, Planes, normalize_planes, normalize_seq, vs
 
-__all__ = ["normalize_thscd", "planes_to_mvtools"]
+__all__ = ["normalize_thscd", "planes_to_mvtools", "refine_blksize"]
 
 
 def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
@@ -60,3 +60,24 @@ def normalize_thscd(
         thscd2 = int(thscd2)
 
     return (thscd1, thscd2)
+
+
+def refine_blksize(blksize: int | tuple[int, int], divisor: int | tuple[int, int] = (2, 2)) -> tuple[int, int]:
+    """
+    Normalize and refine blksize.
+
+    Args:
+        blksize: Block size to refine.
+        divisor: Block size divisor.
+
+    Returns:
+        Normalized and refined blksize tuple.
+    """
+
+    norm_blksize = normalize_seq(blksize, 2)
+    norm_divisor = normalize_seq(divisor, 2)
+
+    return (
+        norm_blksize[0] // norm_divisor[0] if norm_divisor[0] else 0,
+        norm_blksize[1] // norm_divisor[1] if norm_divisor[1] else 0,
+    )

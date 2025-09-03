@@ -5,7 +5,7 @@ from typing import Literal, Sequence, overload
 
 from jetpytools import CustomEnum, CustomIntEnum, KwargsT
 
-from vsdenoise import MotionVectors, MVTools, MVToolsPreset, prefilter_to_full_range
+from vsdenoise import MotionVectors, MVTools, MVToolsPreset, prefilter_to_full_range, refine_blksize
 from vsexprtools import norm_expr
 from vsrgtools import BlurMatrix, sbr
 from vstools import (
@@ -115,27 +115,20 @@ class InterpolateOverlay(CustomEnum):
         Returns:
             Decimated clip with text resampled down to 24p.
         """
-
-        def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
-            return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
-
         assert check_variable(clip, self.__class__)
 
         step, lookup = self.value
         offset = lookup[pattern % 5]
         offsets = [(offset + i * step) % 40 for i in range(4)]
 
-        blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
-        overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
-
         mv = MVTools(clip, vectors=vectors, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
 
         if not vectors:
-            mv.analyze(tr=1, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
+            mv.analyze(tr=1, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
             for _ in range(refine):
-                blksize = _floor_div_tuple(blksize)
-                overlap = _floor_div_tuple(blksize, overlap)
+                blksize = refine_blksize(blksize)
+                overlap = refine_blksize(blksize, overlap)
 
                 mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 

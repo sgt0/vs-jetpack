@@ -29,7 +29,7 @@ from vstools import (
     vs,
 )
 
-from .mvtools import MotionVectors, MVTools, MVToolsPreset
+from .mvtools import MotionVectors, MVTools, MVToolsPreset, refine_blksize
 from .prefilters import PrefilterLike
 
 __all__ = [
@@ -158,25 +158,19 @@ def mc_degrain(
         Motion compensated and temporally filtered clip with reduced noise. If export_globals is true: A tuple
         containing the processed clip and the MVTools object.
     """
-
-    def _floor_div_tuple(x: tuple[int, int], div: tuple[int, int] = (2, 2)) -> tuple[int, int]:
-        return 0 if not div[0] else x[0] // div[0], 0 if not div[1] else x[1] // div[1]
-
     mv_args = preset | KwargsNotNone(search_clip=prefilter)
 
-    blksize = blksize if isinstance(blksize, tuple) else (blksize, blksize)
-    overlap = overlap if isinstance(overlap, tuple) else (overlap, overlap)
     thsad_recalc = fallback(thsad_recalc, round((thsad[0] if isinstance(thsad, tuple) else thsad) / 2))
 
     mv = MVTools(clip, vectors=vectors, **mv_args)
     mfilter = mfilter(mv.clip) if callable(mfilter) else fallback(mfilter, mv.clip)
 
     if not vectors:
-        mv.analyze(tr=tr, blksize=blksize, overlap=_floor_div_tuple(blksize, overlap))
+        mv.analyze(tr=tr, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
         for _ in range(refine):
-            blksize = _floor_div_tuple(blksize)
-            overlap = _floor_div_tuple(blksize, overlap)
+            blksize = refine_blksize(blksize)
+            overlap = refine_blksize(blksize, overlap)
 
             mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
 
