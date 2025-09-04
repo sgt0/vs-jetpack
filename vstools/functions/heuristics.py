@@ -57,7 +57,9 @@ def video_heuristics(
         A dict containing all determinable video heuristics, optionally using key names derived
         from the resize plugin.
     """
-    from ..utils import get_prop
+    from ..utils import get_prop, get_video_format
+
+    fmt = get_video_format(clip)
 
     assumed_props = list[str]()
 
@@ -65,9 +67,13 @@ def video_heuristics(
         "matrix": Matrix,
         "primaries": Primaries,
         "transfer": Transfer,
-        "range": ColorRange,
-        "chromaloc": ChromaLocation,
     }
+
+    if fmt.subsampling_h == fmt.subsampling_w != 0:
+        prop_enums["chromaloc"] = ChromaLocation
+
+    if fmt.color_family != vs.RGB:
+        prop_enums["range"] = ColorRange
 
     def _get_props(obj: vs.VideoNode | Mapping[str, Any], key: type[PropEnum]) -> PropEnum:
         p = get_prop(obj, key, int, cast=key, default=None, func=video_heuristics)
