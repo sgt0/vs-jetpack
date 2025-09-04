@@ -69,11 +69,11 @@ def video_heuristics(
         "transfer": Transfer,
     }
 
-    if fmt.subsampling_h == fmt.subsampling_w != 0:
-        prop_enums["chromaloc"] = ChromaLocation
-
     if fmt.color_family != vs.RGB:
         prop_enums["range"] = ColorRange
+
+    if fmt.subsampling_h == fmt.subsampling_w != 0:
+        prop_enums["chromaloc"] = ChromaLocation
 
     def _get_props(obj: vs.VideoNode | Mapping[str, Any], key: type[PropEnum]) -> PropEnum:
         p = get_prop(obj, key, int, cast=key, default=None, func=video_heuristics)
