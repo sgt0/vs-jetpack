@@ -6,4 +6,3 @@ from .abstract import *
 from .debanders import *
 from .mask import *
 from .noise import *
-from .placebo import *
