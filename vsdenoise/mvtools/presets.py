@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Iterator, MutableMapping, TypedDict, overload
 
-from typing_extensions import Self, deprecated
+from typing_extensions import Self
 
 from vstools import T1, T2, KwargsT, SupportsKeysAndGetItem, VSFunctionNoArgs, classproperty, vs, vs_object
 
@@ -19,7 +19,6 @@ __all__ = [
     "FlowFpsArgs",
     "FlowInterpolateArgs",
     "MVToolsPreset",
-    "MVToolsPresets",
     "MaskArgs",
     "RecalculateArgs",
     "ScDetectionArgs",
@@ -307,23 +306,3 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
                 truemotion=MotionMode.SAD,
             ),
         )
-
-
-@deprecated(
-    "MVToolsPresets class is deprecated and will be removed in a future version. Use MVToolsPreset instead.",
-    category=DeprecationWarning,
-)
-class MVToolsPresets:
-    """
-    Presets for arguments passed to MVTools functions.
-    """
-
-    @classproperty
-    @classmethod
-    def HQ_COHERENCE(cls) -> MVToolsPreset:  # noqa: N802
-        return MVToolsPreset.HQ_COHERENCE
-
-    @classproperty
-    @classmethod
-    def HQ_SAD(cls) -> MVToolsPreset:  # noqa: N802
-        return MVToolsPreset.HQ_SAD
