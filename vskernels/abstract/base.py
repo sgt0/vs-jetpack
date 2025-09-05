@@ -461,7 +461,7 @@ class Scaler(BaseScaler):
     scale_function: Callable[..., vs.VideoNode]
     """Scale function called internally when performing scaling operations."""
 
-    _implemented_funcs: ClassVar[tuple[str, ...]] = ("scale", "supersample", "multi")
+    _implemented_funcs: ClassVar[tuple[str, ...]] = ("scale", "supersample")
 
     def scale(
         self,
