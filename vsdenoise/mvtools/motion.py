@@ -4,8 +4,6 @@ from collections import defaultdict
 from contextlib import suppress
 from typing import Any
 
-from typing_extensions import deprecated
-
 from vstools import ConstantFormatVideoNode, check_variable_format, vs, vs_object
 
 from .enums import MVDirection
@@ -39,21 +37,6 @@ class MotionVectors(defaultdict[MVDirection, dict[int, ConstantFormatVideoNode]]
         self.tr = 0
         self.analysis_data = {}
         self.scaled = False
-
-    @property
-    @deprecated(
-        "The `motion_vectors` attribute is deprecated. Use the MotionVectors instance instead.", category=SyntaxWarning
-    )
-    def motion_vectors(self) -> dict[MVDirection, dict[int, ConstantFormatVideoNode]]:
-        """Dictionary containing both backward and forward motion vectors."""
-        return self
-
-    @motion_vectors.setter
-    @deprecated(
-        "The `motion_vectors` attribute is deprecated. Use the MotionVectors instance instead.", category=SyntaxWarning
-    )
-    def motion_vectors(self, value: dict[MVDirection, dict[int, ConstantFormatVideoNode]]) -> None:
-        self.update(value)
 
     def clear(self) -> None:
         """
