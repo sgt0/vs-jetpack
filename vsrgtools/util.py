@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Sequence
 
-from typing_extensions import deprecated
-
 from vstools import (
     ConstantFormatVideoNode,
     GenericVSFunction,
@@ -16,18 +14,7 @@ from vstools import (
     vs,
 )
 
-__all__ = ["norm_rmode_planes", "normalize_radius"]
-
-
-@deprecated(
-    "`norm_rmode_planes` is deprecated and will be removed in a future version. "
-    "Use `vstools.normalize_param_planes` instead",
-    category=DeprecationWarning,
-)
-def norm_rmode_planes(clip: vs.VideoNode, mode: int | Sequence[int], planes: Planes = None) -> list[int]:
-    from vstools import normalize_param_planes
-
-    return normalize_param_planes(clip, mode, planes, 0)
+__all__ = ["normalize_radius"]
 
 
 def normalize_radius(
