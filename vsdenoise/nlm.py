@@ -216,12 +216,6 @@ def nl_means(
 
     params = dict[str, list[float] | list[int]](h=to_arr(h), d=to_arr(tr), a=to_arr(a), s=to_arr(s))
 
-    # TODO: Remove legacy support for old arguments.
-    for sargs, kargs in zip(["strength", "sr", "simr"], ["h", "a", "s"]):
-        if sargs in kwargs:
-            warnings.warn(f"nl_means: '{sargs}' argument is deprecated, use '{kargs}' instead", DeprecationWarning)
-            params[kargs] = to_arr(kwargs.pop(sargs))
-
     def _nl_means(i: int, channels: str) -> ConstantFormatVideoNode:
         return backend.NLMeans(
             clip,
