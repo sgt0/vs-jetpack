@@ -9,7 +9,7 @@ from jetpytools import fallback, mod_x
 from vstools import ConstantFormatVideoNode
 
 from ..enums.other import Dar, Sar
-from ..exceptions import UnsupportedSubsamplingError
+from ..exceptions import UnsupportedColorFamilyError, UnsupportedSubsamplingError
 from ..functions import check_variable_format, depth
 from ..types import HoldsVideoFormat, VideoFormatLike
 
@@ -186,7 +186,7 @@ def get_resolutions(clip: vs.VideoNode | vs.VideoFrame) -> tuple[tuple[int, int,
     return tuple((plane, *get_plane_sizes(clip, plane)) for plane in range(clip.format.num_planes))
 
 
-def get_subsampling(clip: VideoFormatLike | HoldsVideoFormat, /) -> str | None:
+def get_subsampling(clip: VideoFormatLike | HoldsVideoFormat, /) -> str:
     """
     Get the subsampling of a clip as a human-readable name.
 
@@ -203,7 +203,9 @@ def get_subsampling(clip: VideoFormatLike | HoldsVideoFormat, /) -> str | None:
     fmt = get_video_format(clip)
 
     if fmt.color_family != vs.YUV:
-        return None
+        raise UnsupportedColorFamilyError(
+            "Only the YUV color family can have chroma subsampling.", get_subsampling, fmt.color_family
+        )
 
     if fmt.subsampling_w == 2 and fmt.subsampling_h == 2:
         return "410"
