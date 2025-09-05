@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Any, Callable, ClassVar, Iterable, Literal, Protocol, Sequence, TypeAlias, TypeVar, overload
+from typing import Any, Callable, Iterable, Literal, Protocol, Sequence, TypeAlias, TypeVar, overload
 
-from jetpytools import MISSING, CustomEnum, FuncExcept, MissingT, fallback, inject_self
-from typing_extensions import deprecated
+from jetpytools import MISSING, CustomEnum, FuncExcept, MissingT
 
 from vsexprtools import norm_expr
 from vskernels import BaseScalerSpecializer, BicubicAuto, Lanczos, LeftShift, Scaler, ScalerLike, TopShift
@@ -35,7 +34,6 @@ from vstools import (
 from .debanders import placebo_deband
 
 __all__ = [
-    "AddNoise",
     "GrainFactoryBicubic",
     "Grainer",
     "LanczosTwoPasses",
@@ -607,102 +605,3 @@ GrainerLike: TypeAlias = Grainer | GrainerPartial
 """
 Grainer-like type, which can be a single grainer or a partial grainer.
 """
-
-
-class AddNoiseBase:
-    _noise_type: ClassVar[int]
-
-    def __init__(
-        self,
-        strength: float | tuple[float, float] = 0.25,
-        size: float | tuple[float, float] = (1.0, 1.0),
-        sharp: float | ScalerLike = Lanczos,
-        dynamic: bool = True,
-        temporal_average: int | tuple[float, int] = (0.0, 1),
-        postprocess: Any | None = None,
-        protect_chroma: bool = True,
-        luma_scaling: float | None = None,
-        fade_limits: bool | Any = True,
-        *,
-        matrix: Any | None = None,
-        kernel: Any = None,
-        neutral_out: bool = False,
-        **kwargs: Any,
-    ) -> None:
-        self.strength = strength
-        self.size = size
-        self.sharp = sharp
-        self.dynamic = dynamic
-        self.temporal_average = temporal_average
-        self.postprocess = postprocess
-        self.protect_chroma = protect_chroma
-        self.luma_scaling = luma_scaling
-        self.fade_limits = fade_limits
-        self.neutral_out = neutral_out
-        self.kwargs = kwargs
-
-    @inject_self
-    def grain(
-        self,
-        clip: vs.VideoNode,
-        strength: float | tuple[float, float] | None = None,
-        dynamic: bool | None = None,
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        scaler = (
-            GrainFactoryBicubic(self.sharp + 50)
-            if isinstance(self.sharp, (float, int))
-            else ScalerTwoPasses[Scaler.from_param(self.sharp)]  # type: ignore[misc]
-        )
-        return Grainer(self._noise_type)(  # type: ignore[misc]
-            clip,
-            fallback(strength, self.strength),
-            not fallback(dynamic, self.dynamic),
-            self.size,
-            scaler,  # type: ignore[arg-type]
-            self.temporal_average,
-            self.postprocess,
-            self.fade_limits,
-            self.protect_chroma,
-            self.luma_scaling,
-            neutral_out=self.neutral_out,
-            **self.kwargs | kwargs,
-        )
-
-
-class AddNoise(AddNoiseBase):
-    @deprecated(
-        '"AddNoise.GAUSS" is deprecated and will be removed in a future version. Use Grainer.GAUSS instead.',
-        category=DeprecationWarning,
-    )
-    class GAUSS(AddNoiseBase):
-        _noise_type = 0
-
-    @deprecated(
-        '"AddNoise.PERLIN" is deprecated and will be removed in a future version. Use Grainer.PERLIN instead.',
-        category=DeprecationWarning,
-    )
-    class PERLIN(AddNoiseBase):
-        _noise_type = 1
-
-    @deprecated(
-        '"AddNoise.SIMPLEX" is deprecated and will be removed in a future version. Use Grainer.SIMPLEX instead.',
-        category=DeprecationWarning,
-    )
-    class SIMPLEX(AddNoiseBase):
-        _noise_type = 2
-
-    @deprecated(
-        '"AddNoise.FBM_SIMPLEX" is deprecated and will be removed in a future version. '
-        "Use Grainer.FBM_SIMPLEX instead.",
-        category=DeprecationWarning,
-    )
-    class FBM_SIMPLEX(AddNoiseBase):  # noqa: N801
-        _noise_type = 3
-
-    @deprecated(
-        '"AddNoise.POISSON" is deprecated and will be removed in a future version. Use Grainer.POISSON instead.',
-        category=DeprecationWarning,
-    )
-    class POISSON(AddNoiseBase):
-        _noise_type = 4
