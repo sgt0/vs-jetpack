@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import warnings
 from typing import Any, TypeAlias, Union, overload
 
 from vsexprtools import ExprOp, norm_expr
 from vskernels import Bilinear, Catrom, Kernel, KernelLike
-from vsrgtools import bilateral, gauss_blur, remove_grain
+from vsrgtools import bilateral, remove_grain
 from vsrgtools.rgtools import RemoveGrain
 from vstools import (
     ColorRange,
@@ -27,7 +26,7 @@ from .edge import EdgeDetect, EdgeDetectLike, ExLaplacian4
 from .morpho import Morpho
 from .types import XxpandMode
 
-__all__ = ["based_diff_mask", "credit_mask", "diff_creditless", "diff_creditless_oped", "diff_rescale"]
+__all__ = ["based_diff_mask", "diff_creditless", "diff_creditless_oped", "diff_rescale"]
 
 
 def diff_rescale(
@@ -105,35 +104,6 @@ def diff_creditless_oped(
         return ed_mask
 
     raise CustomValueError('You must specify one or both of ("opstart", "opend"), ("edstart", "edend")', func)
-
-
-def credit_mask(
-    clip: vs.VideoNode,
-    ref: vs.VideoNode,
-    thr: float,
-    blur: float | None = 1.65,
-    prefilter: bool | int = 5,
-    expand: int = 8,
-) -> ConstantFormatVideoNode:
-    warnings.warn(
-        "credit_mask: Function is deprecated and will be removed in a later version! Use based_diff_mask",
-        DeprecationWarning,
-    )
-
-    if blur is not None:
-        clip, ref = gauss_blur(clip, blur), gauss_blur(ref, blur)
-
-    credit_mask = based_diff_mask(clip, ref, thr=thr, prefilter=prefilter, postfilter=0, ampl=ExLaplacian4, expand=4)
-
-    credit_mask = Morpho.erosion(credit_mask, iterations=6)
-    credit_mask = iterate(credit_mask, lambda x: x.std.Minimum().std.Maximum(), 8)
-
-    if expand:
-        credit_mask = Morpho.dilation(credit_mask, iterations=expand)
-
-    credit_mask = Morpho.inflate(credit_mask, iterations=3)
-
-    return credit_mask
 
 
 Count: TypeAlias = int
