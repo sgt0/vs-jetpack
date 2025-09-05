@@ -846,9 +846,7 @@ class QTempGaussMC(vs_object):
 
         for _ in range(self.analyze_refine):
             blksize = refine_blksize(blksize)
-            overlap = refine_blksize(blksize, overlap)
-
-            self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
+            self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
     def _apply_denoise(self) -> None:
         if self.denoise_mode:

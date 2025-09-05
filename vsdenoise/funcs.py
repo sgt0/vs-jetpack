@@ -170,9 +170,7 @@ def mc_degrain(
 
         for _ in range(refine):
             blksize = refine_blksize(blksize)
-            overlap = refine_blksize(blksize, overlap)
-
-            mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
+            mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
     den = mv.degrain(mfilter, mv.clip, None, tr, thsad, thsad2, limit, thscd, planes=planes)
 

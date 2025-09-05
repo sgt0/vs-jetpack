@@ -128,9 +128,7 @@ class InterpolateOverlay(CustomEnum):
 
             for _ in range(refine):
                 blksize = refine_blksize(blksize)
-                overlap = refine_blksize(blksize, overlap)
-
-                mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=overlap)
+                mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
         comp = mv.flow_fps(fps=clip.fps * 4)
         comp += comp[-1] * 3
