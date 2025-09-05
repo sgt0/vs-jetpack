@@ -1217,11 +1217,13 @@ class BaseDPIR(BaseOnnxScaler):
         width: int | None = None,
         height: int | None = None,
         shift: tuple[float, float] = (0, 0),
+        *,
+        copy_props: bool = True,
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         assert check_variable_resolution(clip, self.__class__)
 
-        return super().scale(clip, width, height, shift, **kwargs)
+        return super().scale(clip, width, height, shift, copy_props=copy_props, **kwargs)
 
     def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         if get_color_family(clip) == vs.GRAY:
