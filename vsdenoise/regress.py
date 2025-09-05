@@ -627,9 +627,7 @@ class ChromaReconstruct(ABC):
 
         y_diff = norm_expr((y_base, y_dm), "x y -", func=self.reconstruct)
 
-        y_diffxb = gauss_blur(
-            norm_expr((y_base, y_dm), f"x y / {reg.eps} 1 clamp"), diff_mode.diff_sigma, func=self.reconstruct
-        )
+        y_diffxb = gauss_blur(norm_expr((y_base, y_dm), f"x y / {reg.eps} 1 clamp"), diff_mode.diff_sigma)
 
         fixup = (
             y_diff.recon.Reconstruct(  # type: ignore
