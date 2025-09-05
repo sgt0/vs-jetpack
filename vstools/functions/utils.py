@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from types import NoneType
-from typing import Callable, Mapping, Sequence, SupportsIndex, Union, overload
+from typing import Callable, Iterable, Mapping, Sequence, SupportsIndex, Union, overload
 from weakref import WeakValueDictionary
 
 import vapoursynth as vs
@@ -19,7 +19,7 @@ from jetpytools import (
 
 from ..enums import ColorRange, ColorRangeLike
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
-from ..types import ConstantFormatVideoNode, HoldsVideoFormat, Planes, VideoFormatLike
+from ..types import ConstantFormatVideoNode, HoldsVideoFormat, Planes, VideoFormatLike, VideoNodeIterableT
 from .check import check_variable_format
 from .clip import shift_clip
 
@@ -798,17 +798,7 @@ def split(clip: vs.VideoNode, /, strict: bool = True) -> list[ConstantFormatVide
 depth_func = depth
 
 
-def stack_clips(
-    clips: Sequence[
-        vs.VideoNode
-        | Sequence[
-            vs.VideoNode
-            | Sequence[vs.VideoNode | Sequence[vs.VideoNode | Sequence[vs.VideoNode | Sequence[vs.VideoNode]]]]
-        ]
-    ],
-) -> vs.VideoNode:
-    """
-    Stack clips in the following repeating order: hor->ver->hor->ver->...
+def stack_clips(clips: Iterable[VideoNodeIterableT[vs.VideoNode]]) -> vs.VideoNode:
 
     Args:
         clips: Sequence of clips to stack recursively.
