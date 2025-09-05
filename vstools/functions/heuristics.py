@@ -3,12 +3,10 @@ from __future__ import annotations
 from typing import Any, Literal, Mapping, overload
 
 import vapoursynth as vs
-from jetpytools import KwargsT
-from typing_extensions import deprecated
 
 from ..enums import ChromaLocation, ColorRange, Matrix, Primaries, PropEnum, Transfer
 
-__all__ = ["video_heuristics", "video_resample_heuristics"]
+__all__ = ["video_heuristics"]
 
 
 @overload
@@ -100,29 +98,3 @@ def video_heuristics(
         return heuristics, assumed_props
 
     return heuristics
-
-
-@deprecated("This function is deprecated and will be removed in a future version.", category=DeprecationWarning)
-def video_resample_heuristics(clip: vs.VideoNode, kwargs: KwargsT | None = None, **fmt_kwargs: Any) -> KwargsT:
-    """
-    Get a kwargs object for a video's heuristics to pass to the resize plugin or Kernel.resample.
-
-    Args:
-        clip: Clip to derive the heuristics from.
-        kwargs: Keyword arguments for the _out parameters.
-        **fmt_kwargs: Keyword arguments to pass to the output kwargs. These will override any heuristics that were
-            derived from the input clip!
-
-    Returns:
-        Keyword arguments to pass on to the resize plugin or Kernel.resample.
-    """
-    from .check import check_variable_format
-
-    assert check_variable_format(clip, video_resample_heuristics)
-
-    video_fmt = clip.format.replace(**fmt_kwargs)
-
-    def_kwargs_in = video_heuristics(clip, False, True)
-    def_kwargs_out = video_heuristics(clip.std.BlankClip(format=video_fmt.id), False, False)
-
-    return KwargsT(format=video_fmt.id, **def_kwargs_in, **def_kwargs_out) | (kwargs or KwargsT())
