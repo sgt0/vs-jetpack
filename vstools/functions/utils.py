@@ -799,14 +799,66 @@ depth_func = depth
 
 
 def stack_clips(clips: Iterable[VideoNodeIterableT[vs.VideoNode]]) -> vs.VideoNode:
+    """
+    Recursively stack clips in alternating directions: horizontal → vertical → horizontal → ...
+
+    This function takes a nested sequence of clips (or lists of clips) and stacks them
+    alternately along the horizontal and vertical axes at each nesting level.
+
+    Examples:
+        - Stack a list of clips horizontally:
+          ```py
+          from vstools import core, split, vs
+
+          clip = core.std.BlankClip(format=vs.RGB24)
+          clips = split(clip)
+
+          stacked = stack_clips(clips)
+          ```
+
+        - Stack a list of clips vertically (wrap in another list):
+          ```py
+          from vstools import core, split, vs
+
+          clip = core.std.BlankClip(format=vs.RGB24)
+          clips = split(clip)
+
+          stacked = stack_clips([clips])
+          ```
+
+        - Stack the Y plane horizontally with the U and V planes stacked vertically:
+          ```py
+          from vstools import core, split, vs
+
+          clip = core.std.BlankClip(format=vs.YUV420P8)
+          y, u, v = split(clip)
+
+          stacked = stack_clips([y, [u, v]])
+          ```
+
+        - Stack multiple YUV clips, with Y planes horizontally and UV planes vertically:
+          ```py
+          from vstools import core, split, vs
+
+          yuv_clips = [...]  # all must share format and height
+
+          clips = []
+          for yuv_clip in yuv_clips:
+              y, *uv = split(yuv_clip)
+              clips.extend([y, uv])
+
+          stacked = stack_clips(clips)
+          ```
+
+        - Using ``append`` instead of ``extend`` (and wrapping the sequence, e.g. ``stack_clips([clips])``)
+          changes the stacking layout, since it alters the nesting depth.
 
     Args:
-        clips: Sequence of clips to stack recursively.
+        clips: A (possibly nested) sequence of clips to be stacked.
 
     Returns:
         Stacked clips.
     """
-
     return vs.core.std.StackHorizontal(
         [
             inner_clips
