@@ -3,10 +3,10 @@ from __future__ import annotations
 import re
 from functools import cache
 from itertools import count
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Sequence, SupportsIndex, overload
+from typing import TYPE_CHECKING, Callable, Iterable, Iterator, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomTypeError, SupportsString
-from typing_extensions import Self, deprecated
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from vapoursynth._nodes import _ReturnDict_akarin_Version  # pyright: ignore[reportMissingModuleSource]
@@ -116,25 +116,6 @@ class ExprVars(Iterable[str]):
 
         self.expr_src = expr_src
         self.curr = self.start
-
-    @deprecated(
-        "Invoking a ExprVars as a callable is deprecated and will be removed in a future version.",
-        category=DeprecationWarning,
-    )
-    def __call__(self, *args: Any, **kwargs: Any) -> Self:
-        """
-        Allows an ExprVars instance to be called like a function to create a new instance with new parameters.
-
-        Args:
-            start_stop: A start index or an object from which to infer the number of variables (e.g., video format).
-            stop: Stop index (exclusive). Required only if `start_stop` is a numeric start value.
-            step: Step size for iteration.
-            expr_src: Whether to use `srcX` naming or use alphabetic variables.
-
-        Returns:
-            A new instance with the specified parameters.
-        """
-        return self.__class__(*args, **kwargs)
 
     def __iter__(self) -> Iterator[str]:
         """
