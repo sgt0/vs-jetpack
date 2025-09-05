@@ -18,15 +18,13 @@ from vstools import (
     VSFunctionNoArgs,
     check_variable_format,
     fallback,
-    get_peak_value,
-    get_y,
     scale_mask,
     vs,
 )
 
 from .deinterlacers import EEDI3, NNEDI3, AntiAliaser
 
-__all__ = ["based_aa", "clamp_aa", "pre_aa"]
+__all__ = ["based_aa", "pre_aa"]
 
 
 def pre_aa(
@@ -56,85 +54,6 @@ def pre_aa(
                 wclip = antialiaser.transpose(limit)
 
     return func.return_clip(wclip)
-
-
-def clamp_aa(
-    clip: vs.VideoNode,
-    strength: float = 1.0,
-    mthr: float = 0.25,
-    mask: vs.VideoNode | EdgeDetectLike | Literal[False] = False,
-    weak_aa: vs.VideoNode | AntiAliaser | None = None,
-    strong_aa: vs.VideoNode | AntiAliaser | None = None,
-    ref: vs.VideoNode | None = None,
-    planes: Planes = 0,
-) -> ConstantFormatVideoNode:
-    """
-    Clamp a strong aa to a weaker one for the purpose of reducing the stronger's artifacts.
-
-    Args:
-        clip: Clip to process.
-        strength: Set threshold strength for over/underflow value for clamping.
-        mthr: Binarize threshold for the mask, float.
-        mask: Clip to use for custom mask or an EdgeDetect to use custom masker.
-        weak_aa: AntiAliaser for the weaker aa. Default is NNEDI3.
-        strong_aa: AntiAliaser for the stronger aa. Default is EEDI3.
-        ref: Reference clip for clamping.
-
-    Returns:
-        Antialiased clip.
-    """
-    import warnings
-
-    warnings.warn(
-        "clamp_aa is deprecated and will be removed in a future version. Use based_aa instead.",
-        DeprecationWarning,
-    )
-
-    func = FunctionUtil(clip, clamp_aa, planes, (vs.YUV, vs.GRAY))
-
-    if not isinstance(weak_aa, vs.VideoNode):
-        if weak_aa is None:
-            weak_aa = NNEDI3()
-
-        weak_aa = weak_aa.antialias(func.work_clip)
-
-    if not isinstance(strong_aa, vs.VideoNode):
-        if strong_aa is None:
-            strong_aa = EEDI3()
-
-        strong_aa = strong_aa.antialias(func.work_clip)
-
-    ref = fallback(ref, func.work_clip)
-
-    if func.luma_only:
-        weak_aa = get_y(weak_aa)
-        strong_aa = get_y(strong_aa)
-        ref = get_y(ref)
-
-    if func.work_clip.format.sample_type == vs.INTEGER:
-        thr = strength * get_peak_value(func.work_clip)
-    else:
-        thr = strength / 219
-
-    clamped = norm_expr(
-        [func.work_clip, ref, weak_aa, strong_aa],
-        "y z - D1! y a - D2! D1@ D2@ xor x D1@ abs D2@ abs < a z {thr} - z {thr} + clip a ? ?",
-        thr=thr,
-        planes=func.norm_planes,
-        func=func.func,
-    )
-
-    if mask is not False:
-        if not isinstance(mask, vs.VideoNode):
-            bin_thr = scale_mask(mthr, 32, clip)
-
-            mask = EdgeDetect.ensure_obj(mask).edgemask(func.work_clip)
-            mask = box_blur(mask.std.BinarizeMask(bin_thr).std.Maximum())
-            mask = mask.std.Minimum().std.Deflate()
-
-        clamped = func.work_clip.std.MaskedMerge(clamped, mask, func.norm_planes)
-
-    return func.return_clip(clamped)
 
 
 def based_aa(
