@@ -26,7 +26,7 @@ from typing import (
 
 from jetpytools import P, R, R_co, classproperty
 from jetpytools import cachedproperty as jetpytools_cachedproperty
-from typing_extensions import Self, deprecated
+from typing_extensions import Self
 
 from vstools import (
     ConstantFormatVideoNode,
@@ -527,28 +527,6 @@ class Scaler(BaseScaler):
             )
 
         return self.scale(clip, dst_width, dst_height, shift, **kwargs)  # type: ignore[return-value]
-
-    @deprecated('The "multi" method is deprecated. Use "supersample" instead.', category=DeprecationWarning)
-    def multi(
-        self, clip: VideoNodeT, multi: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
-    ) -> VideoNodeT:
-        """
-        Deprecated alias for `supersample`.
-
-        Keyword arguments passed during initialization are automatically injected here,
-        unless explicitly overridden by the arguments provided at call time.
-        Only arguments that match named parameters in this method are injected.
-
-        Args:
-            clip: The source clip.
-            multi: Supersampling factor.
-            shift: Subpixel shift (top, left) applied during scaling.
-            **kwargs: Additional arguments forwarded to the scale function.
-
-        Returns:
-            The supersampled clip.
-        """
-        return self.supersample(clip, multi, shift, **kwargs)
 
     def get_scale_args(
         self,
