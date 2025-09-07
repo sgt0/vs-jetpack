@@ -251,6 +251,9 @@ class ExprToken(CustomStrEnum, metaclass=_ExprTokenMeta):
 
         return f"{self._value_}_{ExprVars.get_var(validate_index(i))}"
 
+    def __str__(self) -> str:
+        return self._value_
+
 
 def _cache_clear_expr_token(core_id: int) -> None:
     def cache_clear() -> None:
