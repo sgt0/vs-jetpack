@@ -309,4 +309,4 @@ def test_expr_op_str_polyval(input_clip: vs.VideoNode, coeffs: Sequence[float], 
 
 
 def test_expr_op_clamp() -> None:
-    assert ExprOp.clamp(c="x").to_str() == "x ExprToken.RangeMin ExprToken.RangeMax clamp"
+    assert ExprOp.clamp(c="x").to_str() == "x range_min range_max clamp"
