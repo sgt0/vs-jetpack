@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any
 
 import pytest
 
@@ -9,6 +9,11 @@ clip = core.std.BlankClip(
     width=1920,
     height=1080,
 )
+
+
+def _test_func(value: Any) -> str:
+    return f"test func {value}"
+
 
 clip = core.std.SetFrameProps(
     clip,
@@ -21,6 +26,7 @@ clip = core.std.SetFrameProps(
     __BoolProp=True,
     __BytesProp=b"test bytes",
     __VideoFrameProp=clip.get_frame(0),
+    __FunctionProp=_test_func,
 )
 
 video_frame = clip.get_frame(0)
@@ -104,19 +110,20 @@ def test_get_prop_cast_float_success(prop_name: str, prop_type: type, expected: 
 
 
 @pytest.mark.parametrize(
-    "prop_name, prop_type, expected",
+    "prop_name, prop_type",
     [
-        ("__StrProp", str, True),
-        ("__IntProp", int, True),
-        ("__FloatProp", float, True),
-        ("__BoolProp", int, True),
-        ("__BytesProp", bytes, True),
-        ("__VideoFrameProp", vs.VideoFrame, True),
+        ("__StrProp", str),
+        ("__IntProp", int),
+        ("__FloatProp", float),
+        ("__BoolProp", int),
+        ("__BytesProp", bytes),
+        ("__VideoFrameProp", vs.VideoFrame),
+        ("__FunctionProp", "Callable"),
     ],
 )
-def test_get_prop_cast_bool(prop_name: str, prop_type: type[Any], expected: Literal[True]) -> None:
+def test_get_prop_cast_bool(prop_name: str, prop_type: type[Any]) -> None:
     """Test get_prop casting to bool."""
-    assert get_prop(clip, prop_name, prop_type, cast=bool) == expected
+    assert get_prop(clip, prop_name, prop_type, cast=bool)
 
 
 @pytest.mark.parametrize(
