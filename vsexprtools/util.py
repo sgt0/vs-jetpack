@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import cache
 from itertools import count
-from typing import TYPE_CHECKING, Iterable, Iterator, SupportsIndex, overload
+from typing import TYPE_CHECKING, Iterator, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomTypeError
 from typing_extensions import Self
