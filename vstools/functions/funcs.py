@@ -330,13 +330,14 @@ class FunctionUtil(list[int], vs_object):
     def without_planes(self, planes: Planes) -> list[int]:
         return self.normalize_planes(sorted(set(self) - {*self.normalize_planes(planes)}))
 
-    def return_clip(self, processed: vs.VideoNode) -> ConstantFormatVideoNode:
+    def return_clip(self, processed: vs.VideoNode, prop_src: vs.VideoNode | None = None) -> ConstantFormatVideoNode:
         """
         Merge back the chroma if necessary and convert the processed clip back to the original clip's format.
         If `bitdepth != None`, the bitdepth will also be converted if necessary.
 
         Args:
             processed: The clip with all the processing applied to it.
+            prop_src: Optional clip to copy frame properties from.
 
         Returns:
             Processed clip converted back to the original input clip's format.
@@ -345,10 +346,10 @@ class FunctionUtil(list[int], vs_object):
         assert check_variable(processed, self.func)
 
         if len(self.chroma_planes):
-            processed = join([processed, *self.chroma_planes], self.norm_clip.format.color_family)
+            processed = join([processed, *self.chroma_planes], self.norm_clip.format.color_family, prop_src=prop_src)
 
         if self.chroma_only:
-            processed = join(self.norm_clip, processed)
+            processed = join(self.norm_clip, processed, prop_src=prop_src)
 
         if self.bitdepth:
             processed = depth(processed, self.clip)
