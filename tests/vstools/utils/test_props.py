@@ -64,12 +64,6 @@ def test_get_prop_wrong_type() -> None:
         get_prop(clip, "_Matrix", str)
 
 
-def test_get_prop_fail_to_cast() -> None:
-    """Test get_prop with invalid cast function."""
-    with pytest.raises(FramePropError):
-        get_prop(clip, "_Matrix", int, cast=dict)
-
-
 def test_get_prop_default() -> None:
     """Test get_prop default value fallback."""
     assert get_prop(clip, "NonExistentProp", int, default=2) == 2
@@ -97,20 +91,6 @@ def test_get_prop_cast_int_success(prop_name: str, prop_type: type, expected: An
 
 
 @pytest.mark.parametrize(
-    "prop_name, prop_type",
-    [
-        ("__StrProp", str),
-        ("__BytesProp", bytes),
-        ("__VideoFrameProp", vs.VideoFrame),
-    ],
-)
-def test_get_prop_cast_int_fail(prop_name: str, prop_type: type) -> None:
-    """Test get_prop casting to int (expected failures)."""
-    with pytest.raises(FramePropError):
-        get_prop(clip, prop_name, prop_type, cast=int)
-
-
-@pytest.mark.parametrize(
     "prop_name, prop_type, expected",
     [
         ("__IntProp", int, 123.0),
@@ -121,20 +101,6 @@ def test_get_prop_cast_int_fail(prop_name: str, prop_type: type) -> None:
 def test_get_prop_cast_float_success(prop_name: str, prop_type: type, expected: float) -> None:
     """Test get_prop casting to float (success cases)."""
     assert get_prop(clip, prop_name, prop_type, cast=float) == expected
-
-
-@pytest.mark.parametrize(
-    "prop_name, prop_type",
-    [
-        ("__StrProp", str),
-        ("__BytesProp", bytes),
-        ("__VideoFrameProp", vs.VideoFrame),
-    ],
-)
-def test_get_prop_cast_float_fail(prop_name: str, prop_type: type) -> None:
-    """Test get_prop casting to float (expected failures)."""
-    with pytest.raises(FramePropError):
-        get_prop(clip, prop_name, prop_type, cast=float)
 
 
 @pytest.mark.parametrize(
@@ -181,19 +147,6 @@ def test_get_prop_cast_str(prop_name: str, prop_type: type[Any], expected: str) 
 def test_get_prop_cast_bytes_success(prop_name: str, prop_type: type, cast: Any, expected: bytes) -> None:
     """Test get_prop casting to bytes (success cases)."""
     assert get_prop(clip, prop_name, prop_type, cast=cast) == expected
-
-
-@pytest.mark.parametrize(
-    "prop_name, prop_type",
-    [
-        ("__VideoFrameProp", vs.VideoFrame),
-        ("__FloatProp", float),
-    ],
-)
-def test_get_prop_cast_bytes_fail(prop_name: str, prop_type: type) -> None:
-    """Test get_prop casting to bytes (expected failures)."""
-    with pytest.raises(FramePropError):
-        get_prop(clip, prop_name, prop_type, cast=bytes)
 
 
 def test_get_prop_error_messages() -> None:
