@@ -940,9 +940,13 @@ class SuperSamplerProcess(
 
         processed = self.function(ss_clip)
 
-        return self._others[0].scale(
-            processed,
-            clip.width,
-            clip.height,
-            tuple([round(s - 1e-6) for s in dim_shifts] for dim_shifts in reversed(self._ss_shifts)),  # type: ignore[return-value, arg-type]
+        return (
+            self._others[0]
+            .scale(
+                processed,
+                clip.width,
+                clip.height,
+                tuple([round(s - 1e-6) for s in dim_shifts] for dim_shifts in reversed(self._ss_shifts)),  # type: ignore[return-value, arg-type]
+            )
+            .std.CopyFrameProps(processed)
         )
