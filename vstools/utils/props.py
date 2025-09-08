@@ -174,19 +174,24 @@ def get_prop(
     """
     Get FrameProp ``prop`` from frame ``frame`` with expected type ``t``.
 
+    If the property is stored as bytes and `t` is ``str``, the value will be decoded as UTF-8. For example:
+    ```py
+    assert get_prop(clip_indexed_by_lsmas.get_frame(0), "_PictType", str) == "I"
+    ```
+
     Args:
         obj: Clip or frame containing props.
         key: Prop to get.
-        t: Expected type of the prop.
+        t: Expected type of the prop (or tuple of types). Use "Callable" if expecting a callable.
         cast: Optional cast to apply to the value.
-        default: Fallback value if missing or invalid.
+        default: Fallback value if missing.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
-        The property value (possibly cast).
+        The property value, possibly cast, or the provided default.
 
     Raises:
-        FramePropError: If key is missing or wrong type and no default is provided.
+        FramePropError: If the property is missing or has the wrong type and no default value is given.
     """
     func = func or get_prop
 
@@ -220,25 +225,21 @@ def get_prop(
         if default is not MISSING:
             return default
 
-        raise FramePropError(func, resolved_key)
+        raise FramePropError(
+            func,
+            resolved_key,
+            f'Key "{resolved_key}" did not contain expected type: Expected "{t}" got "{type(prop)}"!',
+        )
 
     norm_t = _normalize_types(t)
 
     if isinstance(prop, norm_t):
-        if cast is MISSING:
-            return prop
-        try:
+        if cast is not MISSING:
             return cast(prop)
-        except Exception:
-            if default is not MISSING:
-                return default
-            raise FramePropError(func, resolved_key)
+        return prop
 
     if all(issubclass(ty, str) for ty in norm_t) and isinstance(prop, bytes):
         return prop.decode("utf-8")
-
-    if default is not MISSING:
-        return default
 
     raise FramePropError(
         func,
