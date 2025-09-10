@@ -141,7 +141,7 @@ class MeanMode(CustomEnum):
             case MeanMode.LEHMER:
                 p = kwargs.pop("p", self.value)
 
-                expr = ExprList([f"{clip} neutral - D{i}!" for i, clip in enumerate(evars)])
+                expr = ExprList((f"{v} neutral - D{i}!" for i, v in enumerate(evars)))
 
                 for x in range(2):
                     expr.extend([[f"D{i}@ {p - x} pow" for i in range(n_len)], ExprOp.ADD * (n_len - 1), f"P{x}!"])
@@ -149,7 +149,6 @@ class MeanMode(CustomEnum):
                 expr.append("P1@ 0 = 0 P0@ P1@ / ? neutral +")
 
                 return expr
-
             case MeanMode.HARMONIC | MeanMode.GEOMETRIC | MeanMode.CONTRAHARMONIC:
                 return MeanMode.LEHMER.expr(n, p=self.value)
             case MeanMode.MEDIAN:
