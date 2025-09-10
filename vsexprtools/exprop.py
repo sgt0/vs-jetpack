@@ -4,7 +4,7 @@ import warnings
 from enum import EnumMeta
 from functools import cache
 from inspect import currentframe
-from itertools import cycle, product
+from itertools import product
 from math import inf, isqrt
 from typing import Any, Collection, Iterable, Iterator, Literal, Sequence, SupportsIndex, cast, overload
 
@@ -384,7 +384,8 @@ class ExprOpBase(CustomStrEnum):
 
         return self
 
-    __str__ = str.__str__
+    def __str__(self) -> str:
+        return self._value_
 
     @overload
     def __call__(
@@ -457,14 +458,15 @@ class ExprOpBase(CustomStrEnum):
         return self
 
     def __iter__(self) -> Iterator[Self]:
-        return cycle([self])
+        while True:
+            yield self
 
-    def __mul__(self, n: int) -> list[Self]:  # type: ignore[override]
+    def __mul__(self, n: SupportsIndex) -> list[Self]:  # type: ignore[override]
         return [self] * n
 
     def combine(
         self,
-        *clips: vs.VideoNode | Iterable[vs.VideoNode | Iterable[vs.VideoNode]],
+        *clips: VideoNodeIterableT[vs.VideoNode],
         suffix: SupportsString | Iterable[SupportsString] | None = None,
         prefix: SupportsString | Iterable[SupportsString] | None = None,
         expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
