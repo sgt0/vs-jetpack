@@ -168,7 +168,7 @@ def based_aa(
     # Only uses mclip if `use_mclip` is True,
     # if mclip isn't in aa_kwargs
     # and antialiaser is an instance of EEDI3
-    if aa_kwargs.pop("use_mclip", False) and "mclip" not in aa_kwargs and isinstance(antialiaser, EEDI3):
+    if aa_kwargs.pop("use_mclip", True) and "mclip" not in aa_kwargs and isinstance(antialiaser, EEDI3):
         mclip = None
 
         if mask:
