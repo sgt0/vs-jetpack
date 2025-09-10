@@ -135,7 +135,9 @@ class MeanMode(CustomEnum):
             Mean expression.
         """
         evars = n if isinstance(n, Sequence) else ExprVars(n)
-        n_len = len(evars)
+
+        if (n_len := len(evars)) < 2:
+            return ExprList([evars[0]])
 
         match self:
             case MeanMode.LEHMER:
