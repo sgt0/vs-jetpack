@@ -158,7 +158,7 @@ class MeanMode(CustomEnum):
                 mean = "" if n_len % 2 else "+ 2 /"
 
                 return ExprList(
-                    (f"{' '.join(str(v for v in evars))} sort{n_len} drop{n_op} {mean} swap{n_op} drop{n_op}")
+                    [f"{' '.join(str(v) for v in evars)} sort{n_len} drop{n_op} {mean} swap{n_op} drop{n_op}"]
                 )
             case MeanMode.ARITHMETIC:
                 op = ExprOp.ADD
