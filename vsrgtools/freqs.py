@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Any, Literal, Sequence, SupportsIndex, overload
+from typing import Any, Iterable, Literal, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomValueError, SupportsString
 
-from vsexprtools import ExprList, ExprOp, ExprVars, combine_expr
+from vsexprtools import ExprList, ExprOp, ExprVars, TupleExprList, combine_expr
 from vstools import (
     ConstantFormatVideoNode,
+    ConvMode,
     CustomEnum,
     FuncExcept,
     HoldsVideoFormat,
@@ -16,6 +17,7 @@ from vstools import (
     VideoNodeIterableT,
     check_variable_format,
     flatten_vnodes,
+    shift_clip_multi,
     vs,
 )
 
@@ -92,7 +94,7 @@ class MeanMode(CustomEnum):
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
-        Applies the selected mean to one or more video clips.
+        Applies the selected mean to multiple clips.
 
         Args:
             *_clips: Input clips to combine.
@@ -122,6 +124,47 @@ class MeanMode(CustomEnum):
 
         return self.expr(n_clips, **kwargs)(clips, planes=planes, func=func)
 
+    def single(
+        self,
+        clip: vs.VideoNode,
+        radius: int = 1,
+        mode: ConvMode = ConvMode.SQUARE,
+        exclude: Iterable[tuple[int, int]] | None = None,
+        include: Iterable[tuple[int, int]] | None = None,
+        planes: Planes = None,
+        func: FuncExcept | None = None,
+        **kwargs: Any,
+    ) -> vs.VideoNode:
+        """
+        Applies the selected mean to one clip, spatially or temporally.
+
+        Args:
+            clip: Input clip.
+            radius: The radius in pixels (e.g., 1 for 3x3).
+            mode: The convolution mode. Defaults to ConvMode.SQUARE.
+            exclude: Optional set of (x, y) coordinates to exclude from the matrix.
+            include: Optional set of (x, y) coordinates to include in the matrix.
+            planes: Which planes to process.
+            func: An optional function to use for error handling.
+            **kwargs: Additional keyword arguments for certain modes.
+
+                   - p (float): Exponent for `LEHMER` mode. Defaults to 3.
+
+        Returns:
+            A new clip with the mean applied.
+        """
+        if mode != ConvMode.TEMPORAL:
+            exprs = TupleExprList(
+                self.expr(mat, **kwargs) for mat in ExprOp.matrix("x", radius, mode, exclude, include)
+            )
+            return exprs(clip, planes=planes, func=func)
+
+        clips = shift_clip_multi(clip, (-radius, radius))
+
+        (ops,) = ExprOp.matrix(ExprVars(len(clips)), radius, mode, exclude, include)
+
+        return self.expr(ops, **kwargs)(*clips, planes=planes, func=func)
+
     def expr(
         self, n: SupportsIndex | Sequence[SupportsString] | HoldsVideoFormat | VideoFormatLike, **kwargs: Any
     ) -> ExprList:
@@ -130,6 +173,9 @@ class MeanMode(CustomEnum):
 
         Args:
             n: Object from which to infer the variables.
+            **kwargs: Additional keyword arguments for certain modes.
+
+                   - p (float): Exponent for `LEHMER` mode. Defaults to 3.
 
         Returns:
             Mean expression.
@@ -158,7 +204,14 @@ class MeanMode(CustomEnum):
                 mean = "" if n_len % 2 else "+ 2 /"
 
                 return ExprList(
-                    [f"{' '.join(str(v) for v in evars)} sort{n_len} drop{n_op} {mean} swap{n_op} drop{n_op}"]
+                    [
+                        f"{' '.join(str(v) for v in evars)}",
+                        f"sort{n_len}",
+                        f"drop{n_op}",
+                        f"{mean}",
+                        f"swap{n_op}",
+                        f"drop{n_op}",
+                    ]
                 )
             case MeanMode.ARITHMETIC:
                 op = ExprOp.ADD
