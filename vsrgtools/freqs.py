@@ -129,7 +129,7 @@ class MeanMode(CustomEnum):
         Builds a mean expression using a specified mode.
 
         Args:
-            n: n: Object from which to infer the variables.
+            n: Object from which to infer the variables.
 
         Returns:
             Mean expression.
