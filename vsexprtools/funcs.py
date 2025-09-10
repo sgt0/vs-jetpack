@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import re
+from logging import debug as logging_debug
 from math import ceil
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence, SupportsIndex, TypeAlias, Union
 from warnings import warn
 
-from jetpytools import CustomIndexError
+from jetpytools import CustomIndexError, norm_func_name
 
 from vstools import (
     EXPR_VARS,
@@ -79,6 +80,8 @@ def expr_func(
         assert check_variable_format(clips, func)
 
     fmt = get_video_format(format).id if format is not None else None
+
+    logging_debug(f"expr_func ({norm_func_name(func)}): {expr}")
 
     try:
         return core.akarin.Expr(clips, expr, fmt, opt, boundary)
