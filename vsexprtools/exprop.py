@@ -493,6 +493,31 @@ class ExprOpBase(CustomStrEnum):
 
         return combine(clips, self, suffix, prefix, expr_suffix, expr_prefix, planes, **kwargs)
 
+    def combine_expr(
+        self,
+        n: SupportsIndex | Sequence[SupportsString] | HoldsVideoFormat | VideoFormatLike,
+        suffix: SupportsString | Iterable[SupportsString] | None = None,
+        prefix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_suffix: SupportsString | Iterable[SupportsString] | None = None,
+        expr_prefix: SupportsString | Iterable[SupportsString] | None = None,
+    ) -> ExprList:
+        """
+        Combines multiple video clips using the selected expression operator.
+
+        Args:
+            n: Object from which to infer the variables.
+            suffix: Optional suffix string(s) to append to each input variable in the expression.
+            prefix: Optional prefix string(s) to prepend to each input variable in the expression.
+            expr_suffix: Optional expression to append after the combined input expression.
+            expr_prefix: Optional expression to prepend before the combined input expression.
+
+        Returns:
+            A clip representing the combined result of applying the expression.
+        """
+        from .funcs import combine_expr
+
+        return combine_expr(n, self, suffix, prefix, expr_suffix, expr_prefix)
+
 
 class ExprOpExtraMeta(EnumMeta):
     @property
