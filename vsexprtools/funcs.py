@@ -103,7 +103,7 @@ def _combine_norm__ix(ffix: SupportsString | Iterable[SupportsString] | None, n_
 
 
 def combine_expr(
-    n: SupportsIndex | ExprVars | HoldsVideoFormat | VideoFormatLike,
+    n: SupportsIndex | Sequence[SupportsString] | HoldsVideoFormat | VideoFormatLike,
     operator: ExprOpBase = ExprOp.MAX,
     suffix: SupportsString | Iterable[SupportsString] | None = None,
     prefix: SupportsString | Iterable[SupportsString] | None = None,
@@ -116,7 +116,7 @@ def combine_expr(
     For combining multiple clips, see [combine][vsexprtools.combine].
 
     Args:
-        n: Object from which to infer the number of variables.
+        n: Object from which to infer the variables.
         operator: An ExprOpBase enum used to join the variables.
         suffix: Optional suffix string(s) to append to each input variable in the expression.
         prefix: Optional prefix string(s) to prepend to each input variable in the expression.
@@ -126,8 +126,8 @@ def combine_expr(
     Returns:
         A expression representing the combined result.
     """
-    evars = ExprVars(n)
-    n = evars.stop - evars.start
+    evars = n if isinstance(n, Sequence) else ExprVars(n)
+    n = len(evars)
 
     prefixes, suffixes = (_combine_norm__ix(x, n) for x in (prefix, suffix))
 
