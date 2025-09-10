@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 from enum import auto
-from typing import Any, Literal, overload
+from typing import Any, Literal, Sequence, SupportsIndex, overload
 
-from vsexprtools import ExprOp, ExprVars, norm_expr
+from jetpytools import CustomValueError, SupportsString
+
+from vsexprtools import ExprList, ExprOp, ExprVars, combine_expr
 from vstools import (
     ConstantFormatVideoNode,
     CustomEnum,
     FuncExcept,
+    HoldsVideoFormat,
     Planes,
-    StrList,
+    VideoFormatLike,
     VideoNodeIterableT,
     check_variable_format,
     flatten_vnodes,
@@ -98,6 +101,8 @@ class MeanMode(CustomEnum):
             **kwargs: Additional keyword arguments for certain modes.
 
                    - p (float): Exponent for `LEHMER` mode. Defaults to 3.
+        Raises:
+            CustomValueError: If there is no clip.
 
         Returns:
             A new clip containing the combined frames.
@@ -109,40 +114,57 @@ class MeanMode(CustomEnum):
 
         assert check_variable_format(clips, func)
 
-        n_clips = len(clips)
-        all_clips = ExprVars(n_clips)
+        if not clips:
+            raise CustomValueError("There is no clip to evaluate.", func)
 
-        if n_clips < 2:
-            return next(iter(clips))
+        if (n_clips := len(clips)) < 2:
+            return clips[0]
+
+        return self.expr(n_clips, **kwargs)(clips, planes=planes, func=func)
+
+    def expr(
+        self, n: SupportsIndex | Sequence[SupportsString] | HoldsVideoFormat | VideoFormatLike, **kwargs: Any
+    ) -> ExprList:
+        """
+        Builds a mean expression using a specified mode.
+
+        Args:
+            n: n: Object from which to infer the variables.
+
+        Returns:
+            Mean expression.
+        """
+        evars = n if isinstance(n, Sequence) else ExprVars(n)
+        n_len = len(evars)
 
         match self:
             case MeanMode.LEHMER:
-                p = kwargs.get("p", self.value)
-                counts = range(n_clips)
+                p = kwargs.pop("p", self.value)
 
-                expr = StrList([[f"{clip} neutral - D{i}!" for i, clip in zip(counts, all_clips)]])
+                expr = ExprList([f"{clip} neutral - D{i}!" for i, clip in enumerate(evars)])
+
                 for x in range(2):
-                    expr.extend([[f"D{i}@ {p - x} pow" for i in counts], ExprOp.ADD * (n_clips - 1), f"P{x}!"])
+                    expr.extend([[f"D{i}@ {p - x} pow" for i in range(n_len)], ExprOp.ADD * (n_len - 1), f"P{x}!"])
 
-                return norm_expr(clips, f"{expr} P1@ 0 = 0 P0@ P1@ / ? neutral +", planes, func=func)
+                expr.append("P1@ 0 = 0 P0@ P1@ / ? neutral +")
+
+                return expr
 
             case MeanMode.HARMONIC | MeanMode.GEOMETRIC | MeanMode.CONTRAHARMONIC:
-                return MeanMode.LEHMER(clips, p=self.value, planes=planes, func=func)
-
-            case MeanMode.ARITHMETIC:
-                return ExprOp.ADD(clips, expr_suffix=f"{n_clips} /", planes=planes, func=func)
-
-            case MeanMode.MINIMUM:
-                return ExprOp.MIN(clips, planes=planes, func=func)
-
-            case MeanMode.MAXIMUM:
-                return ExprOp.MAX(clips, planes=planes, func=func)
-
+                return MeanMode.LEHMER.expr(n, p=self.value)
             case MeanMode.MEDIAN:
-                n_op = (n_clips - 1) // 2
+                n_op = (n_len - 1) // 2
+                mean = "" if n_len % 2 else "+ 2 /"
 
-                mean = "" if n_clips % 2 else "+ 2 /"
-
-                return norm_expr(
-                    clips, f"{all_clips} sort{n_clips} drop{n_op} {mean} swap{n_op} drop{n_op}", planes, func=func
+                return ExprList(
+                    (f"{' '.join(str(v for v in evars))} sort{n_len} drop{n_op} {mean} swap{n_op} drop{n_op}")
                 )
+            case MeanMode.ARITHMETIC:
+                op = ExprOp.ADD
+                kwargs.update(expr_suffix=f"{n_len} /")
+            case MeanMode.MINIMUM:
+                op = ExprOp.MIN
+            case MeanMode.MAXIMUM:
+                op = ExprOp.MAX
+
+        return combine_expr(evars, op, **kwargs)
