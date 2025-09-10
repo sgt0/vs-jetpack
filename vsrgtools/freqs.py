@@ -94,7 +94,7 @@ class MeanMode(CustomEnum):
         Args:
             *_clips: Input clips to combine.
             planes: Which planes to process.
-           func: An optional function to use for error handling.
+            func: An optional function to use for error handling.
             **kwargs: Additional keyword arguments for certain modes.
 
                    - p (float): Exponent for `LEHMER` mode. Defaults to 3.
