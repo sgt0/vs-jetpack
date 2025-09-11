@@ -449,6 +449,10 @@ class ProcessVariableClip(DynamicClipsCache[T, VideoNodeT]):
         """
         return clip
 
+    def __vs_del__(self, core_id: int) -> None:
+        super().__vs_del__(core_id)
+        del self.clip, self.out
+
 
 class ProcessVariableResClip(ProcessVariableClip[tuple[int, int], VideoNodeT]):
     """

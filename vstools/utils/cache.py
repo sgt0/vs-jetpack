@@ -56,6 +56,9 @@ class DynamicClipsCache(vs_object, dict[T, VideoNodeT]):
 
         return super().__getitem__(key)
 
+    def __vs_del__(self, core_id: int) -> None:
+        self.clear()
+
 
 class FramesCache(vs_object, Generic[NodeT, FrameT], dict[int, FrameT]):
     def __init__(self, clip: NodeT, cache_size: int = 10) -> None:
@@ -83,9 +86,7 @@ class FramesCache(vs_object, Generic[NodeT, FrameT], dict[int, FrameT]):
 
     def __vs_del__(self, core_id: int) -> None:
         self.clear()
-
-        if not TYPE_CHECKING:
-            self.clip = None
+        del self.clip
 
 
 class NodeFramesCache(vs_object, dict[NodeT, FramesCache[NodeT, FrameT]]):
@@ -126,6 +127,10 @@ class SceneBasedDynamicCache(DynamicClipsCache[int, vs.VideoNode]):
     @classmethod
     def from_clip(cls, clip: vs.VideoNode, keyframes: Keyframes | str, *args: Any, **kwargs: Any) -> vs.VideoNode:
         return cls(clip, keyframes, *args, **kwargs).get_eval()
+
+    def __vs_del__(self, core_id: int) -> None:
+        super().__vs_del__(core_id)
+        del self.clip
 
 
 class NodesPropsCache(vs_object, dict[tuple[NodeT, int], MutableMapping[str, "_PropValue"]]):
