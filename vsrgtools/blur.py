@@ -279,6 +279,7 @@ def sbr(
         blur: Blur kernel to apply to the original clip. Defaults to binomial.
         blur_diff: Blur kernel to apply to the difference clip. Defaults to binomial.
         planes: Which planes to process. Defaults to all.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
         **kwargs: Additional arguments passed to blur kernel call.
 
     Returns:
