@@ -121,7 +121,11 @@ class InterpolateOverlay(CustomEnum):
         offset = lookup[pattern % 5]
         offsets = [(offset + i * step) % 40 for i in range(4)]
 
-        mv = MVTools(clip, vectors=vectors, **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1)))
+        mv = MVTools(
+            clip,
+            vectors=vectors,
+            **preset | KwargsT(search_clip=partial(prefilter_to_full_range, slope=1, func=self.__class__)),
+        )
 
         if not vectors:
             mv.analyze(tr=1, blksize=blksize, overlap=refine_blksize(blksize, overlap))

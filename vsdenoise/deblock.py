@@ -239,7 +239,7 @@ def deblock_qed(
             deblocked = join(deblocked, strong)
 
     if fieldbased.is_inter:
-        deblocked = weave(Box().scale(deblocked, height=clip.height // 2), fieldbased)
+        deblocked = weave(Box().scale(deblocked, height=clip.height // 2), fieldbased, deblock_qed)
 
     return deblocked
 
@@ -277,10 +277,13 @@ def mpeg2stinx(
         if sw == sh == 1:
             repaired = repair(clip, bobbed, 1)
         else:
-            inpand, expand = Morpho.inpand(bobbed, sw, sh), Morpho.expand(bobbed, sw, sh)
+            inpand, expand = (
+                Morpho.inpand(bobbed, sw, sh, func=mpeg2stinx),
+                Morpho.expand(bobbed, sw, sh, func=mpeg2stinx),
+            )
             repaired = norm_expr([clip, inpand, expand], "x y z clip", func=mpeg2stinx)
 
-        return weave(repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)), tff)
+        return weave(repaired.std.SeparateFields(tff).std.SelectEvery(4, (2, 1)), tff, func=mpeg2stinx)
 
     def _temporal_limit(src: vs.VideoNode, flt: vs.VideoNode, adj: vs.VideoNode | None) -> vs.VideoNode:
         if limit is None:
@@ -289,8 +292,8 @@ def mpeg2stinx(
         assert adj
 
         diff = norm_expr([core.std.Interleave([src, src]), adj], "x y - abs", func=mpeg2stinx).std.SeparateFields(tff)
-        diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))])
-        diff = weave(Morpho.expand(diff, sw=2, sh=1), tff)
+        diff = MeanMode.MINIMUM([diff.std.SelectEvery(4, (0, 1)), diff.std.SelectEvery(4, (2, 3))], func=mpeg2stinx)
+        diff = weave(Morpho.expand(diff, sw=2, sh=1), tff, mpeg2stinx)
 
         return norm_expr([flt, src, diff], "z {limit} * LIM! x y LIM@ - y LIM@ + clip", limit=limit, func=mpeg2stinx)
 

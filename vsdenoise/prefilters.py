@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import auto
 from typing import Any, Literal, Sequence, cast, overload
 
-from jetpytools import CustomEnum, CustomNotImplementedError, KwargsT
+from jetpytools import CustomEnum, CustomNotImplementedError, FuncExcept, KwargsT
 
 from vsexprtools import norm_expr
 from vsrgtools import bilateral, flux_smooth, gauss_blur, min_blur
@@ -577,7 +577,9 @@ class MultiPrefilter(AbstractPrefilter):
 PrefilterLike = Prefilter | PrefilterPartial | MultiPrefilter
 
 
-def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: float = 0.0625) -> ConstantFormatVideoNode:
+def prefilter_to_full_range(
+    clip: vs.VideoNode, slope: float = 2.0, smooth: float = 0.0625, func: FuncExcept | None = None
+) -> ConstantFormatVideoNode:
     """
     Converts a clip to full range if necessary and amplifies dark areas.
     Essentially acts like a luma-based multiplier on the SAD when used as an mvtools prefilter.
@@ -590,14 +592,16 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
     Returns:
         Range expanded clip.
     """
-    assert check_variable_format(clip, prefilter_to_full_range)
+    func = func or prefilter_to_full_range
 
-    InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), prefilter_to_full_range)
+    assert check_variable_format(clip, func)
+
+    InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), func)
 
     if smooth < 0 or not 0 <= slope <= (1 + 2 * smooth) / smooth:
-        raise CustomValueError("Curve parameters out of range", prefilter_to_full_range, (slope, smooth))
+        raise CustomValueError("Curve parameters out of range", func, (slope, smooth))
 
-    clip_range = ColorRange.from_video(clip)
+    clip_range = ColorRange.from_video(clip, func=func)
 
     curve = (slope - 1) * smooth
     luma_expr = (
@@ -608,6 +612,4 @@ def prefilter_to_full_range(clip: vs.VideoNode, slope: float = 2.0, smooth: floa
 
     planes = 0 if clip_range.is_full or clip.format.sample_type is vs.FLOAT else None
 
-    return ColorRange.FULL.apply(
-        norm_expr(clip, (luma_expr, chroma_expr), planes, k=curve, c=smooth, func=prefilter_to_full_range)
-    )
+    return ColorRange.FULL.apply(norm_expr(clip, (luma_expr, chroma_expr), planes, k=curve, c=smooth, func=func))

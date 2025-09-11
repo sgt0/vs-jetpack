@@ -326,6 +326,8 @@ def median_blur(
     radius: int | Sequence[int] = 1,
     mode: SpatialConvMode = ConvMode.SQUARE,
     planes: Planes = None,
+    *,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode: ...
 
 
@@ -338,12 +340,18 @@ def median_blur(
     smart: Literal[True] = ...,
     threshold: float | Sequence[float] | None = None,
     scalep: bool = True,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode: ...
 
 
 @overload
 def median_blur(
-    clip: vs.VideoNode, radius: int = 1, mode: Literal[ConvMode.TEMPORAL] = ..., planes: Planes = None
+    clip: vs.VideoNode,
+    radius: int = 1,
+    mode: Literal[ConvMode.TEMPORAL] = ...,
+    planes: Planes = None,
+    *,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode: ...
 
 
@@ -356,6 +364,7 @@ def median_blur(
     smart: bool = False,
     threshold: float | Sequence[float] | None = None,
     scalep: bool = True,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode: ...
 
 
@@ -367,6 +376,7 @@ def median_blur(
     smart: bool = False,
     threshold: float | Sequence[float] | None = None,
     scalep: bool = True,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode:
     """
     Applies a median blur to the clip using spatial or temporal neighborhood.
@@ -385,6 +395,7 @@ def median_blur(
             and over the threshold are returned as is.
         scalep: Parameter scaling when ``smart=True``. If True, all threshold values will be automatically scaled
             from 8-bit range (0-255) to the corresponding range of the input clip's bit depth.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Raises:
         CustomValueError: If a list is passed for radius in temporal mode, which is unsupported
@@ -393,13 +404,15 @@ def median_blur(
     Returns:
         Median-blurred video clip.
     """
-    assert check_variable(clip, median_blur)
+    func = func or median_blur
+
+    assert check_variable(clip, func)
 
     if mode == ConvMode.TEMPORAL:
         if isinstance(radius, int):
             return core.zsmooth.TemporalMedian(clip, radius, planes)
 
-        raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", median_blur, radius)
+        raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", func, radius)
 
     radius = normalize_seq(radius, clip.format.num_planes)
 
@@ -407,7 +420,7 @@ def median_blur(
         if mode == ConvMode.SQUARE:
             return core.zsmooth.SmartMedian(clip, radius, threshold, scalep, planes)
 
-        raise CustomValueError("When using SmartMedian, mode should be ConvMode.SQUARE!", median_blur, mode)
+        raise CustomValueError("When using SmartMedian, mode should be ConvMode.SQUARE!", func, mode)
 
     if mode == ConvMode.SQUARE and max(radius) <= 3:
         return core.zsmooth.Median(clip, radius, planes)
@@ -415,7 +428,7 @@ def median_blur(
     if mode == ConvMode.VERTICAL and max(radius) <= 1:
         return vertical_cleaner(clip, radius, planes)
 
-    return MeanMode.MEDIAN.single(clip, radius, mode, planes=planes, func=median_blur)
+    return MeanMode.MEDIAN.single(clip, radius, mode, planes=planes, func=func)
 
 
 class Bilateral(Generic[P, R]):
