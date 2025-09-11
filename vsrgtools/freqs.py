@@ -5,7 +5,7 @@ from typing import Any, Iterable, Literal, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomValueError, SupportsString
 
-from vsexprtools import ExprList, ExprOp, ExprVars, TupleExprList, combine_expr
+from vsexprtools import ExprList, ExprOp, ExprVars, combine_expr, norm_expr
 from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
@@ -17,6 +17,7 @@ from vstools import (
     VideoNodeIterableT,
     check_variable_format,
     flatten_vnodes,
+    normalize_seq,
     shift_clip_multi,
     vs,
 )
@@ -127,20 +128,20 @@ class MeanMode(CustomEnum):
     def single(
         self,
         clip: vs.VideoNode,
-        radius: int = 1,
+        radius: int | Sequence[int] = 1,
         mode: ConvMode = ConvMode.SQUARE,
         exclude: Iterable[tuple[int, int]] | None = None,
         include: Iterable[tuple[int, int]] | None = None,
         planes: Planes = None,
         func: FuncExcept | None = None,
         **kwargs: Any,
-    ) -> vs.VideoNode:
+    ) -> ConstantFormatVideoNode:
         """
         Applies the selected mean to one clip, spatially or temporally.
 
         Args:
             clip: Input clip.
-            radius: The radius in pixels (e.g., 1 for 3x3).
+            radius: The radius per plane (Sequence) or uniform radius (int). Only int is allowed in temporal mode.
             mode: The convolution mode. Defaults to ConvMode.SQUARE.
             exclude: Optional set of (x, y) coordinates to exclude from the matrix.
             include: Optional set of (x, y) coordinates to include in the matrix.
@@ -150,20 +151,41 @@ class MeanMode(CustomEnum):
 
                    - p (float): Exponent for `LEHMER` mode. Defaults to 3.
 
+        Raises:
+            CustomValueError: If a list is passed for radius in temporal mode, which is unsupported.
+
         Returns:
             A new clip with the mean applied.
         """
-        if mode != ConvMode.TEMPORAL:
-            exprs = TupleExprList(
-                self.expr(mat, **kwargs) for mat in ExprOp.matrix("x", radius, mode, exclude, include)
-            )
-            return exprs(clip, planes=planes, func=func)
+        func = func or f"{self!s}.single"
 
-        clips = shift_clip_multi(clip, (-radius, radius))
+        assert check_variable_format(clip, func)
 
-        (ops,) = ExprOp.matrix(ExprVars(len(clips)), radius, mode, exclude, include)
+        if mode == ConvMode.TEMPORAL:
+            if not isinstance(radius, int):
+                raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", func, radius)
 
-        return self.expr(ops, **kwargs)(*clips, planes=planes, func=func)
+            clips = shift_clip_multi(clip, (-radius, radius))
+
+            (ops,) = ExprOp.matrix(ExprVars(len(clips)), radius, mode, exclude, include)
+
+            return self.expr(ops, **kwargs)(*clips, planes=planes, func=func)
+
+        radius = normalize_seq(radius, clip.format.num_planes)
+        expr_plane = list[list[ExprList]]()
+
+        for r in radius:
+            expr_passes = list[ExprList]()
+
+            for mat in ExprOp.matrix("x", r, mode, exclude, include):
+                expr_passes.append(self.expr(mat, **kwargs))
+
+            expr_plane.append(expr_passes)
+
+        for e in zip(*expr_plane):
+            clip = norm_expr(clip, e, planes, func=func)
+
+        return clip
 
     def expr(
         self, n: SupportsIndex | Sequence[SupportsString] | HoldsVideoFormat | VideoFormatLike, **kwargs: Any
