@@ -1,3 +1,7 @@
+"""
+Utilities for field-based processing and telecine pattern generation.
+"""
+
 from __future__ import annotations
 
 from jetpytools import FuncExcept
@@ -10,6 +14,18 @@ __all__ = ["get_field_difference", "reinterlace", "reweave", "telecine_patterns"
 def telecine_patterns(
     clipa: vs.VideoNode, clipb: vs.VideoNode, length: int = 5, func: FuncExcept | None = None
 ) -> list[ConstantFormatVideoNode]:
+    """
+    Generate all possible telecine patterns by interleaving frames from two clips.
+
+    Args:
+        clipa: First input clip.
+        clipb: Second input clip.
+        length: Cycle length used for frame selection. Defaults to 5.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A list of interleaved clips, each representing a unique telecine pattern.
+    """
     func = func or telecine_patterns
 
     assert check_variable(clipa, func)
@@ -24,6 +40,17 @@ def telecine_patterns(
 def get_field_difference(
     clip: vs.VideoNode, tff: FieldBasedLike | bool | None = None, func: FuncExcept | None = None
 ) -> ConstantFormatVideoNode:
+    """
+    Compute the difference between top and bottom fields in a clip.
+
+    Args:
+        clip: Input clip.
+        tff: Field order (top-field-first). If None, inferred from the clip. Defaults to None.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A clip with a per-frame property "FieldDifference" indicating the absolute difference between fields.
+    """
     func = func or get_field_difference
 
     assert check_variable(clip, func)
@@ -40,6 +67,17 @@ def get_field_difference(
 def weave(
     clip: vs.VideoNode, tff: FieldBasedLike | bool | None = None, func: FuncExcept | None = None
 ) -> ConstantFormatVideoNode:
+    """
+    Recombine fields into frames using DoubleWeave.
+
+    Args:
+        clip: Input clip.
+        tff: Field order (top-field-first). If None, inferred from the clip. Defaults to None.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A clip with fields woven back into full frames.
+    """
     func = func or weave
 
     assert check_variable(clip, func)
@@ -52,6 +90,18 @@ def weave(
 def reweave(
     clipa: vs.VideoNode, clipb: vs.VideoNode, tff: FieldBasedLike | bool | None = None, func: FuncExcept | None = None
 ) -> ConstantFormatVideoNode:
+    """
+    Interleave two clips and weave them into full frames.
+
+    Args:
+        clipa: First input clip.
+        clipb: Second input clip.
+        tff: Field order (top-field-first). If None, inferred from the clip. Defaults to None.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A reweaved clip with fields combined into frames.
+    """
     func = func or reweave
     assert check_variable(clipa, func)
     assert check_variable(clipb, func)
@@ -62,6 +112,17 @@ def reweave(
 def reinterlace(
     clip: vs.VideoNode, tff: FieldBasedLike | bool | None = None, func: FuncExcept | None = None
 ) -> ConstantFormatVideoNode:
+    """
+    Reinterlace a progressive clip by separating and weaving fields.
+
+    Args:
+        clip: Input clip.
+        tff: Field order (top-field-first). If None, inferred from the clip. Defaults to None.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A reinterlaced clip with fields woven back into interlaced frames.
+    """
     func = func or reinterlace
 
     assert check_variable(clip, func)
