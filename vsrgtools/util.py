@@ -19,7 +19,7 @@ __all__ = ["normalize_radius"]
 
 def normalize_radius(
     clip: vs.VideoNode,
-    func: GenericVSFunction[ConstantFormatVideoNode],
+    function: GenericVSFunction[ConstantFormatVideoNode],
     radius: Sequence[float | int] | dict[str, Sequence[float | int]],
     planes: Planes,
     **kwargs: Any,
@@ -36,9 +36,9 @@ def normalize_radius(
 
     if len(set(radius)) > 1:
         pplanes = [
-            func(p, **kwargs | {name: rad, "planes": 0}) if i in planes else p
+            function(p, **kwargs | {name: rad, "planes": 0}) if i in planes else p
             for i, (rad, p) in enumerate(zip(radius, split(clip)))
         ]
         return join(pplanes)
 
-    return func(clip, **kwargs | {name: radius[0], "planes": planes})
+    return function(clip, **kwargs | {name: radius[0], "planes": planes})
