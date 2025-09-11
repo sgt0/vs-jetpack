@@ -3,6 +3,8 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING, Literal, Sequence
 
+from jetpytools import FuncExcept
+
 from vsexprtools import norm_expr
 from vskernels import Bilinear
 
@@ -18,7 +20,6 @@ from vstools import (
     Planes,
     VSFunctionNoArgs,
     check_ref_clip,
-    check_variable,
     core,
     get_y,
     join,
@@ -40,16 +41,36 @@ def unsharpen(
     strength: float = 1.0,
     blur: vs.VideoNode | VSFunctionNoArgs[vs.VideoNode, ConstantFormatVideoNode] = partial(gauss_blur, sigma=1.5),
     planes: Planes = None,
+    func: FuncExcept | None = None,
 ) -> ConstantFormatVideoNode:
-    assert check_variable(clip, unsharpen)
+    """
+    Apply an unsharp mask to a clip.
+
+    This filter sharpens the input by subtracting a blurred version of the clip
+    from the original, scaling the difference by the given `strength`, and
+    adding it back to the original image. Conceptually:
+
+        result = clip + (clip - blur(clip)) * strength
+
+    Args:
+        clip: Input clip.
+        strength: Sharpening strength. Defaults to 1.0.
+        blur: Either a blurred reference clip or a callable that takes the source clip
+            and returns a blurred version (e.g., a Gaussian blur).
+        planes: Which planest to process. Default to all.
+        func: func: Function returned for custom error handling. This should only be set by VS package developers.
+
+    Returns:
+        A sharpened clip.
+    """
+    func = func or unsharpen
 
     if callable(blur):
         blur = blur(clip)
 
-    assert check_variable(blur, unsharpen)
-    check_ref_clip(clip, blur, unsharpen)
+    check_ref_clip(clip, blur, func)
 
-    return norm_expr([clip, blur], f"x y - {strength} * x +", planes, func=unsharpen)
+    return norm_expr([clip, blur], f"x y - {strength} * x +", planes, func=func)
 
 
 def awarpsharp(
