@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, Sequence, Uni
 
 from jetpytools import CustomIntEnum, CustomStrEnum, FuncExcept, P, R, cround
 
-from vsexprtools import ExprOp, norm_expr
+from vsexprtools import norm_expr
 from vskernels import Bilinear, Gaussian, Point, Scaler, ScalerLike
 from vstools import (
     ColorRange,
@@ -396,7 +396,7 @@ def median_blur(
 
     if mode == ConvMode.TEMPORAL:
         if isinstance(radius, int):
-            return clip.zsmooth.TemporalMedian(radius, planes)
+            return core.zsmooth.TemporalMedian(clip, radius, planes)
 
         raise CustomValueError("A list of radius isn't supported for ConvMode.TEMPORAL!", median_blur, radius)
 
@@ -414,23 +414,7 @@ def median_blur(
     if mode == ConvMode.VERTICAL and max(radius) <= 1:
         return vertical_cleaner(clip, radius, planes)
 
-    expr_plane = list[list[str]]()
-
-    for r in radius:
-        expr_passes = list[str]()
-
-        for mat in ExprOp.matrix("x", r, mode):
-            n_samples = len(mat)
-            n_op = n_samples // 2
-
-            expr_passes.append(f"{mat} sort{n_samples} drop{n_op} swap{n_op} drop{n_op}")
-
-        expr_plane.append(expr_passes)
-
-    for e in zip(*expr_plane):
-        clip = norm_expr(clip, e, planes, func=median_blur)
-
-    return clip
+    return MeanMode.MEDIAN.single(clip, radius, mode, planes=planes, func=median_blur)
 
 
 class Bilateral(Generic[P, R]):
