@@ -180,9 +180,38 @@ def mc_clamp(
     src: vs.VideoNode,
     mv_obj: MVTools,
     clamp: int | float | tuple[int | float, int | float] = 0,
+    func: FuncExcept | None = None,
     **kwargs: Any,
 ) -> ConstantFormatVideoNode:
-    check_ref_clip(src, flt, mc_clamp)
+    """
+    Motion-compensated clamping of a filtered clip against the source.
+
+    This function clamps the values of a filtered clip `flt` to those of the source clip `src`.
+    but instead of using a spatial neighborhood (e.g. 3x3), it computes temporal min/max ranges
+    from motion-compensated neighboring frames.
+
+    This helps to preserve temporal consistency and prevent over/undershoot artifacts in motion areas.
+
+    Args:
+        flt: The filtered clip to be clamped.
+        src: The original source clip, used as a reference for clamping.
+        mv_obj: An MVTools object providing motion vectors for compensation.
+        clamp: Clamping thresholds. Can be:
+
+               - single value (applied symmetrically to undershoot and overshoot),
+               - tuple (undershoot, overshoot) for asymmetric clamping.
+
+            Values are scaled according to clip bit depth.
+            Defaults to 0 (no additional clamping margin).
+        func: Function returned for custom error handling. This should only be set by VS package developers.
+        **kwargs: Additional keyword arguments passed to `mv_obj.compensate`.
+
+    Returns:
+        The motion-compensated clamped clip.
+    """
+    func = func or mc_clamp
+
+    check_ref_clip(src, flt, func)
 
     undershoot, overshoot = normalize_seq(clamp, 2)
 
@@ -198,7 +227,7 @@ def mc_clamp(
         overshoot=scale_delta(overshoot, 8, flt),
         comp_min=combine_expr(evars, ExprOp.MIN).to_str(),
         comp_max=combine_expr(evars, ExprOp.MAX).to_str(),
-        func=mc_clamp,
+        func=func,
     )
 
 
