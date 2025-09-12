@@ -721,7 +721,8 @@ class ComplexDescaler(LinearDescaler):
 
         field_based = FieldBased.from_param_or_video(field_based, clip)
 
-        clip, bits = expect_bits(clip, 32)
+        input_clip = clip
+        clip = depth(clip, 32, vs.FLOAT)
 
         de_base_args = (width, height // (1 + field_based.is_inter))
         kwargs.update(
@@ -768,7 +769,7 @@ class ComplexDescaler(LinearDescaler):
 
             descaled = super().descale(clip, **self.get_descale_args(clip, shift, *de_base_args, **kwargs))
 
-        return depth(descaled, bits)
+        return depth(descaled, input_clip)
 
     def rescale(
         self,
