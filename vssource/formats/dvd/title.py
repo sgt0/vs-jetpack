@@ -272,7 +272,7 @@ class SplitHelper:
     def split_range_ac3(title: Title, f: int, t: int, audio_i: int, outfile: str) -> float:
         nd = vs.core.dvdsrc2.RawAc3(str(title._core.iso_path), title._vts, audio_i, title._dvdsrc_ranges)
 
-        start, end = (get_prop(nd, f"Stuff_{x}_PTS", int) for x in ("Start", "End"))
+        start, _ = (get_prop(nd, f"Stuff_{x}_PTS", int) for x in ("Start", "End"))
 
         raw_start = title._absolute_time[title.chapters[f - 1]] * PCR_CLOCK
         raw_end = (title._absolute_time[title.chapters[t]] + title._duration_times[title.chapters[t]]) * PCR_CLOCK

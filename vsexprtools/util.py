@@ -5,7 +5,6 @@ from itertools import count
 from typing import TYPE_CHECKING, Iterator, Sequence, SupportsIndex, overload
 
 from jetpytools import CustomTypeError
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from vapoursynth._nodes import _ReturnDict_akarin_Version  # pyright: ignore[reportMissingModuleSource]
@@ -40,7 +39,7 @@ class ExprVars(Sequence[str], Iterator[str]):
 
     @overload
     def __init__(
-        self, stop: SupportsIndex | Self | HoldsVideoFormat | VideoFormatLike, /, *, expr_src: bool = False
+        self, stop: SupportsIndex | ExprVars | HoldsVideoFormat | VideoFormatLike, /, *, expr_src: bool = False
     ) -> None: ...
 
     @overload
@@ -50,7 +49,7 @@ class ExprVars(Sequence[str], Iterator[str]):
 
     def __init__(
         self,
-        start_stop: SupportsIndex | Self | HoldsVideoFormat | VideoFormatLike,
+        start_stop: SupportsIndex | ExprVars | HoldsVideoFormat | VideoFormatLike,
         stop: SupportsIndex | None = None,
         step: SupportsIndex | None = None,
         /,

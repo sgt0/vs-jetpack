@@ -60,7 +60,7 @@ class DynamicClipsCache(vs_object, dict[T, VideoNodeT]):
         self.clear()
 
 
-class FramesCache(vs_object, Generic[NodeT, FrameT], dict[int, FrameT]):
+class FramesCache(vs_object, dict[int, FrameT], Generic[NodeT, FrameT]):
     def __init__(self, clip: NodeT, cache_size: int = 10) -> None:
         self.clip = clip
         self.cache_size = cache_size
