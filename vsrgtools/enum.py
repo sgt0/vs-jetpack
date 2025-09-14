@@ -347,7 +347,6 @@ class BlurMatrix(CustomEnum):
                 kernel = self.custom(matrix[:-1] + matrix[::-1], mode)
 
             case BlurMatrix.GAUSS:
-                taps = fallback(taps, 1)
                 sigma = kwargs.pop("sigma", 0.5)
                 mode = kwargs.pop("mode", ConvMode.HV)
                 scale_value = kwargs.pop("scale_value", 1023)
