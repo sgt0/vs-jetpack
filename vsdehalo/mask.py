@@ -4,6 +4,7 @@ This module implements dehalo functions with complex masking abilities.
 
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import Any, Callable, Generic, Iterator, Mapping
 
 from jetpytools import CustomIndexError, P, R
@@ -267,13 +268,9 @@ class FineDehalo(Generic[P, R]):
             return self._main
 
         def __vs_del__(self, core_id: int) -> None:
-            del self._edges
-            del self._strong
-            del self._large
-            del self._light
-            del self._shrink
-            del self._shr_med
-            del self._main
+            for name in ["_edges", "_strong", "_large", "_light", "_shrink", "_shr_med", "_main"]:
+                with suppress(AttributeError):
+                    delattr(self, name)
 
 
 @FineDehalo
