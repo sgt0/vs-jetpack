@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC
-from contextlib import suppress
 from functools import wraps
 from typing import Any, Callable, Sequence, TypeVar
 
@@ -82,23 +81,6 @@ class RescaleBase(vs_object, ABC):
 
         self.__add_props = kwargs.get("_add_props")
 
-    def __delattr__(self, name: str) -> None:
-        def _delattr(attr: str) -> None:
-            with suppress(AttributeError):
-                delattr(self, attr)
-
-        match name:
-            case "descale":
-                _delattr("rescale")
-                _delattr("doubled")
-            case "doubled":
-                _delattr("upscale")
-            case _:
-                pass
-
-        with suppress(AttributeError):
-            super().__delattr__(name)
-
     @staticmethod
     def _apply_field_based(
         function: Callable[[_RescaleT, VideoNodeT], VideoNodeT],
@@ -167,35 +149,43 @@ class RescaleBase(vs_object, ABC):
             clip, self._clipy.width, self._clipy.height, **self.descale_args.kwargs(clip)
         )
 
-    @cachedproperty
-    def descale(self) -> ConstantFormatVideoNode:
-        """
-        Gets the descaled clip.
-        """
-        return self._generate_descale(self._clipy)
+    descale = cachedproperty[ConstantFormatVideoNode, vs.VideoNode](
+        lambda self: self._generate_descale(self._clipy),
+        lambda self, value: cachedproperty.update_cache(self, "descale", value),
+        lambda self: cachedproperty.clear_cache(self, ["descale", "rescale", "doubled", "upscale"]),
+    )
+    """
+    Gets the descaled clip.
+    """
 
-    @cachedproperty
-    def rescale(self) -> ConstantFormatVideoNode:
-        """
-        Gets the rescaled clip.
-        """
-        return self._generate_rescale(self.descale)
+    rescale = cachedproperty[ConstantFormatVideoNode, vs.VideoNode](
+        lambda self: self._generate_rescale(self.descale),
+        lambda self, value: cachedproperty.update_cache(self, "rescale", value),
+        lambda self: cachedproperty.clear_cache(self, "rescale"),
+    )
+    """
+    Gets the rescaled clip.
+    """
 
-    @cachedproperty
-    def doubled(self) -> ConstantFormatVideoNode:
-        """
-        Gets the doubled clip.
-        """
-        return self._generate_doubled(self.descale)
+    doubled = cachedproperty[ConstantFormatVideoNode, vs.VideoNode](
+        lambda self: self._generate_doubled(self.descale),
+        lambda self, value: cachedproperty.update_cache(self, "doubled", value),
+        lambda self: cachedproperty.clear_cache(self, ["doubled", "upscale"]),
+    )
+    """
+    Gets the doubled clip.
+    """
 
-    @cachedproperty
-    def upscale(self) -> ConstantFormatVideoNode:
-        """
-        Returns the upscaled clip
-        """
-        return core.std.CopyFrameProps(
+    upscale = cachedproperty[ConstantFormatVideoNode, vs.VideoNode](
+        lambda self: core.std.CopyFrameProps(
             join(self._generate_upscale(self.doubled), *self._chroma), self._clipy, "_ChromaLocation"
-        )
+        ),
+        lambda self, value: cachedproperty.update_cache(self, "upscale", value),
+        lambda self: cachedproperty.clear_cache(self, "upscale"),
+    )
+    """
+    Returns the upscaled clip
+    """
 
     def __vs_del__(self, core_id: int) -> None:
         del self._clipy
