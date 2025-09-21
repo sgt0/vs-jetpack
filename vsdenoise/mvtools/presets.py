@@ -219,13 +219,11 @@ class MVToolsPreset(MutableMapping[str, Any], vs_object):
         return {k: v for k, v in self._dict.items() if v is not None}
 
     def __getattr__(self, name: str) -> Any:
-        if name in self.__annotations__:
-            try:
-                return self.__clean_dict__()[name]
-            except KeyError as e:
-                raise AttributeError from e
-
-        return self.__dict__[name]
+        try:
+            return self.__clean_dict__()[name]
+        except KeyError:
+            pass
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'") from None
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name in self.__annotations__:
