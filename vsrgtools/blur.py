@@ -164,7 +164,7 @@ def gauss_blur(
         raise CustomValueError("Invalid mode specified", gauss_blur, mode)
 
     if isinstance(sigma, Sequence):
-        return normalize_radius(clip, gauss_blur, {"sigma": sigma}, planes, mode=mode)
+        return normalize_radius(clip, gauss_blur, {"sigma": sigma}, planes, taps=taps, mode=mode)
 
     fast = kwargs.pop("_fast", False)
 
