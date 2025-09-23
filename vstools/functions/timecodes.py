@@ -395,6 +395,30 @@ class Keyframes(list[int]):
 
     @classmethod
     def unique(cls, clip: vs.VideoNode, key: str, **kwargs: Any) -> Self:
+        """
+        Get the keyframes from a clip and write them to a file.
+
+        This method tries to generate a unique filename based on the clip's
+        properties and the `key` prefix. If a file with that name exists and is
+        not empty, the keyframes are loaded from the file. Otherwise, they are
+        detected from the clip and then written to the file.
+
+        Examples:
+            When working on a TV series, the episode number can be a convenient
+            key (e.g. `"01"` for episode 1, `"02"` for episode 2, etc.):
+            ```py
+            keyframes = Keyframes.unique(clip, "01")
+            ```
+
+        Args:
+            clip: The clip to get keyframes from.
+            key: A prefix for the filename.
+            **kwargs: Additional keyword arguments passed to
+                [vstools.Keyframes.from_file][] or [vstools.Keyframes.from_clip][].
+
+        Returns:
+            An instance of [vstools.Keyframes][] containing the keyframes.
+        """
         file = cls._get_unique_path(clip, key)
 
         if file.exists():
