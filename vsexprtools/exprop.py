@@ -1042,7 +1042,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         Returns:
             An `ExprList` representing the MAE expression across all planes.
         """
-        planesa, planesb = cls._parse_planes(planesa, planesb, cls.rmse)
+        planesa, planesb = cls._parse_planes(planesa, planesb, cls.mae)
         expr = ExprList()
 
         for a, b in zip(planesa, planesb):
