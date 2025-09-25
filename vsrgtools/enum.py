@@ -307,8 +307,10 @@ class BlurMatrix(CustomEnum):
 
         Args:
             taps: Size of the kernel in each direction.
-            sigma: [GAUSS only] Standard deviation of the Gaussian kernel.
-            mode: Convolution mode. Default depends on kernel.
+            **kwargs: Additional keywords arguments:
+
+                   - sigma: [GAUSS only] Standard deviation of the Gaussian kernel.
+                   - mode: Convolution mode. Default depends on kernel.
 
         Returns:
             A `BlurMatrixBase` instance representing the kernel.
