@@ -7,7 +7,7 @@ __all__ = ["normalize_thscd", "planes_to_mvtools", "refine_blksize"]
 
 def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
     """
-    Convert a sequence of plane indices to MVTools' plane parameter value.
+    Convert a regular Planes parameter to MVTools' plane parameter value.
 
     MVTools uses a single integer to represent which planes to process:
         - 0: Process Y plane only
@@ -17,22 +17,22 @@ def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
         - 4: Process all planes
 
     Args:
-        input_planes: Sequence of plane indices (0=Y, 1=U, 2=V) to process.
+        clip: Input clip.
+        planes: Which planes to process.
 
     Returns:
         Integer value used by MVTools to specify which planes to process.
     """
-
     norm_planes = set(normalize_planes(clip, planes))
 
-    if norm_planes == {0, 1, 2}:
-        return 4
-
-    if len(norm_planes) == 1 and norm_planes.intersection({0, 1, 2}):
-        return norm_planes.pop()
+    if norm_planes in [{0}, {1}, {2}]:
+        norm_planes.pop()
 
     if norm_planes == {1, 2}:
         return 3
+
+    if norm_planes == {0, 1, 2}:
+        return 4
 
     raise CustomValueError("Invalid planes specified!", planes_to_mvtools)
 
