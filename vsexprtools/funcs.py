@@ -204,7 +204,7 @@ def norm_expr(
 ) -> ConstantFormatVideoNode:
     """
     Evaluate a per-pixel expression on input clip(s), normalize it based on the specified planes,
-    and format tokens and placeholders using provided keyword arguments.
+    and format [tokens][vsexprtools.ExprToken] and placeholders using provided keyword arguments.
 
     Web app to dissect expressions:
         - <https://jaded-encoding-thaumaturgy.github.io/expr101/>
