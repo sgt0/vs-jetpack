@@ -317,7 +317,7 @@ class HardsubSign(HardsubMask):
         self.expand_mode = expand_mode
         super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
-    @limiter
+    @limiter(mask=True)
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         assert check_variable(clip, self._mask)
 
@@ -482,7 +482,7 @@ class HardsubASS(HardsubMask):
         self.fontdir = fontdir
         super().__init__(ranges, bound, blur=blur, refframes=refframes)
 
-    @limiter
+    @limiter(mask=True)
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         mask = core.sub.TextFile(ref, self.filename, fontdir=self.fontdir, blend=False).std.PropToClip("_Alpha")
 
@@ -513,7 +513,7 @@ def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> Consta
     )
 
 
-@limiter
+@limiter(mask=True)
 def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask]) -> ConstantFormatVideoNode:
     assert check_variable(hrdsb, get_all_sign_masks)
     assert check_variable(ref, get_all_sign_masks)

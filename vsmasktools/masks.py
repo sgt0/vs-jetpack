@@ -30,7 +30,7 @@ from .types import Coordinates
 __all__ = ["range_mask", "strength_zones_mask"]
 
 
-@limiter
+@limiter(mask=True)
 def range_mask(clip: vs.VideoNode, rad: int = 2, radc: int = 0) -> ConstantFormatVideoNode:
     assert check_variable(clip, range_mask)
 

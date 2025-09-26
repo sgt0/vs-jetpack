@@ -109,7 +109,7 @@ class DeferredMask(GeneralMask):
         if len(self.refframes) > 0 and len(self.refframes) != len(self.ranges):
             raise FramesLengthError(self.__class__, "", "Received reference frame and range list size mismatch!")
 
-    @limiter
+    @limiter(mask=True)
     def get_mask(self, clip: vs.VideoNode, /, ref: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         """
         Get the constructed mask

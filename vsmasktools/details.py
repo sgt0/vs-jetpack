@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-@limiter
+@limiter(mask=True)
 def detail_mask(
     clip: vs.VideoNode,
     brz_mm: float,
