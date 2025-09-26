@@ -19,7 +19,6 @@ from vstools import (
     Transfer,
     VideoFormatLike,
     VSFunctionNoArgs,
-    check_variable_format,
     depth,
     get_video_format,
     vs,
@@ -505,8 +504,6 @@ class LinearLight(AbstractContextManager[LinearLightProcessing], vs_object, ABC)
         return _wrapped
 
     def __enter__(self) -> LinearLightProcessing:
-        assert check_variable_format(self.clip, self.__class__)
-
         if self.sigmoid is not False:
             if self.sigmoid is True:
                 self.sigmoid = (6.5, 0.75)

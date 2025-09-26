@@ -8,7 +8,6 @@ from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
 from vstools import (
     ConvMode,
-    check_variable,
     depth,
     get_peak_value,
     get_y,
@@ -41,8 +40,6 @@ def ringing_mask(
     credit_mask: MaskLike = Prewitt,
     **kwargs: Any,
 ) -> vs.VideoNode:
-    assert check_variable(clip, ringing_mask)
-
     thmi, thma, thlimi, thlima = (scale_mask(t, 32, clip) for t in [thmi, thma, thlimi, thlima])
 
     blur_kernel = BlurMatrix.BINOMIAL(1, mode=ConvMode.SQUARE)
