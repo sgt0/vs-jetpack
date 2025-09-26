@@ -3,16 +3,9 @@ from __future__ import annotations
 from enum import IntFlag
 from typing import Any
 
-from vstools import (
-    ConstantFormatVideoNode,
-    CustomIntEnum,
-    CustomValueError,
-    VSFunctionAllArgs,
-    check_variable_format,
-    core,
-    fallback,
-    vs,
-)
+from jetpytools import CustomEnum, CustomIntEnum, CustomValueError
+
+from vstools import ConstantFormatVideoNode, VSFunctionAllArgs, check_variable_format, core, fallback, vs
 
 __all__ = [
     "FlowMode",
@@ -30,17 +23,17 @@ __all__ = [
 
 
 # ruff: noqa: N802
-class MVToolsPlugin(CustomIntEnum):
+class MVToolsPlugin(CustomEnum):
     """
     Abstraction around both mvtools plugin versions.
     """
 
-    INTEGER = 0
+    INTEGER = "mv"
     """
     Original plugin. Only accepts integer 8-16 bits clips.
     """
 
-    FLOAT = 1
+    FLOAT = "mvsf"
     """
     Fork by IFeelBloated. Only works with float single precision clips.
     """
@@ -50,15 +43,13 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the appropriate MVTools namespace based on plugin type.
         """
-
-        return core.proxied.mv if self is MVToolsPlugin.INTEGER else core.proxied.mvsf
+        return getattr(core.proxied, self._value_)
 
     @property
     def Super(self) -> VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode]:
         """
         Get the Super function for creating motion vector clips.
         """
-
         return self.namespace.Super
 
     @property
@@ -66,7 +57,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the Analyze function for analyzing motion vectors.
         """
-
         return self.namespace.Analyze if self is MVToolsPlugin.FLOAT else self.namespace.Analyse
 
     @property
@@ -74,7 +64,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the Recalculate function for refining motion vectors.
         """
-
         return self.namespace.Recalculate
 
     @property
@@ -82,7 +71,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the Compensate function for motion compensation.
         """
-
         return self.namespace.Compensate
 
     @property
@@ -90,7 +78,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the Flow function for motion vector visualization.
         """
-
         return self.namespace.Flow
 
     @property
@@ -98,7 +85,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the FlowInter function for motion-compensated frame interpolation.
         """
-
         return self.namespace.FlowInter
 
     @property
@@ -106,7 +92,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the FlowBlur function for motion-compensated frame blending.
         """
-
         return self.namespace.FlowBlur
 
     @property
@@ -114,7 +99,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the FlowFPS function for motion-compensated frame rate conversion.
         """
-
         return self.namespace.FlowFPS
 
     @property
@@ -122,7 +106,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the BlockFPS function for block-based frame rate conversion.
         """
-
         return self.namespace.BlockFPS
 
     @property
@@ -130,7 +113,6 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the Mask function for generating motion masks.
         """
-
         return self.namespace.Mask
 
     @property
@@ -138,14 +120,12 @@ class MVToolsPlugin(CustomIntEnum):
         """
         Get the SCDetection function for scene change detection.
         """
-
         return self.namespace.SCDetection
 
     def Degrain(self, tr: int | None = None) -> VSFunctionAllArgs[vs.VideoNode, ConstantFormatVideoNode]:
         """
         Get the Degrain function for motion compensated denoising.
         """
-
         if tr is None and self is not MVToolsPlugin.FLOAT:
             raise CustomValueError("This implementation needs a temporal radius!", f"{self.name}.Degrain")
 
