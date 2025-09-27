@@ -854,7 +854,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         """
         match mode:
             case ConvMode.SQUARE:
-                coordinates = list(product(range(-radius, radius + 1), range(-radius, radius + 1)))
+                coordinates = [(x, y) for (y, x) in product(range(-radius, radius + 1), repeat=2)]
             case ConvMode.VERTICAL:
                 coordinates = [(0, y) for y in range(-radius, radius + 1)]
             case ConvMode.HORIZONTAL:
