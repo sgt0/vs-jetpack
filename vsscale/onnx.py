@@ -700,6 +700,10 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 3
 
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64_Chroma instead.",
+        category=DeprecationWarning,
+    )
     class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
         The smaller of the chroma models.
