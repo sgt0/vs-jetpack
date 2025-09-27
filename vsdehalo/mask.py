@@ -5,9 +5,9 @@ This module implements dehalo functions with complex masking abilities.
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import Any, Callable, Generic, Iterator, Mapping
+from typing import Any, Callable, Generic, Iterator, Mapping, Sequence
 
-from jetpytools import CustomIndexError, P, R
+from jetpytools import CustomIndexError, P, R, normalize_seq
 
 from vsaa import NNEDI3, SuperSamplerProcess
 from vsdenoise import Prefilter
@@ -74,18 +74,20 @@ class FineDehalo(Generic[P, R]):
         rx: int = 2,
         ry: int | None = None,
         edgemask: MaskLike = Robinson3,
-        thmi: int = 80,
-        thma: int = 128,
-        thlimi: int = 50,
-        thlima: int = 100,
-        exclude: bool = True,
-        edgeproc: float = 0.0,
+        thmi: float | Sequence[float] = 80,
+        thma: float | Sequence[float] = 128,
+        thlimi: float | Sequence[float] = 50,
+        thlima: float | Sequence[float] = 100,
+        exclude: bool | Sequence[bool] = True,
+        edgeproc: float | Sequence[float] = 0.0,
         # Misc params
         planes: Planes = 0,
         func: FuncExcept | None = None,
     ) -> ConstantFormatVideoNode:
         """
         The fine_dehalo mask.
+
+        The parameters `thmi`, `thma`, `thlimi`, `thlima`, `exclude` and `edgeproc` can be configured per plane.
 
         Args:
             clip: Source clip.
@@ -123,18 +125,20 @@ class FineDehalo(Generic[P, R]):
             rx: int = 2,
             ry: int | None = None,
             edgemask: MaskLike = Robinson3,
-            thmi: int = 80,
-            thma: int = 128,
-            thlimi: int = 50,
-            thlima: int = 100,
-            exclude: bool = True,
-            edgeproc: float = 0.0,
+            thmi: float | Sequence[float] = 80,
+            thma: float | Sequence[float] = 128,
+            thlimi: float | Sequence[float] = 50,
+            thlima: float | Sequence[float] = 100,
+            exclude: bool | Sequence[bool] = True,
+            edgeproc: float | Sequence[float] = 0.0,
             # Misc params
             planes: Planes = 0,
             func: FuncExcept | None = None,
         ) -> None:
             """
             Initialize the mask generation process.
+
+            The parameters `thmi`, `thma`, `thlimi`, `thlima`, `exclude` and `edgeproc` can be configured per plane.
 
             Args:
                 clip: Source clip.
@@ -150,12 +154,16 @@ class FineDehalo(Generic[P, R]):
                 planes: Planes to process.
                 func: An optional function to use for error handling.
             """
-
             func = func or self.__class__
 
             InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
 
-            thmif, thmaf, thlimif, thlimaf = [scale_mask(x, 8, clip) for x in [thmi, thma, thlimi, thlima]]
+            thmif, thmaf, thlimif, thlimaf = [
+                [scale_mask(x, 8, clip) for x in th]
+                for th in [normalize_seq(th, clip.format.num_planes) for th in (thmi, thma, thlimi, thlima)]  # type: ignore[union-attr]
+            ]
+            exclude = normalize_seq(exclude, clip.format.num_planes)  # type: ignore[union-attr]
+            edgeproc = normalize_seq(edgeproc, clip.format.num_planes)  # type: ignore[union-attr]
             planes = normalize_planes(clip, planes)
             work_clip = get_y(clip) if planes == [0] else clip
 
@@ -164,7 +172,14 @@ class FineDehalo(Generic[P, R]):
             edges = normalize_mask(edgemask, work_clip, work_clip, func=func)
 
             # Keeps only the sharpest edges (line edges)
-            strong = norm_expr(edges, f"x {thmif} - {thmaf - thmif} / mask_max *", planes, func=func)
+            strong = norm_expr(
+                edges,
+                "x {thmif} - {thmaf} {thmif} - / mask_max *",
+                planes,
+                func=func,
+                thmif=thmif,
+                thmaf=thmaf,
+            )
 
             # Extends them to include the potential halos
             large = Morpho.expand(strong, rx, ry, planes=planes, func=func)
@@ -177,7 +192,14 @@ class FineDehalo(Generic[P, R]):
             # these zones from the halo removal.
 
             # Includes more edges than previously, but ignores simple details
-            light = norm_expr(edges, f"x {thlimif} - {thlimaf - thlimif} / mask_max *", planes, func=func)
+            light = norm_expr(
+                edges,
+                "x {thlimif} - {thlimaf} {thlimif} - / mask_max *",
+                planes,
+                func=func,
+                thlimif=thlimif,
+                thlimaf=thlimaf,
+            )
 
             # To build the exclusion zone, we make grow the edge mask, then shrink
             # it to its original shape. During the growing stage, close adjacent
@@ -202,15 +224,19 @@ class FineDehalo(Generic[P, R]):
             # Previous mask may be a bit weak on the pure edge side, so we ensure
             # that the main edges are really excluded. We do not want them to be
             # smoothed by the halo removal.
-            shr_med = norm_expr([strong, shrink], "x y max", planes) if exclude else strong
+            shr_med = (
+                norm_expr([strong, shrink], tuple("x y max" * ex for ex in exclude), planes, func=func)
+                if any(exclude)
+                else strong
+            )
 
             # Subtracts masks and amplifies the difference to be sure we get 255
             # on the areas to be processed.
             mask = norm_expr([large, shr_med], "x y - 2 *", planes, func=func)
 
             # If edge processing is required, adds the edgemask
-            if edgeproc > 0:
-                mask = norm_expr([mask, strong], f"x y {edgeproc} 0.66 * * +", planes, func=func)
+            if any(edgeproc):
+                mask = norm_expr([mask, strong], "x y {edgeproc} 0.66 * * +", planes, func=func, edgeproc=edgeproc)
 
             # Smooth again and amplify to grow the mask a bit, otherwise the halo
             # parts sticking to the edges could be missed.
@@ -289,12 +315,12 @@ def fine_dehalo(
     rx: int = 2,
     ry: int | None = None,
     edgemask: MaskLike = Robinson3,
-    thmi: int = 80,
-    thma: int = 128,
-    thlimi: int = 50,
-    thlima: int = 100,
-    exclude: bool = True,
-    edgeproc: float = 0.0,
+    thmi: float | Sequence[float] = 80,
+    thma: float | Sequence[float] = 128,
+    thlimi: float | Sequence[float] = 50,
+    thlima: float | Sequence[float] = 100,
+    exclude: bool | Sequence[bool] = True,
+    edgeproc: float | Sequence[float] = 0.0,
     # Final post processing
     contra: float = 0.0,
     # Misc params
@@ -320,6 +346,8 @@ def fine_dehalo(
             - 1st: 1.4 for all planes
             - 2nd: 1.4 for luma, 1.65 for both chroma planes
             - 3rd: 1.5 for luma, 1.4 for U, 1.45 for V
+
+    The parameters `thmi`, `thma`, `thlimi`, `thlima`, `exclude` and `edgeproc` can be configured per plane.
 
     Example usage:
         ```py
