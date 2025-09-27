@@ -452,6 +452,7 @@ class Morpho:
                 clip,
                 "{dilated} {eroded} - {multiply}",
                 planes,
+                func=func,
                 dilated=self._morpho_xx_imum(
                     clip, (r, conv_mode), thr, coords, multiply, True, op=ExprOp.MAX, func=func
                 )[0].to_str(),

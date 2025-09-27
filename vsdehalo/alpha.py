@@ -136,7 +136,10 @@ def dehalo_alpha(
         # Building the mask
         if all(0 <= x <= 100 for x in (*lowsens_i, *highsens_i)):
             mask = norm_expr(
-                [Morpho.gradient(work_clip, planes=planes), Morpho.gradient(dehalo, planes=planes)],
+                [
+                    Morpho.gradient(work_clip, planes=planes, func=util.func),
+                    Morpho.gradient(dehalo, planes=planes, func=util.func),
+                ],
                 "x 0 = x y - dup x / ? mask_max * {lowsens} - x range_size + range_size 2 * / {highsens} + *",
                 planes,
                 func=util.func,
