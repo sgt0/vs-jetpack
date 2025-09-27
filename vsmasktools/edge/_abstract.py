@@ -192,7 +192,8 @@ class EdgeDetect(ABC):
                 clip,
                 ("x abs {peak} *", "x abs {peak} * neutral -"),
                 format=fmt,
-                peak=get_peak_value(bitdepth),
+                func=cls,
+                peak=get_peak_value(bitdepth, range_in=ColorRange.FULL),
             )
         return clip
 
