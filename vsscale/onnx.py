@@ -648,7 +648,7 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F32_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        The same as C4F32 but intended to also sharpen and denoise.
+        The same as C4F32 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
@@ -688,7 +688,7 @@ class ArtCNN(BaseArtCNNLuma):
     )
     class C16F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        The same as C16F64 but intended to also sharpen and denoise.
+        The same as C16F64 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
@@ -702,7 +702,7 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
-        The smaller of the two chroma models.
+        The smaller of the chroma models.
 
         These don't double the input clip and rather just try to enhance the chroma using luma information.
 
@@ -717,12 +717,12 @@ class ArtCNN(BaseArtCNNLuma):
         _model = 4
 
     @deprecated(
-        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
+        "This model is no longer maintained and has been deprecated. Please use R8F64_Chroma instead.",
         category=DeprecationWarning,
     )
     class C16F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
-        The bigger of the two chroma models.
+        The bigger of the old chroma models.
 
         These don't double the input clip and rather just try to enhance the chroma using luma information.
 
@@ -768,7 +768,7 @@ class ArtCNN(BaseArtCNNLuma):
 
     class R8F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        The same as R8F64 but intended to also sharpen and denoise.
+        The same as R8F64 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
@@ -815,7 +815,7 @@ class ArtCNN(BaseArtCNNLuma):
 
     class C4F16_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        The same as C4F16 but intended to also sharpen and denoise.
+        The same as C4F16 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
