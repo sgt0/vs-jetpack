@@ -401,6 +401,33 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
         return precision
 
 
+class BaseOnnxScalerRGB(BaseOnnxScaler):
+    """
+    Abstract ONNX class for RGB models.
+    """
+
+    def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB, **kwargs)
+        return limiter(clip, func=self.__class__)
+
+    def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+        assert check_variable_format(clip, self.__class__)
+
+        if get_video_format(clip) != get_video_format(input_clip):
+            kwargs = (
+                dict[str, Any](
+                    format=input_clip,
+                    matrix=Matrix.from_video(input_clip, func=self.__class__),
+                    range=ColorRange.from_video(input_clip, func=self.__class__),
+                    dither_type=DitherType.ORDERED,
+                )
+                | kwargs
+            )
+            clip = self.kernel.resample(clip, **kwargs)
+
+        return clip
+
+
 class GenericOnnxScaler(BaseOnnxScaler, partial_abstract=True):
     """
     Generic scaler class for an ONNX model.
@@ -816,6 +843,62 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 12
 
+    class C4F16_DN(BaseArtCNNLuma):  # noqa: N801
+        """
+        The same as C4F16 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F16_DN().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 13
+
+    class C4F32_DN(BaseArtCNNLuma):  # noqa: N801
+        """
+        The same as C4F32 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F32_DN().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 14
+
+    class R8F64_JPEG420(BaseArtCNN, BaseOnnxScalerRGB):  # noqa: N801
+        """
+        1x RGB model meant to clean JPEG artifacts and to fix chroma subsampling.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.R8F64_JPEG420().scale(clip)
+        ```
+        """
+
+        _model = 15
+
+    class R8F64_JPEG444(BaseArtCNN, BaseOnnxScalerRGB):  # noqa: N801
+        """
+        1x RGB model meant to clean JPEG artifacts.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.R8F64_JPEG444().scale(clip)
+        ```
+        """
+
+        _model = 15
+
 
 class BaseWaifu2x(BaseOnnxScaler):
     scale_w2x: Literal[1, 2, 4]
@@ -893,30 +976,7 @@ class BaseWaifu2x(BaseOnnxScaler):
         )
 
 
-class BaseWaifu2xRGB(BaseWaifu2x):
-    def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        clip = self.kernel.resample(clip, self._pick_precision(vs.RGBH, vs.RGBS), Matrix.RGB, **kwargs)
-        return limiter(clip, func=self.__class__)
-
-    def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        assert check_variable_format(clip, self.__class__)
-
-        if get_video_format(clip) != get_video_format(input_clip):
-            kwargs = (
-                dict[str, Any](
-                    format=input_clip,
-                    matrix=Matrix.from_video(input_clip, func=self.__class__),
-                    range=ColorRange.from_video(input_clip, func=self.__class__),
-                    dither_type=DitherType.ORDERED,
-                )
-                | kwargs
-            )
-            clip = self.kernel.resample(clip, **kwargs)
-
-        return clip
-
-
-class _Waifu2xCunet(BaseWaifu2xRGB):
+class _Waifu2xCunet(BaseWaifu2x, BaseOnnxScalerRGB):
     _model = 6
     _static_kernel_radius = 16
 
@@ -1013,7 +1073,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 0
 
-    class AnimeStyleArtRGB(BaseWaifu2xRGB):
+    class AnimeStyleArtRGB(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         RGB version of the anime-style model.
 
@@ -1027,7 +1087,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 1
 
-    class Photo(BaseWaifu2xRGB):
+    class Photo(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         Waifu2x model trained on real-world photographic images.
 
@@ -1041,7 +1101,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 2
 
-    class UpConv7AnimeStyleArt(BaseWaifu2xRGB):
+    class UpConv7AnimeStyleArt(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         UpConv7 model variant optimized for anime-style images.
 
@@ -1055,7 +1115,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 3
 
-    class UpConv7Photo(BaseWaifu2xRGB):
+    class UpConv7Photo(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         UpConv7 model variant optimized for photographic images.
 
@@ -1069,7 +1129,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 4
 
-    class UpResNet10(BaseWaifu2xRGB):
+    class UpResNet10(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         UpResNet10 model offering a balance of speed and quality.
 
@@ -1095,7 +1155,7 @@ class Waifu2x(_Waifu2xCunet):
         ```
         """
 
-    class SwinUnetArt(BaseWaifu2xRGB):
+    class SwinUnetArt(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         Swin-Unet-based model trained on anime-style images.
 
@@ -1109,7 +1169,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 7
 
-    class SwinUnetPhoto(BaseWaifu2xRGB):
+    class SwinUnetPhoto(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         Swin-Unet model trained on photographic content.
 
@@ -1123,7 +1183,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 8
 
-    class SwinUnetPhotoV2(BaseWaifu2xRGB):
+    class SwinUnetPhotoV2(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         Improved Swin-Unet model for photos (v2).
 
@@ -1137,7 +1197,7 @@ class Waifu2x(_Waifu2xCunet):
 
         _model = 9
 
-    class SwinUnetArtScan(BaseWaifu2xRGB):
+    class SwinUnetArtScan(BaseWaifu2x, BaseOnnxScalerRGB):
         """
         Swin-Unet model trained on anime scans.
 
