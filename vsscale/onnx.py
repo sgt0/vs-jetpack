@@ -630,6 +630,51 @@ class ArtCNN(BaseArtCNNLuma):
 
     _model = 7
 
+    class C4F16(BaseArtCNNLuma):
+        """
+        This has 4 internal convolution layers with 16 filters each.
+
+        The currently fastest variant. Not really recommended for any filtering.
+        Should strictly be used for real-time applications and even then the other non R ones should be fast enough...
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F16().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 10
+
+    class C4F16_DN(BaseArtCNNLuma):  # noqa: N801
+        """
+        The same as C4F16 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F16_DN().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 13
+
+    class C4F16_DS(BaseArtCNNLuma):  # noqa: N801
+        """
+        The same as C4F16 but intended to also denoise and sharpen.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F16_DS().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 11
+
     class C4F32(BaseArtCNNLuma):
         """
         This has 4 internal convolution layers with 32 filters each.
@@ -645,6 +690,40 @@ class ArtCNN(BaseArtCNNLuma):
         """
 
         _model = 0
+
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64_Chroma instead.",
+        category=DeprecationWarning,
+    )
+    class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
+        """
+        The smaller of the chroma models.
+
+        These don't double the input clip and rather just try to enhance the chroma using luma information.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        chroma_upscaled = ArtCNN.C4F32_Chroma().scale(clip)
+        ```
+        """
+
+        _model = 4
+
+    class C4F32_DN(BaseArtCNNLuma):  # noqa: N801
+        """
+        The same as C4F32 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.C4F32_DN().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 14
 
     class C4F32_DS(BaseArtCNNLuma):  # noqa: N801
         """
@@ -683,44 +762,6 @@ class ArtCNN(BaseArtCNNLuma):
         _model = 2
 
     @deprecated(
-        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
-        category=DeprecationWarning,
-    )
-    class C16F64_DS(BaseArtCNNLuma):  # noqa: N801
-        """
-        The same as C16F64 but intended to also denoise and sharpen.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        doubled = ArtCNN.C16F64_DS().scale(clip, clip.width * 2, clip.height * 2)
-        ```
-        """
-
-        _model = 3
-
-    @deprecated(
-        "This model is no longer maintained and has been deprecated. Please use R8F64_Chroma instead.",
-        category=DeprecationWarning,
-    )
-    class C4F32_Chroma(BaseArtCNNChroma):  # noqa: N801
-        """
-        The smaller of the chroma models.
-
-        These don't double the input clip and rather just try to enhance the chroma using luma information.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        chroma_upscaled = ArtCNN.C4F32_Chroma().scale(clip)
-        ```
-        """
-
-        _model = 4
-
-    @deprecated(
         "This model is no longer maintained and has been deprecated. Please use R8F64_Chroma instead.",
         category=DeprecationWarning,
     )
@@ -740,21 +781,23 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 5
 
-    class R16F96(BaseArtCNNLuma):
+    @deprecated(
+        "This model is no longer maintained and has been deprecated. Please use R8F64 instead.",
+        category=DeprecationWarning,
+    )
+    class C16F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        The biggest model. Can compete with or outperform Waifu2x Cunet.
-
-        Also quite a bit slower but is less heavy on vram.
+        The same as C16F64 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
         from vsscale import ArtCNN
 
-        doubled = ArtCNN.R16F96().scale(clip, clip.width * 2, clip.height * 2)
+        doubled = ArtCNN.C16F64_DS().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
 
-        _model = 6
+        _model = 3
 
     class R8F64(BaseArtCNNLuma):
         """
@@ -769,20 +812,6 @@ class ArtCNN(BaseArtCNNLuma):
         """
 
         _model = 7
-
-    class R8F64_DS(BaseArtCNNLuma):  # noqa: N801
-        """
-        The same as R8F64 but intended to also denoise and sharpen.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        doubled = ArtCNN.R8F64_DS().scale(clip, clip.width * 2, clip.height * 2)
-        ```
-        """
-
-        _model = 8
 
     class R8F64_Chroma(BaseArtCNNChroma):  # noqa: N801
         """
@@ -800,80 +829,19 @@ class ArtCNN(BaseArtCNNLuma):
 
         _model = 9
 
-    class C4F16(BaseArtCNNLuma):
+    class R8F64_DS(BaseArtCNNLuma):  # noqa: N801
         """
-        This has 4 internal convolution layers with 16 filters each.
-
-        The currently fastest variant. Not really recommended for any filtering.
-        Should strictly be used for real-time applications and even then the other non R ones should be fast enough...
+        The same as R8F64 but intended to also denoise and sharpen.
 
         Example usage:
         ```py
         from vsscale import ArtCNN
 
-        doubled = ArtCNN.C4F16().scale(clip, clip.width * 2, clip.height * 2)
+        doubled = ArtCNN.R8F64_DS().scale(clip, clip.width * 2, clip.height * 2)
         ```
         """
 
-        _model = 10
-
-    class C4F16_DS(BaseArtCNNLuma):  # noqa: N801
-        """
-        The same as C4F16 but intended to also denoise and sharpen.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        doubled = ArtCNN.C4F16_DS().scale(clip, clip.width * 2, clip.height * 2)
-        ```
-        """
-
-        _model = 11
-
-    class R16F96_Chroma(BaseArtCNNChroma):  # noqa: N801
-        """
-        The biggest and fancy chroma model. Shows almost biblical results on the right sources.
-
-        These don't double the input clip and rather just try to enhance the chroma using luma information.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        chroma_upscaled = ArtCNN.R16F96_Chroma().scale(clip)
-        ```
-        """
-
-        _model = 12
-
-    class C4F16_DN(BaseArtCNNLuma):  # noqa: N801
-        """
-        The same as C4F16 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        doubled = ArtCNN.C4F16_DN().scale(clip, clip.width * 2, clip.height * 2)
-        ```
-        """
-
-        _model = 13
-
-    class C4F32_DN(BaseArtCNNLuma):  # noqa: N801
-        """
-        The same as C4F32 but intended to also denoise. Works well on noisy sources when you don't want any sharpening.
-
-        Example usage:
-        ```py
-        from vsscale import ArtCNN
-
-        doubled = ArtCNN.C4F32_DN().scale(clip, clip.width * 2, clip.height * 2)
-        ```
-        """
-
-        _model = 14
+        _model = 8
 
     class R8F64_JPEG420(BaseArtCNN, BaseOnnxScalerRGB):  # noqa: N801
         """
@@ -901,7 +869,39 @@ class ArtCNN(BaseArtCNNLuma):
         ```
         """
 
-        _model = 15
+        _model = 16
+
+    class R16F96(BaseArtCNNLuma):
+        """
+        The biggest model. Can compete with or outperform Waifu2x Cunet.
+
+        Also quite a bit slower but is less heavy on vram.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        doubled = ArtCNN.R16F96().scale(clip, clip.width * 2, clip.height * 2)
+        ```
+        """
+
+        _model = 6
+
+    class R16F96_Chroma(BaseArtCNNChroma):  # noqa: N801
+        """
+        The biggest and fancy chroma model. Shows almost biblical results on the right sources.
+
+        These don't double the input clip and rather just try to enhance the chroma using luma information.
+
+        Example usage:
+        ```py
+        from vsscale import ArtCNN
+
+        chroma_upscaled = ArtCNN.R16F96_Chroma().scale(clip)
+        ```
+        """
+
+        _model = 12
 
 
 class BaseWaifu2x(BaseOnnxScaler):
