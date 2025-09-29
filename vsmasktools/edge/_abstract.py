@@ -19,6 +19,7 @@ from vstools import (
     T,
     check_variable,
     depth,
+    get_peak_value,
     get_subclasses,
     get_video_format,
     inject_self,
@@ -222,6 +223,19 @@ class EdgeDetect(ABC):
         hthr = [scale_mask(ht, 32, mask) for ht in to_arr(hthr)]
         multi = to_arr(multi)
 
+        peak = get_peak_value(mask, range_in=ColorRange.FULL)
+
+        thr_expr = ExprList(["Z@"])
+
+        if lthr == hthr:
+            thr_expr.append("{hthr} >= range_max 0 ?")
+        elif any(lt > 0 for lt in lthr) and any(ht < peak for ht in hthr):
+            thr_expr.append("{hthr} >", "range_max", ["Z@ {lthr} < 0 x ?"], "?")
+        elif any(lt > 0 for lt in lthr):
+            thr_expr.append("{lthr} < 0 Z@ ?")
+        elif any(ht < peak for ht in hthr):
+            thr_expr.append("{hthr} > range_max Z@ ?")
+
         if clamp is True and mask.format.sample_type == vs.FLOAT:
             clamp = [(0, 1)]
         elif isinstance(clamp, bool):
@@ -231,7 +245,7 @@ class EdgeDetect(ABC):
 
         mask = norm_expr(
             mask,
-            ["x {multi}", "Z!", ["Z@ {hthr} >", "range_max", ["Z@ {lthr} < 0 Z@ ?"], "?"], "{clamp}"],
+            ["x {multi}", "Z!", thr_expr, "{clamp}"],
             planes,
             func=self.__class__,
             multi=[f"{m} *" if m != 1.0 else "" for m in multi],
