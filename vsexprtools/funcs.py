@@ -10,7 +10,6 @@ from jetpytools import CustomIndexError, norm_func_name
 
 from vstools import (
     EXPR_VARS,
-    ColorRange,
     ConstantFormatVideoNode,
     CustomRuntimeError,
     FuncExcept,
@@ -297,7 +296,7 @@ def bitdepth_aware_tokenize_expr(
     if not expr or len(expr) < 4:
         return expr
 
-    replaces = list[tuple[str, Callable[[vs.VideoNode, bool, ColorRange], float]]]()
+    replaces = list[tuple[str, Callable[[vs.VideoNode, bool, vs.VideoNode], float]]]()
 
     for token in sorted(ExprToken, key=lambda x: len(x), reverse=True):
         if token.value in expr:
@@ -315,16 +314,12 @@ def bitdepth_aware_tokenize_expr(
         return expr
 
     clips = list(clips)
-    ranges = [ColorRange.from_video(c, func=func) for c in clips]
-
-    mapped_clips = list(reversed(list(zip(["", *EXPR_VARS], clips[:1] + clips, ranges[:1] + ranges))))
+    mapped_clips = list(reversed(list(zip(["", *EXPR_VARS], clips[:1] + clips))))
 
     for mkey, function in replaces:
         if mkey in expr:
-            for key, clip, crange in [
-                (f"{mkey}_{k}" if k else f"{mkey}", clip, crange) for k, clip, crange in mapped_clips
-            ]:
-                expr = re.sub(rf"\b{key}\b", str(function(clip, chroma, crange)), expr)
+            for key, clip in [(f"{mkey}_{k}" if k else f"{mkey}", clip) for k, clip in mapped_clips]:
+                expr = re.sub(rf"\b{key}\b", str(function(clip, chroma, clip)), expr)
 
         if re.search(rf"\b{mkey}\b", expr):
             raise CustomIndexError("Parsing error or not enough clips passed!", func, reason=expr)

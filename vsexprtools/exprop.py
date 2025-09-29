@@ -13,6 +13,7 @@ from typing_extensions import Self
 
 from vstools import (
     ColorRange,
+    ColorRangeLike,
     ConstantFormatVideoNode,
     ConvMode,
     CustomIndexError,
@@ -136,7 +137,7 @@ class ExprToken(CustomStrEnum, metaclass=_ExprTokenMeta):
     ChromaRangeInMax = "crange_in_max"
 
     @cache
-    def get_value(self, clip: vs.VideoNode, chroma: bool = False, range_in: ColorRange | None = None) -> float:
+    def get_value(self, clip: vs.VideoNode, chroma: bool = False, range_in: ColorRangeLike | None = None) -> float:
         """
         Resolves the numeric value represented by this token based on the input clip and range.
 
