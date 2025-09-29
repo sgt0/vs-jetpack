@@ -15,11 +15,9 @@ from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
     FuncExcept,
-    HoldsVideoFormat,
     KwargsT,
     Planes,
     T,
-    VideoFormatLike,
     check_variable,
     depth,
     get_lowest_value,
@@ -180,21 +178,13 @@ class EdgeDetect(ABC):
         return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
 
     @classmethod
-    def depth_scale(
-        cls, clip: vs.VideoNode, bitdepth: VideoFormatLike | HoldsVideoFormat | int
-    ) -> ConstantFormatVideoNode:
+    def depth_scale(cls, clip: vs.VideoNode, bitdepth: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(clip, cls)
 
         fmt = get_video_format(bitdepth)
 
         if fmt.sample_type == vs.INTEGER:
-            return norm_expr(
-                clip,
-                ("x abs {peak} *", "x abs {peak} * neutral -"),
-                format=fmt,
-                func=cls,
-                peak=get_peak_value(bitdepth, range_in=ColorRange.FULL),
-            )
+            return norm_expr([clip, bitdepth], "x mask_max_y *", format=fmt, func=cls)
         return clip
 
     @classmethod
@@ -260,9 +250,7 @@ class EdgeDetect(ABC):
     def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return ColorRange.FULL.apply(clip)
 
-    def _postprocess(
-        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormat | VideoFormatLike | int
-    ) -> ConstantFormatVideoNode:
+    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: vs.VideoNode) -> ConstantFormatVideoNode:
         return clip
 
 
@@ -297,9 +285,7 @@ class NormalizeProcessor(MatrixEdgeDetect):
     def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return super()._preprocess(depth(clip, 32))
 
-    def _postprocess(
-        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormat | VideoFormatLike | int
-    ) -> ConstantFormatVideoNode:
+    def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: vs.VideoNode) -> ConstantFormatVideoNode:
         return super()._postprocess(self.depth_scale(clip, input_bits), input_bits)
 
 
@@ -399,9 +385,7 @@ class RidgeDetect(MatrixEdgeDetect):
     def _preprocess_ridge(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return depth(super()._preprocess(clip), 32)
 
-    def _postprocess_ridge(
-        self, clip: ConstantFormatVideoNode, input_bits: HoldsVideoFormat | VideoFormatLike | int
-    ) -> ConstantFormatVideoNode:
+    def _postprocess_ridge(self, clip: ConstantFormatVideoNode, input_bits: vs.VideoNode) -> ConstantFormatVideoNode:
         return self.depth_scale(super()._postprocess(clip, input_bits), input_bits)
 
 
