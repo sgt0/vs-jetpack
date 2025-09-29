@@ -202,7 +202,7 @@ class EdgeDetect(ABC):
         clamp: bool | tuple[float, float] | list[tuple[float, float]],
         planes: Planes,
     ) -> ConstantFormatVideoNode:
-        if lthr == hthr and multi == 1 and not clamp:
+        if not any([lthr, hthr, multi != 1, clamp]):
             if planes is None:
                 return mask
 
