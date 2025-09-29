@@ -5,10 +5,10 @@ from enum import IntFlag, auto
 from inspect import isabstract
 from typing import Any, ClassVar, Sequence, TypeAlias, TypeVar
 
-from jetpytools import inject_kwargs_params
+from jetpytools import inject_kwargs_params, to_arr
 from typing_extensions import Self
 
-from vsexprtools import ExprList, ExprOp, ExprToken, norm_expr
+from vsexprtools import ExprList, ExprOp, norm_expr
 from vstools import (
     ColorRange,
     ConstantFormatVideoNode,
@@ -19,13 +19,10 @@ from vstools import (
     T,
     check_variable,
     depth,
-    get_lowest_value,
-    get_peak_value,
     get_subclasses,
     get_video_format,
     inject_self,
     join,
-    limiter,
     normalize_planes,
     scale_mask,
     vs,
@@ -144,9 +141,9 @@ class EdgeDetect(ABC):
     def edgemask(
         self,
         clip: vs.VideoNode,
-        lthr: float = 0.0,
-        hthr: float | None = None,
-        multi: float = 1.0,
+        lthr: float | list[float] | None = None,
+        hthr: float | list[float] | None = None,
+        multi: float | list[float] = 1.0,
         clamp: bool | tuple[float, float] | list[tuple[float, float]] = False,
         planes: Planes = None,
         **kwargs: Any,
@@ -199,40 +196,16 @@ class EdgeDetect(ABC):
     def _finalize_mask(
         self,
         mask: ConstantFormatVideoNode,
-        lthr: float,
-        hthr: float | None,
-        multi: float,
+        lthr: float | list[float] | None,
+        hthr: float | list[float] | None,
+        multi: float | list[float],
         clamp: bool | tuple[float, float] | list[tuple[float, float]],
         planes: Planes,
     ) -> ConstantFormatVideoNode:
-        peak = get_peak_value(mask)
+        if lthr == hthr and multi == 1 and not clamp:
+            if planes is None:
+                return mask
 
-        hthr = 1.0 if hthr is None else hthr
-
-        lthr = scale_mask(lthr, 32, mask)
-        hthr = scale_mask(hthr, 32, mask)
-
-        if multi != 1:
-            mask = ExprOp.MUL(mask, suffix=str(multi), planes=planes)
-
-        if lthr == hthr:
-            mask = norm_expr(mask, f"x {hthr} >= {ExprToken.RangeMax} 0 ?", planes, func=self.__class__)
-        elif lthr > 0 and hthr < peak:
-            mask = norm_expr(mask, f"x {hthr} > {ExprToken.RangeMax} x {lthr} < 0 x ? ?", planes, func=self.__class__)
-        elif lthr > 0:
-            mask = norm_expr(mask, f"x {lthr} < 0 x ?", planes, func=self.__class__)
-        elif hthr < peak:
-            mask = norm_expr(mask, f"x {hthr} > {ExprToken.RangeMax} x ?", planes, func=self.__class__)
-
-        if clamp is True and mask.format.sample_type == vs.FLOAT:
-            clamp = (get_lowest_value(mask, range_in=ColorRange.FULL), get_peak_value(mask, range_in=ColorRange.FULL))
-
-        if isinstance(clamp, list):
-            mask = limiter(mask, *zip(*clamp), planes=planes, func=self.__class__)
-        elif isinstance(clamp, tuple):
-            mask = limiter(mask, *clamp, planes=planes, func=self.__class__)
-
-        if planes is not None:
             return join(
                 {
                     None: mask.std.BlankClip(color=[0] * mask.format.num_planes, keep=True),
@@ -240,7 +213,34 @@ class EdgeDetect(ABC):
                 }
             )
 
-        return mask
+        if lthr is None:
+            lthr = 0.0
+        if hthr is None:
+            hthr = 1.0
+
+        lthr = [scale_mask(lt, 32, mask) for lt in to_arr(lthr)]
+        hthr = [scale_mask(ht, 32, mask) for ht in to_arr(hthr)]
+        multi = to_arr(multi)
+
+        if clamp is True and mask.format.sample_type == vs.FLOAT:
+            clamp = [(0, 1)]
+        elif isinstance(clamp, bool):
+            clamp = [(False, False)]
+        elif isinstance(clamp, tuple):
+            clamp = [clamp]
+
+        mask = norm_expr(
+            mask,
+            ["x {multi}", "Z!", ["Z@ {hthr} >", "range_max", ["Z@ {lthr} < 0 Z@ ?"], "?"], "{clamp}"],
+            planes,
+            func=self.__class__,
+            multi=[f"{m} *" if m != 1.0 else "" for m in multi],
+            lthr=lthr,
+            hthr=hthr,
+            clamp=["%s %s clamp" % c if any(c) else "" for c in clamp],
+        )
+
+        return self._finalize_mask(mask, None, None, 1, False, planes)
 
     @abstractmethod
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
@@ -323,9 +323,9 @@ class RidgeDetect(MatrixEdgeDetect):
     def ridgemask(
         self,
         clip: vs.VideoNode,
-        lthr: float = 0.0,
-        hthr: float | None = None,
-        multi: float = 1.0,
+        lthr: float | list[float] | None = None,
+        hthr: float | list[float] | None = None,
+        multi: float | list[float] = 1.0,
         clamp: bool | tuple[float, float] | list[tuple[float, float]] = False,
         planes: Planes = None,
         **kwargs: Any,
