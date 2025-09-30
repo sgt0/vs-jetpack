@@ -116,7 +116,7 @@ def awarpsharp(
     if mask is None:
         mask = SobelStd
 
-    mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, planes=mask_planes)
+    mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, clamp=(0, thresh), planes=mask_planes)
 
     if blur is not False:
         blur_fn = partial(box_blur, radius=2, passes=blur, planes=planes) if isinstance(blur, int) else blur
