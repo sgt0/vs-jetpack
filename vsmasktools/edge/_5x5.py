@@ -9,7 +9,7 @@ from typing import Any, ClassVar, Sequence
 
 from jetpytools import KwargsT
 
-from vstools import ConstantFormatVideoNode, vs
+from vstools import ConstantFormatVideoNode
 
 from ._abstract import (
     EdgeDetect,
@@ -137,9 +137,7 @@ class FDoGTCanny(Matrix5x5, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 0.5 if clip.format.sample_type == vs.FLOAT else (1 - 1 / (7 / 3) * 0.9696)
-
-        return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=0.5) | kwargs))
 
 
 class Farid(NormalizeProcessor, RidgeDetect, EuclideanDistance, Matrix5x5):

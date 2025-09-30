@@ -133,9 +133,7 @@ class TriticalTCanny(Matrix3x3, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 1 if clip.format.sample_type == vs.FLOAT else (7 / 3 * 1.002 - 0.0001) / 2
-
-        return clip.tcanny.TCanny(op=0, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=0, **(KwargsT(sigma=0, mode=1) | kwargs))
 
 
 class Cross(RidgeDetect, EuclideanDistance, Matrix3x3):
@@ -170,9 +168,7 @@ class PrewittTCanny(Matrix3x3, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 2 if clip.format.sample_type == vs.FLOAT else 7 / 3 * 1.002 - 0.0001
-
-        return clip.tcanny.TCanny(op=1, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=1, **(KwargsT(sigma=0, mode=1, scale=2) | kwargs))
 
 
 class Sobel(RidgeDetect, EuclideanDistance, Matrix3x3):
@@ -198,9 +194,7 @@ class SobelTCanny(Matrix3x3, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 1.0 if clip.format.sample_type == vs.FLOAT else (7 / 3 * 1.002 - 0.0001) / 2
-
-        return clip.tcanny.TCanny(op=2, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=2, **(KwargsT(sigma=0, mode=1) | kwargs))
 
 
 class ASobel(Matrix3x3, EdgeDetect):
@@ -241,9 +235,7 @@ class ScharrTCanny(Matrix3x3, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 1 / 3 if clip.format.sample_type == vs.FLOAT else 1 / ((3 - math.sqrt(3) / 4) - 0.00053)
-
-        return clip.tcanny.TCanny(op=3, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=3, **(KwargsT(sigma=0, mode=1, scale=1 / 3) | kwargs))
 
 
 class Kroon(RidgeDetect, EuclideanDistance, Matrix3x3):
@@ -264,9 +256,7 @@ class KroonTCanny(Matrix3x3, EdgeDetect):
     """
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        _scale_constant = 1 / 17 if clip.format.sample_type == vs.FLOAT else 1 / 14.54325
-
-        return clip.tcanny.TCanny(op=4, **(KwargsT(sigma=0, mode=1, scale=_scale_constant) | kwargs))
+        return clip.tcanny.TCanny(op=4, **(KwargsT(sigma=0, mode=1, scale=1 / 17) | kwargs))
 
 
 class FreyChen(NormalizeProcessor, MatrixEdgeDetect):
