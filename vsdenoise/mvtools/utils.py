@@ -26,7 +26,7 @@ def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
     norm_planes = set(normalize_planes(clip, planes))
 
     if norm_planes in [{0}, {1}, {2}]:
-        norm_planes.pop()
+        return norm_planes.pop()
 
     if norm_planes == {1, 2}:
         return 3
@@ -81,3 +81,4 @@ def refine_blksize(blksize: int | tuple[int, int], divisor: int | tuple[int, int
         nblksize[0] // ndivisor[0] if ndivisor[0] else 0,
         nblksize[1] // ndivisor[1] if ndivisor[1] else 0,
     )
+
