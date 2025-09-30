@@ -9,7 +9,7 @@ from vsexprtools import norm_expr
 from vskernels import Bilinear
 
 if TYPE_CHECKING:
-    from vsmasktools import EdgeDetectLike
+    from vsmasktools import MaskLike
 
 from vstools import (
     ChromaLocation,
@@ -75,7 +75,7 @@ def unsharpen(
 
 def awarpsharp(
     clip: vs.VideoNode,
-    mask: EdgeDetectLike | vs.VideoNode | None = None,
+    mask: MaskLike | None = None,
     thresh: int | float = 128,
     blur: int | GenericVSFunction[vs.VideoNode] | Literal[False] = 3,
     depth: int | Sequence[int] | None = None,
@@ -105,7 +105,7 @@ def awarpsharp(
     Returns:
         Warp-sharpened clip.
     """
-    from vsmasktools import EdgeDetect, Sobel
+    from vsmasktools import SobelStd, normalize_mask
 
     func = FunctionUtil(clip, awarpsharp, planes)
 
@@ -113,10 +113,10 @@ def awarpsharp(
     chroma = True if func.work_clip.format.color_family is vs.RGB else chroma
     mask_planes = planes if chroma else 0
 
-    if not isinstance(mask, vs.VideoNode):
-        mask = EdgeDetect.ensure_obj(mask if mask else Sobel, awarpsharp).edgemask(
-            func.work_clip, clamp=(0, thresh), planes=mask_planes
-        )
+    if mask is None:
+        mask = SobelStd
+
+    mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, planes=mask_planes)
 
     if isinstance(blur, int):
         if blur:
