@@ -298,7 +298,6 @@ def get_clip_filepath(clip: vs.VideoNode, fallback: SPathLike | None = None, fun
     Args:
         clip: The clip to get the file path from.
         fallback: Fallback file path to use if the `prop` is not found.
-        strict: If True, will raise an error if the `prop` is not found. Default: False.
         func: Function returned for error handling. This should only be set by VS package developers.
 
     Raises:
