@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Literal, Sequence
+from typing import TYPE_CHECKING, Any, Literal, Sequence
 
 from jetpytools import FuncExcept
 
@@ -81,6 +81,7 @@ def awarpsharp(
     depth: int | Sequence[int] | None = None,
     chroma: bool = False,
     planes: Planes = None,
+    **kwargs: Any,
 ) -> ConstantFormatVideoNode:
     """
     Sharpens edges by warping them.
@@ -101,6 +102,7 @@ def awarpsharp(
             True will create an edge mask from each chroma channel and use those to warp each chroma channel
             individually.
         planes: Planes to process. Defaults to all.
+        **kwargs: Additional arguments forwarded to the [normalize_mask][vsmasktools.normalize_mask] function.
 
     Returns:
         Warp-sharpened clip.
@@ -116,7 +118,9 @@ def awarpsharp(
     if mask is None:
         mask = SobelStd
 
-    mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, clamp=(0, thresh), planes=mask_planes)
+    kwargs = {"clamp": (0, thresh)} | kwargs
+
+    mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, planes=mask_planes, **kwargs)
 
     if blur is not False:
         blur_fn = partial(box_blur, radius=2, passes=blur, planes=planes) if isinstance(blur, int) else blur
