@@ -613,9 +613,10 @@ def bilateral(
         ```
 
     For more details, see:
-        - https://github.com/dnjulek/vapoursynth-zip/wiki/Bilateral
-        - https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Bilateral
-        - https://github.com/WolframRhodium/VapourSynth-BilateralGPU
+
+      - <https://github.com/dnjulek/vapoursynth-zip/wiki/Bilateral>
+      - <https://github.com/HomeOfVapourSynthEvolution/VapourSynth-Bilateral>
+      - <https://github.com/WolframRhodium/VapourSynth-BilateralGPU>
 
     Args:
         clip: Source clip.
