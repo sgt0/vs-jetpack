@@ -81,4 +81,3 @@ def refine_blksize(blksize: int | tuple[int, int], divisor: int | tuple[int, int
         nblksize[0] // ndivisor[0] if ndivisor[0] else 0,
         nblksize[1] // ndivisor[1] if ndivisor[1] else 0,
     )
-
