@@ -16,9 +16,9 @@ from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
     FunctionUtil,
-    GenericVSFunction,
     Planes,
     VSFunctionNoArgs,
+    VSFunctionPlanesArgs,
     check_ref_clip,
     core,
     get_y,
@@ -77,7 +77,7 @@ def awarpsharp(
     clip: vs.VideoNode,
     mask: MaskLike | None = None,
     thresh: int | float = 128,
-    blur: int | GenericVSFunction[vs.VideoNode] | Literal[False] = 3,
+    blur: int | VSFunctionPlanesArgs[vs.VideoNode, vs.VideoNode] | Literal[False] = 3,
     depth: int | Sequence[int] | None = None,
     chroma: bool = False,
     planes: Planes = None,
@@ -118,11 +118,9 @@ def awarpsharp(
 
     mask = normalize_mask(mask, func.work_clip, func.work_clip, func=func.func, planes=mask_planes)
 
-    if isinstance(blur, int):
-        if blur:
-            blur = partial(box_blur, radius=2, passes=blur, planes=planes)
-    else:
-        mask = blur(mask, planes=mask_planes)
+    if blur is not False:
+        blur_fn = partial(box_blur, radius=2, passes=blur, planes=planes) if isinstance(blur, int) else blur
+        mask = blur_fn(mask, planes=mask_planes)
 
     if not chroma:
         loc = ChromaLocation.from_video(func.work_clip)
