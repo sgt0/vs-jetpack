@@ -264,6 +264,53 @@ class EdgeDetect(ABC):
         return clip
 
 
+class SupportsScalePlanes(EdgeDetect):
+    _scale = 1.0
+
+    @inject_self
+    @inject_kwargs_params
+    def edgemask(
+        self,
+        clip: vs.VideoNode,
+        lthr: float | list[float] | None = None,
+        hthr: float | list[float] | None = None,
+        multi: float | list[float] = 1.0,
+        clamp: bool | tuple[float, float] | list[tuple[float, float]] = False,
+        planes: Planes = None,
+        **kwargs: Any,
+    ) -> ConstantFormatVideoNode:
+        if not isinstance(multi, Sequence):
+            scale = kwargs.pop("scale", self._scale) * multi
+            multi = 1.0
+        else:
+            scale = self._scale
+
+        return super().edgemask(clip, lthr, hthr, multi, clamp, planes, scale=scale, **kwargs)
+
+    def _finalize_mask(
+        self,
+        mask: ConstantFormatVideoNode,
+        lthr: float | list[float] | None,
+        hthr: float | list[float] | None,
+        multi: float | list[float],
+        clamp: bool | tuple[float, float] | list[tuple[float, float]],
+        planes: Planes,
+    ) -> ConstantFormatVideoNode:
+        if not any([lthr, hthr, multi != 1, clamp]):
+            return mask
+
+        return super()._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
+
+
+class TCannyEdgeDetect(SupportsScalePlanes):
+    _op: ClassVar[int]
+
+    def _compute_edge_mask(
+        self, clip: ConstantFormatVideoNode, *, scale: float | None = None, planes: Planes = None, **kwargs: Any
+    ) -> ConstantFormatVideoNode:
+        return clip.tcanny.TCanny(op=self._op, scale=scale, planes=planes, **{"sigma": 0, "mode": 1} | kwargs)
+
+
 class MatrixEdgeDetect(EdgeDetect):
     matrices: ClassVar[Sequence[Sequence[float]]]
     divisors: ClassVar[Sequence[float] | None] = None

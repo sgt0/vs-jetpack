@@ -5,11 +5,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, ClassVar, Sequence
-
-from jetpytools import KwargsT
-
-from vstools import ConstantFormatVideoNode
+from typing import ClassVar, Sequence
 
 from ._abstract import (
     EdgeDetect,
@@ -19,6 +15,7 @@ from ._abstract import (
     NormalizeProcessor,
     RidgeDetect,
     SingleMatrix,
+    TCannyEdgeDetect,
 )
 
 # ruff: noqa: RUF022
@@ -131,13 +128,13 @@ class FDoG(RidgeDetect, EuclideanDistance, Matrix5x5):
     divisors: ClassVar[Sequence[float] | None] = [2, 2]
 
 
-class FDoGTCanny(Matrix5x5, EdgeDetect):
+class FDoGTCanny(TCannyEdgeDetect, Matrix5x5):
     """
     Flow-based Difference of Gaussian TCanny Vapoursynth plugin.
     """
 
-    def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        return clip.tcanny.TCanny(op=6, **(KwargsT(sigma=0, mode=1, scale=0.5) | kwargs))
+    _op = 6
+    _scale = 1 / 2
 
 
 class Farid(NormalizeProcessor, RidgeDetect, EuclideanDistance, Matrix5x5):
