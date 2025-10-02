@@ -103,7 +103,7 @@ class ExprToken(CustomStrEnum, metaclass=_ExprTokenMeta):
     """Maximum value in mask clips."""
 
     Neutral = "neutral"
-    """Neutral value (e.g. 128 for 8-bit limited, 0 for float)."""
+    """Neutral value for chroma & MakeDiff/MergeDiff (e.g. 128 for 8-bit, 0 for float)."""
 
     RangeMin = "range_min"
     """Minimum value in full range (chroma-aware)."""
