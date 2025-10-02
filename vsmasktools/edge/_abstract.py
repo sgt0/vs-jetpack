@@ -204,15 +204,12 @@ class EdgeDetect(ABC):
         planes: Planes,
     ) -> ConstantFormatVideoNode:
         if not any([lthr, hthr, multi != 1, clamp]):
-            if planes is None:
+            planes = normalize_planes(mask, planes)
+
+            if planes == normalize_planes(mask, None):
                 return mask
 
-            return join(
-                {
-                    None: mask.std.BlankClip(color=[0] * mask.format.num_planes, keep=True),
-                    tuple(normalize_planes(mask, planes)): mask,
-                }
-            )
+            return join({None: mask.std.BlankClip(color=[0] * mask.format.num_planes, keep=True), tuple(planes): mask})
 
         if lthr is None:
             lthr = 0.0
