@@ -343,20 +343,6 @@ class SupportsScalePlanes(EdgeDetect):
 
         return super().edgemask(clip, lthr, hthr, multi, clamp, planes, scale=scale, **kwargs)
 
-    def _finalize_mask(
-        self,
-        mask: ConstantFormatVideoNode,
-        lthr: float | Sequence[float] | None,
-        hthr: float | Sequence[float] | None,
-        multi: float | Sequence[float],
-        clamp: bool | tuple[float, float] | list[tuple[float, float]],
-        planes: Planes,
-    ) -> ConstantFormatVideoNode:
-        if not any([lthr, hthr, multi != 1, clamp]):
-            return mask
-
-        return super()._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
-
 
 class TCannyEdgeDetect(SupportsScalePlanes):
     """
