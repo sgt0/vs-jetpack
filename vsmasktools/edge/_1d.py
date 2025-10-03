@@ -18,7 +18,10 @@ __all__ = [
 ]
 
 
-class Matrix1D(EdgeDetect, ABC): ...
+class Matrix1D(EdgeDetect, ABC):
+    """
+    Abstract base class for one-dimensional convolution-based edge detectors.
+    """
 
 
 class TEdge(EuclideanDistance, Matrix1D):

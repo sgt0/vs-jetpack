@@ -1,3 +1,7 @@
+"""
+This module defines core abstract classes for building edge detection and ridge detection operators.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -14,7 +18,6 @@ from vstools import (
     ConstantFormatVideoNode,
     ConvMode,
     FuncExcept,
-    KwargsT,
     Planes,
     T,
     check_variable,
@@ -51,7 +54,10 @@ __all__ = [
 
 class MagDirection(IntFlag):
     """
-    Direction of magnitude calculation.
+    Direction flags for magnitude calculations.
+
+    Includes 8 primary compass directions (N, NE, E, SE, S, SW, W, NW) and composite groups (e.g., ALL, AXIS, CORNERS).
+    Supports bitwise operations.
     """
 
     N = auto()
@@ -64,16 +70,36 @@ class MagDirection(IntFlag):
     NE = auto()
 
     ALL = N | NW | W | SW | S | SE | E | NE
+    """All eight directions combined."""
 
     AXIS = N | W | S | E
+    """The four cardinal directions: North, West, South, East."""
+
     CORNERS = NW | SW | SE | NE
+    """The four intercardinal (diagonal) directions."""
 
     NORTH = N | NW | NE
+    """All northern directions (North, Northwest, Northeast)."""
+
     WEST = W | NW | SW
+    """All western directions (West, Northwest, Southwest)."""
+
     EAST = E | NE | SE
+    """All eastern directions (East, Northeast, Southeast)."""
+
     SOUTH = S | SW | SE
+    """All southern directions (South, Southwest, Southeast)."""
 
     def select_matrices(self, matrices: Sequence[T]) -> Sequence[T]:
+        """
+        Return matrices matching the active directions in `self`.
+
+        Args:
+            matrices: One item for each primary direction, in definition order.
+
+        Returns:
+            The subset of matrices for directions enabled in `self`.
+        """
         # In Python <3.11, composite flags are included in MagDirection's
         # collection and iteration interfaces.
         primary_flags = [flag for flag in MagDirection if flag != 0 and flag & (flag - 1) == 0]
@@ -124,17 +150,22 @@ def _base_ensure_obj(
 
 class EdgeDetect(ABC):
     """
-    Abstract edge detection interface.
+    Abstract base class for edge detection operators.
     """
 
     _err_class: ClassVar[type[_UnknownMaskDetectError]] = UnknownEdgeDetectError
     """Custom error class used for validation failures."""
 
-    kwargs: KwargsT | None = None
+    kwargs: dict[str, Any] | None = None
+    """Arguments passed to the edgemask function(s)."""
 
     def __init__(self, **kwargs: Any) -> None:
-        super().__init__()
+        """
+        Initialize the scaler with optional keyword arguments.
 
+        Args:
+            **kwargs: Keyword arguments passed to the edgemask function(s).
+        """
         self.kwargs = kwargs
 
     @inject_self
@@ -151,6 +182,7 @@ class EdgeDetect(ABC):
     ) -> ConstantFormatVideoNode:
         """
         Makes edge mask based on convolution kernel.
+
         The resulting mask can be thresholded with lthr, hthr and multiplied with multi.
 
         Args:
@@ -188,10 +220,30 @@ class EdgeDetect(ABC):
     def from_param(
         cls, value: type[Self] | Self | str | None = None, /, func_except: FuncExcept | None = None
     ) -> type[Self]:
+        """
+        Resolve and return an edgemask type from a given input (string, type, or instance).
+
+        Args:
+            value: Edgemask identifier (string, class, or instance).
+            func_except: Function returned for custom error handling.
+
+        Returns:
+            Resolved edgemask type.
+        """
         return _base_from_param(cls, value, cls._err_class, func_except)
 
     @classmethod
     def ensure_obj(cls, value: type[Self] | Self | str | None = None, /, func_except: FuncExcept | None = None) -> Self:
+        """
+        Ensure that the input is an edgemask instance, resolving it if necessary.
+
+        Args:
+            value: Edgemask identifier (string, class, or instance).
+            func_except: Function returned for custom error handling.
+
+        Returns:
+            Edgemask instance.
+        """
         return _base_ensure_obj(cls, value, func_except)
 
     def _finalize_mask(
@@ -265,6 +317,10 @@ class EdgeDetect(ABC):
 
 
 class SupportsScalePlanes(EdgeDetect):
+    """
+    Edge detection base class with support for scaling edge masks.
+    """
+
     _scale = 1.0
 
     @inject_self
@@ -303,6 +359,10 @@ class SupportsScalePlanes(EdgeDetect):
 
 
 class TCannyEdgeDetect(SupportsScalePlanes):
+    """
+    Edge detection using VapourSynth's `tcanny` plugin.
+    """
+
     _op: ClassVar[int]
 
     def _compute_edge_mask(
@@ -312,9 +372,18 @@ class TCannyEdgeDetect(SupportsScalePlanes):
 
 
 class MatrixEdgeDetect(EdgeDetect):
+    """
+    Edge detection based on convolution matrices.
+    """
+
     matrices: ClassVar[Sequence[Sequence[float]]]
+    """Convolution kernels used for edge detection."""
+
     divisors: ClassVar[Sequence[float] | None] = None
+    """Optional divisors applied to each kernel. Defaults to zeros (no division)."""
+
     mode_types: ClassVar[Sequence[str] | None] = None
+    """Optional convolution modes (e.g. 's' for square). Defaults to 's'."""
 
     def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         exprs = [
@@ -337,6 +406,10 @@ class MatrixEdgeDetect(EdgeDetect):
 
 
 class NormalizeProcessor(MatrixEdgeDetect):
+    """
+    Edge detection processor with normalized precision.
+    """
+
     def _preprocess(self, clip: ConstantFormatVideoNode) -> ConstantFormatVideoNode:
         return super()._preprocess(depth(clip, 32))
 
@@ -345,7 +418,20 @@ class NormalizeProcessor(MatrixEdgeDetect):
 
 
 class MagnitudeMatrix(MatrixEdgeDetect):
+    """
+    Edge detector using a subset of convolution matrices.
+
+    Allows selecting which matrices to apply based on directional flags. By default, all directions are used.
+    """
+
     def __init__(self, mag_directions: MagDirection = MagDirection.ALL, **kwargs: Any) -> None:
+        """
+        Initialize with a set of magnitude directions.
+
+        Args:
+            mag_directions: Directional flags controlling which matrices are used. Defaults to all directions.
+            **kwargs: Additional parameters passed to the base class.
+        """
         super().__init__(**kwargs)
 
         self.mag_directions = mag_directions
@@ -355,11 +441,19 @@ class MagnitudeMatrix(MatrixEdgeDetect):
 
 
 class SingleMatrix(MatrixEdgeDetect, ABC):
+    """
+    Edge detector that uses a single convolution matrix.
+    """
+
     def _merge_edge(self, exprs: Sequence[ExprList], clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         return exprs[0](clip)
 
 
 class EuclideanDistance(MatrixEdgeDetect, ABC):
+    """
+    Edge detector combining two matrices via Euclidean distance.
+    """
+
     def _merge_edge(self, exprs: Sequence[ExprList], clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         return norm_expr(
             clip,
@@ -370,14 +464,25 @@ class EuclideanDistance(MatrixEdgeDetect, ABC):
 
 
 class Max(MatrixEdgeDetect, ABC):
+    """
+    Edge detector combining multiple matrices by maximum response.
+
+    Produces the edge mask by selecting the maximum value across all convolution results.
+    """
+
     def _merge_edge(self, exprs: Sequence[ExprList], clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         return ExprOp.MAX.combine_expr(exprs)(clip, planes=kwargs.get("planes"), func=self.__class__)
 
 
 class RidgeDetect(MatrixEdgeDetect):
+    """
+    Edge detector specialized for ridge detection.
+    """
+
     _err_class: ClassVar[type[_UnknownMaskDetectError]] = UnknownRidgeDetectError
 
     @inject_self
+    @inject_kwargs_params
     def ridgemask(
         self,
         clip: vs.VideoNode,

@@ -39,7 +39,10 @@ __all__ = [
 ]
 
 
-class Matrix5x5(EdgeDetect, ABC): ...
+class Matrix5x5(EdgeDetect, ABC):
+    """
+    Abstract base class for 5x5 convolution-based edge detectors.
+    """
 
 
 # Single matrix

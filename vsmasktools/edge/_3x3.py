@@ -67,7 +67,10 @@ __all__ = [
 ]
 
 
-class Matrix3x3(EdgeDetect, ABC): ...
+class Matrix3x3(EdgeDetect, ABC):
+    """
+    Abstract base class for 3x3 convolution-based edge detectors.
+    """
 
 
 # Single matrix
