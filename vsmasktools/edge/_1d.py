@@ -9,7 +9,7 @@ from typing import Any, ClassVar, Sequence
 
 from vstools import ConstantFormatVideoNode, vs
 
-from ._abstract import EdgeDetect, EuclideanDistance
+from ._abstract import EdgeDetect, EuclideanDistance, SupportsScalePlanes
 
 __all__ = [
     "Matrix1D",
@@ -34,10 +34,10 @@ class TEdge(EuclideanDistance, Matrix1D):
     mode_types: ClassVar[Sequence[str] | None] = ["h", "v"]
 
 
-class TEdgeTedgemask(Matrix1D, EdgeDetect):
+class TEdgeTedgemask(SupportsScalePlanes, Matrix1D):
     """
     (tedgemask.TEdgeMask(threshold=0.0, type=2)) Vapoursynth plugin.
     """
 
     def _compute_edge_mask(self, clip: vs.VideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        return clip.tedgemask.TEdgeMask(threshold=0, type=2)
+        return clip.tedgemask.TEdgeMask(threshold=0, type=2, **kwargs)
