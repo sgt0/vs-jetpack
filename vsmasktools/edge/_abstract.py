@@ -175,7 +175,7 @@ class EdgeDetect(ABC):
         return self._finalize_mask(mask, lthr, hthr, multi, clamp, planes)
 
     @classmethod
-    def depth_scale(cls, clip: vs.VideoNode, bitdepth: vs.VideoNode) -> ConstantFormatVideoNode:
+    def _depth_scale(cls, clip: vs.VideoNode, bitdepth: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(clip, cls)
 
         fmt = get_video_format(bitdepth)
@@ -341,7 +341,7 @@ class NormalizeProcessor(MatrixEdgeDetect):
         return super()._preprocess(depth(clip, 32))
 
     def _postprocess(self, clip: ConstantFormatVideoNode, input_bits: vs.VideoNode) -> ConstantFormatVideoNode:
-        return super()._postprocess(self.depth_scale(clip, input_bits), input_bits)
+        return super()._postprocess(self._depth_scale(clip, input_bits), input_bits)
 
 
 class MagnitudeMatrix(MatrixEdgeDetect):
@@ -450,7 +450,7 @@ class RidgeDetect(MatrixEdgeDetect):
         return depth(super()._preprocess(clip), 32)
 
     def _postprocess_ridge(self, clip: ConstantFormatVideoNode, input_bits: vs.VideoNode) -> ConstantFormatVideoNode:
-        return self.depth_scale(super()._postprocess(clip, input_bits), input_bits)
+        return self._depth_scale(super()._postprocess(clip, input_bits), input_bits)
 
 
 EdgeDetectLike: TypeAlias = type[EdgeDetect] | EdgeDetect | str
