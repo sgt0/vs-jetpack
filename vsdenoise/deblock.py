@@ -69,7 +69,6 @@ class dpir(CustomStrEnum):  # noqa: N801
 
             ```py
             import vsmlrt
-            from vstools import core, vs
 
             clip = dpir.DEBLOCK(
                 clip,
