@@ -71,8 +71,6 @@ class dpir(CustomStrEnum):  # noqa: N801
             import vsmlrt
             from vstools import core, vs
 
-            clip = core.std.BlankClip(None, format=vs.YUV420P16, length=3000)
-
             clip = dpir.DEBLOCK(
                 clip,
                 15,
