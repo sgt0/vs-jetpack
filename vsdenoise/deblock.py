@@ -58,7 +58,34 @@ class dpir(CustomStrEnum):  # noqa: N801
         **kwargs: Any,
     ) -> ConstantFormatVideoNode:
         """
-        Deep Plug-and-Play Image Restoration
+        Deep Plug-and-Play Image Restoration.
+
+        Example:
+            Apply DPIR to an entire clip with a global strength of 15,
+            a strength of 20 in the frame range (10, 20),
+            a strength of 5 in the frame ranges (500, 1000) and (1500, 2500),
+            restricted to the chroma planes only,
+            and using the TRT_RTX backend:
+
+            ```py
+            import vsmlrt
+            from vstools import core, vs
+
+            clip = core.std.BlankClip(None, format=vs.YUV420P16, length=3000)
+
+            clip = dpir.DEBLOCK(
+                clip,
+                15,
+                [((10, 20), 20), ([(500, 1000), (1500, 2500)], 5)],
+                planes=[1, 2],
+                backend=vsmlrt.Backend.TRT_RTX,
+            )
+            ```
+
+        Notes:
+            - DPIR requires RGB or GRAY input (automatically upsampled if YUV).
+            - The default chroma upscaler is Catrom.
+              Users may substitute a higher-quality upscaler if needed.
 
         Args:
             clip: Clip to process.
@@ -71,8 +98,8 @@ class dpir(CustomStrEnum):  # noqa: N801
                 If a VideoNode is used, it must be in GRAY8, GRAYH, or GRAYS format,
                 with pixel values representing the 8-bit thresholds.
 
-            zones: Apply different strength in specified zones.
-            **kwargs: Additional arguments to be passed to `vsscale.DPIR`.
+            zones: Apply different strength values to specific frame ranges.
+            **kwargs: Additional arguments to be passed to [vsscale.DPIR][].
         """
         func = "dpir." + str(self.value)
 
@@ -139,7 +166,7 @@ class dpir(CustomStrEnum):  # noqa: N801
             out = dpired
 
         if planes != normalize_planes(clip, None):
-            out = join({None: clip, tuple(planes): dpired}, clip.format.color_family)
+            out = join({None: clip, tuple(planes): dpired}, clip.format.color_family, prop_src=clip)
 
         return out
 
