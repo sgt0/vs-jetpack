@@ -434,7 +434,7 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
             f"{self.__class__.__name__}" + "(" + ", ".join(f"{k}={v}" for k, v in (attrs | self.kwargs).items()) + ")"
         )
 
-    @BaseScalerMeta.cachedproperty
+    @property
     def pretty_string(self) -> str:
         """
         Cached property returning a user-friendly string representation.
@@ -444,7 +444,7 @@ class BaseScaler(vs_object, ABC, metaclass=BaseScalerMeta, abstract=True):
         """
         return self._pretty_string()
 
-    @classproperty
+    @classproperty.cached
     @classmethod
     def implemented_funcs(cls) -> frozenset[str]:
         """
