@@ -314,11 +314,12 @@ class BaseMixedScaler(
             cls.__others__ = tuple(others) or cls.__others__
             return GenericAlias(cls, (specializer, *cls.__others__))
 
-        mixed_spe = BaseMixedScalerMeta(
+        mixed_spe = BaseMixedScalerMeta.__new__(
+            BaseMixedScalerMeta,
             cls.__name__,
             (cls,),
             cls.__dict__.copy(),
-            *tuple(others),
+            *others,
             specializer=specializer,
             partial_abstract=True,
         )
