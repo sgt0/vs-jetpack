@@ -4,9 +4,10 @@ This module implements scalers for ONNX models.
 
 from __future__ import annotations
 
+import re
 from abc import ABC
 from dataclasses import Field, asdict, fields, replace
-from importlib.util import find_spec
+from functools import cache
 from logging import DEBUG, debug, getLogger, warning
 from typing import (
     TYPE_CHECKING,
@@ -22,6 +23,7 @@ from typing import (
 )
 
 from jetpytools import CustomImportError
+from packaging.version import Version
 from typing_extensions import Self, deprecated
 
 from vsexprtools import norm_expr
@@ -33,6 +35,7 @@ from vstools import (
     DitherType,
     Matrix,
     MatrixLike,
+    OutdatedPluginError,
     ProcessVariableResClip,
     SPath,
     SPathLike,
@@ -49,21 +52,6 @@ from vstools import (
     padder,
     vs,
 )
-
-if TYPE_CHECKING:
-    from vsmlrt import backendT as Backend
-
-    BackendLike = Backend | type[Backend] | str
-    """
-    Type alias for anything that can resolve to a Backend from vs-mlrt.
-
-    This includes:
-    - A string identifier.
-    - A class type subclassing `Backend`.
-    - An instance of a `Backend`.
-    """
-else:
-    BackendLike = Any
 
 from .generic import BaseGenericScaler
 
@@ -93,6 +81,89 @@ def _clean_keywords(kwargs: dict[str, Any], backend: Any) -> dict[str, Any]:
 
 def _get_backend_fields(backend: Any) -> dict[str, Field[Any]]:
     return {f.name: f for f in fields(backend)}
+
+
+if TYPE_CHECKING:
+    from vsmlrt import backendT as Backend
+
+    BackendLike = Backend | type[Backend] | str
+    """
+    Type alias for anything that can resolve to a Backend from vs-mlrt.
+
+    This includes:
+    - A string identifier.
+    - A class type subclassing `Backend`.
+    - An instance of a `Backend`.
+    """
+else:
+    BackendLike = Any
+
+
+def _normalize_git_version(raw: str) -> Version:
+    raw = raw.strip().lstrip("v")
+
+    matched = re.match(r"(?P<tag>[0-9A-Za-z.\-_]+?)(?:-(?P<count>\d+)-g(?P<hash>[0-9a-f]+))?$", raw)
+
+    if not matched:
+        raise ValueError(f"Unrecognized git-describe string: {raw!r}")
+
+    tag = matched.group("tag")
+    count = int(matched.group("count") or 0)
+
+    tag_parts = tag.split(".", 2)
+    numeric_parts = list[str]()
+    suffix_parts = list[str]()
+
+    for part in tag_parts:
+        if part.isdigit():
+            numeric_parts.append(part)
+        else:
+            suffix_parts.append(part)
+
+    base_version = ".".join(numeric_parts)
+    normalized = base_version if count == 0 else f"{base_version}.post{count}"
+
+    local_segments = list[str]()
+
+    if suffix_parts:
+        local_segments.append(".".join(suffix_parts))
+
+    if local_segments:
+        normalized += "+" + ".".join(local_segments)
+
+    return Version(normalized)
+
+
+@cache
+def _check_vsmlrt_script_version(cls: type[BaseOnnxScaler]) -> None:
+    try:
+        import vsmlrt
+    except ImportError:
+        raise CustomImportError(cls, "vsmlrt") from None
+
+    if (current_version := Version(vsmlrt.__version__)) < cls._REQUIRED_VSMLRT_SCRIPT_VERSION:
+        raise CustomImportError(
+            cls,
+            "vsmlrt",
+            f"Detected vs-mlrt version {current_version} is older than {cls._REQUIRED_VSMLRT_SCRIPT_VERSION}. "
+            "Please update to a more recent version.",
+        )
+
+
+@cache
+def _check_vsmlrt_plugin_version(backend_name: str, cls: type[BaseOnnxScaler]) -> None:
+    bname = backend_name.lower().split("_", 1)
+    plugin_name = "trt_rtx" if bname == ["trt", "rtx"] else bname[0]
+
+    current_version = _normalize_git_version(getattr(core, plugin_name).Version()["version"].decode())
+
+    if current_version < cls._REQUIRED_VSMLRT_PLUGIN_VERSION:
+        raise OutdatedPluginError(
+            cls,
+            plugin_name,
+            f"The plugin '{plugin_name}' version is older than {cls._REQUIRED_VSMLRT_PLUGIN_VERSION}. "
+            "Please update to a more recent version.",
+        )
 
 
 def autoselect_backend(**kwargs: Any) -> Backend:
@@ -147,11 +218,14 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     Abstract generic scaler class for an ONNX model.
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
-        if find_spec("vsmlrt") is None:
-            raise CustomImportError(cls, "vsmlrt")
+    _REQUIRED_VSMLRT_SCRIPT_VERSION = Version("3.22.35")
+    _REQUIRED_VSMLRT_PLUGIN_VERSION = Version("15.13")
 
-        return super().__new__(cls, *args, **kwargs)
+    if not TYPE_CHECKING:
+
+        def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+            _check_vsmlrt_script_version(cls)
+            return super().__new__(cls, *args, **kwargs)
 
     def __init__(
         self,
@@ -211,6 +285,8 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
             self.backend = backend_t(**_clean_keywords(default_args | self.kwargs, backend_t))
         else:
             self.backend = replace(backend, **_clean_keywords(self.kwargs, backend))
+
+        _check_vsmlrt_plugin_version(self.backend.__class__.__name__, self.__class__)
 
         self.tiles = tiles
         self.tilesize = tilesize

@@ -7,6 +7,8 @@ from fractions import Fraction
 if typing.TYPE_CHECKING:
     from vstools import ConstantFormatVideoNode
 
+__version__: str
+
 __all__ = [
     "Backend",
     "BackendV2",
