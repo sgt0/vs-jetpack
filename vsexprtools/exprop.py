@@ -978,7 +978,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             if not saturate:
                 out.append(cls.ABS)
 
-            if multiply is not None:
+            if multiply is not None and multiply != 1.0:
                 out.append(multiply, cls.MUL)
 
             if clamp:
