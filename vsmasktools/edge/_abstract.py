@@ -295,7 +295,7 @@ class EdgeDetect(ABC):
 
         mask = norm_expr(
             mask,
-            ["x", thr_expr, "{clamp}"],
+            [thr_expr, "{clamp}"],
             planes,
             func=self.__class__,
             lthr=lthr,
