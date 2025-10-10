@@ -23,7 +23,7 @@ from vstools import (
 )
 
 from .details import multi_detail_mask
-from .edge import FDoG, Kirsch, MagDirection, Prewitt
+from .edge import FDoG, Kirsch, Prewitt
 from .morpho import Morpho
 from .spat_funcs import retinex
 from .types import Coordinates, MaskLike
@@ -212,7 +212,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         dreluma_edges = Prewitt.edgemask(dreluma)
         dreluma_edges = Morpho.minimum(dreluma_edges, coords=Coordinates.CORNERS)
 
-        kirsch = Kirsch(MagDirection.N | MagDirection.EAST).edgemask(luma)
+        kirsch = Kirsch.edgemask(luma)
 
         add_clip = ExprOp.ADD(dreluma_edges, kirsch)
 
