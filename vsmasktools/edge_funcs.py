@@ -160,7 +160,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
     def __call__(  # type: ignore[misc]
         self: Literal[dre_edgemask.RETINEX],
         clip: vs.VideoNode,
-        tsigma: float = 1,
+        sigma: float = 1,
         brz: float = 0.122,
         *,
         sigmas: Sequence[float] = [50, 200, 350],
@@ -170,7 +170,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
     def __call__(  # type: ignore[misc]
         self: Literal[dre_edgemask.CLAHE],
         clip: vs.VideoNode,
-        tsigma: float = 1,
+        sigma: float = 1,
         brz: float = 0.122,
         *,
         limit: float = 0.0305,
@@ -179,11 +179,11 @@ class dre_edgemask(CustomEnum):  # noqa: N801
 
     @overload
     def __call__(
-        self, clip: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any
+        self, clip: vs.VideoNode, sigma: float = 1, brz: float = 0.122, **kwargs: Any
     ) -> ConstantFormatVideoNode: ...
 
     def __call__(
-        self, clip: vs.VideoNode, tsigma: float = 1, brz: float = 0.122, **kwargs: Any
+        self, clip: vs.VideoNode, sigma: float = 1, brz: float = 0.122, **kwargs: Any
     ) -> ConstantFormatVideoNode:
         """
         Creates an edgemask with dynamic range enhancement (DRE) prefiltering.
@@ -193,7 +193,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
 
         Args:
             clip: Source clip.
-            tsigma: Sigma value for TCanny edge detection. Defaults to 1.
+            sigma: Standard deviation of the Gaussian kernel for edge detection. Defaults to 1.
             brz: Binarization threshold (32-bit float scale). Defaults to 0.122.
             sigmas: Sigma values for the retinex prefilter. Defaults to [50, 200, 350].
             limit: Limit for CLAHE prefilter. Defaults to 0.0305.
@@ -206,12 +206,15 @@ class dre_edgemask(CustomEnum):  # noqa: N801
 
         dreluma = self._prefilter(luma, **kwargs)
 
-        tcanny = Prewitt.edgemask(dreluma, sigma=tsigma, scale=1)
-        tcanny = Morpho.minimum(tcanny, coords=Coordinates.CORNERS)
+        if sigma:
+            dreluma = gauss_blur(dreluma, sigma)
+
+        dreluma_edges = Prewitt.edgemask(dreluma)
+        dreluma_edges = Morpho.minimum(dreluma_edges, coords=Coordinates.CORNERS)
 
         kirsch = Kirsch(MagDirection.N | MagDirection.EAST).edgemask(luma)
 
-        add_clip = ExprOp.ADD(tcanny, kirsch)
+        add_clip = ExprOp.ADD(dreluma_edges, kirsch)
 
         if brz > 0:
             add_clip = Morpho.binarize(add_clip, brz)
