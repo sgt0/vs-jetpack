@@ -63,12 +63,12 @@ class DeinterlacerKwargs(dict[str, Any]):
             return super().__setitem__(key, value)
         setattr(self.deinterlacer, key, value)
 
-    @copy_signature(dict.update)
+    @copy_signature(dict[str, Any].update)
     def update(self, *args: Any, **kwargs: Any) -> None:
         for k, v in dict(*args, **kwargs).items():
             self[k] = v
 
-    @copy_signature(dict.setdefault)
+    @copy_signature(dict[str, Any].setdefault)
     def setdefault(self, key: str, default: Any = None) -> Any:
         if key not in self:
             self[key] = default
