@@ -22,7 +22,7 @@ from vstools import (
 )
 
 from .details import multi_detail_mask
-from .edge import FDoG, Kirsch, Prewitt
+from .edge import EdgeDetect, EdgeDetectLike, FDoG, Kirsch, Prewitt
 from .morpho import Morpho
 from .spat_funcs import retinex
 from .types import Coordinates, MaskLike
@@ -161,6 +161,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         clip: vs.VideoNode,
         sigma: float = 1,
         brz: float = 0.122,
+        operator: EdgeDetectLike = Prewitt,
         *,
         sigmas: Sequence[float] = [50, 200, 350],
     ) -> ConstantFormatVideoNode: ...
@@ -171,6 +172,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         clip: vs.VideoNode,
         sigma: float = 1,
         brz: float = 0.122,
+        operator: EdgeDetectLike = Prewitt,
         *,
         limit: float = 0.0305,
         tile: int = 5,
@@ -178,12 +180,22 @@ class dre_edgemask(CustomEnum):  # noqa: N801
 
     @overload
     def __call__(
-        self, clip: vs.VideoNode, sigma: float = 1, brz: float = 0.122, **kwargs: Any
+        self,
+        clip: vs.VideoNode,
+        sigma: float = 1,
+        brz: float = 0.122,
+        operator: EdgeDetectLike = Prewitt,
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode: ...
 
     def __call__(
-        self, clip: vs.VideoNode, sigma: float = 1, brz: float = 0.122, **kwargs: Any
-    ) -> ConstantFormatVideoNode:
+        self,
+        clip: vs.VideoNode,
+        sigma: float = 1,
+        brz: float = 0.122,
+        operator: EdgeDetectLike = Prewitt,
+        **kwargs: Any,
+    ) -> vs.VideoNode:
         """
         Creates an edgemask with dynamic range enhancement (DRE) prefiltering.
 
@@ -194,9 +206,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
             clip: Source clip.
             sigma: Standard deviation of the Gaussian kernel for edge detection. Defaults to 1.
             brz: Binarization threshold (32-bit float scale). Defaults to 0.122.
-            sigmas: Sigma values for the retinex prefilter. Defaults to [50, 200, 350].
-            limit: Limit for CLAHE prefilter. Defaults to 0.0305.
-            tile: Tile size for CLAHE prefilter. Defaults to 5.
+            operator: Edge detect operator.
 
         Returns:
             Edgemask clip with applied DRE prefiltering.
@@ -208,7 +218,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         if sigma:
             dreluma = gauss_blur(dreluma, sigma)
 
-        dreluma_edges = Prewitt.edgemask(dreluma)
+        dreluma_edges = EdgeDetect.ensure_obj(operator, self.__class__).edgemask(dreluma)
         dreluma_edges = Morpho.minimum(dreluma_edges, coords=Coordinates.CORNERS)
 
         merge = norm_expr([dreluma_edges, Kirsch.edgemask(luma)], "x y + mask_max min", func=self.__class__)
