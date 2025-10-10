@@ -386,8 +386,8 @@ class Rescale(RescaleBase):
             mask = region_rel_mask(
                 pre_y.std.BlankClip(length=1, keep=True),
                 *self._crop,
-                replace_in=ExprToken.RangeMax,
-                replace_out=0,
+                replace_in=0,
+                replace_out=ExprToken.RangeMax,
                 func=self.__class__,
             )
 
