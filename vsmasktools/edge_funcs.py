@@ -7,7 +7,6 @@ from jetpytools import CustomEnum, CustomNotImplementedError
 from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsrgtools import BlurMatrix, gauss_blur
 from vstools import (
-    ColorRange,
     ConstantFormatVideoNode,
     ConvMode,
     check_variable,
@@ -212,11 +211,9 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         dreluma_edges = Prewitt.edgemask(dreluma)
         dreluma_edges = Morpho.minimum(dreluma_edges, coords=Coordinates.CORNERS)
 
-        kirsch = Kirsch.edgemask(luma)
+        merge = norm_expr([dreluma_edges, Kirsch.edgemask(luma)], "x y + mask_max min", func=self.__class__)
 
-        add_clip = ExprOp.ADD(dreluma_edges, kirsch)
+        if brz:
+            return Morpho.binarize(merge, brz)
 
-        if brz > 0:
-            add_clip = Morpho.binarize(add_clip, brz)
-
-        return ColorRange.FULL.apply(add_clip)
+        return merge
