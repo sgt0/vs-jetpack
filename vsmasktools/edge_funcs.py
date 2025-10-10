@@ -144,9 +144,14 @@ class dre_edgemask(CustomEnum):  # noqa: N801
 
     def _prefilter(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
         if self is dre_edgemask.RETINEX:
-            sigmas = kwargs.get("sigmas", [50, 200, 350])
-
-            return retinex(clip, sigmas, 0.001, 0.005)
+            return retinex(
+                clip,
+                kwargs.pop("sigmas", [50, 200, 350]),
+                kwargs.pop("lower_thr", 0.001),
+                kwargs.pop("lower_thr", 0.005),
+                func=self,
+                **kwargs,
+            )
 
         if self is dre_edgemask.CLAHE:
             limit, tile = kwargs.get("limit", 0.0305), kwargs.get("tile", 5)
@@ -164,6 +169,9 @@ class dre_edgemask(CustomEnum):  # noqa: N801
         operator: EdgeDetectLike = Prewitt,
         *,
         sigmas: Sequence[float] = [50, 200, 350],
+        lower_thr: float = 0.001,
+        upper_thr: float = 0.005,
+        **kwargs: Any,
     ) -> ConstantFormatVideoNode: ...
 
     @overload
@@ -207,6 +215,16 @@ class dre_edgemask(CustomEnum):  # noqa: N801
             sigma: Standard deviation of the Gaussian kernel for edge detection. Defaults to 1.
             brz: Binarization threshold (32-bit float scale). Defaults to 0.122.
             operator: Edge detect operator.
+            **kwargs: Additional keyword arguments for the selected prefilter:
+
+                   - RETINEX. See [retinex][vsmasktools.retinex] for details:
+                    * `sigmas`: List of Gaussian sigmas for multi-scale retinex (MSR).
+                    * `lower_thr`: Lower threshold percentile for output normalization
+                    * `upper_thr`: Upper threshold percentile for output normalization.
+                   - CLAHE. See [vszip.CLAHE](https://github.com/dnjulek/vapoursynth-zip/wiki/CLAHE) for details.
+                    * `limit`: Threshold for contrast limiting (32-bit float scale, unlike CLAHE plugin).
+                      Defaults to 0.0305.
+                    * `tile`: Tile size for histogram equalization. Defaults to 5.
 
         Returns:
             Edgemask clip with applied DRE prefiltering.
