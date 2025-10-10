@@ -174,7 +174,7 @@ class RescaleBase(vs_object, ABC):
 
     upscale = cachedproperty[ConstantFormatVideoNode, vs.VideoNode](
         lambda self: core.std.CopyFrameProps(
-            join(self._generate_upscale(self.doubled), *self._chroma), self._clipy, "_ChromaLocation"
+            join([self._generate_upscale(self.doubled), *self._chroma]), self._clipy, "_ChromaLocation"
         ),
         lambda self, value: cachedproperty.update_cache(self, "upscale", value),
         lambda self: cachedproperty.clear_cache(self, "upscale"),
