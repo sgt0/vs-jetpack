@@ -3,10 +3,10 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Callable, Iterator, Literal, NamedTuple, Self
 
-import vapoursynth as vs
-from jetpytools import Coordinate, CustomIntEnum, CustomStrEnum, Position, Sentinel, SentinelT, Size
+from jetpytools import Coordinate, CustomIntEnum, CustomRuntimeError, CustomStrEnum, Position, Sentinel, SentinelT, Size
 
 from ..types import HoldsPropValue
+from ..vs_proxy import vs
 
 __all__ = ["Coordinate", "Dar", "Direction", "Position", "Region", "Resolution", "Sar", "SceneChangeMode", "Size"]
 
@@ -295,10 +295,6 @@ class Resolution(NamedTuple):
         """
         Create a Resolution object using a given clip's dimensions.
         """
-        from ..functions import check_variable_resolution
-
-        assert check_variable_resolution(clip, cls.from_video)
-
         return cls(clip.width, clip.height)
 
     def transpose(self) -> Self:
@@ -362,11 +358,7 @@ class SceneChangeMode(CustomIntEnum):
         """
         Ensures all the frame properties necessary for scene change detection are created.
         """
-        from ..exceptions import CustomRuntimeError
-        from ..functions import check_variable_format
         from ..utils import merge_clip_props
-
-        assert check_variable_format(clip, self.ensure_presence)
 
         stats_clip = list[vs.VideoNode]()
 

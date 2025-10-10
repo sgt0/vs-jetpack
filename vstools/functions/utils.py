@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from functools import partial, wraps
+import operator
+from functools import partial, reduce, wraps
 from types import NoneType
-from typing import Callable, Iterable, Mapping, Sequence, SupportsIndex, Union, overload
+from typing import Any, Callable, Iterable, Mapping, Sequence, SupportsIndex, Union, overload
 from weakref import WeakValueDictionary
 
-import vapoursynth as vs
 from jetpytools import (
     CustomIndexError,
     CustomStrEnum,
@@ -19,15 +19,17 @@ from jetpytools import (
 
 from ..enums import ColorRange, ColorRangeLike
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
-from ..types import HoldsVideoFormat, Planes, VideoFormatLike, VideoNodeIterableT
-from .check import check_variable_format
-from .clip import shift_clip
+from ..types import HoldsVideoFormat, Planes, VideoFormatLike, VideoNodeIterable
+from ..utils import check_variable_format, flatten, get_depth
+from ..vs_proxy import vs
 
 __all__ = [
     "EXPR_VARS",
     "DitherType",
     "depth",
     "depth_func",
+    "expect_bits",
+    "flatten_vnodes",
     "frame2clip",
     "get_b",
     "get_g",
@@ -39,7 +41,6 @@ __all__ = [
     "join",
     "limiter",
     "plane",
-    "sc_detect",
     "split",
     "stack_clips",
 ]
@@ -397,6 +398,30 @@ def depth(
     new_format = in_fmt.replace(bits_per_sample=out_fmt.bits_per_sample, sample_type=out_fmt.sample_type)
 
     return dither_type.apply(clip, new_format, range_in, range_out)
+
+
+def expect_bits(clip: vs.VideoNode, /, expected_depth: int = 16, **kwargs: Any) -> tuple[vs.VideoNode, int]:
+    """
+    Expected output bitdepth for a clip.
+
+    This function is meant to be used when a clip may not match the expected input bitdepth.
+    Both the dithered clip and the original bitdepth are returned.
+
+    Args:
+        clip: Input clip.
+        expected_depth: Expected bitdepth. Default: 16.
+
+    Returns:
+        Tuple containing the clip dithered to the expected depth and the original bitdepth.
+    """
+    assert check_variable_format(clip, expect_bits)
+
+    bits = get_depth(clip)
+
+    if bits != expected_depth:
+        clip = depth(clip, expected_depth, **kwargs)
+
+    return clip, bits
 
 
 _f2c_cache = WeakValueDictionary[int, vs.VideoNode]()
@@ -793,10 +818,29 @@ def split(clip: vs.VideoNode, /, strict: bool = True) -> list[vs.VideoNode]:
     return [clip] if clip.format.num_planes == 1 else [plane(clip, i, strict) for i in range(clip.format.num_planes)]
 
 
+def flatten_vnodes(*clips: VideoNodeIterable, split_planes: bool = False) -> Sequence[vs.VideoNode]:
+    """
+    Flatten an array of VideoNodes.
+
+    Args:
+        *clips: An array of clips to flatten into a list.
+        split_planes: Optionally split the VideoNodes into their individual planes as well. Default: False.
+
+    Returns:
+        Flattened list of VideoNodes.
+    """
+    nodes = list[vs.VideoNode](flatten(clips))
+
+    if not split_planes:
+        return nodes
+
+    return reduce(operator.iadd, map(split, nodes), [])
+
+
 depth_func = depth
 
 
-def stack_clips(clips: Iterable[VideoNodeIterableT]) -> vs.VideoNode:
+def stack_clips(clips: Iterable[VideoNodeIterable]) -> vs.VideoNode:
     """
     Recursively stack clips in alternating directions: horizontal → vertical → horizontal → ...
 
@@ -1036,17 +1080,3 @@ def limiter(
         max_val = normalize_seq(max_val or get_peak_values(clip, clip), clip.format.num_planes)
 
     return clip.vszip.Limiter(min_val, max_val, tv_range, mask, planes)
-
-
-def sc_detect(clip: vs.VideoNode, threshold: float = 0.1) -> vs.VideoNode:
-    assert check_variable_format(clip, sc_detect)
-
-    stats = vs.core.std.PlaneStats(shift_clip(clip, -1), clip)
-
-    return vs.core.akarin.PropExpr(
-        [clip, stats, stats[1:]],
-        lambda: {
-            "_SceneChangePrev": f"y.PlaneStatsDiff {threshold} > 1 0 ?",
-            "_SceneChangeNext": f"z.PlaneStatsDiff {threshold} > 1 0 ?",
-        },
-    )

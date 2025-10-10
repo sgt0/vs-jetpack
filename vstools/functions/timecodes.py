@@ -1,19 +1,31 @@
 from __future__ import annotations
 
 import re
+from abc import abstractmethod
 from dataclasses import dataclass
 from fractions import Fraction
 from functools import cache
 from pathlib import Path
-from typing import Any, ClassVar, Iterable, Literal, NamedTuple, Self, overload
+from typing import Any, ClassVar, Iterable, Literal, NamedTuple, Self, cast, overload
 
-import vapoursynth as vs
-from jetpytools import CustomValueError, FilePathType, FuncExcept, LinearRangeLut, Sentinel, SPath, inject_self
+from jetpytools import (
+    CustomValueError,
+    FilePathType,
+    FuncExcept,
+    LinearRangeLut,
+    Sentinel,
+    SPath,
+    check_perms,
+    fallback,
+    inject_self,
+)
 
 from ..enums import Matrix, SceneChangeMode
 from ..exceptions import FramesLengthError, InvalidTimecodeVersionError
-from .file import PackageStorage
-from .render import clip_async_render
+from ..utils import DynamicClipsCache, PackageStorage
+from ..vs_proxy import vs, vs_object
+from .ranges import replace_ranges
+from .render import clip_async_render, clip_data_gather
 
 __all__ = ["Keyframes", "LWIndex", "Timecodes"]
 
@@ -124,9 +136,6 @@ class Timecodes(list[FrameDur]):
         """
         Convert from normalized ranges to a list of frame duration.
         """
-
-        from .funcs import fallback
-
         norm_timecodes = [assume] * length if assume else list[Fraction]()
 
         for (startn, endn), fps in timecodes.items():
@@ -296,8 +305,6 @@ class Timecodes(list[FrameDur]):
         Returns:
             Clip that should always be assumed to be vfr by other applications.
         """
-        from ..utils import replace_ranges
-
         func = func or self.assume_vfr
 
         major_time, minor_fps = self.accumulate_norm_timecodes(self)
@@ -324,8 +331,6 @@ class Timecodes(list[FrameDur]):
             out: Path to write the file to.
             format: Format to write the file to.
         """
-        from ..utils import check_perms
-
         func = func or self.to_file
 
         out_path = Path(str(out)).resolve()
@@ -456,7 +461,7 @@ class Keyframes(list[int]):
         prop_key: str = next(iter(SceneChangeMode.SCXVID.prop_keys)),
         scene_idx_prop: bool = False,
     ) -> vs.VideoNode:
-        from ..utils import replace_ranges
+        from .ranges import replace_ranges
 
         propset_clip = clip.std.SetFrameProp(prop_key, True)
 
@@ -526,8 +531,6 @@ class Keyframes(list[int]):
         header: bool = True,
         force: bool = False,
     ) -> None:
-        from ..utils import check_perms
-
         func = func or self.to_file
 
         out_path = Path(str(out)).resolve()
@@ -573,6 +576,70 @@ class Keyframes(list[int]):
             return param
 
         return cls(param)
+
+
+class SceneBasedDynamicCache(DynamicClipsCache[int]):
+    def __init__(self, clip: vs.VideoNode, keyframes: Keyframes | str, cache_size: int = 5) -> None:
+        super().__init__(cache_size)
+
+        self.clip = clip
+        self.keyframes = Keyframes.from_param(clip, keyframes)
+
+    @abstractmethod
+    def get_clip(self, key: int) -> vs.VideoNode: ...
+
+    def get_eval(self) -> vs.VideoNode:
+        return self.clip.std.FrameEval(lambda n: self[self.keyframes.scenes.indices[n]])
+
+    @classmethod
+    def from_clip(cls, clip: vs.VideoNode, keyframes: Keyframes | str, *args: Any, **kwargs: Any) -> vs.VideoNode:
+        return cls(clip, keyframes, *args, **kwargs).get_eval()
+
+    def __vs_del__(self, core_id: int) -> None:
+        super().__vs_del__(core_id)
+        del self.clip
+
+
+class SceneAverageStats(SceneBasedDynamicCache):
+    _props_keys = ("Min", "Max", "Average")
+
+    class _Cache(dict[int, tuple[float, float, float]], vs_object):
+        def __init__(self, clip: vs.VideoNode, keyframes: Keyframes, plane: int) -> None:
+            self.props = clip.std.PlaneStats(plane=plane)
+            self.keyframes = keyframes
+
+        def __getitem__(self, idx: int) -> tuple[float, float, float]:
+            if idx not in self:
+                frame_range = self.keyframes.scenes[idx]
+                cut_clip = self.props[frame_range.start : frame_range.stop]
+
+                frames_min_max_avg = clip_data_gather(
+                    cut_clip,
+                    None,
+                    lambda n, f: tuple(cast(float, f.props[f"PlaneStats{p}"]) for p in SceneAverageStats._props_keys),
+                )
+
+                frames_min, frames_max, frames_avgs = [[x[i] for x in frames_min_max_avg] for i in (0, 1, 2)]
+
+                self[idx] = (min(frames_min), max(frames_max), sum(frames_avgs) / len(frames_avgs))
+
+            return super().__getitem__(idx)
+
+    def __init__(
+        self,
+        clip: vs.VideoNode,
+        keyframes: Keyframes | str,
+        prop: str = "SceneStats",
+        plane: int = 0,
+        cache_size: int = 5,
+    ) -> None:
+        super().__init__(clip, keyframes, cache_size)
+
+        self.prop_keys = tuple(f"{prop}{x}" for x in self._props_keys)
+        self.scene_avgs = self._Cache(self.clip, self.keyframes, plane)
+
+    def get_clip(self, key: int) -> vs.VideoNode:
+        return self.clip.std.SetFrameProps(**dict(zip(self.prop_keys, self.scene_avgs[key])))
 
 
 @dataclass

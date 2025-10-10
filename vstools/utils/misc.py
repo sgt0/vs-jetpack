@@ -4,19 +4,37 @@ from contextlib import AbstractContextManager
 from fractions import Fraction
 from math import floor
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Self, Sequence, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Self, Sequence, overload
 
-import vapoursynth as vs
-from jetpytools import MISSING, MissingT
+from jetpytools import (
+    MISSING,
+    FuncExcept,
+    MissingT,
+    normalize_seq,
+    to_arr,
+)
+from jetpytools import flatten as jetp_flatten
 
-from ..enums import Align, BaseAlign
+from ..enums import Align, BaseAlign, Matrix
 from ..exceptions import InvalidSubsamplingError
-from ..functions import Keyframes, check_variable_format, clip_data_gather
-from ..utils.cache import SceneBasedDynamicCache
-from .info import get_video_format
+from ..types import Planes
+from ..vs_proxy import core, vs
+from .check import check_variable, check_variable_format
 from .props import get_props
+from .scale import get_lowest_values, get_neutral_values, get_peak_values
 
-__all__ = ["SceneAverageStats", "change_fps", "match_clip", "padder", "padder_ctx", "pick_func_stype", "set_output"]
+__all__ = [
+    "change_fps",
+    "flatten",
+    "invert_planes",
+    "match_clip",
+    "normalize_param_planes",
+    "normalize_planes",
+    "padder",
+    "padder_ctx",
+    "pick_func_stype",
+    "set_output",
+]
 
 
 def change_fps(clip: vs.VideoNode, fps: Fraction) -> vs.VideoNode:
@@ -69,9 +87,6 @@ def match_clip(
             clip. Default: True.
         length: Whether to adjust the length of the reference clip to match the original clip.
     """
-    from ..enums import Matrix
-    from ..functions import check_variable
-
     assert check_variable(clip, match_clip)
     assert check_variable(ref, match_clip)
 
@@ -204,23 +219,21 @@ class padder:  # noqa: N801
     def _base(
         clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0
     ) -> tuple[int, int, vs.VideoFormat, int, int]:
-        from ..functions import check_variable
-
         assert check_variable(clip, "padder")
 
         width = clip.width + left + right
         height = clip.height + top + bottom
 
-        fmt = get_video_format(clip)
-
-        w_sub, h_sub = 1 << fmt.subsampling_w, 1 << fmt.subsampling_h
+        w_sub, h_sub = 1 << clip.format.subsampling_w, 1 << clip.format.subsampling_h
 
         if width % w_sub and height % h_sub:
             raise InvalidSubsamplingError(
-                "padder", fmt, "Values must result in a mod congruent to the clip's subsampling ({subsampling})!"
+                "padder",
+                clip.format,
+                "Values must result in a mod congruent to the clip's subsampling ({subsampling})!",
             )
 
-        return width, height, fmt, w_sub, h_sub
+        return width, height, clip.format, w_sub, h_sub
 
     @classmethod
     def MIRROR(cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:  # noqa: N802
@@ -245,8 +258,6 @@ class padder:  # noqa: N801
         Returns:
             Padded clip with reflected borders.
         """
-
-        from ..utils import core
 
         width, height, *_ = cls._base(clip, left, right, top, bottom)
 
@@ -365,10 +376,6 @@ class padder:  # noqa: N801
         Returns:
             Padded clip with colored borders.
         """
-
-        from ..functions import normalize_seq
-        from ..utils import core, get_lowest_values, get_neutral_values, get_peak_values
-
         assert check_variable_format(clip, "padder")
 
         cls._base(clip, left, right, top, bottom)
@@ -627,8 +634,6 @@ def set_output(
         alpha: Alpha planes node, defaults to None.
         **kwargs: Additional arguments to be passed to `vspreview.set_output`.
     """
-    from ..functions import flatten, to_arr
-
     if isinstance(index_or_name, (str, bool)):
         index = None
         if not TYPE_CHECKING and isinstance(name, vs.VideoNode):
@@ -655,43 +660,84 @@ def set_output(
             n.set_output(idx)
 
 
-class SceneAverageStats(SceneBasedDynamicCache):
-    _props_keys = ("Min", "Max", "Average")
+def normalize_planes(clip: vs.VideoNode, planes: Planes = None) -> list[int]:
+    """
+    Normalize a sequence of planes.
 
-    class cache(dict[int, tuple[float, float, float]]):  # noqa: N801
-        def __init__(self, clip: vs.VideoNode, keyframes: Keyframes, plane: int) -> None:
-            self.props = clip.std.PlaneStats(plane=plane)
-            self.keyframes = keyframes
+    Args:
+        clip: Input clip.
+        planes: Array of planes. If None, returns all planes of the input clip's format. Default: None.
 
-        def __getitem__(self, idx: int) -> tuple[float, float, float]:
-            if idx not in self:
-                frame_range = self.keyframes.scenes[idx]
-                cut_clip = self.props[frame_range.start : frame_range.stop]
+    Returns:
+        Sorted list of planes.
+    """
 
-                frames_min_max_avg = clip_data_gather(
-                    cut_clip,
-                    None,
-                    lambda n, f: tuple(cast(float, f.props[f"PlaneStats{p}"]) for p in SceneAverageStats._props_keys),
-                )
+    assert clip.format
 
-                frames_min, frames_max, frames_avgs = [[x[i] for x in frames_min_max_avg] for i in (0, 1, 2)]
+    planes = list(range(clip.format.num_planes)) if planes is None or planes == 4 else to_arr(planes)
 
-                self[idx] = (min(frames_min), max(frames_max), sum(frames_avgs) / len(frames_avgs))
+    return sorted(set(planes).intersection(range(clip.format.num_planes)))
 
-            return super().__getitem__(idx)
 
-    def __init__(
-        self,
-        clip: vs.VideoNode,
-        keyframes: Keyframes | str,
-        prop: str = "SceneStats",
-        plane: int = 0,
-        cache_size: int = 5,
-    ) -> None:
-        super().__init__(clip, keyframes, cache_size)
+def invert_planes(clip: vs.VideoNode, planes: Planes = None) -> list[int]:
+    """
+    Invert a sequence of planes.
 
-        self.prop_keys = tuple(f"{prop}{x}" for x in self._props_keys)
-        self.scene_avgs = self.__class__.cache(self.clip, self.keyframes, plane)
+    Args:
+        clip: Input clip.
+        planes: Array of planes. If None, selects all planes of the input clip's format.
 
-    def get_clip(self, key: int) -> vs.VideoNode:
-        return self.clip.std.SetFrameProps(**dict(zip(self.prop_keys, self.scene_avgs[key])))
+    Returns:
+        Sorted inverted list of planes.
+    """
+    return sorted(set(normalize_planes(clip, None)) - set(normalize_planes(clip, planes)))
+
+
+def normalize_param_planes[T](
+    clip: vs.VideoNode, param: T | Sequence[T], planes: Planes, null: T, func: FuncExcept | None = None
+) -> list[T]:
+    """
+    Normalize a value or sequence to a list mapped to the clip's planes.
+
+    For any plane not included in `planes`, the corresponding output value is set to `null`.
+
+    Args:
+        clip: The input clip whose format and number of planes will be used to determine mapping.
+        param: A single value or a sequence of values to normalize across the clip's planes.
+        planes: The planes to apply the values to. Other planes will receive `null`.
+        null: The default value to use for planes that are not included in `planes`.
+        func: Function returned for custom error handling.
+
+    Returns:
+        A list of length equal to the number of planes in the clip, with `param` values or `null`.
+    """
+    func = func or normalize_param_planes
+
+    assert check_variable_format(clip, func)
+
+    planes = normalize_planes(clip, planes)
+
+    return [p if i in planes else null for i, p in enumerate(normalize_seq(param, clip.format.num_planes))]
+
+
+@overload
+def flatten[T](items: Iterable[Iterable[T]]) -> Iterator[T]: ...
+
+
+@overload
+def flatten(items: Iterable[Any]) -> Iterator[Any]: ...
+
+
+@overload
+def flatten(items: Any) -> Iterator[Any]: ...
+
+
+def flatten(items: Any) -> Iterator[Any]:
+    """
+    Flatten an array of values, clips and frames included.
+    """
+
+    if isinstance(items, (vs.RawNode, vs.RawFrame)):
+        yield items
+    else:
+        yield from jetp_flatten(items)

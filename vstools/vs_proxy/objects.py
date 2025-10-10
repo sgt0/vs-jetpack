@@ -3,33 +3,11 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable, Self
 
-from jetpytools import (
-    KwargsNotNone,
-    LinearRangeLut,
-    Singleton,
-    cachedproperty,
-    classproperty,
-    complex_hash,
-    copy_signature,
-    get_subclasses,
-    inject_self,
-    to_singleton,
-)
+from jetpytools import Singleton
 
-__all__ = [
-    "KwargsNotNone",
-    "LinearRangeLut",
-    "Singleton",
-    "VSDebug",
-    "cachedproperty",
-    "classproperty",
-    "complex_hash",
-    "copy_signature",
-    "get_subclasses",
-    "inject_self",
-    "to_singleton",
-    "vs_object",
-]
+from .proxy import core, register_on_creation, register_on_destroy
+
+__all__ = ["VSDebug", "vs_object"]
 
 
 class vs_object:  # noqa: N801
@@ -46,8 +24,6 @@ class vs_object:  # noqa: N801
     __vsdel_register: Callable[[int], None] | None = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> Self:
-        from ..utils.vs_proxy import core, register_on_creation
-
         try:
             self = super().__new__(cls, *args, **kwargs)
         except TypeError:
@@ -56,7 +32,11 @@ class vs_object:  # noqa: N801
         if hasattr(self, "__vs_del__"):
 
             def _register(core_id: int) -> None:
-                self.__vsdel_partial_register = partial(self.__vs_del__, core_id)
+                def __vsdel_partial_register(core_id: int) -> None:
+                    self.__vs_del__(core_id)
+
+                self.__vsdel_partial_register = partial(__vsdel_partial_register, core_id)
+
                 core.register_on_destroy(self.__vsdel_partial_register)
 
             # [un]register_on_creation/destroy will only hold a weakref to the object
@@ -89,9 +69,6 @@ class VSDebug(Singleton, init=True):
             core_fetch: Print traceback of the code that led to the first concrete core fetch. Especially useful when
                 trying to find the code path that is locking you into a EnvironmentPolicy.
         """
-
-        from ..utils.vs_proxy import register_on_creation
-
         if use_logging:
             import logging
 
@@ -111,8 +88,6 @@ class VSDebug(Singleton, init=True):
 
     @staticmethod
     def _print_env_live(core_id: int) -> None:
-        from ..utils.vs_proxy import core, register_on_destroy
-
         VSDebug._print_func(f"New core created with id: {core_id}")
 
         core.register_on_destroy(VSDebug._print_core_destroy, False)
