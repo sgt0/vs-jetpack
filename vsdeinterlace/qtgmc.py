@@ -867,72 +867,76 @@ class QTempGaussMC(vs_object):
             self.mv.recalculate(thsad=thsad_recalc, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
     def _apply_denoise(self) -> None:
-        if self.denoise_mode:
-            if self.denoise_mc_denoise:
-                denoised = self.mv.compensate(
-                    tr=self.denoise_tr,
-                    thscd=self.analyze_thscd,
-                    temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
-                    **self.denoise_func_comp_args,
-                )
-            else:
-                denoised = self.denoise_func(self.draft, tr=self.denoise_tr)
+        self.denoise_output = self.clip
 
-            if self.input_type == self.InputType.INTERLACE:
-                denoised = reinterlace(denoised, self.tff, self._apply_denoise)
+        if self.denoise_mode == self.NoiseProcessMode.NONE:
+            return
 
-            noise = self.clip.std.MakeDiff(denoised)
+        if self.denoise_mc_denoise:
+            denoised = self.mv.compensate(
+                tr=self.denoise_tr,
+                thscd=self.analyze_thscd,
+                temporal_func=lambda clip: self.denoise_func(clip, tr=self.denoise_tr),
+                **self.denoise_func_comp_args,
+            )
+        else:
+            denoised = self.denoise_func(self.draft, tr=self.denoise_tr)
 
-            if self.basic_noise_restore or self.final_noise_restore:
-                if self.input_type == self.InputType.INTERLACE:
-                    match self.denoise_deint:
-                        case self.NoiseDeintMode.WEAVE:
-                            noise = noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
-                        case self.NoiseDeintMode.BOB:
-                            noise = Catrom(tff=self.tff).bob(noise)
-                        case self.NoiseDeintMode.GENERATE:
-                            noise_source = noise.std.SeparateFields(self.tff)
+        if self.input_type == self.InputType.INTERLACE:
+            denoised = reinterlace(denoised, self.tff, self._apply_denoise)
 
-                            noise_max = Morpho.maximum(
-                                Morpho.maximum(noise_source), coords=Coordinates.HORIZONTAL, func=self._apply_denoise
-                            )
-                            noise_min = Morpho.minimum(
-                                Morpho.minimum(noise_source), coords=Coordinates.HORIZONTAL, func=self._apply_denoise
-                            )
+        if self.denoise_mode == self.NoiseProcessMode.DENOISE:
+            self.denoise_output = denoised
 
-                            noise_new = Grainer.GAUSS(
-                                noise_source, 2048, protect_edges=False, protect_neutral_chroma=False, neutral_out=True
-                            )
-                            noise_new = norm_expr(
-                                [noise_max, noise_min, noise_new],
-                                "x y - z * range_size / y +",
-                                func=self._apply_denoise,
-                            )
+        self.noise = self.clip.std.MakeDiff(denoised)
 
-                            noise = reweave(noise_source, noise_new, self.tff, self._apply_denoise)
+        if self.basic_noise_restore == self.final_noise_restore == 0.0:
+            return
 
-                if self.denoise_stabilize:
-                    weight1, weight2 = self.denoise_stabilize
+        if self.input_type == self.InputType.INTERLACE:
+            match self.denoise_deint:
+                case self.NoiseDeintMode.WEAVE:
+                    self.noise = self.noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
+                case self.NoiseDeintMode.BOB:
+                    self.noise = Catrom(tff=self.tff).bob(self.noise)
+                case self.NoiseDeintMode.GENERATE:
+                    noise_source = self.noise.std.SeparateFields(self.tff)
 
-                    noise_comp, _ = self.mv.compensate(
-                        noise,
-                        direction=MVDirection.BACKWARD,
-                        tr=1,
-                        thscd=self.analyze_thscd,
-                        interleave=False,
-                        **self.denoise_stabilize_comp_args,
+                    noise_max = Morpho.maximum(
+                        Morpho.maximum(noise_source), coords=Coordinates.HORIZONTAL, func=self._apply_denoise
+                    )
+                    noise_min = Morpho.minimum(
+                        Morpho.minimum(noise_source), coords=Coordinates.HORIZONTAL, func=self._apply_denoise
                     )
 
-                    noise = norm_expr(
-                        [noise, *noise_comp],
-                        "x neutral - abs y neutral - abs > x y ? {weight1} * x y + {weight2} * +",
-                        weight1=weight1,
-                        weight2=weight2,
-                        func=self._apply_denoise,
+                    noise_new = Grainer.GAUSS(
+                        noise_source, 2048, protect_edges=False, protect_neutral_chroma=False, neutral_out=True
+                    )
+                    noise_new = norm_expr(
+                        [noise_max, noise_min, noise_new], "x y - z * range_size / y +", func=self._apply_denoise
                     )
 
-            self.noise = noise
-        self.denoise_output = denoised if self.denoise_mode == self.NoiseProcessMode.DENOISE else self.clip
+                    self.noise = reweave(noise_source, noise_new, self.tff, self._apply_denoise)
+
+        if self.denoise_stabilize:
+            weight1, weight2 = self.denoise_stabilize
+
+            noise_comp, _ = self.mv.compensate(
+                self.noise,
+                direction=MVDirection.BACKWARD,
+                tr=1,
+                thscd=self.analyze_thscd,
+                interleave=False,
+                **self.denoise_stabilize_comp_args,
+            )
+
+            self.noise = norm_expr(
+                [self.noise, *noise_comp],
+                "x neutral - abs y neutral - abs > x y ? {weight1} * x y + {weight2} * +",
+                weight1=weight1,
+                weight2=weight2,
+                func=self._apply_denoise,
+            )
 
     def _apply_basic(self) -> None:
         self.bobbed = self._interpolate(self.denoise_output, self.basic_bobber)
