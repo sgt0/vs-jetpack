@@ -4,7 +4,7 @@ This module implements utilities for correcting dirty or damaged borders.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, SupportsIndex, TypeAlias, TypeIs
+from typing import TYPE_CHECKING, Any, SupportsIndex, TypeIs
 
 from jetpytools import CustomOverflowError, CustomTypeError, FuncExcept, normalize_seq
 
@@ -12,11 +12,11 @@ from vsexprtools import ExprList, ExprOp, ExprToken, norm_expr
 from vstools import check_variable_format, get_lowest_values, get_peak_values, get_resolutions, vs, vs_object
 
 if TYPE_CHECKING:
-    NoneSlice: TypeAlias = slice[None, None, None] | None
-    IndexLike: TypeAlias = SupportsIndex | slice[SupportsIndex, SupportsIndex, SupportsIndex]
+    type NoneSlice = slice[None, None, None] | None
+    type IndexLike = SupportsIndex | slice[SupportsIndex, SupportsIndex, SupportsIndex]
 else:
-    NoneSlice: TypeAlias = slice | None
-    IndexLike: TypeAlias = SupportsIndex | slice
+    type NoneSlice = slice | None
+    type IndexLike = SupportsIndex | slice
 
 
 def _normalize_slice(index: IndexLike | NoneSlice, length: int, func: FuncExcept) -> slice:
