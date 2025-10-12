@@ -6,13 +6,7 @@ from math import floor
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Self, Sequence, overload
 
-from jetpytools import (
-    MISSING,
-    FuncExcept,
-    MissingT,
-    normalize_seq,
-    to_arr,
-)
+from jetpytools import MISSING, MissingT, normalize_seq, to_arr
 from jetpytools import flatten as jetp_flatten
 
 from ..enums import Align, BaseAlign, Matrix
@@ -686,9 +680,7 @@ def invert_planes(clip: vs.VideoNode, planes: Planes = None) -> list[int]:
     return sorted(set(normalize_planes(clip, None)) - set(normalize_planes(clip, planes)))
 
 
-def normalize_param_planes[T](
-    clip: vs.VideoNode, param: T | Sequence[T], planes: Planes, null: T, func: FuncExcept | None = None
-) -> list[T]:
+def normalize_param_planes[T](clip: vs.VideoNode, param: T | Sequence[T], planes: Planes, null: T) -> list[T]:
     """
     Normalize a value or sequence to a list mapped to the clip's planes.
 
@@ -704,8 +696,6 @@ def normalize_param_planes[T](
     Returns:
         A list of length equal to the number of planes in the clip, with `param` values or `null`.
     """
-    func = func or normalize_param_planes
-
     planes = normalize_planes(clip, planes)
 
     return [p if i in planes else null for i, p in enumerate(normalize_seq(param, clip.format.num_planes))]

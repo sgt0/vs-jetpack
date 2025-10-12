@@ -578,7 +578,7 @@ def bm3d(
         ref = check_ref_clip(clip, ref, func)
 
     radius_basic, radius_final = normalize_seq(tr, 2)
-    nsigma = normalize_param_planes(clip, sigma, planes, 0, func)
+    nsigma = normalize_param_planes(clip, sigma, planes, 0)
 
     backend = backend.resolve()
     nbasic_args = fallback(basic_args, {})

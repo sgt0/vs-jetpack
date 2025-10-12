@@ -118,7 +118,7 @@ class dpir(CustomStrEnum):  # noqa: N801
                 )
 
             if len(strength) == 3:
-                strength = normalize_param_planes(clip, strength, planes, 0, func)
+                strength = normalize_param_planes(clip, strength, planes, 0)
 
                 return join(
                     [self.__call__(plane(clip, i), s, zones, **kwargs) for i, s in enumerate(strength)],

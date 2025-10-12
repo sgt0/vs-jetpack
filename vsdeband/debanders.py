@@ -407,8 +407,8 @@ def f3k_deband(
 
     clip, bits = expect_bits(clip, 16)
 
-    y, cb, cr = normalize_param_planes(clip, normalize_seq(thr, 3), planes, 0, f3k_deband)
-    grainy, *ngrainc = normalize_param_planes(clip, normalize_seq(grain, 2), planes, 0, f3k_deband)
+    y, cb, cr = normalize_param_planes(clip, normalize_seq(thr, 3), planes, 0)
+    grainy, *ngrainc = normalize_param_planes(clip, normalize_seq(grain, 2), planes, 0)
 
     if len(set(ngrainc)) > 1:
         raise CustomValueError("Inconsistent grain parameters across chroma planes.", f3k_deband)
@@ -477,8 +477,8 @@ def placebo_deband(
     Returns:
         Debanded and optionally grained clip.
     """
-    thr = normalize_param_planes(clip, thr, planes, 0, placebo_deband)
-    ngrain = normalize_param_planes(clip, grain, planes, 0, placebo_deband)
+    thr = normalize_param_planes(clip, thr, planes, 0)
+    ngrain = normalize_param_planes(clip, grain, planes, 0)
 
     def _placebo(clip: vs.VideoNode, threshold: float, grain_val: float, planes: Sequence[int]) -> vs.VideoNode:
         plane = 0
