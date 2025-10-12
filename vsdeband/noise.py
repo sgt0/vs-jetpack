@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import auto
 from typing import Any, Callable, Iterable, Literal, Protocol, Sequence, overload
 
-from jetpytools import MISSING, CustomEnum, FuncExcept, MissingT, mod_x, normalize_seq, to_arr
+from jetpytools import MISSING, CustomEnum, CustomValueError, FuncExcept, MissingT, mod_x, to_arr
 from typing_extensions import TypeVar
 
 from vsexprtools import norm_expr
@@ -23,6 +23,7 @@ from vstools import (
     get_u,
     get_v,
     normalize_param_planes,
+    normalize_planes,
     scale_delta,
     split,
     vs,
@@ -59,7 +60,7 @@ class _GrainerFunc(Protocol):
     """
 
     def __call__(
-        self, clip: vs.VideoNode, strength: Sequence[float], planes: Planes, **kwargs: Any
+        self, clip: vs.VideoNode, strength: float | Sequence[float], planes: Planes, **kwargs: Any
     ) -> vs.VideoNode: ...
 
 
@@ -180,6 +181,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> vs.VideoNode: ...
 
@@ -199,6 +201,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> GrainerPartial: ...
 
@@ -218,6 +221,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         *,
         size: int | tuple[float | None, float | None] | None = (2.0, 2.0),
         **kwargs: Any,
@@ -239,6 +243,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         size: int | tuple[float | None, float | None] | None = (2.0, 2.0),
         **kwargs: Any,
     ) -> GrainerPartial: ...
@@ -259,6 +264,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> vs.VideoNode: ...
 
@@ -277,6 +283,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> GrainerPartial: ...
 
@@ -296,6 +303,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> vs.VideoNode: ...
 
@@ -315,6 +323,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> GrainerPartial: ...
 
@@ -333,6 +342,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         protect_edges: bool | EdgeLimits = True,
         protect_neutral_chroma: bool | None = None,
         luma_scaling: float | None = None,
+        planes: Planes = None,
         **kwargs: Any,
     ) -> vs.VideoNode | GrainerPartial:
         """
@@ -378,6 +388,8 @@ class Grainer(AbstractGrainer, CustomEnum):
             luma_scaling:
                 Sensitivity of the luma-adaptive graining mask.
                 Higher values reduce grain in brighter areas; negative values invert behavior.
+            planes:
+                Which planes to process. Default to all.
             **kwargs:
                 Additional arguments to pass to the graining function or additional advanced options:
 
@@ -398,6 +410,7 @@ class Grainer(AbstractGrainer, CustomEnum):
             post_process=post_process,
             protect_neutral_chroma=protect_neutral_chroma,
             luma_scaling=luma_scaling,
+            planes=planes,
         )
 
         if clip is MISSING:
@@ -406,7 +419,7 @@ class Grainer(AbstractGrainer, CustomEnum):
         if self == Grainer.PLACEBO:
             assert static is False, "PlaceboGrain does not support static noise!"
 
-            grained = _apply_grainer(
+            return _apply_grainer(
                 clip,
                 lambda clip, strength, planes, **kwds: placebo_deband(
                     clip, 8, 0.0, strength, planes, iterations=1, **kwds
@@ -414,26 +427,23 @@ class Grainer(AbstractGrainer, CustomEnum):
                 **kwargs,
                 func=self.name,
             )
-        else:
-            if not isinstance(size := kwargs.pop("size", (None, None)), tuple):
-                size = (size, size)
 
-            kwargs.update(xsize=size[0], ysize=size[1])
+        if not isinstance(size := kwargs.pop("size", (None, None)), tuple):
+            size = (size, size)
 
-            grained = _apply_grainer(
-                clip,
-                lambda clip, strength, planes, **kwds: core.noise.Add(
-                    clip,
-                    *strength[:2],  # type: ignore[misc]
-                    type=self.value,
-                    constant=static,
-                    **kwds,
-                ),
-                **kwargs,
-                func=self.name,
-            )
+        kwargs.update(xsize=size[0], ysize=size[1])
 
-        return grained
+        def _noise_function(
+            clip: vs.VideoNode, strength: float | Sequence[float], planes: Planes, **kwds: Any
+        ) -> vs.VideoNode:
+            strength = normalize_param_planes(clip, strength, planes, 0)
+
+            if len(set(strength[1:])) != 1:
+                raise CustomValueError("Inconsistent grain values on chroma planes.", self.name, strength[1:])
+
+            return core.noise.Add(clip, strength[0], strength[1], type=self.value, constant=static, **kwds)
+
+        return _apply_grainer(clip, _noise_function, **kwargs, func=self.name)
 
 
 def _apply_grainer(
@@ -447,28 +457,27 @@ def _apply_grainer(
     post_process: Callable[[vs.VideoNode], vs.VideoNode] | Iterable[Callable[[vs.VideoNode], vs.VideoNode]] | None,
     protect_neutral_chroma: bool | None,
     luma_scaling: float | None,
+    planes: Planes,
     func: FuncExcept,
     **kwargs: Any,
 ) -> vs.VideoNode:
     # Normalize params
-    strength = normalize_seq(strength, clip.format.num_planes)
+    planes = normalize_planes(clip, planes)
     scale = scale if isinstance(scale, tuple) else (scale, scale)
     scaler = Scaler.ensure_obj(scaler, func)
     temporal_avg, temporal_rad = temporal if isinstance(temporal, tuple) else (temporal, 1)
     temporal_avg_func = kwargs.pop("temporal_avg_func", BlurMatrix.MEAN(temporal_rad, mode=ConvMode.TEMPORAL))
     protect_neutral_chroma = (
-        (clip.format.color_family is vs.YUV) if protect_neutral_chroma is None else protect_neutral_chroma
+        (clip.format.color_family is vs.YUV)
+        if protect_neutral_chroma is None and any(p in planes for p in [1, 2])
+        else protect_neutral_chroma
     )
     protect_edges = protect_edges if isinstance(protect_edges, tuple) else (protect_edges, protect_edges)
     protect_edges_blend = kwargs.pop("protect_edges_blend", 0.0)
     protect_neutral_chroma_blend = kwargs.pop("protect_neutral_chroma_blend", scale_delta(2, 8, clip))
     neutral_out = kwargs.pop("neutral_out", False)
 
-    planes = [i for i, s in zip(range(clip.format.num_planes), strength) if s]
     (scalex, scaley), mod = scale, max(clip.format.subsampling_w, clip.format.subsampling_h) << 1
-
-    if not planes:
-        return clip
 
     # Making a neutral blank clip
     base_clip = clip.std.BlankClip(
@@ -478,6 +487,10 @@ def _apply_grainer(
         color=get_neutral_values(clip),
         keep=True,
     )
+
+    if not planes:
+        return clip if not neutral_out else base_clip[temporal_rad:-temporal_rad]
+
     # Applying grain
     grained = grainer_function(base_clip, strength, planes, **kwargs)
 
@@ -506,7 +519,7 @@ def _apply_grainer(
         elif hi is False:
             hi = get_peak_values(clip, ColorRange.FULL)
 
-        grained = _protect_pixel_range(clip, grained, to_arr(lo), to_arr(hi), protect_edges_blend, func)
+        grained = _protect_pixel_range(clip, grained, to_arr(lo), to_arr(hi), protect_edges_blend, planes, func)
 
     # Postprocess
     if post_process:
@@ -520,7 +533,7 @@ def _apply_grainer(
         base_clip = clip.std.BlankClip(length=clip.num_frames, color=get_neutral_values(clip), keep=True)
 
         if protect_neutral_chroma:
-            grained = _protect_neutral_chroma(clip, grained, base_clip, protect_neutral_chroma_blend, func)
+            grained = _protect_neutral_chroma(clip, grained, base_clip, protect_neutral_chroma_blend, planes, func)
 
         if luma_scaling is not None:
             grained = core.std.MaskedMerge(base_clip, grained, adg_mask(clip, luma_scaling), planes)
@@ -534,6 +547,7 @@ def _protect_pixel_range(
     low: list[float],
     high: list[float],
     blend: float = 0.0,
+    planes: Planes = None,
     func: FuncExcept | None = None,
 ) -> vs.VideoNode:
     if not blend:
@@ -547,15 +561,16 @@ def _protect_pixel_range(
             "N@ * neutral + "
         )
 
-    return norm_expr([clip, grained], expr, func=func, lo=low, hi=high, blend=blend)
+    return norm_expr([clip, grained], expr, planes, func=func, lo=low, hi=high, blend=blend)
 
 
 def _protect_neutral_chroma(
     clip: vs.VideoNode,
     grained: vs.VideoNode,
     base_clip: vs.VideoNode,
-    blend: float = 0.0,
-    func: FuncExcept | None = None,
+    blend: float,
+    planes: list[int],
+    func: FuncExcept | None,
 ) -> vs.VideoNode:
     match clip.format.color_family:
         case vs.YUV:
@@ -567,11 +582,14 @@ def _protect_neutral_chroma(
             mask = norm_expr([get_u(clip), get_v(clip)], expr, func=func, blend=blend)
 
             return core.std.MaskedMerge(
-                grained, base_clip, core.std.ShufflePlanes([clip, mask, mask], [0, 0, 0], vs.YUV, clip), [1, 2]
+                grained,
+                base_clip,
+                core.std.ShufflePlanes([clip, mask, mask], [0, 0, 0], vs.YUV, clip),
+                {1, 2}.intersection(planes),
             )
         case vs.RGB:
             return core.std.MaskedMerge(
-                grained, base_clip, norm_expr(split(clip), "x y = x z = and mask_max *", func=func)
+                grained, base_clip, norm_expr(split(clip), "x y = x z = and mask_max *", planes, func=func)
             )
         case _:
             raise UnsupportedColorFamilyError("Can't use `protect_neutral_chroma=True` when input clip is GRAY", func)
