@@ -802,7 +802,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             case ExprOp.LERP:
                 if bytes(self, "utf-8") in _get_akarin_expr_version()["expr_features"]:
                     return str(self)
-                return "dup 1 - swap2 * swap2 * - __LERP! range_max 1 <= __LERP@ __LERP@ round ?"
+                return "dup 1 - swap2 * swap2 * -"
             case ExprOp.POLYVAL:
                 assert degree is not None
                 return self.polyval("", *[""] * (degree + 1)).to_str()
