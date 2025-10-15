@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from contextlib import AbstractContextManager, suppress
 from dataclasses import dataclass
-from functools import cache, partial, wraps
+from functools import partial, wraps
 from math import exp
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Concatenate, Self, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Concatenate, Self, get_origin, overload
 
 from jetpytools import CustomRuntimeError, CustomValueError, cachedproperty, classproperty
 from typing_extensions import TypeIs, TypeVar
@@ -45,7 +45,7 @@ from .abstract import (
     Scaler,
     ScalerLike,
 )
-from .abstract.base import BaseScaler, BaseScalerMeta
+from .abstract.base import BaseScaler, BaseScalerMeta, abstract_kernels, partial_abstract_kernels
 from .kernels import Catrom, Point
 from .types import Center, LeftShift, Slope, TopShift
 
@@ -56,6 +56,7 @@ __all__ = [
     "MixedScalerProcess",
     "NoScale",
     "NoScaleLike",
+    "ScalerSpecializer",
     "is_complex_descaler_like",
     "is_complex_kernel_like",
     "is_complex_scaler_like",
@@ -69,21 +70,15 @@ __all__ = [
 ]
 
 
-@cache
-def _add_specializer_in_str(cls: BaseScalerSpecializerMeta) -> None:
-    if cls.__specializer__:
-        cls.__name__ += f"[{cls.__specializer__.__name__}]"
-
-
 class BaseScalerSpecializerMeta(BaseScalerMeta):
     """
     Meta class for BaseScalerSpecializer to handle specialization logic.
     """
 
-    __specializer__: type[BaseScaler] | None
+    __specializer__: type[BaseScaler]
 
-    def __new__[_BaseScalerSpecializerMetaT: BaseScalerSpecializerMeta](  # noqa: PYI019
-        mcls: type[_BaseScalerSpecializerMetaT],
+    def __new__[MetaSelf: BaseScalerSpecializerMeta](  # noqa: PYI019
+        mcls: type[MetaSelf],
         name: str,
         bases: tuple[type, ...],
         namespace: dict[str, Any],
@@ -91,36 +86,40 @@ class BaseScalerSpecializerMeta(BaseScalerMeta):
         *,
         specializer: type[BaseScaler] | None = None,
         **kwargs: Any,
-    ) -> _BaseScalerSpecializerMetaT:
-        if specializer is not None:
-            bases = (specializer, *bases)
-            namespace["__orig_bases__"] = (specializer, *namespace["__orig_bases__"])
+    ) -> MetaSelf:
+        if specializer:
+            bases = (*bases, specializer)
+            namespace["__orig_bases__"] = (*namespace["__orig_bases__"], specializer)
+
+            name += f"[{specializer.__name__}]"
 
             with suppress(KeyError):
                 del namespace["kernel_radius"]
 
         obj = super().__new__(mcls, name, bases, namespace, **kwargs)
-        obj.__specializer__ = specializer
+
+        if specializer:
+            obj.__specializer__ = specializer
 
         return obj
 
     @property
     def __isspecialized__(self) -> bool:
-        return bool(self.__specializer__)
+        return hasattr(self, "__specializer__")
 
 
-class BaseScalerSpecializer[_BaseScalerT: BaseScaler](BaseScaler, metaclass=BaseScalerSpecializerMeta, abstract=True):
+class BaseScalerSpecializer[DefaultScalerT: BaseScaler](BaseScaler, metaclass=BaseScalerSpecializerMeta, abstract=True):
     """
-    An abstract base class to provide specialization logic for Scaler-like classes.
+    An abstract base class to provide specialization logic for BaseScaler-like classes.
     """
 
-    _default_scaler: ClassVar[type[BaseScaler]]
+    default_scaler: ClassVar[type[BaseScaler]]
 
     if not TYPE_CHECKING:
 
         def __new__(cls, *args: Any, **kwargs: Any) -> Self:
             if not cls.__isspecialized__:
-                return cls.__class_getitem__(cls._default_scaler)(*args, **kwargs)
+                cls = get_origin(cls[cls.default_scaler])
 
             return super().__new__(cls, *args, **kwargs)
 
@@ -132,10 +131,6 @@ class BaseScalerSpecializer[_BaseScalerT: BaseScaler](BaseScaler, metaclass=Base
                 setattr(self, k, kwargs.pop(k))
 
         self.kwargs = kwargs
-
-    def __str__(self) -> str:
-        _add_specializer_in_str(self.__class__)
-        return super().__str__()
 
     def __class_getitem__(cls, base_scaler: Any) -> GenericAlias:
         """
@@ -151,23 +146,34 @@ class BaseScalerSpecializer[_BaseScalerT: BaseScaler](BaseScaler, metaclass=Base
             return GenericAlias(cls, (base_scaler,))
 
         specialized_scaler = BaseScalerSpecializerMeta(
-            cls.__name__, (cls,), cls.__dict__.copy(), specializer=base_scaler, partial_abstract=True
+            cls.__name__,
+            (cls,),
+            cls.__dict__.copy(),
+            specializer=base_scaler,
+            partial_abstract=base_scaler in partial_abstract_kernels,
+            abstract=base_scaler in abstract_kernels,
         )
 
         return GenericAlias(specialized_scaler, (base_scaler,))
 
 
+class ScalerSpecializer[DefaultScalerT: Scaler](BaseScalerSpecializer[DefaultScalerT], Scaler, abstract=True):
+    """
+    An abstract base class to provide specialization logic for Scaler-like classes.
+    """
+
+
 _ScalerWithCatromDefaultT = TypeVar("_ScalerWithCatromDefaultT", bound=Scaler, default=Catrom)
 
 
-class NoScale(BaseScalerSpecializer[_ScalerWithCatromDefaultT], Scaler, partial_abstract=True):
+class NoScale(ScalerSpecializer[_ScalerWithCatromDefaultT]):
     """
     A utility scaler class that performs no scaling on the input clip.
 
     If used without a specified scaler, it defaults to inheriting from `Catrom`.
     """
 
-    _default_scaler = Catrom
+    default_scaler = Catrom
 
     def scale(
         self,
@@ -262,11 +268,11 @@ class BaseMixedScalerMeta[*_BaseScalerTs](BaseScalerSpecializerMeta):
         return obj
 
 
-class BaseMixedScaler[_BaseScalerT: BaseScaler, *_BaseScalerTs](
-    BaseScalerSpecializer[_BaseScalerT], metaclass=BaseMixedScalerMeta, abstract=True
+class BaseMixedScaler[DefaultScalerT: BaseScaler, *_BaseScalerTs](
+    BaseScalerSpecializer[DefaultScalerT], metaclass=BaseMixedScalerMeta, abstract=True
 ):
     """
-    An abstract base class to provide mixed or chained scaling for Scaler-like classes.
+    An abstract base class to provide mixed or chained scaling for BaseScaler-like classes.
     """
 
     @classproperty
@@ -289,27 +295,27 @@ class BaseMixedScaler[_BaseScalerT: BaseScaler, *_BaseScalerTs](
             specializer, *others = scalers
         else:
             specializer = scalers
-            others = []
+            others = ()
 
         if isinstance(specializer, TypeVar):
             cls.__others__ = tuple(others) or cls.__others__
             return GenericAlias(cls, (specializer, *cls.__others__))
 
-        mixed_spe = BaseMixedScalerMeta.__new__(
-            BaseMixedScalerMeta,
+        mixed_spe = BaseMixedScalerMeta(
             cls.__name__,
             (cls,),
             cls.__dict__.copy(),
             *others,
             specializer=specializer,
-            partial_abstract=True,
+            partial_abstract=specializer in partial_abstract_kernels,
+            abstract=specializer in abstract_kernels,
         )
 
         return GenericAlias(mixed_spe, (specializer, *others))
 
 
-class MixedScalerProcess[_ScalerT: Scaler, *_BaseScalerTs](
-    BaseMixedScaler[_ScalerT, *_BaseScalerTs], Scaler, abstract=True
+class MixedScalerProcess[DefaultScalerT: Scaler, *_BaseScalerTs](
+    BaseMixedScaler[DefaultScalerT, *_BaseScalerTs], Scaler, abstract=True
 ):
     """
     An abstract class for chained scaling with an additional processing step.

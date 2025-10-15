@@ -153,9 +153,7 @@ class ClampScaler(GenericScaler):
 _ComplexScalerWithLanczosDefaultT = TypeVar("_ComplexScalerWithLanczosDefaultT", bound=ComplexScaler, default=Lanczos)
 
 
-class ComplexSuperSamplerProcess(
-    MixedScalerProcess[_ComplexScalerWithLanczosDefaultT, Point], ComplexScaler, partial_abstract=True
-):
+class ComplexSuperSamplerProcess(MixedScalerProcess[_ComplexScalerWithLanczosDefaultT, Point], ComplexScaler):
     """
     A utility ComplexScaler class that applies a given function to a supersampled clip,
     then downsamples it back using Point.
@@ -177,7 +175,7 @@ class ComplexSuperSamplerProcess(
         chroma placement relative to luma is required.
     """
 
-    _default_scaler = Lanczos
+    default_scaler = Lanczos
 
     def scale(
         self,

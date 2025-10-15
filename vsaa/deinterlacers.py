@@ -846,9 +846,7 @@ else:
 _SuperSamplerWithNNEDI3DefaultT = TypeVar("_SuperSamplerWithNNEDI3DefaultT", bound=SuperSampler, default=NNEDI3)
 
 
-class SuperSamplerProcess(
-    MixedScalerProcess[_SuperSamplerWithNNEDI3DefaultT, Point], _ConcreteSuperSampler, partial_abstract=True
-):
+class SuperSamplerProcess(MixedScalerProcess[_SuperSamplerWithNNEDI3DefaultT, Point], _ConcreteSuperSampler):
     """
     A utility SuperSampler class that applies a given function to a supersampled clip,
     then downsamples it back using Point.
@@ -856,15 +854,9 @@ class SuperSamplerProcess(
     If used without a specified scaler, it defaults to inheriting from `NNEDI3`.
     """
 
-    _default_scaler = NNEDI3
+    default_scaler = NNEDI3
 
-    def __init__(
-        self,
-        *,
-        function: VSFunctionNoArgs,
-        noshift: bool | Sequence[bool] = True,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, *, function: VSFunctionNoArgs, noshift: bool | Sequence[bool] = True, **kwargs: Any) -> None:
         """
         Initialize the SuperSamplerProcess.
 

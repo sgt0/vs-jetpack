@@ -8,7 +8,7 @@ from typing import Any, Callable, NamedTuple, Self, overload
 
 from jetpytools import CustomTypeError, FuncExcept, mod2, mod_x
 
-from vskernels import Lanczos, MixedScalerProcess, Scaler, ScalerLike, is_scaler_like
+from vskernels import MixedScalerProcess, Scaler, ScalerLike, is_scaler_like
 from vstools import FunctionUtil, Planes, Resolution, VSFunctionNoArgs, get_w, vs
 
 from .various import ComplexSuperSamplerProcess
@@ -284,7 +284,7 @@ def pre_ss(
     clip: vs.VideoNode,
     function: VSFunctionNoArgs,
     rfactor: float = 2.0,
-    sp: type[MixedScalerProcess[Any, Any]] = ComplexSuperSamplerProcess[Lanczos],
+    sp: type[MixedScalerProcess[Any, Any]] = ComplexSuperSamplerProcess,
     *,
     mod: int = 4,
     planes: Planes = None,
@@ -322,7 +322,7 @@ def pre_ss(
     clip: vs.VideoNode,
     function: VSFunctionNoArgs | None = None,
     rfactor: float = 2.0,
-    sp: type[MixedScalerProcess[Any, Any]] | MixedScalerProcess[Any, Any] = ComplexSuperSamplerProcess[Lanczos],
+    sp: type[MixedScalerProcess[Any, Any]] | MixedScalerProcess[Any, Any] = ComplexSuperSamplerProcess,
     supersampler: ScalerLike | Callable[[vs.VideoNode, int, int], vs.VideoNode] | None = None,
     downscaler: ScalerLike | Callable[[vs.VideoNode, int, int], vs.VideoNode] | None = None,
     mod: int = 4,
