@@ -558,7 +558,7 @@ class QTempGaussMC(vs_object):
         self,
         *,
         mode: SharpMode | None = None,
-        strength: float = 1.0,
+        strength: tuple[int, float] = (1, 1.0),
         clamp: int | float | tuple[int | float, int | float] = 1,
         thin: float = 0.0,
     ) -> Self:
@@ -567,7 +567,7 @@ class QTempGaussMC(vs_object):
 
         Args:
             mode: Specifies the type of sharpening to use.
-            strength: Sharpening strength.
+            strength: Sharpening radius and strength.
             clamp: Clamp the sharpening strength of
                 [SharpMode.UNSHARP_MINMAX][vsdeinterlace.qtgmc.QTempGaussMC.SharpMode.UNSHARP_MINMAX] to the min/max
                 average plus/minus this.
@@ -1054,7 +1054,9 @@ class QTempGaussMC(vs_object):
             case self.SharpMode.NONE:
                 resharp = clip
             case self.SharpMode.UNSHARP:
-                resharp = unsharpen(clip, self.sharp_strength, BlurMatrix.BINOMIAL(), func=self._apply_sharpen)
+                resharp = unsharpen(
+                    clip, self.sharp_strength[1], BlurMatrix.BINOMIAL(self.sharp_strength[0]), func=self._apply_sharpen
+                )
             case self.SharpMode.UNSHARP_MINMAX:
                 undershoot, overshoot = self.sharp_clamp
 
@@ -1070,8 +1072,8 @@ class QTempGaussMC(vs_object):
                 )
                 resharp = unsharpen(
                     clip,
-                    self.sharp_strength,
-                    BlurMatrix.BINOMIAL()(clamp, func=self._apply_sharpen),
+                    self.sharp_strength[1],
+                    BlurMatrix.BINOMIAL(self.sharp_strength[0])(clamp, func=self._apply_sharpen),
                     func=self._apply_sharpen,
                 )
 
