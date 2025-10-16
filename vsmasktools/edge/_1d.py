@@ -12,13 +12,9 @@ from typing_extensions import deprecated
 from vsexprtools import norm_expr
 from vstools import ConstantFormatVideoNode, Planes, core
 
-from ._abstract import EdgeDetect, EuclideanDistance
+from ._abstract import EdgeDetect, EdgeMasksEdgeDetect, EuclideanDistance, RidgeDetect, TCannyEdgeDetect
 
-__all__ = [
-    "Matrix1D",
-    "TEdge",
-    "TEdgeTedgemask",
-]
+__all__ = ["Matrix1D", "TEdge", "TEdgeTedgemask", "Tritical", "TriticalTCanny"]
 
 
 class Matrix1D(EdgeDetect, ABC):
@@ -26,15 +22,39 @@ class Matrix1D(EdgeDetect, ABC):
     Abstract base class for one-dimensional convolution-based edge detectors.
     """
 
+    mode_types: ClassVar[Sequence[str] | None] = ["h", "v"]
 
-class TEdge(EuclideanDistance, Matrix1D):
+
+class Tritical(Matrix1D, EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance):
+    """
+    Operator used in Tritical's original TCanny filter.
+    Plain and simple orthogonal first order derivative.
+    """
+
+    matrices: ClassVar[Sequence[Sequence[float]]] = [[-1, 0, 1], [1, 0, -1]]
+
+
+@deprecated(
+    "TriticalTCanny is deprecated and will be removed in a future version. "
+    "Please use Tritical and install the 'edgemasks' plugin instead.",
+    category=DeprecationWarning,
+)
+class TriticalTCanny(Matrix1D, TCannyEdgeDetect):
+    """
+    Operator used in Tritical's original TCanny filter.
+    Plain and simple orthogonal first order derivative.
+    """
+
+    _op = 0
+
+
+class TEdge(Matrix1D, EuclideanDistance):
     """
     (TEdgeMasktype=2) Avisynth plugin.
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [[12, -74, 0, 74, -12], [-12, 74, 0, -74, 12]]
     divisors: ClassVar[Sequence[float] | None] = [62, 62]
-    mode_types: ClassVar[Sequence[str] | None] = ["h", "v"]
 
     def _compute_edge_mask(
         self,

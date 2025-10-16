@@ -41,8 +41,6 @@ __all__ = [
     "Laplacian4",
     "Kayyali",
     # Euclidean Distance
-    "Tritical",
-    "TriticalTCanny",
     "Cross",
     "Prewitt",
     "PrewittStd",
@@ -117,29 +115,6 @@ class Kayyali(SingleMatrix, Matrix3x3):
 
 
 # Euclidean Distance
-class Tritical(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
-    """
-    Operator used in Tritical's original TCanny filter.
-    Plain and simple orthogonal first order derivative.
-    """
-
-    matrices: ClassVar[Sequence[Sequence[float]]] = [[0, 0, 0, -1, 0, 1, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, -1, 0]]
-
-
-@deprecated(
-    "TriticalTCanny is deprecated and will be removed in a future version. "
-    "Please use Tritical and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class TriticalTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    Operator used in Tritical's original TCanny filter.
-    Plain and simple orthogonal first order derivative.
-    """
-
-    _op = 0
-
-
 class Cross(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
     """
     "HotDoG" Operator from AVS ExTools by Dogway.
