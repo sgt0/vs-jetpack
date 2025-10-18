@@ -339,8 +339,7 @@ class QTempGaussMC(vs_object):
 
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter:
             raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
-
-        if self.input_type in (self.InputType.INTERLACE, self.InputType.REPAIR) and not clip_fieldbased.is_inter:
+        elif self.input_type in (self.InputType.INTERLACE, self.InputType.REPAIR) and not clip_fieldbased.is_inter:
             raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with progressive video!", self.__class__)
 
     def prefilter(
@@ -574,11 +573,7 @@ class QTempGaussMC(vs_object):
             thin: How much to vertically thin edges.
         """
 
-        if mode is None:
-            self.sharp_mode = self.SharpMode.NONE if self.match_mode else self.SharpMode.UNSHARP_MINMAX
-        else:
-            self.sharp_mode = mode
-
+        self.sharp_mode = fallback(mode, self.SharpMode.NONE if self.match_mode else self.SharpMode.UNSHARP_MINMAX)
         self.sharp_strength = strength
         self.sharp_clamp = normalize_seq(clamp, 2)
         self.sharp_thin = thin
@@ -623,11 +618,9 @@ class QTempGaussMC(vs_object):
                 temporal limiting.
         """
 
-        if mode is None:
-            self.limit_mode = self.SharpLimitMode.NONE if self.match_mode else self.SharpLimitMode.TEMPORAL_PRESMOOTH
-        else:
-            self.limit_mode = mode
-
+        self.limit_mode = fallback(
+            mode, self.SharpLimitMode.NONE if self.match_mode else self.SharpLimitMode.TEMPORAL_PRESMOOTH
+        )
         self.limit_radius = radius
         self.limit_clamp = clamp
         self.limit_comp_args = fallback(comp_args, KwargsT())
@@ -1012,11 +1005,9 @@ class QTempGaussMC(vs_object):
                 adjusted2 = _error_adjustment(match2, bobbed2, self.match_tr)
                 match2 = self._binomial_degrain(adjusted2, self.match_tr)
 
-            out = match1.std.MergeDiff(match2)
-        else:
-            out = match1
+            return match1.std.MergeDiff(match2)
 
-        return out
+        return match1
 
     def _apply_lossless(self, clip: vs.VideoNode) -> ConstantFormatVideoNode:
         assert check_variable(clip, self._apply_lossless)
@@ -1114,7 +1105,7 @@ class QTempGaussMC(vs_object):
                     expand = Morpho.maximum(self.bobbed, iterations=self.limit_radius, func=self._apply_sharpen_limit)
                     clip = norm_expr([clip, inpand, expand], "x y z clip", func=self._apply_sharpen_limit)
 
-            if self.limit_mode in (self.SharpLimitMode.TEMPORAL_PRESMOOTH, self.SharpLimitMode.TEMPORAL_POSTSMOOTH):
+            elif self.limit_mode in (self.SharpLimitMode.TEMPORAL_PRESMOOTH, self.SharpLimitMode.TEMPORAL_POSTSMOOTH):
                 clip = mc_clamp(
                     clip,
                     self.bobbed,
