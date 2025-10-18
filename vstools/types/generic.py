@@ -9,6 +9,7 @@ from .builtins import Planes
 
 __all__ = [
     "F_VD",
+    "AudioNodeIterable",
     "ConstantFormatVideoNode",
     "GenericVSFunction",
     "HoldsPropValue",
@@ -16,6 +17,7 @@ __all__ = [
     "HoldsVideoFormat",
     "HoldsVideoFormatT",  # Deprecated alias
     "MissingT",
+    "RawNodeIterable",
     "VSFunction",
     "VSFunctionAllArgs",
     "VSFunctionArgs",
@@ -29,6 +31,8 @@ __all__ = [
 ]
 
 type VideoNodeIterable = vs.VideoNode | Iterable[VideoNodeIterable]
+type AudioNodeIterable = vs.AudioNode | Iterable[AudioNodeIterable]
+type RawNodeIterable = vs.RawNode | Iterable[RawNodeIterable]
 
 VideoNodeIterableT = VideoNodeIterable
 
