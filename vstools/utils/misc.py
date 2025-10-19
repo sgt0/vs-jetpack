@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Self, Seque
 from jetpytools import MISSING, MissingT, normalize_seq, to_arr
 from jetpytools import flatten as jetp_flatten
 
-from ..enums import Align, BaseAlign, Matrix
+from ..enums import Align, Matrix
 from ..exceptions import InvalidSubsamplingError
 from ..types import Planes
 from ..vs_proxy import core, vs
@@ -417,17 +417,17 @@ class padder:  # noqa: N801
         left, top = floor(ph / 2), floor(pv / 2)
         left, right, top, bottom = tuple(x + min for x in (left, ph - left, top, pv - top))
 
-        if align & BaseAlign.TOP:
+        if align & Align.TOP:
             bottom += top
             top = 0
-        elif align & BaseAlign.BOTTOM:
+        elif align & Align.BOTTOM:
             top += bottom
             bottom = 0
 
-        if align & BaseAlign.LEFT:
+        if align & Align.LEFT:
             right += left
             left = 0
-        elif align & BaseAlign.RIGHT:
+        elif align & Align.RIGHT:
             left += right
             right = 0
 
