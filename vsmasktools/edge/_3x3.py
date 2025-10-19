@@ -8,11 +8,11 @@ import math
 from abc import ABC
 from typing import Any, ClassVar, Sequence
 
-from jetpytools import interleave_arr
+from jetpytools import interleave_arr, to_arr
 from typing_extensions import deprecated
 
 from vsexprtools import ExprList, ExprOp, norm_expr
-from vstools import ConstantFormatVideoNode, Planes, get_depth, join, split, vs
+from vstools import ConstantFormatVideoNode, Planes, join, split, vs
 
 from ..morpho import Morpho
 from ..types import XxpandMode
@@ -217,11 +217,36 @@ class SobelTCanny(TCannyEdgeDetect, Matrix3x3):
 
 class ASobel(Matrix3x3, EdgeDetect):
     """
-    Modified Sobel-Feldman operator from AWarpSharp.
+    ASobel from the `AWarpSharp2` VapourSynth plugin.
     """
 
-    def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
-        return (vs.core.warp.ASobel if get_depth(clip) < 32 else vs.core.warpsf.ASobel)(clip, 255, **kwargs)
+    def _compute_edge_mask(
+        self,
+        clip: vs.VideoNode,
+        *,
+        multi: float | Sequence[float] = 1.0,
+        planes: Planes = None,
+        **kwargs: Any,
+    ) -> ConstantFormatVideoNode:
+        expr = (
+            "x[-1,-1] x[1,-1] + 2 / x[0,-1] + 2 / AVG_UP!",
+            "x[-1,1] x[1,1] + 2 / x[0,1] + 2 / AVG_DOWN!",
+            "x[-1,-1] x[-1,1] + 2 / x[-1,0] + 2 / AVG_LEFT!",
+            "x[1,-1] x[1,1] + 2 / x[1,0] + 2 / AVG_RIGHT!",
+            "AVG_UP@ AVG_DOWN@ - abs DIFF_V!",
+            "AVG_LEFT@ AVG_RIGHT@ - abs DIFF_H!",
+            "DIFF_V@ DIFF_H@ + mask_max min DIFF_V@ DIFF_H@ max + mask_max min A!",
+            "A@ 2 * mask_max min A@ + mask_max min 2 * mask_max min",
+        )
+
+        return norm_expr(
+            clip,
+            [expr, "{multi}"],
+            planes,
+            func=self.__class__,
+            multi=[f"{m} *" if m != 1.0 else "" for m in to_arr(multi)],
+            **kwargs,
+        )
 
 
 class Scharr(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
