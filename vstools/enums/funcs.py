@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from enum import Flag, auto
 from typing import Literal, TypeAlias
 
-from jetpytools import CustomIntEnum, CustomStrEnum
+from jetpytools import CustomStrEnum
 
 __all__ = [
     "Align",
-    "BaseAlign",
     "ConvMode",
     "OneDimConvMode",
     "OnePassConvMode",
@@ -121,22 +121,50 @@ TempConvModeT = TempConvMode
 """Deprecated alias of TempConvMode"""
 
 
-class BaseAlign(CustomIntEnum):
-    TOP = 1
-    MIDDLE = 2
-    BOTTOM = 4
-    LEFT = 8
-    CENTER = 16
-    RIGHT = 32
+class Align(Flag):
+    """Defines alignment flags for positioning elements vertically and horizontally."""
 
+    TOP = auto()
+    """Align to the top."""
 
-class Align(CustomIntEnum):
-    TOP_LEFT = BaseAlign.TOP | BaseAlign.LEFT
-    TOP_CENTER = BaseAlign.TOP | BaseAlign.CENTER
-    TOP_RIGHT = BaseAlign.TOP | BaseAlign.RIGHT
-    MIDDLE_LEFT = BaseAlign.MIDDLE | BaseAlign.LEFT
-    MIDDLE_CENTER = BaseAlign.MIDDLE | BaseAlign.CENTER
-    MIDDLE_RIGHT = BaseAlign.MIDDLE | BaseAlign.RIGHT
-    BOTTOM_LEFT = BaseAlign.BOTTOM | BaseAlign.LEFT
-    BOTTOM_CENTER = BaseAlign.BOTTOM | BaseAlign.CENTER
-    BOTTOM_RIGHT = BaseAlign.BOTTOM | BaseAlign.RIGHT
+    MIDDLE = auto()
+    """Align to the vertical center."""
+
+    BOTTOM = auto()
+    """Align to the bottom."""
+
+    LEFT = auto()
+    """Align to the left."""
+
+    CENTER = auto()
+    """Align to the horizontal center."""
+
+    RIGHT = auto()
+    """Align to the right."""
+
+    TOP_LEFT = TOP | LEFT
+    """Align to the top-left corner."""
+
+    TOP_CENTER = TOP | CENTER
+    """Align to the top-center."""
+
+    TOP_RIGHT = TOP | RIGHT
+    """Align to the top-right corner."""
+
+    MIDDLE_LEFT = MIDDLE | LEFT
+    """Align to the middle-left."""
+
+    MIDDLE_CENTER = MIDDLE | CENTER
+    """Align to the center (both vertically and horizontally)."""
+
+    MIDDLE_RIGHT = MIDDLE | RIGHT
+    """Align to the middle-right."""
+
+    BOTTOM_LEFT = BOTTOM | LEFT
+    """Align to the bottom-left corner."""
+
+    BOTTOM_CENTER = BOTTOM | CENTER
+    """Align to the bottom-center."""
+
+    BOTTOM_RIGHT = BOTTOM | RIGHT
+    """Align to the bottom-right corner."""

@@ -10,7 +10,7 @@ import vapoursynth as vs
 from jetpytools import MISSING, MissingT, P
 from typing_extensions import Self
 
-from ..enums import Align, BaseAlign
+from ..enums import Align
 from ..exceptions import InvalidSubsamplingError
 from ..functions import Keyframes, check_variable_format, clip_data_gather
 from ..types import ConstantFormatVideoNode, VideoNodeT
@@ -422,17 +422,17 @@ class padder:  # noqa: N801
         left, top = floor(ph / 2), floor(pv / 2)
         left, right, top, bottom = tuple(x + min for x in (left, ph - left, top, pv - top))
 
-        if align & BaseAlign.TOP:
+        if align & Align.TOP:
             bottom += top
             top = 0
-        elif align & BaseAlign.BOTTOM:
+        elif align & Align.BOTTOM:
             top += bottom
             bottom = 0
 
-        if align & BaseAlign.LEFT:
+        if align & Align.LEFT:
             right += left
             left = 0
-        elif align & BaseAlign.RIGHT:
+        elif align & Align.RIGHT:
             left += right
             right = 0
 
