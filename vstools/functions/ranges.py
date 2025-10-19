@@ -160,7 +160,7 @@ def _is_cb_n(cb: Callable[..., bool], params: set[str]) -> TypeGuard[_RangesCall
 
 class ReplaceRanges[**P, R]:
     """
-    Class decorator that wraps the [replace_ranges][vstools.utils.replace_ranges] function
+    Class decorator that wraps the [replace_ranges][vstools.replace_ranges] function
     and extends its functionality.
 
     It is not meant to be used directly.
