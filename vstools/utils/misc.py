@@ -691,7 +691,6 @@ def normalize_param_planes[T](clip: vs.VideoNode, param: T | Sequence[T], planes
         param: A single value or a sequence of values to normalize across the clip's planes.
         planes: The planes to apply the values to. Other planes will receive `null`.
         null: The default value to use for planes that are not included in `planes`.
-        func: Function returned for custom error handling.
 
     Returns:
         A list of length equal to the number of planes in the clip, with `param` values or `null`.

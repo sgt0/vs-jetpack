@@ -56,6 +56,8 @@ class ProcessVariableClip[T](DynamicClipsCache[T]):
         cache_size: int = 10,
     ) -> None:
         """
+        Initializes the class.
+
         Args:
             clip: Clip to process
             out_dim: Ouput dimension.
