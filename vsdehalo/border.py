@@ -13,7 +13,10 @@ from vstools import VSObject, get_lowest_values, get_peak_values, get_resolution
 
 if TYPE_CHECKING:
     type NoneSlice = slice[None, None, None] | None
+    """A slice with all components possibly None, or None itself."""
+
     type IndexLike = SupportsIndex | slice[SupportsIndex, SupportsIndex, SupportsIndex]
+    """Either an integer-like index or a fully-typed slice."""
 else:
     type NoneSlice = slice | None
     type IndexLike = SupportsIndex | slice

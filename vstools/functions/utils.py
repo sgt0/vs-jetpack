@@ -19,14 +19,13 @@ from jetpytools import (
 from ..enums import ColorRange, ColorRangeLike
 from ..exceptions import ClipLengthError, InvalidColorFamilyError
 from ..types import HoldsVideoFormat, Planes, VideoFormatLike, VideoNodeIterable
-from ..utils import flatten, get_depth
+from ..utils import flatten, get_depth, get_video_format
 from ..vs_proxy import vs
 
 __all__ = [
     "EXPR_VARS",
     "DitherType",
     "depth",
-    "depth_func",
     "expect_bits",
     "flatten_vnodes",
     "frame2clip",
@@ -332,41 +331,40 @@ def depth(
     A convenience bitdepth conversion function using only internal plugins if possible.
 
     This uses exclusively internal plugins except for specific dither_types.
-    To check whether your DitherType uses fmtc, use `DitherType.is_fmtc`.
+    To check whether your DitherType uses fmtc, use [DitherType.is_fmtc][vstools.DitherType.is_fmtc].
 
-        >>> src_8 = vs.core.std.BlankClip(format=vs.YUV420P8)
-        >>> src_10 = depth(src_8, 10)
-        >>> src_10.format.name
-        'YUV420P10'
+    Example:
+        ```py
+        rc_8 = vs.core.std.BlankClip(format=vs.YUV420P8)
+        rc_10 = depth(src_8, 10)
+        print(rc_10.format.name)  # YUV420P10
 
-        >>> src2_10 = vs.core.std.BlankClip(format=vs.RGB30)
-        >>> src2_8 = depth(src2_10, 8, dither_type=Dither.RANDOM)  # override default dither behavior
-        >>> src2_8.format.name
-        'RGB24'
+        rc2_10 = vs.core.std.BlankClip(format=vs.RGB30)
+        rc2_8 = depth(src2_10, 8, dither_type=Dither.RANDOM)  # override default dither behavior
+        print(rc2_8.format.name)  # RGB24
+        ```
 
     Args:
         clip: Input clip.
         bitdepth: Desired bitdepth of the output clip.
-        sample_type: Desired sample type of output clip. Allows overriding default float/integer behavior. Accepts
-            ``vapoursynth.SampleType`` enums ``vapoursynth.INTEGER`` and ``vapoursynth.FLOAT`` or their values, ``0``
-            and ``1`` respectively.
+        sample_type: Desired sample type of output clip. Allows overriding default float/integer behavior.
         range_in: Input pixel range (defaults to input `clip`'s range).
         range_out: Output pixel range (defaults to input `clip`'s range).
         dither_type: Dithering algorithm. Allows overriding default dithering behavior.
-            See [Dither][vstools.DitherType].
+            See [DitherType][vstools.DitherType].
 
             When integer output is desired but the conversion may produce fractional values,
-            defaults to DitherType.VOID if it is available via the fmtc VapourSynth plugin,
-            or to Floyd-Steinberg DitherType.ERROR_DIFFUSION for 8-bit output
-            or DitherType.ORDERED for higher bit depths.
-            In other cases, defaults to DitherType.NONE, or round to nearest.
+            defaults to [VOID][vstools.DitherType.VOID] if it is available via the fmtc VapourSynth plugin,
+            or to [Floyd-Steinberg][vstools.DitherType.ERROR_DIFFUSION] for 8-bit output
+            or [ORDERED][vstools.DitherType.ORDERED] for higher bit depths.
+
+            In other cases, defaults to no dither.
+
             See [DitherType.should_dither][vstools.DitherType.should_dither] for more information.
 
     Returns:
-        Converted clip with desired bit depth and sample type. ``ColorFamily`` will be same as input.
+        Converted clip with desired bit depth and sample type. `ColorFamily` will be same as input.
     """
-    from ..utils import get_video_format
-
     in_fmt = get_video_format(clip)
     out_fmt = get_video_format(bitdepth or clip, sample_type=sample_type)
 
@@ -718,8 +716,6 @@ def join(
         Clip with combined planes.
     """
     if isinstance(clips, Mapping):
-        from ..functions import flatten_vnodes
-
         clips_map = dict[int, vs.VideoNode]()
 
         for p_key, node in clips.items():
@@ -827,9 +823,6 @@ def flatten_vnodes(*clips: VideoNodeIterable, split_planes: bool = False) -> Seq
     return reduce(operator.iadd, map(split, nodes), [])
 
 
-depth_func = depth
-
-
 def stack_clips(clips: Iterable[VideoNodeIterable]) -> vs.VideoNode:
     """
     Recursively stack clips in alternating directions: horizontal → vertical → horizontal → ...
@@ -918,8 +911,8 @@ def limiter(
     func: FuncExcept | None = None,
 ) -> vs.VideoNode:
     """
-    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
-    if clip format is not integer, a min/max val is specified or tv_range is True.
+    Wraps [vszip.Limiter](https://github.com/dnjulek/vapoursynth-zip/wiki/Limiter)
+    but only processes if clip format is not integer, a min/max val is specified or tv_range is True.
 
     Args:
         clip: Clip to process.
@@ -929,7 +922,7 @@ def limiter(
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
         mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
-        planes: Planes to process.
+        planes: Which planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
@@ -950,8 +943,8 @@ def limiter[**P](
     func: FuncExcept | None = None,
 ) -> Callable[P, vs.VideoNode]:
     """
-    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
-    if clip format is not integer, a min/max val is specified or tv_range is True.
+    Wraps [vszip.Limiter](https://github.com/dnjulek/vapoursynth-zip/wiki/Limiter)
+    but only processes if clip format is not integer, a min/max val is specified or tv_range is True.
 
     This is the decorator implementation.
 
@@ -963,7 +956,7 @@ def limiter[**P](
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
         mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
-        planes: Planes to process.
+        planes: Which planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
@@ -982,8 +975,8 @@ def limiter[**P](
     func: FuncExcept | None = None,
 ) -> Callable[[Callable[P, vs.VideoNode]], Callable[P, vs.VideoNode]]:
     """
-    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
-    if clip format is not integer, a min/max val is specified or tv_range is True.
+    Wraps [vszip.Limiter](https://github.com/dnjulek/vapoursynth-zip/wiki/Limiter)
+    but only processes if clip format is not integer, a min/max val is specified or tv_range is True.
 
     This is the decorator implementation.
 
@@ -994,7 +987,7 @@ def limiter[**P](
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
         mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
-        planes: Planes to process.
+        planes: Which planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
@@ -1018,8 +1011,8 @@ def limiter[**P](
     Callable[[Callable[P, vs.VideoNode]], Callable[P, vs.VideoNode]],
 ]:
     """
-    Wraps `vs-zip <https://github.com/dnjulek/vapoursynth-zip>`.Limiter but only processes
-    if clip format is not integer, a min/max val is specified or tv_range is True.
+    Wraps [vszip.Limiter](https://github.com/dnjulek/vapoursynth-zip/wiki/Limiter)
+    but only processes if clip format is not integer, a min/max val is specified or tv_range is True.
 
     Args:
         clip_or_func: Clip to process or function that returns a VideoNode to be processed.
@@ -1029,7 +1022,7 @@ def limiter[**P](
             individually.
         tv_range: Changes min/max defaults values to LIMITED.
         mask: Float chroma range from -0.5/0.5 to 0.0/1.0.
-        planes: Planes to process.
+        planes: Which planes to process.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:

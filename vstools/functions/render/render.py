@@ -5,18 +5,9 @@ from collections import deque
 from dataclasses import dataclass
 from math import floor
 from os import PathLike
-from pathlib import Path
 from typing import Any, BinaryIO, Callable, Literal, Protocol, Union, overload
 
-from jetpytools import (
-    CustomRuntimeError,
-    CustomValueError,
-    Sentinel,
-    SentinelT,
-    SPath,
-    SPathLike,
-    fallback,
-)
+from jetpytools import CustomRuntimeError, CustomValueError, Sentinel, SentinelT, SPathLike, fallback
 
 from ...exceptions import InvalidColorFamilyError
 from ...utils import get_prop
@@ -82,30 +73,31 @@ def clip_async_render[T](
     It's highly recommended to perform as little filtering as possible on the input clip for speed purposes.
 
     Example usage:
-
+        ```py
         # Gather scenechanges.
-        >>> scenechanges = clip_async_render(
-            clip, None, 'Searching for scenechanges...', lambda n, f: get_prop(f, "_SceneChange", int)
+        scenechanges = clip_async_render(
+            clip, None, "Searching for scenechanges...", lambda n, f: get_prop(f, "_SceneChange", int)
         )
 
         # Gather average planes stats.
-        >>> avg_planes = clip_async_render(
-            clip, None, 'Calculating average planes...', lambda n, f: get_prop(f, "PlaneStatsAverage", float)
+        avg_planes = clip_async_render(
+            clip, None, "Calculating average planes...", lambda n, f: get_prop(f, "PlaneStatsAverage", float)
         )
+        ```
 
     Args:
         clip: Clip to render.
         outfile: Optional binary output or path to write to.
         progress: A message to display during rendering. This is shown alongside the progress.
-        callback: Callback function. Must accept `n` and `f` (like a frameeval would) and return some value. This
-            function is used to determine what information gets returned per frame. Default: None.
+        callback: Callback function. Must accept `n` and `f` (like a frameeval would) and return some value.
+            This function is used to determine what information gets returned per frame. Default: None.
         prefetch: The amount of frames to prefetch. 0 means automatically determine. Default: 0.
         backlog: How many frames to hold. Useful for if your write of callback is slower than your frame rendering.
         y4m: Whether to add YUV4MPEG2 headers to the rendered output. If None, automatically determine. Default: None.
         async_requests: Whether to render frames non-consecutively. If int, determines the number of requests. Default:
             False.
     """
-    if isinstance(outfile, (str, PathLike, Path, SPath)) and outfile is not None:
+    if isinstance(outfile, (str, PathLike)) and outfile is not None:
         with open(outfile, "wb") as f:
             return clip_async_render(clip, f, progress, callback, prefetch, backlog, y4m, async_requests)
 
@@ -420,9 +412,10 @@ def find_prop(
     Find specific frame props in the clip and return a list of frame ranges that meets the conditions.
 
     Example usage:
-
+        ```py
         # Return a list of all frames that were marked as combed.
-        >>> find_prop(clip, "_Combed", None, True, 0)
+        find_prop(clip, "_Combed", None, True, 0)
+        ```
 
     Args:
         src: Input clip.
@@ -464,10 +457,11 @@ def find_prop_rfs(
     Conditional replace frames from the original clip with a replacement clip by comparing frame properties.
 
     Example usage:
-
+        ```py
         # Replace a rescaled clip with the original clip for frames where the error
         # (defined on another clip) is equal to or greater than 0.025.
-        >>> find_prop_rfs(scaled, src, "PlaneStatsAverage", ">=", 0.025, err_clip)
+        find_prop_rfs(scaled, src, "PlaneStatsAverage", ">=", 0.025, err_clip)
+        ```
 
     Args:
         clip_a: Original clip.

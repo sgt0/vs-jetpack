@@ -207,7 +207,7 @@ class ScalingArgs:
 
                    - "w" means only the width is calculated.
                    - "h" means only the height is calculated.
-                   - "hw or "wh" mean both width and height are calculated.
+                   - "hw" or "wh" mean both width and height are calculated.
 
         Returns:
             ScalingArgs object suitable for scaling functions.
@@ -330,33 +330,32 @@ def pre_ss(
     func: FuncExcept | None = None,
 ) -> vs.VideoNode:
     """
-    Supersamples the input clip, applies a given function to the higher-resolution version,
-    and then downscales it back to the original resolution.
+    Supersamples the input clip, applies a given function to the higher-resolution version, and then downscales it back to the original resolution.
 
     This function generalizes the behavior of
     [SuperSamplerProcess][vsaa.deinterlacers.SuperSamplerProcess] and
     [ComplexSuperSamplerProcess][vsscale.various.ComplexSuperSamplerProcess].
 
     - Examples:
-        ```
+        ```py
         out = pre_ss(clip, lambda clip: cool_function(clip, ...), planes=0)
         ```
 
         - Passing NNEDI3 as a supersampler:
-        ```
+        ```py
         from vsaa import SuperSamplerProcess
 
         out = pre_ss(clip, lambda clip: cool_function(clip, ...), SuperSamplerProcess)
         ```
         - This works too:
-        ```
+        ```py
         from vsaa import SuperSamplerProcess
 
         out = pre_ss(clip, sp=SuperSamplerProcess(function=lambda clip: cool_function(clip, ...)))
         ```
 
         - Specifying `supersampler` and `downscaler`:
-        ```
+        ```py
         from vskernels import Point
 
         out = pre_ss(clip, lambda clip: cool_function(clip, ...), supersampler=Point, downscaler=Point, planes=0)
@@ -366,9 +365,9 @@ def pre_ss(
         clip: Source clip.
         function: A function to apply on the supersampled clip.
         rfactor: Scaling factor for supersampling. Defaults to 2.
-        sp: A `MixedScalerProcess` instance or class.
-            Default is `ComplexSuperSamplerProcess[Lanczos]`.
-            It upscales with Lanczos and downscales with Point.
+        sp: A [MixedScalerProcess][vskernels.MixedScalerProcess] instance or class.
+            Default is [ComplexSuperSamplerProcess[Lanczos]][vsscale.ComplexSuperSamplerProcess].
+            It upscales with [Lanczos][vskernels.Lanczos] and downscales with [Point][vskernels.Point].
         supersampler: Scaler used to upscale the input clip if `sp` is not specified.
         downscaler: Downscaler used for undoing the upscaling done by the supersampler if `sp` is not specified.
         mod: Ensures the supersampled resolution is a multiple of this value. Defaults to 4.
@@ -377,7 +376,7 @@ def pre_ss(
 
     Returns:
         A clip with the given function applied at higher resolution, then downscaled back.
-    """
+    """  # noqa: E501
     func_util = FunctionUtil(clip, func or pre_ss, planes)
 
     args = (

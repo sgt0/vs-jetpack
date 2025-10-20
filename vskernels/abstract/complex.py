@@ -203,9 +203,10 @@ class LinearScaler(Scaler):
         """
         Scale a clip to the given resolution with optional linearization.
 
-        This method behaves like the base `Scaler.descale()` but adds support for
-        linear or sigmoid-based preprocessing and postprocessing. When enabled, the clip
-        is linearized before the scaling operation and de-linearized afterward.
+        This method behaves like the base [Scaler.scale()][vskernels.Scaler.scale] but adds support for linear
+        or sigmoid-based preprocessing and postprocessing.
+
+        When enabled, the clip is linearized before the scaling operation and de-linearized afterward.
 
         Keyword arguments passed during initialization are automatically injected here,
         unless explicitly overridden by the arguments provided at call time.
@@ -238,7 +239,7 @@ class LinearScaler(Scaler):
 
 class LinearDescaler(Descaler):
     """
-    Abctract descaler class that applies linearization before descaling.
+    Abstract descaler class that applies linearization before descaling.
 
     Only affects descaling results when `linear` or `sigmoid` parameters are specified.
 
@@ -295,9 +296,10 @@ class LinearDescaler(Descaler):
         """
         Descale a clip to the specified resolution, optionally using linear light processing.
 
-        This method behaves like the base `Descaler.descale()` but adds support for
-        linear or sigmoid-based preprocessing and postprocessing. When enabled, the clip
-        is linearized before the descaling operation and de-linearized afterward.
+        This method behaves like the base [Descaler.descale()][vskernels.Descaler.descale] but adds support for linear
+        or sigmoid-based preprocessing and postprocessing.
+
+        When enabled, the clip is linearized before the descaling operation and de-linearized afterward.
 
         Keyword arguments passed during initialization are automatically injected here,
         unless explicitly overridden by the arguments provided at call time.
@@ -342,9 +344,10 @@ class LinearDescaler(Descaler):
         Rescale a clip to the given resolution from a previously descaled clip,
         optionally using linear light processing.
 
-        This method behaves like the base `Descaler.rescale()` but adds support for
-        linear or sigmoid-based preprocessing and postprocessing. When enabled, the clip
-        is linearized before the rescaling operation and de-linearized afterward.
+        This method behaves like the base [Descaler.rescale()][vskernels.Descaler.rescale] but adds support for linear
+        or sigmoid-based preprocessing and postprocessing.
+
+        When enabled, the clip is linearized before the rescaling operation and de-linearized afterward.
 
         Keyword arguments passed during initialization are automatically injected here,
         unless explicitly overridden by the arguments provided at call time.
@@ -375,6 +378,16 @@ class LinearDescaler(Descaler):
 
 
 class KeepArScaler(Scaler):
+    """
+    Abstract scaler class that preserves or adjusts aspect ratio during scaling.
+
+    Extends the base [Scaler][vskernels.Scaler] with logic for handling sample aspect ratio (SAR)
+    and display aspect ratio (DAR) transformations.
+
+    Provides automatic normalization and correction of scaling parameters to maintain proper image proportions
+    when `keep_ar` is enabled.
+    """
+
     def _ar_params_norm(
         self,
         clip: vs.VideoNode,
@@ -519,8 +532,9 @@ class ComplexScaler(KeepArScaler, LinearScaler):
     Abstract composite scaler class with support for aspect ratio preservation, linear light processing,
     and per-plane subpixel shifting.
 
-    Combines `KeepArScaler` for handling sample/display aspect ratios
-    and `LinearScaler` for linear and sigmoid processing.
+    Combines [KeepArScaler][vskernels.KeepArScaler] for handling sample/display aspect ratios
+    and [LinearScaler][vskernels.LinearScaler] for linear and sigmoid processing.
+
     Additionally, it introduces support for specifying per-plane subpixel shifts.
     """
 
@@ -662,7 +676,7 @@ class ComplexDescaler(LinearDescaler):
     """
     Abstract descaler class with support for border handling and sampling grid alignment.
 
-    Extends `LinearDescaler` by introducing mechanisms to control how image borders
+    Extends [LinearDescaler][vskernels.LinearDescaler] by introducing mechanisms to control how image borders
     are handled and how the sampling grid is aligned during descaling.
     """
 
@@ -844,11 +858,11 @@ class ComplexDescaler(LinearDescaler):
 
 class ComplexKernel(Kernel, ComplexDescaler, ComplexScaler):
     """
-    Comprehensive abstract kernel class combining scaling, descaling,
-    and resampling with linear light and aspect ratio support.
+    Comprehensive abstract kernel class combining scaling, descaling, and resampling with linear light and aspect ratio support.
 
-    This class merges the full capabilities of `Kernel`, `ComplexDescaler`, and `ComplexScaler`.
-    """
+    This class merges the full capabilities of [Kernel][vskernels.Kernel], [ComplexDescaler][vskernels.ComplexDescaler],
+    and [ComplexScaler][vskernels.ComplexScaler].
+    """  # noqa: E501
 
 
 type ComplexScalerLike = str | type[ComplexScaler] | ComplexScaler
@@ -856,9 +870,10 @@ type ComplexScalerLike = str | type[ComplexScaler] | ComplexScaler
 Type alias for anything that can resolve to a ComplexScaler.
 
 This includes:
+
 - A string identifier.
-- A class type subclassing `ComplexScaler`.
-- An instance of a `ComplexScaler`.
+- A class type subclassing [ComplexScaler][vskernels.ComplexScaler].
+- An instance of a [ComplexScaler][vskernels.ComplexScaler].
 """
 
 type ComplexDescalerLike = str | type[ComplexDescaler] | ComplexDescaler
@@ -866,9 +881,10 @@ type ComplexDescalerLike = str | type[ComplexDescaler] | ComplexDescaler
 Type alias for anything that can resolve to a ComplexDescaler.
 
 This includes:
+
 - A string identifier.
-- A class type subclassing `ComplexDescaler`.
-- An instance of a `ComplexDescaler`.
+- A class type subclassing [ComplexDescaler][vskernels.ComplexDescaler].
+- An instance of a [ComplexDescaler][vskernels.ComplexDescaler].
 """
 
 type ComplexKernelLike = str | type[ComplexKernel] | ComplexKernel
@@ -876,7 +892,8 @@ type ComplexKernelLike = str | type[ComplexKernel] | ComplexKernel
 Type alias for anything that can resolve to a ComplexKernel.
 
 This includes:
+
 - A string identifier.
-- A class type subclassing `ComplexKernel`.
-- An instance of a `ComplexKernel`.
+- A class type subclassing [ComplexKernel][vskernels.ComplexKernel].
+- An instance of a [ComplexKernel][vskernels.ComplexKernel].
 """

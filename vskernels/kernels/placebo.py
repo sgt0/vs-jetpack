@@ -28,7 +28,7 @@ class Placebo(ComplexScaler, abstract=True):
     """
     Abstract Placebo scaler class.
 
-    This class and its subclasses depend on [vs-placebo](https://github.com/sgt0/vs-placebo)
+    This class and its subclasses depend on [vs-placebo](https://github.com/sgt0/vs-placebo).
     """
 
     _kernel: ClassVar[str]
@@ -130,10 +130,11 @@ class EwaBicubic(Placebo):
         """
         Initialize the scaler with specific 'b' and 'c' parameters and optional arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             b: The 'b' parameter for bicubic interpolation.
@@ -158,10 +159,11 @@ class EwaLanczos(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -181,10 +183,11 @@ class EwaLanczosSharp(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -210,10 +213,11 @@ class EwaLanczos4Sharpest(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -236,10 +240,11 @@ class EwaJinc(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -259,10 +264,11 @@ class EwaGinseng(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -282,10 +288,11 @@ class EwaHann(Placebo):
         """
         Initialize the kernel with a specific radius and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             radius: Overrides the filter kernel radius. Has no effect if the filter kernel is not resizeable.
@@ -305,10 +312,11 @@ class EwaRobidoux(Placebo):
         """
         Initialize the kernel with optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             **kwargs: Keyword arguments that configure the internal scaling behavior.
@@ -327,10 +335,11 @@ class EwaRobidouxSharp(Placebo):
         """
         Initialize the kernel with optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only if the method explicitly accepts
+        them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             **kwargs: Keyword arguments that configure the internal scaling behavior.

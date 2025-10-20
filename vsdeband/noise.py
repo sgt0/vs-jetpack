@@ -7,7 +7,7 @@ from jetpytools import MISSING, CustomEnum, CustomValueError, FuncExcept, Missin
 from typing_extensions import TypeVar
 
 from vsexprtools import norm_expr
-from vskernels import BaseScalerSpecializer, BicubicAuto, Lanczos, LeftShift, Scaler, ScalerLike, TopShift
+from vskernels import BicubicAuto, Lanczos, LeftShift, Scaler, ScalerLike, ScalerSpecializer, TopShift
 from vsmasktools import adg_mask
 from vsrgtools import BlurMatrix
 from vstools import (
@@ -68,9 +68,9 @@ _ScalerWithLanczosDefaultT = TypeVar("_ScalerWithLanczosDefaultT", bound=Scaler,
 
 
 # TODO: class ScalerTwoPasses[_ScalerT: Scaler = Lanczos] python 3.13
-class ScalerTwoPasses(BaseScalerSpecializer[_ScalerWithLanczosDefaultT], Scaler, partial_abstract=True):
+class ScalerTwoPasses(ScalerSpecializer[_ScalerWithLanczosDefaultT]):
     """
-    Abstract scaler class that applies scaling in two passes.
+    Scaler class that applies scaling in two passes.
     """
 
     _default_scaler = Lanczos
@@ -84,6 +84,9 @@ class ScalerTwoPasses(BaseScalerSpecializer[_ScalerWithLanczosDefaultT], Scaler,
         **kwargs: Any,
     ) -> vs.VideoNode:
         assert check_variable_resolution(clip, self.__class__)
+
+        if any(shift):
+            raise CustomValueError("Shifting is unsupported.", self.__class__, shift)
 
         width, height = self._wh_norm(clip, width, height)
 
@@ -126,6 +129,7 @@ class AbstractGrainer:
     """
 
     def __call__(self, clip: vs.VideoNode, /, **kwargs: Any) -> vs.VideoNode | GrainerPartial:
+        """To be implemented in subclasses."""
         raise NotImplementedError
 
 
@@ -381,7 +385,7 @@ class Grainer(AbstractGrainer, CustomEnum):
 
                    - True: Use legal range based on clip format.
                    - False: Disable edge protection.
-                   - Tuple: Specify custom edge limits per plane (see `EdgeLimits`).
+                   - Tuple: Specify custom edge limits per plane (see [EdgeLimits][vsdeband.noise.EdgeLimits]).
 
             protect_neutral_chroma:
                 Whether to disable graining on neutral chroma.
@@ -399,7 +403,7 @@ class Grainer(AbstractGrainer, CustomEnum):
                    - ``neutral_out``: (Boolean) Output the neutral layer instead of the merged clip.
 
         Returns:
-            Grained video clip, or a `GrainerPartial` if `clip` is not provided.
+            Grained video clip, or a [GrainerPartial][vsdeband.noise.GrainerPartial] if `clip` is not provided.
         """
         kwargs.update(
             strength=strength,
@@ -608,8 +612,8 @@ class GrainerPartial(AbstractGrainer):
             grainer: [Grainer][vsdeband.noise.Grainer] enumeration.
             **kwargs: Arguments for the specified grainer.
         """
-        self.grainer = grainer
-        self.kwargs = kwargs
+        self._grainer = grainer
+        self._kwargs = kwargs
 
     def __call__(self, clip: vs.VideoNode, /, **kwargs: Any) -> vs.VideoNode:
         """
@@ -622,7 +626,7 @@ class GrainerPartial(AbstractGrainer):
         Returns:
             Processed clip.
         """
-        return self.grainer(clip, **self.kwargs | kwargs)
+        return self._grainer(clip, **self._kwargs | kwargs)
 
 
 type GrainerLike = Grainer | GrainerPartial

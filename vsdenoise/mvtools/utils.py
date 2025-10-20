@@ -12,11 +12,12 @@ def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
     Convert a regular Planes parameter to MVTools' plane parameter value.
 
     MVTools uses a single integer to represent which planes to process:
-        - 0: Process Y plane only
-        - 1: Process U plane only
-        - 2: Process V plane only
-        - 3: Process UV planes only
-        - 4: Process all planes
+
+    - 0: Process Y plane only
+    - 1: Process U plane only
+    - 2: Process V plane only
+    - 3: Process UV planes only
+    - 4: Process all planes
 
     Args:
         clip: Input clip.

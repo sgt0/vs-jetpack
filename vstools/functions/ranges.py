@@ -30,11 +30,12 @@ def normalize_franges(ranges: SoftRange, /, exclusive: bool | None = None) -> Se
     """
     Normalize ranges represented by a tuple to an iterable of frame numbers.
 
-    :param ranges:      Ranges to normalize.
-    :param exclusive:   Whether to use exclusive (Python-style) ranges.
-                        Defaults to False.
+    Args:
+        ranges: Ranges to normalize.
+        exclusive: Whether to use exclusive (Python-style) ranges.
 
-    :return:            List of positive frame ranges.
+    Returns:
+        Sequence of positive frame ranges.
     """
     return jetp_normalize_range(ranges, fallback(exclusive, replace_ranges.exclusive, False))
 
@@ -51,26 +52,27 @@ def normalize_ranges(
     """
     Normalize ranges to a list of positive ranges.
 
-    Frame ranges can include `None` and negative values.
-    None will be converted to either 0 if it's the first value in a FrameRange,
-    or the clip's length if it's the second item.
-    Negative values will be subtracted from the clip's length.
+    - Frame ranges can include `None` and negative values.
+    - None will be converted to either 0 if it's the first value in a FrameRange, or the clip's length
+     if it's the second item.
+    - Negative values will be subtracted from the clip's length.
 
     Examples:
-
-        >>> clip.num_frames
-        1000
-        >>> normalize_ranges(clip, (None, None))
-        [(0, 999)]
-        >>> normalize_ranges(clip, (24, -24))
-        [(24, 975)]
-        >>> normalize_ranges(clip, [(24, 100), (80, 150)])
-        [(24, 150)]
+        ```py
+        clip.num_frames
+        # 1000
+        normalize_ranges(clip, (None, None))
+        # [(0, 999)]
+        normalize_ranges(clip, (24, -24))
+        # [(24, 975)]
+        normalize_ranges(clip, [(24, 100), (80, 150)])
+        # [(24, 150)]
+        ```
 
     Args:
         clip: Input clip.
         ranges: Frame range or list of frame ranges.
-        exclusive: Whether to use exclusive (Python-style) ranges. Defaults to False.
+        exclusive: Whether to use exclusive (Python-style) ranges.
 
     Returns:
         List of positive frame ranges.
@@ -89,17 +91,18 @@ def invert_ranges(
     Invert FrameRanges.
 
     Example:
-
-        >>> franges = [(100, 200), 600, (1200, 2400)]
-        >>> invert_ranges(core.std.BlankClip(length=10000), core.std.BlankClip(length=10000), franges)
-        [(0, 99), (201, 599), (601, 1199), (2401, 9999)]
+        ```py
+        franges = [(100, 200), 600, (1200, 2400)]
+        invert_ranges(core.std.BlankClip(length=10000), core.std.BlankClip(length=10000), franges)
+        # [(0, 99), (201, 599), (601, 1199), (2401, 9999)]
+        ```
 
     Args:
         clipa: Original clip.
         clipb: Replacement clip.
         ranges: Ranges to replace clipa (original clip) with clipb (replacement clip). These ranges will be inverted.
             For more info, see `replace_ranges`.
-        exclusive: Whether to use exclusive (Python-style) ranges. Defaults to False.
+        exclusive: Whether to use exclusive (Python-style) ranges.
 
     Returns:
         A list of inverted frame ranges.
@@ -434,6 +437,7 @@ def replace_every(
         ```
 
         In this example, within every group of 3 frames:
+
         - Frame 0 and 1 come from `clipa`.
         - Frame 2 comes from `clipb`.
 

@@ -30,7 +30,6 @@ __all__ = [
     "Primaries",
     "PrimariesLike",
     "PrimariesT",  # Deprecated alias
-    "PropEnum",
     "Transfer",
     "TransferLike",
     "TransferT",  # Deprecated alias
@@ -68,27 +67,28 @@ class Matrix(PropEnum):
 
     RGB = 0
     """
-    ```
-    # Identity
-    ```
     The identity matrix.
-    Typically used for GBR (often referred to as RGB); however, may also be
-    used for YZX (often referred to as XYZ)
+
+    Typically used for GBR (often referred to as RGB); however, may also be used for YZX (often referred to as XYZ)
+
     IEC 61966-2-1 sRGB
+
     SMPTE ST 428-1 (2006)
+
     See ITU-T H.265 Equations E-31 to E-33
     """
     GBR = RGB
 
     BT709 = 1
     """
-    ```
     Kr = 0.2126; Kb = 0.0722
-    ```
+
     Rec. ITU-R BT.709-6
-    Rec. ITU-R BT.1361-0 conventional colour gamut system and extended
-    colour gamut system (historical)
+
+    Rec. ITU-R BT.1361-0 conventional colour gamut system and extended colour gamut system (historical)
+
     IEC 61966-2-4 xvYCC709
+
     SMPTE RP 177 (1993) Annex B
     """
 
@@ -99,105 +99,118 @@ class Matrix(PropEnum):
 
     FCC = 4
     """
-    ```
     KR = 0.30; KB = 0.11
-    ```
+
     FCC Title 47 Code of Federal Regulations (2003) 73.682 (a) (20)
+
     See ITU-T H.265 Equations E-28 to E-30
     """
 
     BT470BG = 5
     """
-    ```
     KR = 0.299; KB = 0.114
-    ```
+
     (Functionally the same as [Matrix.SMPTE170M][vstools.Matrix.SMPTE170M])
+
     Rec. ITU-R BT.470-6 System B, G (historical)
+
     Rec. ITU-R BT.601-7 625
+
     Rec. ITU-R BT.1358-0 625 (historical)
+
     Rec. ITU-R BT.1700-0 625 PAL and 625 SECAM
+
     IEC 61966-2-1 sYCC
+
     IEC 61966-2-4 xvYCC601
+
     See ITU-T H.265 Equations E-28 to E-30
     """
     BT601_625 = BT470BG
 
     SMPTE170M = 6
     """
-    ```
     Kr = 0.299; Kb = 0.114
-    ```
+
     (Functionally the same as [Matrix.BT470BG][vstools.Matrix.BT470BG])
+
     Rec. ITU-R BT.601-7 525
+
     Rec. ITU-R BT.1358-1 525 or 625 (historical)
+
     Rec. ITU-R BT.1700-0 NTSC
+
     SMPTE ST 170 (2004)
+
     See ITU-T H.265 Equations E-28 to E-30
+
     """
     BT601_525 = SMPTE170M
 
     SMPTE240M = 7
     """
-    ```
     KR = 0.212; KB = 0.087
-    ```
+
     SMPTE ST 240 (1999, historical)
+
     See ITU-T H.265 Equations E-28 to E-30
     """
 
     YCGCO = 8
     """
-    ```
     KR = 0.2126; KB = 0.0722
-    ```
+
     See Implementation And Evaluation Of Residual Color Transform For 4:4:4 RGB Lossless Coding
     """
 
     BT2020NCL = 9
     """
-    ```
     KR = 0.2627; KB = 0.0593
-    ```
+
     Rec. ITU-R BT.2020-2 non-constant luminance system
+
     Rec. ITU-R BT.2100-2 Y'CbCr
+
     See ITU-T H.265 Equations E-28 to E-30
+
     """
 
     BT2020CL = 10
     """
-    ```
     KR = 0.2627; KB = 0.0593
-    ```
+
     Rec. ITU-R BT.2020-2 constant luminance system
+
     See ITU-T H.265 Equations E-49 to E-58
     """
 
     CHROMANCL = 12
     """
-    ```
-    # See ITU-T H.265 Equations E-22 to E-27
-    ```
     Chromaticity-derived non-constant luminance system
+
+    See ITU-T H.265 Equations E-22 to E-27
     See ITU-T H.265 Equations E-28 to E-30
     """
 
     CHROMACL = 13
     """
-    ```
-    # See ITU-T H.265 Equations E-22 to E-27
-    ```
     Chromaticity-derived constant luminance system
+
+    See ITU-T H.265 Equations E-22 to E-27
+
     See ITU-T H.265 Equations E-49 to E-58
     """
 
     ICTCP = 14
     """
-    ```
     ICtCp
-    ```
+
     Rec. ITU-R BT.2100-2 ICTCP
+
     See ITU-T H.265 Equations E-62 to E-64 for `transfer_characteristics` value 16 (PQ)
+
     See ITU-T H.265 Equations E-65 to E-67 for `transfer_characteristics` value 18 (HLG)
+
     """
 
     if TYPE_CHECKING:
@@ -737,6 +750,8 @@ class Primaries(PropEnum):
 
     BT709 = 1
     """
+    Rec. ITU-R BT.709-6
+
     ```
     Primary      x      y
     Green     0.3000 0.6000
@@ -746,19 +761,25 @@ class Primaries(PropEnum):
     ```
 
     Rec. ITU-R BT.709-6
+
     Rec. ITU-R BT.1361-0 conventional colour gamutsystem and extended colour gamut system (historical)
+
     IEC 61966-2-1 sRGB or sYCC
+
     IEC 61966-2-4
+
     SMPTE RP 177 (1993) Annex B
     """
 
     UNKNOWN = 2
     """
-    Unspecified Image characteristics are unknown or are determined by the application.
+    Unspecified image characteristics are unknown or are determined by the application.
     """
 
     BT470M = 4
     """
+    Rec. ITU-R BT.470-6 System M (historical)
+
     ```
     Primary     x      y
     Green    0.2100 0.7100
@@ -768,14 +789,15 @@ class Primaries(PropEnum):
     ```
 
     Rec. ITU-R BT.470-6 System M (historical)
-    NTSC Recommendation for transmission
-    standards for colour television (1953)
+    NTSC Recommendation for transmission standards for colour television (1953)
     FCC Title 47 Code of Federal Regulations (2003)
     73.682 (a) (20)
     """
 
     BT470BG = 5
     """
+    Rec. ITU-R BT.470-6 System B, G (historical)
+
     ```
     Primary      x      y
     Green     0.2900 0.6000
@@ -795,6 +817,7 @@ class Primaries(PropEnum):
     SMPTE170M = 6
     """
     (Functionally the same as [Primaries.SMPTE240M][vstools.Primaries.SMPTE240M])
+
     ```
     Primary      x      y
     Green     0.3100 0.5950
@@ -804,15 +827,21 @@ class Primaries(PropEnum):
     ```
 
     Rec. ITU-R BT.601-7 525
+
     Rec. ITU-R BT.1358-1 525 or 625 (historical)
+
     Rec. ITU-R BT.1700-0 NTSC
+
     SMPTE ST 170 (2004)
     """
     BT601_525 = SMPTE170M
 
     SMPTE240M = 7
     """
+    SMPTE ST 240 (1999, historical)
+
     (Functionally the same as [Primaries.SMPTE170M][vstools.Primaries.SMPTE170M])
+
     ```
     Primary      x      y
     Green     0.3100 0.5950
@@ -826,6 +855,8 @@ class Primaries(PropEnum):
 
     FILM = 8
     """
+    Generic film (colour filters using Illuminant C)
+
     ```
     Primary    x      y
     Green   0.2430 0.6920 #(Wratten 58)
@@ -833,12 +864,12 @@ class Primaries(PropEnum):
     Red     0.6810 0.3190 #(Wratten 25)
     White C 0.3100 0.3160
     ```
-
-    Generic film (colour filters using Illuminant C)
     """
 
     BT2020 = 9
     """
+    Rec. ITU-R BT.2020-2
+
     ```
     Primary       x      y
     Green     0.1700 0.7970
@@ -848,11 +879,14 @@ class Primaries(PropEnum):
     ```
 
     Rec. ITU-R BT.2020-2
+
     Rec. ITU-R BT.2100-2
     """
 
     ST428 = 10
     """
+    SMPTE ST 428-1 (2006)
+
     ```
     Primary        x   y
     Green    (Y)  0.0 1.0
@@ -861,7 +895,6 @@ class Primaries(PropEnum):
     Centre White  1/3 1/3
     ```
 
-    SMPTE ST 428-1 (2006)
     (CIE 1931 XYZ)
     """
     XYZ = ST428
@@ -869,6 +902,8 @@ class Primaries(PropEnum):
 
     ST431_2 = 11
     """
+    SMPTE RP 431-2 (2011)
+
     ```
     Primary    x      y
     Green   0.2650 0.6900
@@ -877,13 +912,14 @@ class Primaries(PropEnum):
     White   0.3140 0.3510
     ```
 
-    SMPTE RP 431-2 (2011)
     SMPTE ST 2113 (2019) "P3DCI"
     """
     DCI_P3 = ST431_2
 
     ST432_1 = 12
     """
+    SMPTE EG 432-1 (2010)
+
     ```
     Primary      x      y
     Green     0.2650 0.6900
@@ -893,12 +929,15 @@ class Primaries(PropEnum):
     ```
 
     SMPTE EG 432-1 (2010)
+
     SMPTE ST 2113 (2019) "P3D65"
     """
     DISPLAY_P3 = ST432_1
 
     JEDEC_P22 = 22
     """
+    EBU Tech. 3213-E (1975)
+
     ```
     Primary      x      y
     Green     0.2950 0.6050
@@ -906,8 +945,6 @@ class Primaries(PropEnum):
     Red       0.6300 0.3400
     White D65 0.3127 0.3290
     ```
-
-    EBU Tech. 3213-E (1975)
     """
     EBU3213 = JEDEC_P22
 
@@ -1158,7 +1195,7 @@ class ColorRange(PropEnum):
     """
     Studio (TV) legal range, 16-235 in 8 bits.
 
-    | This is primarily used with YUV integer formats.
+    This is primarily used with YUV integer formats.
     """
     TV = LIMITED
 
@@ -1166,8 +1203,8 @@ class ColorRange(PropEnum):
     """
     Full (PC) dynamic range, 0-255 in 8 bits.
 
-    | Note that float clips should ALWAYS be FULL range!
-    | RGB clips will ALWAYS be FULL range!
+    Note that float clips should ALWAYS be FULL range!
+    RGB clips will ALWAYS be FULL range!
     """
     PC = FULL
 

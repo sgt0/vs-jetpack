@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import inspect
 from abc import abstractmethod
 from functools import partial, wraps
+from inspect import signature
 from typing import Any, Callable, Literal, overload
 
 from jetpytools import CustomValueError, FuncExcept, KwargsT, StrictRange
@@ -436,7 +436,9 @@ def initialize_input[**P](
     func: FuncExcept | None = None,
 ) -> Callable[P, vs.VideoNode] | Callable[[Callable[P, vs.VideoNode]], Callable[P, vs.VideoNode]]:
     """
-    Decorator implementation of [initialize_clip][vstools.initialize_clip]
+    Decorator implementation of [initialize_clip][vstools.initialize_clip].
+
+    Initializes the first clip found in this order: positional arguments -> keyword arguments ->  default arguments.
     """
 
     if function is None:
@@ -474,18 +476,18 @@ def initialize_input[**P](
         for i, obj in enumerate(args_l):
             if isinstance(obj, vs.VideoNode):
                 args_l[i] = initialize_clip(obj, **init_args)
-                return function(*args_l, **kwargs)  # type: ignore
+                return function(*args_l, **kwargs)  # type: ignore[arg-type]
 
         kwargs2 = kwargs.copy()
 
         for name, obj in kwargs2.items():
             if isinstance(obj, vs.VideoNode):
                 kwargs2[name] = initialize_clip(obj, **init_args)
-                return function(*args, **kwargs2)  # type: ignore
+                return function(*args, **kwargs2)  # type: ignore[arg-type]
 
-        for name, param in inspect.signature(function).parameters.items():
-            if param.default is not inspect.Parameter.empty and isinstance(param.default, vs.VideoNode):
-                return function(*args, **kwargs2 | {name: initialize_clip(param.default, **init_args)})  # type: ignore
+        for name, param in signature(function).parameters.items():
+            if isinstance(param.default, vs.VideoNode):
+                return function(*args, **{name: initialize_clip(param.default, **init_args)}, **kwargs)  # type: ignore[arg-type]
 
         raise CustomValueError(
             "No VideoNode found in positional, keyword, nor default arguments!", func or initialize_input
@@ -496,7 +498,7 @@ def initialize_input[**P](
 
 def shift_clip(clip: vs.VideoNode, offset: int) -> vs.VideoNode:
     """
-    Shift a clip forwards or backwards by *N* frames.
+    Shift a clip forwards or backwards by N frames.
 
     This is useful for cases where you must compare every frame of a clip
     with the frame that comes before or after the current frame,
@@ -551,6 +553,16 @@ def shift_clip_multi(clip: vs.VideoNode, offsets: StrictRange = (-1, 1)) -> list
 
 
 def sc_detect(clip: vs.VideoNode, threshold: float = 0.1) -> vs.VideoNode:
+    """
+    Detects scene changes in a video clip based on frame difference statistics.
+
+    Args:
+        clip: The input clip.
+        threshold: Sensitivity for scene change detection. Higher values make detection less sensitive. Default is 0.1.
+
+    Returns:
+        vs.VideoNode: A clip with scene change props (`_SceneChangePrev` and `_SceneChangeNext`) set for each frame.
+    """
     stats = vs.core.std.PlaneStats(shift_clip(clip, -1), clip)
 
     return vs.core.akarin.PropExpr(

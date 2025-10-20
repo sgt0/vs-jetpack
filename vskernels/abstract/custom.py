@@ -28,10 +28,11 @@ class CustomKernel(Kernel):
     """
     Abstract base class for defining custom kernel-based scaling and descaling operations.
 
-    This class allows users to implement their own kernel function by overriding the
-    `kernel()` method.
+    This class allows users to implement their own kernel function by overriding
+    the [kernel()][vskernels.CustomKernel.kernel()] method.
 
-    Subclasses must implement the `kernel()` method to specify the mathematical shape of the kernel.
+    Subclasses must implement the [kernel()][vskernels.CustomKernel.kernel()] method to specify
+    the mathematical shape of the kernel.
     """
 
     @abstractmethod
@@ -91,9 +92,9 @@ class CustomComplexKernel(CustomKernel, ComplexKernel):
     """
     Abstract kernel class that combines custom kernel behavior with advanced scaling and descaling capabilities.
 
-    This class extends both `CustomKernel` and `ComplexKernel`, enabling the definition
-    of custom mathematical kernels with the advanced rescaling logic provided by
-    linear and aspect-ratio-aware components.
+    This class extends both [CustomKernel][vskernels.CustomKernel] and [ComplexKernel][vskernels.ComplexKernel],
+    enabling the definition of custom mathematical kernels with the advanced rescaling logic provided by linear
+    and aspect-ratio-aware components.
     """
 
 
@@ -102,24 +103,27 @@ type CustomComplexKernelLike = str | type[CustomComplexKernel] | CustomComplexKe
 Type alias for anything that can resolve to a CustomComplexKernel.
 
 This includes:
+
 - A string identifier.
-- A class type subclassing `CustomComplexKernel`.
-- An instance of a `CustomComplexKernel`.
+- A class type subclassing [CustomComplexKernel][vskernels.CustomComplexKernel].
+- An instance of a [CustomComplexKernel][vskernels.CustomComplexKernel].
 """
 
 
 class CustomComplexTapsKernel(CustomComplexKernel):
     """
-    Extension of `CustomComplexKernel` that introduces configurable kernel taps.
+    Extension of [CustomComplexKernel][vskernels.CustomComplexKernel] that introduces configurable kernel taps.
     """
 
     def __init__(self, taps: float, **kwargs: Any) -> None:
         """
         Initialize the kernel with a specific number of taps and optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
+        These keyword arguments are automatically forwarded to the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods
         but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs],
         the one passed to `func` takes precedence.
 
         Args:

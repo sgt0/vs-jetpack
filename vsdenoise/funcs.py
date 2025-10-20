@@ -11,16 +11,7 @@ from jetpytools import MISSING, CustomRuntimeError, FuncExcept, KwargsNotNone, M
 from vsexprtools import ExprOp, ExprVars, combine_expr, norm_expr
 from vskernels import Catrom, Kernel, KernelLike, Scaler, ScalerLike
 from vsscale import ArtCNN
-from vstools import (
-    Planes,
-    VSFunctionNoArgs,
-    check_ref_clip,
-    get_color_family,
-    join,
-    normalize_planes,
-    scale_delta,
-    vs,
-)
+from vstools import Planes, VSFunctionNoArgs, check_ref_clip, get_color_family, join, normalize_planes, scale_delta, vs
 
 from .mvtools import MotionVectors, MVTools, MVToolsPreset, refine_blksize
 from .prefilters import PrefilterLike
@@ -199,7 +190,7 @@ def mc_clamp(
             Values are scaled according to clip bit depth.
             Defaults to 0 (no additional clamping margin).
         func: Function returned for custom error handling. This should only be set by VS package developers.
-        **kwargs: Additional keyword arguments passed to `mv_obj.compensate`.
+        **kwargs: Additional keyword arguments passed to [mv_obj.compensate][vsdenoise.MVTools.compensate].
 
     Returns:
         The motion-compensated clamped clip.
@@ -248,7 +239,6 @@ def ccd(
     matrix is less than the threshold, then this pixel is considered in the average.
 
     Example usage:
-
         ```py
         denoised = ccd(clip, thr=6, tr=1, chroma_uspcaler=Bicubic(format=vs.RGB48))
         ```
@@ -262,8 +252,9 @@ def ccd(
             respectively, in the processing matrix. The default uses the low and medium, but excludes the high points.
             See [zsmooth.CCD](https://github.com/adworacz/zsmooth?tab=readme-ov-file#ccd) for more information.
         scale: Multiplier for the size of the matrix.
-            `scale=1` corresponds with a 25x25 matrix (just like the original CCD implementation by Sergey).
-            `scale=2` is a 50x50 matrix, and so on.
+
+               - `scale=1` corresponds with a 25x25 matrix (just like the original CCD implementation by Sergey).
+               - `scale=2` is a 50x50 matrix, and so on.
         pscale: Scale factor for the source clip-denoised process change.
         chroma_upscaler: Chroma upscaler to apply before processing if input clip is YUV.
             Defaults to ArtCNN.R8F64_Chroma.

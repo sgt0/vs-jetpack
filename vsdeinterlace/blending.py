@@ -86,7 +86,7 @@ def deblend_bob(
     bobbed: vs.VideoNode, fieldmatched: vs.VideoNode | None = None, func: FuncExcept | None = None
 ) -> vs.VideoNode:
     """
-    Stronger version of `deblend` that uses a bobbed clip to deblend. Adopted from jvsfunc.
+    Stronger version of [deblend][vsdeinterlace.deblend] that uses a bobbed clip to deblend. Adopted from jvsfunc.
 
     Args:
         bobbed: Bobbed source.
@@ -111,7 +111,7 @@ def deblend_bob(
 
 def deblend_fix_kf(deblended: vs.VideoNode, fieldmatched: vs.VideoNode, func: FuncExcept | None = None) -> vs.VideoNode:
     """
-    Should be used after deblend/_bob to fix scene changes. Adopted from jvsfunc.
+    Should be used after [deblend_bob][vsdeinterlace.deblend_bob] to fix scene changes. Adopted from jvsfunc.
 
     Args:
         deblended: Deblended clip.

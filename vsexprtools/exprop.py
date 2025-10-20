@@ -293,8 +293,8 @@ class ExprList(StrList):
             opt: Forces integer evaluation as much as possible.
             boundary: Specifies the default boundary condition for relative pixel accesses:
 
-                   - True (default): Mirrored edges.
-                   - False: Clamped edges.
+                   - `True` (default): Mirrored edges.
+                   - `False`: Clamped edges.
             func: Function returned for custom error handling. This should only be set by VS package developers.
             split_planes: Splits the VideoNodes into their individual planes.
             kwargs: Additional keyword arguments passed to [norm_expr][vsexprtools.norm_expr].
@@ -309,7 +309,7 @@ class ExprList(StrList):
 
 class TupleExprList(tuple[ExprList, ...]):
     """
-    A tuple of multiple `ExprList` expressions, applied sequentially to the clip(s).
+    A tuple of multiple [ExprList][vsexprtools.ExprList] expressions, applied sequentially to the clip(s).
     """
 
     def __call__(
@@ -326,7 +326,7 @@ class TupleExprList(tuple[ExprList, ...]):
         """
         Apply a sequence of expressions to the input clip(s), one after another.
 
-        Each `ExprList` in the tuple is applied to the result of the previous one.
+        Each [ExprList][vsexprtools.ExprList] in the tuple is applied to the result of the previous one.
 
         Args:
             clips: Input clip(s).
@@ -335,11 +335,11 @@ class TupleExprList(tuple[ExprList, ...]):
             opt: Forces integer evaluation as much as possible.
             boundary: Specifies the default boundary condition for relative pixel accesses:
 
-                   - True (default): Mirrored edges.
-                   - False: Clamped edges.
+                   - `True` (default): Mirrored edges.
+                   - `False`: Clamped edges.
             func: Function returned for custom error handling. This should only be set by VS package developers.
             split_planes: Splits the VideoNodes into their individual planes.
-            kwargs: Extra keyword arguments passed to each `ExprList`.
+            kwargs: Extra keyword arguments passed to each [ExprList][vsexprtools.ExprList].
 
         Returns:
             Evaluated clip.
@@ -418,7 +418,7 @@ class ExprOpBase(CustomStrEnum):
     @overload
     def __call__(self, *pos_args: Any, **kwargs: Any) -> str:
         """
-        Returns a formatted version of the ExprOp, using substitutions from pos_args and kwargs.
+        Returns a formatted version of the [ExprOp][vsexprtools.ExprOp], using substitutions from pos_args and kwargs.
 
         The substitutions are identified by braces ('{' and '}').
 
@@ -427,20 +427,21 @@ class ExprOpBase(CustomStrEnum):
             **kwargs: Keywords arguments.
 
         Returns:
-            Formatted version of this ExprOp.
+            Formatted version of this [ExprOp][vsexprtools.ExprOp].
         """
 
     def __call__(self, *pos_args: Any, **kwargs: Any) -> vs.VideoNode | str:
         """
-        Combines multiple video clips using the selected expression operator
-        or returns a formatted version of the ExprOp, using substitutions from pos_args and kwargs.
+        Combines multiple video clips using the selected expression operator or returns a formatted version
+        of the [ExprOp][vsexprtools.ExprOp], using substitutions from pos_args and kwargs.
 
         Args:
             *pos_args: Positional arguments.
             **kwargs: Keywords arguments.
 
         Returns:
-            A clip representing the combined result of applying the expression or formatted version of this ExprOp.
+            A clip representing the combined result of applying the expression
+            or formatted version of this [ExprOp][vsexprtools.ExprOp].
         """
         args = list(flatten(pos_args))
 
@@ -544,7 +545,8 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     Each class attribute corresponds to a specific expression operator
     with its associated symbol and arity (number of required operands).
 
-    Note: format strings can include placeholders for dynamic substitution (e.g., `{N:d}`, `{name:s}`).
+    Note:
+        Format strings can include placeholders for dynamic substitution (e.g., `{N:d}`, `{name:s}`).
     """
 
     # 0 Argument (akarin)
@@ -822,7 +824,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             c: Optional expression variable or prefix to clamp.
 
         Returns:
-            An `ExprList` containing the clamping expression.
+            An [ExprList][vsexprtools.ExprList] containing the clamping expression.
         """
         return ExprList([c, min, max, ExprOp.CLAMP])
 
@@ -926,7 +928,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             clamp: If True, clamps the final result to [RangeMin, RangeMax].
 
         Returns:
-            A `TupleExprList` representing the expression-based convolution.
+            A [TupleExprList][vsexprtools.TupleExprList] representing the expression-based convolution.
 
         Raises:
             CustomValueError: If matrix length is invalid or doesn't match the mode.
@@ -1014,7 +1016,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             planesb: The second plane set or clip. If None, uses same as `planesa`.
 
         Returns:
-            An `ExprList` representing the RMSE expression across all planes.
+            An [ExprList][vsexprtools.ExprList] representing the RMSE expression across all planes.
         """
         planesa, planesb = cls._parse_planes(planesa, planesb, cls.rmse)
 
@@ -1041,7 +1043,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             planesb: The second plane set or clip. If None, uses same as `planesa`.
 
         Returns:
-            An `ExprList` representing the MAE expression across all planes.
+            An [ExprList][vsexprtools.ExprList] representing the MAE expression across all planes.
         """
         planesa, planesb = cls._parse_planes(planesa, planesb, cls.mae)
         expr = ExprList()
@@ -1063,7 +1065,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             n: The number of terms to use in the Taylor series approximation.
 
         Returns:
-            An `ExprList` representing the arctangent expression.
+            An [ExprList][vsexprtools.ExprList] representing the arctangent expression.
         """
         # Using domain reduction when |x| > 1
         expr = ExprList(
@@ -1096,14 +1098,14 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         """
         Approximate atan(x) using a Taylor series centered at 0.
 
-        This is accurate for inputs in [-1, 1]. Use `atan` for full-range values.
+        This is accurate for inputs in [-1, 1]. Use [ExprOp.atan][vsexprtools.ExprOp.atan] for full-range values.
 
         Args:
             c: The expression variable or string input.
             n: The number of terms in the Taylor series (min 2).
 
         Returns:
-            An `ExprList` approximating atan(x).
+            An [ExprList][vsexprtools.ExprList] approximating atan(x).
         """
         # Approximation using Taylor series
         n = max(2, n)
@@ -1118,30 +1120,28 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
     @classmethod
     def asin(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         """
-        Build an expression to approximate arcsine using an identity:
-            asin(x) = atan(x / sqrt(1 - x²))
+        Build an expression to approximate arcsine using an identity: `asin(x) = atan(x / sqrt(1 - x²))`
 
         Args:
             c: The input expression variable.
             n: Number of terms to use in the internal atan approximation.
 
         Returns:
-            An `ExprList` representing the asin(x) expression.
+            An [ExprList][vsexprtools.ExprList] representing the asin(x) expression.
         """
         return cls.atan(ExprList([c, cls.DUP, cls.DUP, cls.MUL, 1, cls.SWAP, cls.SUB, cls.SQRT, cls.DIV]).to_str(), n)
 
     @classmethod
     def acos(cls, c: SupportsString = "", n: int = 10) -> ExprList:
         """
-        Build an expression to approximate arccosine using an identity:
-            acos(x) = π/2 - asin(x)
+        Build an expression to approximate arccosine using an identity: `acos(x) = π/2 - asin(x)`
 
         Args:
             c: The input expression variable.
             n: Number of terms to use in the internal asin approximation.
 
         Returns:
-            An `ExprList` representing the acos(x) expression.
+            An [ExprList][vsexprtools.ExprList] representing the acos(x) expression.
         """
         return ExprList([c, "__acosvar!", cls.PI, 2, cls.DIV, cls.asin("__acosvar@", n), cls.SUB])
 
@@ -1156,7 +1156,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             mask: The mask expression that determines how `c_a` and `c_b` are combined.
 
         Returns:
-            An `ExprList` representing the MaskedMerge expression.
+            An [ExprList][vsexprtools.ExprList] representing the MaskedMerge expression.
         """
         return ExprList([c_a, c_b, [mask, ExprToken.RangeMax, ExprToken.RangeMin, cls.SUB, cls.DIV], cls.LERP])
 
@@ -1170,7 +1170,7 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
             *coeffs: Coefficients of the polynomial. Must provide at least one coefficient.
 
         Returns:
-            An `ExprList` representing the polyval expression.
+            An [ExprList][vsexprtools.ExprList] representing the polyval expression.
 
         Raises:
             CustomValueError: If fewer than one coefficient is provided.

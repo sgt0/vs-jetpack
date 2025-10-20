@@ -67,14 +67,14 @@ class CustomMaskFromClipsAndRanges(GeneralMask, VSObjectABC):
 
     def get_mask(self, ref: vs.VideoNode, /, *args: Any, **kwargs: Any) -> vs.VideoNode:
         """
-        Get the constructed mask
+        Get the constructed mask.
 
         Args:
             ref: Reference clip.
-            **kwargs: Keyword arguments passed to `replace_ranges` function.
+            **kwargs: Keyword arguments passed to [replace_ranges][vstools.replace_ranges] function.
 
         Returns:
-            Constructed mask
+            Constructed mask.
         """
         mask = vs.core.std.BlankClip(
             ref,
@@ -204,8 +204,8 @@ class HardsubMask(DeferredMask):
 class HardsubSignFades(HardsubMask):
     """
     Helper for hardsub scene filtering, typically used for de-hardsubbing signs during fades or hard-to-catch signs.
-    Originally written by Kageru from Kagefunc:
-    `https://github.com/Irrational-Encoding-Wizardry/kagefunc`
+
+    Originally written by Kageru from [kagefunc](https://github.com/Irrational-Encoding-Wizardry/kagefunc)
     """
 
     highpass: float
@@ -260,7 +260,7 @@ class HardsubSignFades(HardsubMask):
 
 class HardsubSign(HardsubMask):
     """
-    Hardsub scenefiltering helper using `Zastin <https://github.com/kgrabs>`_'s hardsub mask.
+    Hardsub scenefiltering helper using [Zastin](https://github.com/kgrabs)'s hardsub mask.
     """
 
     thr: float
@@ -321,8 +321,8 @@ class HardsubSign(HardsubMask):
 class HardsubLine(HardsubMask):
     """
     Helper for de-hardsubbing white text with black border subtitles.
-    Originally written by Kageru from Kagefunc:
-    `https://github.com/Irrational-Encoding-Wizardry/kagefunc`
+
+    Originally written by Kageru from [kagefunc](https://github.com/Irrational-Encoding-Wizardry/kagefunc)
     """
 
     expand: int | None

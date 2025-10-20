@@ -159,10 +159,12 @@ def get_prop(
     """
     Get FrameProp ``prop`` from frame ``frame`` with expected type ``t``.
 
-    If the property is stored as bytes and `t` is ``str``, the value will be decoded as UTF-8. For example:
-    ```py
-    assert get_prop(clip_indexed_by_lsmas.get_frame(0), "_PictType", str) == "I"
-    ```
+    If the property is stored as bytes and `t` is ``str``, the value will be decoded as UTF-8.
+
+    Example:
+        ```py
+        assert get_prop(clip.get_frame(0), "_PictType", str) == "I"
+        ```
 
     Args:
         obj: Clip or frame containing props.

@@ -36,6 +36,7 @@ class NLMeans[**P, R]:
         AUTO = "auto"
         """
         Automatically selects the best available backend.
+
         Priority: "cuda" -> "accelerator" -> "gpu" -> "cpu" -> "ispc".
         """
 
@@ -140,6 +141,8 @@ class NLMeans[**P, R]:
 
         def __call__(self, wref: float | None = None) -> NLMeans.WeightMode:
             """
+            Add a reference value.
+
             Args:
                 wref: Amount of original pixel to contribute to the filter output, relative to the weight of the most
                     similar pixel found.

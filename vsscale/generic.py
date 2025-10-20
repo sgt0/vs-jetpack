@@ -103,7 +103,7 @@ class BaseGenericScaler(Scaler, ABC):
 
 class GenericScaler(BaseGenericScaler, partial_abstract=True):
     """
-    Generic Scaler class
+    Generic Scaler class.
     """
 
     def __init__(

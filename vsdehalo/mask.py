@@ -107,7 +107,7 @@ class FineDehalo[**P, R]:
 
     class Masks(Mapping[str, vs.VideoNode], VSObjectABC):
         """
-        Class for creating and storing intermediate masks used in the `fine_dehalo` function.
+        Class for creating and storing intermediate masks used in the [fine_dehalo][vsdehalo.fine_dehalo] function.
 
         Each step of the masking pipeline is stored with a descriptive key, allowing for
         debugging or further processing.
@@ -329,15 +329,16 @@ def fine_dehalo(
     The parameter `ss` can be configured per iteration while `blur`, `lowsens`, `highsens`, `darkstr` and `brightstr`
     can be configured per plane and per iteration. You can specify:
 
-        - A single value: applies to all iterations and all planes.
-        - A tuple of values: interpreted as iteration-wise.
-        - A list inside the tuple: interpreted as per-plane for a specific iteration.
+    - A single value: applies to all iterations and all planes.
+    - A tuple of values: interpreted as iteration-wise.
+    - A list inside the tuple: interpreted as per-plane for a specific iteration.
 
     For example:
         `blur=(1.4, [1.4, 1.65], [1.5, 1.4, 1.45])` implies 3 iterations:
-            - 1st: 1.4 for all planes
-            - 2nd: 1.4 for luma, 1.65 for both chroma planes
-            - 3rd: 1.5 for luma, 1.4 for U, 1.45 for V
+
+        - 1st: 1.4 for all planes
+        - 2nd: 1.4 for luma, 1.65 for both chroma planes
+        - 3rd: 1.5 for luma, 1.4 for U, 1.45 for V
 
     The parameters `thmi`, `thma`, `thlimi`, `thlima`, `exclude` and `edgeproc` can be configured per plane.
 
@@ -359,7 +360,7 @@ def fine_dehalo(
         brightstr: Strength factor for suppressing bright halos.
         rx: Horizontal radius for halo removal.
         ry: Vertical radius for halo removal. Defaults to `rx` if not set.
-        edgemask: Edge detection object to use. Defaults to `Robinson3`.
+        edgemask: Edge detection object to use. Defaults to [Robinson3][vsmasktools.Robinson3].
         thmi: Minimum threshold for sharp edge selection; isolates only the strongest (line-like) edges.
         thma: Maximum threshold for sharp edge selection; filters out weaker edges.
         thlimi: Minimum threshold for including edges that were previously ignored.

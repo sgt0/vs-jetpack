@@ -103,13 +103,16 @@ def match_clip(
     return clip.std.AssumeFPS(fpsnum=ref.fps.numerator, fpsden=ref.fps.denominator)
 
 
-class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
+# ruff: noqa: N802, N801
+class padder_ctx(AbstractContextManager["padder_ctx"]):
     """
     Context manager for the padder class.
     """
 
     def __init__(self, mod: int = 8, min: int = 0, align: Align = Align.MIDDLE_CENTER) -> None:
         """
+        Initializes the class
+
         Args:
             mod: The modulus used for calculations or constraints. Defaults to 8.
             min: The minimum value allowed or used as a base threshold. Defaults to 0.
@@ -120,9 +123,7 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
         self.align = align
         self.pad_ops = list[tuple[tuple[int, int, int, int], tuple[int, int]]]()
 
-    def CROP(  # noqa: N802
-        self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None
-    ) -> vs.VideoNode:
+    def CROP(self, clip: vs.VideoNode, crop_scale: float | tuple[float, float] | None = None) -> vs.VideoNode:
         """
         Crop a clip with the padding values.
 
@@ -142,7 +143,7 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
 
         return clip.std.Crop(*(x * y for x, y in zip(padding, crop_pad)))
 
-    def MIRROR(self, clip: vs.VideoNode) -> vs.VideoNode:  # noqa: N802
+    def MIRROR(self, clip: vs.VideoNode) -> vs.VideoNode:
         """
         Pad a clip with reflect mode. This will reflect the clip on each side.
 
@@ -157,7 +158,7 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
         self.pad_ops.append((padding, (out.width, out.height)))
         return out
 
-    def REPEAT(self, clip: vs.VideoNode) -> vs.VideoNode:  # noqa: N802
+    def REPEAT(self, clip: vs.VideoNode) -> vs.VideoNode:
         """
         Pad a clip with repeat mode. This will simply repeat the last row/column till the end.
 
@@ -172,7 +173,7 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
         self.pad_ops.append((padding, (out.width, out.height)))
         return out
 
-    def COLOR(  # noqa: N802
+    def COLOR(
         self, clip: vs.VideoNode, color: int | float | bool | None | Sequence[int | float | bool | None] = (False, None)
     ) -> vs.VideoNode:
         """
@@ -180,10 +181,13 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
 
         Args:
             clip: Input clip.
-            color: Constant color that should be added on the sides: * number: This will be treated as such and not
-                converted or clamped. * False: Lowest value for this clip format and color range. * True: Highest value
-                for this clip format and color range. * None: Neutral value for this clip format. * MISSING:
-                Automatically set to False if RGB, else None.
+            color: Constant color that should be added on the sides:
+
+                   * number: This will be treated as such and not converted or clamped.
+                   * False: Lowest value for this clip format and color range.
+                   * True: Highest value for this clip format and color range.
+                   * None: Neutral value for this clip format.
+                   * MISSING: Automatically set to False if RGB, else None.
 
         Returns:
             Padded clip with colored borders.
@@ -202,12 +206,13 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):  # noqa: N801
         return None
 
 
-class padder:  # noqa: N801
+class padder:
     """
     Pad out the pixels on the sides by the given amount of pixels.
     """
 
     ctx = padder_ctx
+    """Context manager for the padder class."""
 
     @staticmethod
     def _base(
@@ -228,12 +233,11 @@ class padder:  # noqa: N801
         return width, height, clip.format, w_sub, h_sub
 
     @classmethod
-    def MIRROR(cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:  # noqa: N802
+    def MIRROR(cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
         """
         Pad a clip with reflect mode. This will reflect the clip on each side.
 
         Visual example:
-
             ```
             >>> |ABCDE
             >>> padder.MIRROR(left=3)
@@ -265,14 +269,11 @@ class padder:  # noqa: N801
         return core.std.CopyFrameProps(padded, clip)
 
     @classmethod
-    def REPEAT(  # noqa: N802
-        cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0
-    ) -> vs.VideoNode:
+    def REPEAT(cls, clip: vs.VideoNode, left: int = 0, right: int = 0, top: int = 0, bottom: int = 0) -> vs.VideoNode:
         """
         Pad a clip with repeat mode. This will simply repeat the last row/column till the end.
 
         Visual example:
-
             ```
             >>> |ABCDE
             >>> padder.REPEAT(left=3)
@@ -331,7 +332,7 @@ class padder:  # noqa: N801
         )
 
     @classmethod
-    def COLOR(  # noqa: N802
+    def COLOR(
         cls,
         clip: vs.VideoNode,
         left: int = 0,
@@ -344,7 +345,6 @@ class padder:  # noqa: N801
         Pad a clip with a constant color.
 
         Visual example:
-
             ```
             >>> |ABCDE
             >>> padder.COLOR(left=3, color=Z)
@@ -447,9 +447,11 @@ class padder:  # noqa: N801
         return padding, tuple(x * crop_scale[0 if i < 2 else 1] for x, i in enumerate(padding))  # type: ignore
 
 
-def pick_func_stype[**P](
-    clip: vs.VideoNode, func_int: Callable[P, vs.VideoNode], func_float: Callable[P, vs.VideoNode]
-) -> Callable[P, vs.VideoNode]:
+def pick_func_stype[**P0, **P1](
+    clip: vs.VideoNode,
+    func_int: Callable[P0, vs.VideoNode],
+    func_float: Callable[P1, vs.VideoNode],
+) -> Callable[P0, vs.VideoNode] | Callable[P1, vs.VideoNode]:
     """
     Pick the function matching the sample type of the clip's format.
 

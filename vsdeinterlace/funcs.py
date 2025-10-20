@@ -24,6 +24,10 @@ __all__ = ["FixInterlacedFades", "InterpolateOverlay", "vinverse"]
 
 
 class InterpolateOverlay(CustomEnum):
+    """
+    Enum defining interpolation patterns for handling overlaid 60i/30p text on top of telecined 24p footage.
+    """
+
     IVTC_TXT60 = 10, (4, 2, 0, 8, 6)
     """
     For 60i overlaid on top of 24t.
@@ -138,6 +142,10 @@ class InterpolateOverlay(CustomEnum):
 
 
 class FixInterlacedFades(CustomIntEnum):
+    """
+    Enum for mathematically decombing fades that were applied *after* telecine.
+    """
+
     AVERAGE = 0
     """
     Adjust the average of each field to `color`.
@@ -169,8 +177,8 @@ class FixInterlacedFades(CustomIntEnum):
                 `clip`). Accepts a single float or a sequence of floats to control the color per plane.
 
         Returns:
-            Clip with fades to/from `color` accurately deinterlaced. Frames that don't contain such fades may be
-            damaged.
+            Clip with fades to/from `color` accurately deinterlaced.
+                Frames that don't contain such fades may be damaged.
         """
         func = FunctionUtil(clip, self.__class__, planes, vs.YUV, 32)
 

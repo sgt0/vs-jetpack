@@ -113,12 +113,11 @@ def vfm(
     If you pass a clip, it will replace combed frames with that clip. If you pass a function,
     it will run that function on your input clip and replace combed frames with it.
 
-    Example usage:
-
-    ```py
+    Example:
+        ```py
         # Run vsaa.NNEDI3 on combed frames
         vfm(clip, postprocess=NNEDI3().deinterlace)
-    ```
+        ```
 
     Args:
         clip: Input clip to field matching telecine on.

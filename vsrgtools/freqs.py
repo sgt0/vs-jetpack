@@ -46,13 +46,13 @@ class MeanMode(CustomEnum):
     """
 
     MINIMUM = auto()
-    """Minimum value across all clips"""
+    """Minimum value across all clips."""
 
     MAXIMUM = auto()
-    """Maximum value across all clips"""
+    """Maximum value across all clips."""
 
     MEDIAN = auto()
-    """Median value across all clips"""
+    """Median value across all clips."""
 
     @overload
     def __call__(  # type: ignore[misc]
