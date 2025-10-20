@@ -59,15 +59,16 @@ def dehalo_alpha(
     The parameter `ss` can be configured per iteration while `blur`, `lowsens`, `highsens`, `darkstr` and `brightstr`
     can be configured per plane and per iteration. You can specify:
 
-        - A single value: applies to all iterations and all planes.
-        - A tuple of values: interpreted as iteration-wise.
-        - A list inside the tuple: interpreted as per-plane for a specific iteration.
+    - A single value: applies to all iterations and all planes.
+    - A tuple of values: interpreted as iteration-wise.
+    - A list inside the tuple: interpreted as per-plane for a specific iteration.
 
     For example:
         `blur=(1.4, [1.4, 1.65], [1.5, 1.4, 1.45])` implies 3 iterations:
-            - 1st: 1.4 for all planes
-            - 2nd: 1.4 for luma, 1.65 for both chroma planes
-            - 3rd: 1.5 for luma, 1.4 for U, 1.45 for V
+
+        - 1st: 1.4 for all planes
+        - 2nd: 1.4 for luma, 1.65 for both chroma planes
+        - 3rd: 1.5 for luma, 1.4 for U, 1.45 for V
 
     Args:
         clip: Source clip.
@@ -201,7 +202,7 @@ class AlphaBlur:
         - Radius 4.0 ≈ sigma 2.75
     """
 
-    __slots__ = ("downscaler", "func", "rx", "ry", "upscaler")
+    __slots__ = ("_downscaler", "_func", "_rx", "_ry", "_upscaler")
 
     def __init__(
         self,
@@ -222,13 +223,13 @@ class AlphaBlur:
                    - downscaler: Custom downscaler Scaler object.
                    - upscaler: Custom upscaler Scaler object.
         """
-        self.rx = rx
-        self.ry = self.rx if ry is None else ry
-        self.func = func or self
-        self.downscaler = Scaler.ensure_obj(kwargs.get("downscaler", Mitchell()), self.func)
-        self.upscaler = Scaler.ensure_obj(kwargs.get("upscaler", BSpline()), self.func)
+        self._rx = rx
+        self._ry = self._rx if ry is None else ry
+        self._func = func or self
+        self._downscaler = Scaler.ensure_obj(kwargs.get("downscaler", Mitchell), self._func)
+        self._upscaler = Scaler.ensure_obj(kwargs.get("upscaler", BSpline), self._func)
 
-    def __call__(self, clip: vs.VideoNode, planes: Planes = None, **kwargs: Any) -> Any:
+    def __call__(self, clip: vs.VideoNode, planes: Planes = None, **kwargs: Any) -> vs.VideoNode:
         """
         Applies the Gaussian blur approximation to the input clip.
 
@@ -246,11 +247,11 @@ class AlphaBlur:
 
         work_clip, *chroma = split(clip) if planes == [0] else (clip,)
 
-        rxs = normalize_seq(self.rx, work_clip.format.num_planes)
-        rys = normalize_seq(self.ry, work_clip.format.num_planes)
+        rxs = normalize_seq(self._rx, work_clip.format.num_planes)
+        rys = normalize_seq(self._ry, work_clip.format.num_planes)
 
         if any(x < 1 for x in (*rxs, *rys)):
-            raise CustomIndexError("rx, and ry must all be greater than 1.0!", self.func)
+            raise CustomIndexError("rx, and ry must all be greater than 1.0!", self._func)
 
         if (len(set(rxs)) == len(set(rys)) == 1) or planes == [0] or work_clip.format.num_planes == 1:
             processed = self._function(clip, rxs[0], rys[0])
@@ -268,8 +269,8 @@ class AlphaBlur:
         rx: float,
         ry: float,
     ) -> vs.VideoNode:
-        return self.upscaler.scale(
-            self.downscaler.scale(
+        return self._upscaler.scale(
+            self._downscaler.scale(
                 clip,
                 mod_x(clip.width / rx, 2**clip.format.subsampling_w),
                 mod_x(clip.height / ry, 2**clip.format.subsampling_h),

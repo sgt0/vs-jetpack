@@ -240,8 +240,7 @@ class Operators(metaclass=SingletonMeta):
             exclude: Optional set of (x, y) coordinates to exclude from the matrix.
             include: Optional set of (x, y) coordinates to include in the matrix.
 
-        Returns:
-            A list of [LiteralVar][vsexprtools.inline.helpers.LiteralVar] instances
+        Returns: A list of [LiteralVar][vsexprtools.inline.helpers.LiteralVar] instances
             representing the matrix of expressions.
         """
         matrix, *_ = ExprOp.matrix(char, radius, mode, exclude, include)
@@ -290,7 +289,7 @@ op = Operators()
 
 
 class ExprVar(ABC):
-    """Base interface for variables used in RPN expression"""
+    """Base interface for variables used in RPN expression."""
 
     def __add__(self, other: ExprVarLike) -> ComputedVar:
         if other == 0:
@@ -465,7 +464,7 @@ class ExprVar(ABC):
 
     def as_var(self) -> ComputedVar:
         """
-        Converts the expression variable to a ComputedVar.
+        Converts the expression variable to a [ComputedVar][vsexprtools.inline.helpers.ComputedVar].
 
         Returns:
             A ComputedVar.
@@ -481,6 +480,9 @@ type ExprVarLike = int | float | str | ExprVar
 
 class LiteralVar(ExprVar):
     """Literal value wrapper for use in RPN expressions."""
+
+    value: ExprVarLike
+    """The underlying raw value."""
 
     def __init__(self, value: ExprVarLike):
         """

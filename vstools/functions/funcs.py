@@ -20,7 +20,7 @@ from ..enums import (
 )
 from ..exceptions import InvalidColorspacePathError, UndefinedMatrixError
 from ..types import HoldsVideoFormat, Planes, VideoFormatLike
-from ..utils import check_variable, normalize_planes
+from ..utils import check_variable, get_color_family, get_depth, normalize_planes
 from ..vs_proxy import VSObject, vs
 from .utils import depth, join, plane
 
@@ -32,17 +32,19 @@ class FunctionUtil(list[int], VSObject):
     Function util to normalize common actions and boilerplate often used in functions.
 
     Main use is:
-        - Automatically dither up and down as required.
-        - Automatically check if the input clip has variable formats, resolutions, etc.
-        - Fully type safe and removes the need for asserts or typeguards in function code.
-        - Handy properties for common code paths, improving code readability and writability.
+
+    - Automatically dither up and down as required.
+    - Automatically check if the input clip has variable formats, resolutions, etc.
+    - Fully type safe and removes the need for asserts or typeguards in function code.
+    - Handy properties for common code paths, improving code readability and writability.
 
     Examples:
-
-        >>> func = FunctionUtil(clip, planes=0, color_family=(vs.YUV, vs.GRAY), bitdepth=16)
-        >>> wclip = func.work_clip
-        >>> txt = wclip.text.Text("This clip has been processed!")
-        >>> return func.return_clip(txt)
+        ```py
+        func = FunctionUtil(clip, planes=0, color_family=(vs.YUV, vs.GRAY), bitdepth=16)
+        wclip = func.work_clip
+        txt = wclip.text.Text("This clip has been processed!")
+        return func.return_clip(txt)
+        ```
 
     For further examples, see: <https://github.com/search?q=org%3AJaded-Encoding-Thaumaturgy+FunctionUtil>
     """
@@ -67,6 +69,8 @@ class FunctionUtil(list[int], VSObject):
         order: FieldBasedLike | None = None,
     ) -> None:
         """
+        Initializes the class.
+
         Args:
             clip: Clip to process.
             func: Function returned for custom error handling. This should only be set by VS package developers.
@@ -81,7 +85,9 @@ class FunctionUtil(list[int], VSObject):
                 the work clip's bitdepth will be converted to the lowest bitdepth that is greater than
                 or equal to the work clip's current bitdepth.
 
-                `return_clip` automatically restores the clip to the original bitdepth.
+                [return_clip][vstools.FunctionUtil.return_clip] automatically restores the clip
+                to the original bitdepth.
+
                 If None, use the input clip's bitdepth. Default: None.
             matrix: Color Matrix to work in. Used for YUV <-> RGB conversions. Default: Get matrix from the input clip.
             transfer: Transfer to work in. Default: Get transfer from the input clip.
@@ -90,8 +96,6 @@ class FunctionUtil(list[int], VSObject):
             chromaloc: Chroma location to work in. Default: Get the chroma location from the input clip.
             order: Field order to work in. Default: Get the field order from the input clip.
         """
-        from ..utils import get_color_family
-
         assert check_variable(clip, func)
 
         all_color_family: list[vs.ColorFamily] | None
@@ -133,8 +137,6 @@ class FunctionUtil(list[int], VSObject):
         """
 
         if isinstance(self.bitdepth, (range, set)) and self.clip.format.bits_per_sample not in self.bitdepth:
-            from .. import get_depth
-
             src_depth = get_depth(self.clip)
             target_depth = next((bits for bits in self.bitdepth if bits >= src_depth), max(self.bitdepth))
 
@@ -328,6 +330,7 @@ class FunctionUtil(list[int], VSObject):
     def return_clip(self, processed: vs.VideoNode, prop_src: vs.VideoNode | None = None) -> vs.VideoNode:
         """
         Merge back the chroma if necessary and convert the processed clip back to the original clip's format.
+
         If `bitdepth != None`, the bitdepth will also be converted if necessary.
 
         Args:
@@ -359,6 +362,7 @@ class FunctionUtil(list[int], VSObject):
     def norm_seq[T](self, seq: T | Sequence[T], null: T) -> list[T]:
         """
         Normalize a value or sequence to a list mapped to the clip's planes.
+
         Unprocessed planes will be set to the given "null" value.
         """
 

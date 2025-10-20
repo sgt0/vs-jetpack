@@ -70,8 +70,7 @@ class PropEnum(CustomIntEnum):
         func_except: FuncExcept | None = None,
     ) -> Self:
         """
-        Get the enum member from a value that can be casted to this prop value
-        or grab it from frame properties.
+        Get the enum member from a value that can be casted to this prop value or grab it from frame properties.
 
         If `strict=False`, gather the heuristics using the clip's size or format.
 

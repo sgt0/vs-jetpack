@@ -82,6 +82,7 @@ if TYPE_CHECKING:
     Type alias for anything that can resolve to a Backend from vs-mlrt.
 
     This includes:
+
     - A string identifier.
     - A class type subclassing `Backend`.
     - An instance of a `Backend`.
@@ -686,7 +687,7 @@ class ArtCNN(BaseArtCNNLuma):
     You will have to grab the extended models pack or get it from the repo itself.
     (And create an "ArtCNN" folder in your models folder yourself)
 
-    https://github.com/Artoriuz/ArtCNN/releases/latest
+    <https://github.com/Artoriuz/ArtCNN/releases/latest>
 
     Defaults to R8F64.
 
@@ -1422,7 +1423,7 @@ class BaseDPIR(BaseOnnxScaler):
 
 class DPIR(BaseDPIR):
     """
-    Deep Plug-and-Play Image Restoration
+    Deep Plug-and-Play Image Restoration.
     """
 
     _model = (2, 3)

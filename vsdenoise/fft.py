@@ -107,7 +107,7 @@ class DFTTest:
 
         class InterMode(CustomEnum):
             """
-            Interpolation modes for sigma values in `SLocation`.
+            Interpolation modes for sigma values in [SLocation][vsdenoise.DFTTest.SLocation].
 
             Defines how sigma values should be interpolated across frequency locations.
             """
@@ -204,7 +204,7 @@ class DFTTest:
                     digits: The precision of the frequency values (default is 3 decimal places).
 
                 Returns:
-                    The interpolated `SLocation` object.
+                    The interpolated [SLocation][vsdenoise.DFTTest.SLocation] object.
                 """
 
             @overload
@@ -249,7 +249,8 @@ class DFTTest:
                     digits: The precision of the frequency values (default is 3 decimal places).
 
                 Returns:
-                    The interpolated `SLocation` object or a `MultiDim` object if multiple locations are provided.
+                    The interpolated [SLocation][vsdenoise.DFTTest.SLocation] object or a `MultiDim` object
+                        if multiple locations are provided.
                 """
                 if not locations and location is not None:
                     return DFTTest.SLocation.from_param(location).interpolate(self, res, digits)
@@ -377,7 +378,7 @@ class DFTTest:
             Reverses the frequency-sigma pairs, inverting the frequency range and reversing the order of sigma values.
 
             Returns:
-                A new `SLocation` instance with reversed frequency-sigma pairs.
+                A new [SLocation][vsdenoise.DFTTest.SLocation] instance with reversed frequency-sigma pairs.
             """
             return self.__class__(dict(zip((1 - f for f in reversed(self.frequencies)), list(reversed(self.sigmas)))))
 
@@ -427,13 +428,14 @@ class DFTTest:
         @classmethod
         def from_param(cls, location: SLocationLike | Literal[False]) -> Self:
             """
-            Converts a frequency-sigma pair or a literal `False` to an `SLocation` instance.
+            Converts a frequency-sigma pair or a literal `False`
+            to an [SLocation][vsdenoise.DFTTest.SLocation] instance.
 
             Args:
                 location: A frequency-sigma pair, `False` for no processing.
 
             Returns:
-                An `SLocation` instance`.
+                An [SLocation][vsdenoise.DFTTest.SLocation] instance`.
             """
             if location is False:
                 return cls.NoProcess
@@ -456,7 +458,7 @@ class DFTTest:
                 digits: The precision of the frequency values (default is 3 decimal places).
 
             Returns:
-                A new `SLocation` instance with interpolated sigma values.
+                A new [SLocation][vsdenoise.DFTTest.SLocation] instance with interpolated sigma values.
             """
             from scipy.interpolate import interp1d
 
@@ -471,11 +473,11 @@ class DFTTest:
         @classmethod
         def NoProcess(cls) -> Self:  # noqa: N802
             """
-            Returns a pre-defined `SLocation` instance that performs no processing
+            Returns a pre-defined [SLocation][vsdenoise.DFTTest.SLocation] instance that performs no processing
             (i.e., sigma is zero for all locations).
 
             Returns:
-                A `SLocation` instance with no processing.
+                A [SLocation][vsdenoise.DFTTest.SLocation] instance with no processing.
             """
             return cls({0: 0, 1: 0})
 
@@ -604,35 +606,35 @@ class DFTTest:
         """
         Hanning window (0). A raised cosine window with good frequency resolution and low spectral leakage.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Hann_(Hanning)_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Hann_(Hanning)_window>
         """
 
         HAMMING = 1
         """
         Hamming window (1). Similar to Hanning but with slightly reduced side lobe attenuation.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Hamming_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Hamming_window>
         """
 
         BLACKMAN = 2
         """
         Blackman window (2). Better side lobe attenuation than Hamming or Hanning at the cost of wider main lobe.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Blackman_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Blackman_window>
         """
 
         BLACKMAN_HARRIS_4TERM = 3
         """
         4-term Blackman-Harris window (3). Low side lobes, ideal for high dynamic range applications.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Blackman%E2%80%93Harris_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Blackman%E2%80%93Harris_window>
         """
 
         KAISER_BESSEL = 4
         """
         Kaiser-Bessel window (4). Adjustable window (beta parameter) balancing resolution and leakage.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Kaiser_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Kaiser_window>
         """
 
         BLACKMAN_HARRIS_7TERM = 5
@@ -640,50 +642,51 @@ class DFTTest:
         7-term Blackman-Harris window (5). Extended version with even greater side lobe suppression.
 
         See:
-            - https://ccrma.stanford.edu/~jos/Windows/Blackman_Harris_Window_Family.html
-            - https://github.com/hukenovs/blackman_harris_win
+
+        - <https://ccrma.stanford.edu/~jos/Windows/Blackman_Harris_Window_Family.html>
+        - <https://github.com/hukenovs/blackman_harris_win>
         """
 
         FLAT_TOP = 6
         """
         Flat top window (6). Optimized for amplitude accuracy and minimizing scalloping loss.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Flat_top_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Flat_top_window>
         """
 
         RECTANGULAR = 7
         """
         Rectangular window (7). Equivalent to no windowing; highest resolution, but worst leakage.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Rectangular_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Rectangular_window>
         """
 
         BARLETT = 8
         """
         Bartlett window (8). Also known as a triangular window; moderate leakage reduction.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Bartlett_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Bartlett_window>
         """
 
         BARLETT_HANN = 9
         """
         Bartlett-Hann window (9). Hybrid of Bartlett and Hanning with a smoother taper.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Bartlett%E2%80%93Hann_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Bartlett%E2%80%93Hann_window>
         """
 
         NUTTALL = 10
         """
         Nuttall window (10). Four-term cosine window with very low side lobes.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Nuttall_window,_continuous_first_derivative
+        See: <https://en.wikipedia.org/wiki/Window_function#Nuttall_window,_continuous_first_derivative>
         """
 
         BLACKMAN_NUTTALL = 11
         """
         Blackman-Nuttall window (11). Variant of Nuttall with even stronger side lobe suppression.
 
-        See: https://en.wikipedia.org/wiki/Window_function#Blackman%E2%80%93Nuttall_window
+        See: <https://en.wikipedia.org/wiki/Window_function#Blackman%E2%80%93Nuttall_window>
         """
 
     class Backend(_BackendBase):
@@ -875,7 +878,7 @@ class DFTTest:
                 """
                 Resolves the appropriate DFTTest backend to use based on availability.
 
-                If the current instance is not DFTTest.Backend.AUTO, it returns itself.
+                If the current instance is not [AUTO][vsdenoise.DFTTest.Backend.AUTO], it returns itself.
                 Otherwise, it attempts to select the best available backend.
 
                 Raises:
@@ -1103,7 +1106,7 @@ The `SLocationLike` type can be one of the following:
 
 - `int` or `float`:
   A single frequency value (for 1D frequency location).
-- `DFTTest.SLocation`:
+- [DFTTest.SLocation][vsdenoise.DFTTest.SLocation]:
   A structured class for defining frequency locations in a more complex manner.
 - `Sequence[Frequency, Sigma]`:
   A sequence (e.g., list or tuple) that alternates between `Frequency` and `Sigma` values.

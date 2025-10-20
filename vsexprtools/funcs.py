@@ -49,7 +49,7 @@ def expr_func(
     """
     Calls `akarin.Expr` plugin.
 
-    For a higher-level function, see [norm_expr][vsexprtools.norm_expr]
+    For a higher-level function, see [norm_expr][vsexprtools.norm_expr].
 
     Web app to dissect expressions:
         - <https://jaded-encoding-thaumaturgy.github.io/expr101/>
@@ -61,8 +61,8 @@ def expr_func(
         opt: Forces integer evaluation as much as possible.
         boundary: Specifies the default boundary condition for relative pixel accesses:
 
-               - True (default): Mirrored edges.
-               - False: Clamped edges.
+               - `True` (default): Mirrored edges.
+               - `False`: Clamped edges.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Raises:
@@ -180,6 +180,7 @@ type NestedStrLike = SupportsString | None | Iterable[NestedStrLike]
 A recursive type representing string-like values or collections thereof.
 
 Acceptable forms include:
+
 - A single string (or string-like object).
 - An iterable (list, tuple, etc.) containing other NestedStrLike values, which may themselves be further nested.
 """
@@ -189,10 +190,12 @@ type ExprLike = str | Sequence[NestedStrLike]
 A recursive type representing a valid expression input.
 
 Acceptable forms include:
+
 - A single string (or string-like object): Used as the same expression for all planes.
 - A list of expressions: Concatenated into a single expression for all planes.
 - A tuple of expressions: Interpreted as separate expressions for each plane.
-- A TupleExprList: will make a [norm_expr][vsexprtools.norm_expr] call for each expression within this tuple.
+- A [TupleExprList][vsexprtools.TupleExprList]: will make a [norm_expr][vsexprtools.norm_expr] call for each expression
+  within this tuple.
 """
 
 
@@ -222,20 +225,24 @@ def norm_expr(
                - A single str will be processed for all planes.
                - A list will be concatenated to form a single expr for all planes.
                - A tuple of these types will allow specification of different expr for each planes.
-               - A TupleExprList will make a `norm_expr` call for each expression within this tuple.
+               - A [TupleExprList][vsexprtools.TupleExprList] will make a `norm_expr` call for each expression
+                within this tuple.
         planes: Plane to process, defaults to all.
         format: Output format, defaults to the first clip format.
         opt: Forces integer evaluation as much as possible.
         boundary: Specifies the default boundary condition for relative pixel accesses:
 
-               - True (default): Mirrored edges.
-               - False: Clamped edges.
+               - `True` (default): Mirrored edges.
+               - `False`: Clamped edges.
         func: Function returned for custom error handling. This should only be set by VS package developers.
         split_planes: Splits the VideoNodes into their individual planes.
         debug: Print out the normalized expr.
-        **kwargs: Additional keywords arguments to be passed to the expression function. These arguments are key-value
-            pairs, where the keys are placeholders that will be replaced in the expression string. Iterable values
-            (except str and bytes types) will be associated with the corresponding plane.
+        **kwargs: Additional keywords arguments to be passed to the expression function.
+
+            These arguments are key-value pairs, where the keys are placeholders that will be replaced
+            in the expression string.
+
+            Iterable values (except str and bytes types) will be associated with the corresponding plane.
 
     Returns:
         Evaluated clip.

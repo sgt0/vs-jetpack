@@ -61,6 +61,7 @@ from ..exceptions import (
 from ..types import LeftShift, TopShift
 
 __all__ = [
+    "BaseScaler",
     "Bobber",
     "BobberLike",
     "Descaler",
@@ -255,7 +256,7 @@ class BaseScalerMeta(VSObjectABCMeta):
 
         obj = super().__new__(mcls, name, bases, namespace, **kwargs)
 
-        # Decorate the `implemented_funcs` with `_add_init_kwargs` to add the init kwargs to the funcs.
+        # Decorate the implemented_funcs with `_add_init_kwargs` to add the init kwargs to the funcs.
         for impl_func_name in getattr(obj, "_implemented_funcs"):
             func = getattr(obj, impl_func_name)
 
@@ -309,7 +310,7 @@ class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
     """
     Tuple of function names that are implemented in the current class.
 
-    These functions determine which keyword arguments will be extracted from the __init__ method.
+    These functions determine which keyword arguments will be extracted from the `__init__` method.
     """
 
     if not TYPE_CHECKING:
@@ -325,10 +326,11 @@ class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
         """
         Initialize the scaler with optional keyword arguments.
 
-        These keyword arguments are automatically forwarded to the `implemented_funcs` methods
-        but only if the method explicitly accepts them as named parameters.
-        If the same keyword is passed to both `__init__` and one of the `implemented_funcs`,
-        the one passed to `func` takes precedence.
+        These keyword arguments are automatically forwarded to
+        the [implemented_funcs][vskernels.BaseScaler.implemented_funcs] methods but only
+        if the method explicitly accepts them as named parameters.
+        If the same keyword is passed to both `__init__` and one of the
+        [implemented_funcs][vskernels.BaseScaler.implemented_funcs], the one passed to `func` takes precedence.
 
         Args:
             **kwargs: Keyword arguments that configure the internal scaling behavior.
@@ -446,7 +448,7 @@ class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
         """
         Returns a set of function names that are implemented in the current class and the parent classes.
 
-        These functions determine which keyword arguments will be extracted from the __init__ method.
+        These functions determine which keyword arguments will be extracted from the `__init__` method.
 
         Returns:
             Frozen set of function names.
@@ -1077,9 +1079,10 @@ type ScalerLike = str | type[Scaler] | Scaler
 Type alias for anything that can resolve to a Scaler.
 
 This includes:
- - A string identifier.
- - A class type subclassing `Scaler`.
- - An instance of a `Scaler`.
+
+- A string identifier.
+- A class type subclassing [Scaler][vskernels.Scaler].
+- An instance of a [Scaler][vskernels.Scaler].
 """
 
 type DescalerLike = str | type[Descaler] | Descaler
@@ -1087,9 +1090,10 @@ type DescalerLike = str | type[Descaler] | Descaler
 Type alias for anything that can resolve to a Descaler.
 
 This includes:
- - A string identifier.
- - A class type subclassing `Descaler`.
- - An instance of a `Descaler`.
+
+- A string identifier.
+- A class type subclassing [Descaler][vskernels.Descaler].
+- An instance of a [Descaler][vskernels.Descaler].
 """
 
 type ResamplerLike = str | type[Resampler] | Resampler
@@ -1097,9 +1101,10 @@ type ResamplerLike = str | type[Resampler] | Resampler
 Type alias for anything that can resolve to a Resampler.
 
 This includes:
- - A string identifier.
- - A class type subclassing `Resampler`.
- - An instance of a `Resampler`.
+
+- A string identifier.
+- A class type subclassing [Resampler][vskernels.Resampler].
+- An instance of a [Resampler][vskernels.Resampler].
 """
 
 type KernelLike = str | type[Kernel] | Kernel
@@ -1107,9 +1112,10 @@ type KernelLike = str | type[Kernel] | Kernel
 Type alias for anything that can resolve to a Kernel.
 
 This includes:
- - A string identifier.
- - A class type subclassing `Kernel`.
- - An instance of a `Kernel`.
+
+- A string identifier.
+- A class type subclassing [Kernel][vskernels.Kernel].
+- An instance of a [Kernel][vskernels.Kernel].
 """
 
 type BobberLike = str | type[Bobber] | Bobber
@@ -1117,7 +1123,8 @@ type BobberLike = str | type[Bobber] | Bobber
 Type alias for anything that can resolve to a Bobber.
 
 This includes:
- - A string identifier.
- - A class type subclassing `Bobber`.
- - An instance of a `Bobber`.
+
+- A string identifier.
+- A class type subclassing [Bobber][vskernels.Bobber].
+- An instance of a [Bobber][vskernels.Bobber].
 """

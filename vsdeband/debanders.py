@@ -249,10 +249,11 @@ class F3KDeband[**P, R]:
             Configure `MEAN_DIFF` with either individual values or sequences.
 
             You can use either:
+
             - Individual thresholds: ``y1, cb1, cr1, y2, cb2, cr2``
             - Sequences: ``thr_max`` and ``thr_mid``
 
-            ### y1 / cb1 / cr1
+            ## y1 / cb1 / cr1
             These are detail protection thresholds (max difference).
 
             This threshold applies to the maxDif check.
@@ -262,7 +263,7 @@ class F3KDeband[**P, R]:
 
             It helps protect sharp edges and fine details from being blurred by the debanding process.
 
-            ### y2 / cb2 / cr2
+            ## y2 / cb2 / cr2
             These are gradient / texture protection threshold (mid-pair difference).
 
             This threshold applies to the midDif checks.
@@ -376,7 +377,7 @@ def f3k_deband(
     """
     Debanding filter wrapper using the `neo_f3kdb` plugin.
 
-    More informations can be found in the plugin documentation: https://github.com/HomeOfAviSynthPlusEvolution/neo_f3kdb
+    More informations can be found in the plugin documentation: <https://github.com/HomeOfAviSynthPlusEvolution/neo_f3kdb>
 
     Args:
         clip: Input clip.
@@ -459,7 +460,7 @@ def placebo_deband(
     Debanding wrapper around the `placebo.Deband` filter from the VapourSynth `vs-placebo` plugin.
 
     For full plugin documentation, see:
-    https://github.com/sgt0/vs-placebo?tab=readme-ov-file#deband
+    <https://github.com/sgt0/vs-placebo?tab=readme-ov-file#deband>
 
     Args:
         clip: Input clip.
@@ -546,12 +547,11 @@ def mdb_bilateral(
     This function is more of a last resort for extreme banding.
 
     Example usage:
-    ```py
-    from vsdeband import mdb_bilateral, f3k_deband
-    from functools import partial
+        ```py
+        from vsdeband import mdb_bilateral
 
-    debanded = mdb_bilateral(clip, 17, 320)
-    ```
+        debanded = mdb_bilateral(clip, 22, 320)
+        ```
 
     Args:
         clip: Input clip.

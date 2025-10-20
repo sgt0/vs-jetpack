@@ -48,8 +48,9 @@ class ZimgComplexKernel(ComplexKernel, ZimgBobber):
     """
     Combined kernel class that supports complex scaling operations and zimg-based bob deinterlacing.
 
-    This class integrates the full functionality of `ComplexKernel`—including scaling, descaling,
-    resampling, and linear light/aspect ratio handling—with the bobbing capabilities of `ZimgBobber`.
+    This class integrates the full functionality of [ComplexKernel][vskernels.ComplexKernel]—including scaling,
+    descaling, resampling, and linear light/aspect ratio handling—with the bobbing capabilities
+    of [ZimgBobber][vskernels.ZimgBobber].
     """
 
 
@@ -58,7 +59,8 @@ type ZimgComplexKernelLike = str | type[ZimgComplexKernel] | ZimgComplexKernel
 Type alias for anything that can resolve to a ZimgComplexKernel.
 
 This includes:
+
 - A string identifier.
-- A class type subclassing `ZimgComplexKernel`.
-- An instance of a `ZimgComplexKernel`.
+- A class type subclassing [ZimgComplexKernel][vskernels.ZimgComplexKernel].
+- An instance of a [ZimgComplexKernel][vskernels.ZimgComplexKernel].
 """

@@ -69,10 +69,10 @@ def frequency_merge(
             lowpass function can either be a standard function or one that supports per-plane filtering.
         mode_high: The mean mode to use for the high frequency components or specifying the clip with the high frequency
             components. If a clip is passed, it must be one of the clips provided in `_clips`. Defaults to
-            `MeanMode.LEHMER`.
+            [MeanMode.LEHMER][vsrgtools.MeanMode.LEHMER].
         mode_low: The mean mode to use for the low frequency components or specifying the clip with the low frequency
             components. If a clip is passed, it must be one of the clips provided in `_clips`. Defaults to
-            `MeanMode.ARITHMETIC`.
+            [MeanMode.ARITHMETIC][vsrgtools.MeanMode.ARITHMETIC].
         lowpass: A global lowpass function applied to all provided clips. If set, ``_clips`` must consist solely of
             VideoNodes.
         planes: Planes to process. If specified, this will be passed to the lowpass functions. If None, it won't be

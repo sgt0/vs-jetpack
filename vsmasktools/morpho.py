@@ -39,8 +39,9 @@ RadiusLike = int | tuple[int, SpatialConvMode]
 Type alias for specifying a convolution radius.
 
 This can be one of the following:
- - An `int`: Interpreted as a square convolution with size `(2 * radius + 1) x (2 * radius + 1)`.
- - A `tuple[int, SpatialConvMode]`: A pair specifying the radius and the convolution mode.
+
+- An `int`: Interpreted as a square convolution with size `(2 * radius + 1) x (2 * radius + 1)`.
+- A `tuple[int, SpatialConvMode]`: A pair specifying the radius and the convolution mode.
 """
 
 
@@ -66,6 +67,7 @@ class Morpho:
     ) -> vs.VideoNode:
         """
         Replaces each pixel with the largest value in its 3x3 neighbourhood.
+
         This operation is also known as dilation with a radius of 1.
 
         Args:
@@ -96,6 +98,7 @@ class Morpho:
     ) -> vs.VideoNode:
         """
         Replaces each pixel with the smallest value in its 3x3 neighbourhood.
+
         This operation is also known as erosion with a radius of 1.
 
         Args:
@@ -127,8 +130,8 @@ class Morpho:
     ) -> vs.VideoNode:
         """
         Replaces each pixel with the average of the (radius * 2 + 1) ** 2 - 1 pixels
-        in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood, but only if that average
-        is greater than the center pixel.
+        in its (radius * 2 + 1)x(radius * 2 + 1) neighbourhood, but only if that average is greater
+        than the center pixel.
 
         A radius of 1 will replace each pixel with the average of the 8 pixels in its 3x3 neighbourhood.
         A radius of 2 will replace each pixel with the average of the 24 pixels in its 5x5 neighbourhood.
@@ -507,7 +510,7 @@ class Morpho:
     @copy_signature(top_hat)
     @inject_self
     def white_hate(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
-        """Alias for [top_hat][vsmasktools.Morpho.top_hat]"""
+        """Alias for [top_hat][vsmasktools.Morpho.top_hat]."""
         return self.top_hat(*args, **{"func": self.white_hate} | kwargs)
 
     @inject_self
@@ -549,7 +552,7 @@ class Morpho:
     @copy_signature(bottom_hat)
     @inject_self
     def black_hat(self, *args: Any, **kwargs: Any) -> vs.VideoNode:
-        """Alias for [bottom_hat][vsmasktools.Morpho.bottom_hat]"""
+        """Alias for [bottom_hat][vsmasktools.Morpho.bottom_hat]."""
         return self.top_hat(*args, **{"func": self.black_hat} | kwargs)
 
     @inject_self

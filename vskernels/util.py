@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from functools import partial, wraps
 from math import exp
 from types import GenericAlias
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Concatenate, Self, get_origin, overload
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Concatenate, Self, TypeAlias, get_origin, overload
 
 from jetpytools import CustomRuntimeError, CustomValueError, cachedproperty, classproperty
 from typing_extensions import TypeIs, TypeVar
@@ -234,14 +234,18 @@ class NoScale(ScalerSpecializer[_ScalerWithCatromDefaultT]):
         return NoScale[Scaler.from_param(scaler)]  # type: ignore[return-value,misc]
 
 
-type NoScaleLike[_ScalerT: Scaler] = str | type[NoScale[_ScalerT]] | NoScale[_ScalerT]
+_ScalerWithScalerDefaultT = TypeVar("_ScalerWithScalerDefaultT", bound=Scaler, default=Scaler)
+
+# TODO: type NoScaleLike[_ScalerT: Scaler = Scaler] = str | type[NoScale[_ScalerT]] | NoScale[_ScalerT]
+NoScaleLike: TypeAlias = str | type[NoScale[_ScalerWithScalerDefaultT]] | NoScale[_ScalerWithScalerDefaultT]
 """
 Type alias for anything that can resolve to a NoScale scaler.
 
 This includes:
- - A string identifier.
- - A class type subclassing `NoScale`.
- - An instance of `NoScale`.
+
+- A string identifier.
+- A class type subclassing [NoScale][vskernels.NoScale].
+- An instance of [NoScale][vskernels.NoScale].
 """
 
 
@@ -576,56 +580,55 @@ def _is_base_scaler_like(obj: Any, base_scaler: type[BaseScaler]) -> bool:
     if isinstance(obj, str):
         try:
             base_scaler.from_param(obj)
-        except base_scaler._err_class:
-            return False
-        else:
             return True
+        except base_scaler._err_class:
+            pass
 
     return False
 
 
 def is_scaler_like(obj: Any) -> TypeIs[ScalerLike]:
-    """Returns true if obj is a ScalerLike"""
+    """Returns true if obj is a ScalerLike."""
     return _is_base_scaler_like(obj, Scaler)
 
 
 def is_descaler_like(obj: Any) -> TypeIs[DescalerLike]:
-    """Returns true if obj is a DescalerLike"""
+    """Returns true if obj is a DescalerLike."""
     return _is_base_scaler_like(obj, Descaler)
 
 
 def is_resampler_like(obj: Any) -> TypeIs[ResamplerLike]:
-    """Returns true if obj is a ResamplerLike"""
+    """Returns true if obj is a ResamplerLike."""
     return _is_base_scaler_like(obj, Resampler)
 
 
 def is_kernel_like(obj: Any) -> TypeIs[KernelLike]:
-    """Returns true if obj is a KernelLike"""
+    """Returns true if obj is a KernelLike."""
     return _is_base_scaler_like(obj, Kernel)
 
 
 def is_bobber_like(obj: Any) -> TypeIs[BobberLike]:
-    """Returns true if obj is a BobberLike"""
+    """Returns true if obj is a BobberLike."""
     return _is_base_scaler_like(obj, Bobber)
 
 
 def is_complex_scaler_like(obj: Any) -> TypeIs[ComplexScalerLike]:
-    """Returns true if obj is a ComplexScalerLike"""
+    """Returns true if obj is a ComplexScalerLike."""
     return _is_base_scaler_like(obj, ComplexScaler)
 
 
 def is_complex_descaler_like(obj: Any) -> TypeIs[ComplexDescalerLike]:
-    """Returns true if obj is a ComplexDescalerLike"""
+    """Returns true if obj is a ComplexDescalerLike."""
     return _is_base_scaler_like(obj, ComplexDescaler)
 
 
 def is_complex_kernel_like(obj: Any) -> TypeIs[ComplexKernelLike]:
-    """Returns true if obj is a ComplexKernelLike"""
+    """Returns true if obj is a ComplexKernelLike."""
     return _is_base_scaler_like(obj, ComplexKernel)
 
 
 def is_custom_complex_kernel_like(obj: Any) -> TypeIs[CustomComplexKernelLike]:
-    """Returns true if obj is a CustomComplexKernelLike"""
+    """Returns true if obj is a CustomComplexKernelLike."""
     return _is_base_scaler_like(obj, CustomComplexKernel)
 
 

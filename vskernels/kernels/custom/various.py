@@ -31,7 +31,7 @@ def sinc(x: float) -> float:
 
 class CustomPoint(CustomComplexKernel, Point):
     """
-    Point resizer using the `CustomKernel` class.
+    Point resizer using the [CustomKernel][vskernels.CustomKernel] class.
     """
 
     _static_kernel_radius = 0
@@ -42,7 +42,7 @@ class CustomPoint(CustomComplexKernel, Point):
 
 class CustomBilinear(CustomComplexKernel, Bilinear):
     """
-    Bilinear resizer using the `CustomKernel` class.
+    Bilinear resizer using the [CustomKernel][vskernels.CustomKernel] class.
     """
 
     _static_kernel_radius = 1
@@ -53,7 +53,7 @@ class CustomBilinear(CustomComplexKernel, Bilinear):
 
 class CustomLanczos(CustomComplexTapsKernel, Lanczos):
     """
-    Lanczos resizer using the `CustomKernel` class.
+    Lanczos resizer using the [CustomKernel][vskernels.CustomKernel] class.
     """
 
     def __init__(self, taps: float = 3, **kwargs: Any) -> None:

@@ -153,7 +153,9 @@ class BM3D[**P, R]:
         AUTO = "auto"
         """
         Automatically selects the best available backend.
+
         Selection priority: "CUDA_RTC" → "CUDA" → "HIP" → "SYCL" → "CPU" → "OLD".
+
         When the filter chain is executed within vspreview, the priority of "cuda_rtc" and "cuda" is reversed.
         """
 
@@ -192,7 +194,7 @@ class BM3D[**P, R]:
             """
             Resolves the appropriate BM3D backend to use based on availability and context.
 
-            If the current instance is not BM3D.Backend.AUTO, it returns itself.
+            If the current instance is not [AUTO][vsdenoise.blockmatch.BM3D.Backend.AUTO], it returns itself.
             Otherwise, it attempts to select the best available backend.
 
             Raises:
@@ -239,7 +241,7 @@ class BM3D[**P, R]:
         Enum representing the available BM3D profiles, each with default parameter settings.
 
         For more detailed information on these profiles,
-        refer to the original [documentation](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D#profile-default)
+        refer to the original [documentation](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-BM3D#profile-default).
         """
 
         FAST = "fast"

@@ -109,7 +109,7 @@ class DeferredMask(GeneralMask):
     @limiter(mask=True)
     def get_mask(self, clip: vs.VideoNode, /, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         """
-        Get the constructed mask
+        Get the constructed mask.
 
         Args:
             clip: Source clip.
@@ -117,7 +117,7 @@ class DeferredMask(GeneralMask):
             **kwargs: Keyword arguments passed to the internal `_mask` method.
 
         Returns:
-            Constructed mask
+            Constructed mask.
         """
         if self.refframes:
             hm = vs.core.std.BlankClip(

@@ -56,8 +56,8 @@ def unsharpen(
         strength: Sharpening strength. Defaults to 1.0.
         blur: Either a blurred reference clip or a callable that takes the source clip
             and returns a blurred version (e.g., a Gaussian blur).
-        planes: Which planest to process. Default to all.
-        func: func: Function returned for custom error handling. This should only be set by VS package developers.
+        planes: Which plane to process. Default to all.
+        func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Returns:
         A sharpened clip.
@@ -89,9 +89,11 @@ def awarpsharp(
         clip: Clip to process. Must be either the same size as mask, or four times the size of mask in each dimension.
             The latter can be useful if better subpixel interpolation is desired. If clip is upscaled to four times the
             original size, it must be top-left aligned.
-        mask: Edge mask.
+        mask: Edge mask. Default is [Sobel][vsmasktools.Sobel].
+            [ASobel][vsmasktools.ASobel] is what you need if you want the original implementation.
         thresh: No pixel in the edge mask will have a value greater than thresh. Decrease for weaker sharpening.
         blur: Specifies the blur applied to the edge mask.
+
                - If an `int`, it sets the number of passes for the default `box_blur` filter.
                - If a callable, a custom blur function will be used instead.
                - If `False`, no blur will be applied.

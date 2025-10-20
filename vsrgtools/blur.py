@@ -280,7 +280,7 @@ def min_blur(
     a "best of both worlds" result — combining the edge-preserving nature of median filtering
     with the smoothness of Gaussian blur. The effect is somewhat reminiscent of a bilateral filter.
 
-    Original concept: http://avisynth.nl/index.php/MinBlur
+    Original concept: <http://avisynth.nl/index.php/MinBlur>
 
     Args:
         clip: Source clip.
@@ -328,7 +328,8 @@ def sbr(
 ) -> vs.VideoNode:
     """
     A helper function for high-pass filtering a blur difference, inspired by an AviSynth script by Didée.
-    `https://forum.doom9.org/showthread.php?p=1584186#post1584186`
+
+    <https://forum.doom9.org/showthread.php?p=1584186#post1584186>
 
     Args:
         clip: Source clip.

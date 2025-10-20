@@ -11,7 +11,7 @@ __all__ = [
 
 class CustomBicubic(CustomComplexKernel, Bicubic):
     """
-    Bicubic resizer using the `CustomKernel` class
+    Bicubic resizer using the [CustomKernel][vskernels.CustomKernel] class.
     """
 
     class bic_vals:  # noqa: N801

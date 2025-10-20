@@ -243,7 +243,7 @@ def inline_expr(
 
     Args:
         clips: Input clip(s).
-        format: format: Output format, defaults to the first clip format.
+        format: Output format, defaults to the first clip format.
         enable_polyfills: Enable monkey-patching built-in methods. Maybe more than that, nobody knows.
         **kwargs: Additional keyword arguments passed to [norm_expr][vsexprtools.norm_expr].
 

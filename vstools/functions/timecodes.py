@@ -406,9 +406,9 @@ class Keyframes(list[int]):
         not empty, the keyframes are loaded from the file. Otherwise, they are
         detected from the clip and then written to the file.
 
-        Examples:
-            When working on a TV series, the episode number can be a convenient
-            key (e.g. `"01"` for episode 1, `"02"` for episode 2, etc.):
+        Example:
+            When working on a TV series, the episode number can be a convenient key
+            (e.g. `"01"` for episode 1, `"02"` for episode 2, etc.):
             ```py
             keyframes = Keyframes.unique(clip, "01")
             ```
