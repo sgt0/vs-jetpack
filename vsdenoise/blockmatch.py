@@ -42,7 +42,6 @@ def wnnm(
     refine: int = 0,
     ref: vs.VideoNode | None = None,
     merge_factor: float = 0.1,
-    self_refine: bool = False,
     planes: Planes = None,
     **kwargs: Any,
 ) -> vs.VideoNode:
@@ -82,8 +81,6 @@ def wnnm(
                 but significantly increasing computation time and memory usage.
         ref: Reference clip. Must be the same dimensions and format as the input clip.
         merge_factor: Blend factor for merging the last and current iteration during iterative regularization.
-        self_refine: If True, each iterative recalculation uses the result from the previous iteration as the
-            reference clip `ref`, instead of the original input.
         planes: Which planes to process. Default to all.
         **kwargs: Additional arguments to be passed to the plugin.
 
@@ -102,19 +99,17 @@ def wnnm(
 
     dkwargs = dict[str, Any](radius=tr, rclip=ref) | kwargs
 
-    previous = func.work_clip
     denoised = core.wnnm.WNNM(func.work_clip, sigma, **dkwargs)
 
     for i in range(refine):
         if i == 0:
+            previous = func.work_clip
+        elif i == 1:
             previous = denoised
         else:
             previous = norm_expr(
                 [func.work_clip, previous, denoised], f"x y - {merge_factor} * z +", planes, func=func.func
             )
-
-        if self_refine:
-            dkwargs["rclip"] = denoised
 
         denoised = core.wnnm.WNNM(previous, sigma, **dkwargs)
 
