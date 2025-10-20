@@ -156,6 +156,16 @@ class BaseScalerSpecializer[DefaultScalerT: BaseScaler](BaseScaler, metaclass=Ba
 
         return GenericAlias(specialized_scaler, (base_scaler,))
 
+    @property
+    def specializer(self) -> DefaultScalerT:
+        """
+        Returns the effective specializer.
+
+        Returns:
+            The effective specializer.
+        """
+        return self.__class__.__specializer__  # type: ignore[return-value]
+
 
 class ScalerSpecializer[DefaultScalerT: Scaler](BaseScalerSpecializer[DefaultScalerT], Scaler, abstract=True):
     """
@@ -619,6 +629,26 @@ def is_custom_complex_kernel_like(obj: Any) -> TypeIs[CustomComplexKernelLike]:
     return _is_base_scaler_like(obj, CustomComplexKernel)
 
 
-def is_noscale_like(obj: Any) -> TypeIs[NoScaleLike[Scaler]]:
-    """Returns true if obj is a NoScaleLike"""
-    return _is_base_scaler_like(obj, NoScale)
+def is_noscale_like[_ScalerT: Scaler](obj: Any, specializer: type[_ScalerT] = Scaler) -> TypeIs[NoScaleLike[_ScalerT]]:  # type: ignore[assignment]
+    """
+    Returns true if obj is a NoScaleLike.
+    """
+    if isinstance(obj, NoScale):
+        return isinstance(obj.specializer, specializer)
+
+    if isinstance(obj, GenericAlias):
+        obj = get_origin(obj)
+
+        if isinstance(obj, BaseScalerSpecializerMeta) and issubclass(obj, NoScale):
+            return (obj.__isspecialized__ and issubclass(obj.__specializer__, specializer)) or issubclass(
+                obj.default_scaler, specializer
+            )
+
+    if isinstance(obj, str):
+        try:
+            NoScale.from_param(obj)
+            return True
+        except NoScale._err_class:
+            pass
+
+    return False
