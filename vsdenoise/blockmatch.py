@@ -49,28 +49,42 @@ def wnnm(
     """
     Weighted Nuclear Norm Minimization Denoise algorithm.
 
-    Block matching, which is popularized by BM3D, finds similar blocks and then stacks together in a 3-D group.
+    Block matching, popularized by BM3D, finds similar blocks and stacks them together in a 3-D group.
     The similarity between these blocks allows details to be preserved during denoising.
 
-    In contrast to BM3D, which denoises the 3-D group based on frequency domain filtering,
-    WNNM utilizes weighted nuclear norm minimization, a kind of low rank matrix approximation.
-    Because of this, WNNM exhibits less blocking and ringing artifact compared to BM3D,
-    but the computational complexity is much higher. This stage is called collaborative filtering in BM3D.
+    In contrast to BM3D, which denoises the 3-D group via frequency domain filtering,
+    WNNM (Weighted Nuclear Norm Minimization) uses a low-rank matrix approximation approach.
+    Because of this, WNNM tends to exhibit fewer blocking and ringing artifacts than BM3D,
+    at the cost of much higher computational complexity.
+    This stage is analogous to the "collaborative filtering" step in BM3D.
 
     For more information, see the [WNNM README](https://github.com/WolframRhodium/VapourSynth-WNNM).
 
     Args:
         clip: Clip to process.
-        sigma: Strength of denoising, valid range is [0, +inf]. If a float is passed, this strength will be applied to
-            every plane. Values higher than 4.0 are not recommended. Recommended values are [0.35, 1.0]. Default: 3.0.
-        refine: The amount of iterations for iterative regularization. Default: 0.
-        tr: Temporal radius. To enable spatial-only denoising, set this to 0. Higher values will rapidly increase
-            filtering time and RAM usage. Default: 0.
-        ref: Reference clip. Must be the same dimensions and format as input clip. Default: None.
-        merge_factor: Merge amount of the last recalculation into the new one when performing iterative regularization.
-        self_refine: If True, the iterative recalculation step will use the result from the previous iteration as the
-            reference clip `ref` instead of the original input. Default: False.
-        planes: Planes to process. If None, all planes. Default: None.
+        sigma: Denoising strength, controlling how aggressively noise is suppressed.
+            Larger values remove more noise but may smooth fine details.
+
+            Accepts either a single float (applied to all planes) or a per-plane sequence.
+            The valid range is [0, +inf), though practical values usually fall between **0.35 and 1.0**.
+            Values above 4.0 are rarely useful.
+        refine: Number of additional refinement iterations to perform.
+
+            A value of 0 corresponds to a single WNNM pass (equivalent to `num_iterations=1`
+            in the original implementation).
+            Each increment adds another iterative regularization step using the previously denoised result.
+
+            Valid range is [0, +inf).
+        tr: Temporal radius (in frames) used for motion-compensated denoising.
+
+               - `tr=0`: purely spatial denoising.
+               - `tr>0`: includes `tr` frames before and after the current one, improving temporal stability
+                but significantly increasing computation time and memory usage.
+        ref: Reference clip. Must be the same dimensions and format as the input clip.
+        merge_factor: Blend factor for merging the last and current iteration during iterative regularization.
+        self_refine: If True, each iterative recalculation uses the result from the previous iteration as the
+            reference clip `ref`, instead of the original input.
+        planes: Which planes to process. Default to all.
         **kwargs: Additional arguments to be passed to the plugin.
 
     Returns:
@@ -96,15 +110,11 @@ def wnnm(
             previous = denoised
         else:
             previous = norm_expr(
-                [func.work_clip, previous, denoised],
-                "x y - {merge_factor} * z +",
-                planes,
-                merge_factor=merge_factor,
-                func=func.func,
+                [func.work_clip, previous, denoised], f"x y - {merge_factor} * z +", planes, func=func.func
             )
 
         if self_refine:
-            dkwargs.update(rclip=denoised)
+            dkwargs["rclip"] = denoised
 
         denoised = core.wnnm.WNNM(previous, sigma, **dkwargs)
 
