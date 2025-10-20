@@ -99,12 +99,11 @@ def wnnm(
 
     dkwargs = dict[str, Any](radius=tr, rclip=ref) | kwargs
 
+    previous = func.work_clip
     denoised = core.wnnm.WNNM(func.work_clip, sigma, **dkwargs)
 
     for i in range(refine):
         if i == 0:
-            previous = func.work_clip
-        elif i == 1:
             previous = denoised
         else:
             previous = norm_expr(
