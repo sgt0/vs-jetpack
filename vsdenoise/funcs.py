@@ -4,17 +4,18 @@ This module contains general denoising functions built on top of base denoisers.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Sequence, overload
+from typing import Any, Callable, Literal, Sequence, overload
 
 from jetpytools import MISSING, CustomRuntimeError, FuncExcept, MissingT
 
 from vsexprtools import ExprOp, ExprVars, combine_expr, norm_expr
-from vskernels import Catrom, Kernel, KernelLike, Scaler, ScalerLike
-from vsscale import ArtCNN
+from vskernels import Catrom, Kernel, KernelLike, Lanczos, Scaler, ScalerLike
 from vstools import (
     ConstantFormatVideoNode,
+    HoldsVideoFormat,
     KwargsNotNone,
     Planes,
+    VideoFormatLike,
     VSFunctionNoArgs,
     check_ref_clip,
     check_variable_format,
@@ -231,6 +232,28 @@ def mc_clamp(
     )
 
 
+class _LanczosChroma(Lanczos):
+    def __init__(
+        self,
+        taps: float = 3,
+        *,
+        format: int
+        | VideoFormatLike
+        | HoldsVideoFormat
+        | None
+        | Callable[[ConstantFormatVideoNode], int | VideoFormatLike | HoldsVideoFormat | None] = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(taps, format=format, **kwargs)
+
+    def get_params_args(
+        self, is_descale: bool, clip: vs.VideoNode, width: int | None = None, height: int | None = None, **kwargs: Any
+    ) -> dict[str, Any]:
+        if callable((fmt := self.kwargs.pop("format", None))):
+            kwargs["format"] = fmt(clip)
+        return super().get_params_args(is_descale, clip, width, height, **kwargs)
+
+
 def ccd(
     clip: vs.VideoNode,
     thr: float = 4,
@@ -238,7 +261,9 @@ def ccd(
     ref_points: Sequence[bool] = (True, True, False),
     scale: float | None = None,
     pscale: float = 0.0,
-    chroma_upscaler: ScalerLike = ArtCNN.R8F64_Chroma,
+    chroma_upscaler: ScalerLike = _LanczosChroma(
+        format=lambda clip: clip.format.replace(color_family=vs.RGB, subsampling_w=0, subsampling_h=0)
+    ),
     chroma_downscaler: KernelLike = Catrom,
     planes: Planes | MissingT = MISSING,
     func: FuncExcept | None = None,
@@ -255,7 +280,7 @@ def ccd(
     Example usage:
 
         ```py
-        denoised = ccd(clip, thr=6, tr=1, chroma_uspcaler=Bicubic(format=vs.RGB48))
+        denoised = ccd(clip, thr=6, tr=1, chroma_upscaler=Lanczos(format=vs.RGB48))
         ```
 
     Args:
@@ -271,8 +296,7 @@ def ccd(
             `scale=2` is a 50x50 matrix, and so on.
         pscale: Scale factor for the source clip-denoised process change.
         chroma_upscaler: Chroma upscaler to apply before processing if input clip is YUV.
-            Defaults to ArtCNN.R8F64_Chroma.
-        chroma_downscaler: Chroma downscaler to apply after processing if input clip is YUV. Defaults to Catrom.
+        chroma_downscaler: Chroma downscaler to apply after processing if input clip is YUV.
         planes: Planes to process. Default is chroma planes is clip is YUV, else all planes.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
