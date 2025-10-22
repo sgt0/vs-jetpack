@@ -269,13 +269,9 @@ def ccd(
     func: FuncExcept | None = None,
 ) -> vs.VideoNode:
     """
-    Camcorder Color Denoise is a VirtualDub filter originally made by Sergey Stolyarevsky.
+    Camcorder Color Denoise (CCD) - chroma denoiser adapted from the original VirtualDub filter by Sergey Stolyarevsky.
 
-    It's a chroma denoiser that works great on old sources such as VHS and DVD.
-
-    It works as a convolution of nearby pixels determined by ``ref_points``.
-    If the euclidean distance between the RGB values of the center pixel and a given pixel in the convolution
-    matrix is less than the threshold, then this pixel is considered in the average.
+    It works best on analog or low-quality digital sources such as VHS or DVD captures.
 
     Example usage:
 
@@ -287,21 +283,21 @@ def ccd(
         clip: Source clip.
         thr: Euclidean distance threshold for including pixel in the matrix.
             Higher values results in stronger denoising. Automatically scaled to all bit depths internally.
-        tr: Temporal radius of processing. Higher values result in more denoising. Defaults to 0.
+        tr: Temporal radius of processing. Higher values result in more denoising.
         ref_points: Specifies whether to use the low, medium, or high reference points (or any combination),
             respectively, in the processing matrix. The default uses the low and medium, but excludes the high points.
-            See [zsmooth.CCD](https://github.com/adworacz/zsmooth?tab=readme-ov-file#ccd) for more information.
-        scale: Multiplier for the size of the matrix.
-            `scale=1` corresponds with a 25x25 matrix (just like the original CCD implementation by Sergey).
-            `scale=2` is a 50x50 matrix, and so on.
-        pscale: Scale factor for the source clip-denoised process change.
-        chroma_upscaler: Chroma upscaler to apply before processing if input clip is YUV.
-        chroma_downscaler: Chroma downscaler to apply after processing if input clip is YUV.
-        planes: Planes to process. Default is chroma planes is clip is YUV, else all planes.
+            See [zsmooth.CCD](https://github.com/adworacz/zsmooth?tab=readme-ov-file#ccd) for details.
+        scale: Matrix size multiplier.
+            `1` = 25x25 matrix (original CCD)
+            `2` = 50x50, and so on.
+        pscale: Correction strength for chroma ringing introduced during downscaling.
+        chroma_upscaler: Upscaler for converting YUV input to full-resolution RGB before processing.
+        chroma_downscaler: Kernel used to downscale the denoised RGB result back to the input format.
+        planes: Planes to process. Defaults to chroma for YUV input, all planes otherwise.
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Raises:
-        CustomRuntimeError: If the `chroma_upscaler` didn't upscale the chroma planes.
+        CustomRuntimeError: If `chroma_upscaler` fails to produce full-resolution chroma.
 
     Returns:
         Denoised clip.
