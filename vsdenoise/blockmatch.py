@@ -46,7 +46,6 @@ def wnnm(
     refine: int = 0,
     ref: vs.VideoNode | None = None,
     merge_factor: float = 0.1,
-    self_refine: bool = False,
     planes: Planes = None,
     **kwargs: Any,
 ) -> vs.VideoNode:
@@ -65,16 +64,27 @@ def wnnm(
 
     Args:
         clip: Clip to process.
-        sigma: Strength of denoising, valid range is [0, +inf]. If a float is passed, this strength will be applied to
-            every plane. Values higher than 4.0 are not recommended. Recommended values are [0.35, 1.0]. Default: 3.0.
-        refine: The amount of iterations for iterative regularization. Default: 0.
-        tr: Temporal radius. To enable spatial-only denoising, set this to 0. Higher values will rapidly increase
-            filtering time and RAM usage. Default: 0.
-        ref: Reference clip. Must be the same dimensions and format as input clip. Default: None.
-        merge_factor: Merge amount of the last recalculation into the new one when performing iterative regularization.
-        self_refine: If True, the iterative recalculation step will use the result from the previous iteration as the
-            reference clip `ref` instead of the original input. Default: False.
-        planes: Planes to process. If None, all planes. Default: None.
+        sigma: Denoising strength, controlling how aggressively noise is suppressed.
+            Larger values remove more noise but may smooth fine details.
+
+            Accepts either a single float (applied to all planes) or a per-plane sequence.
+            The valid range is [0, +inf), though practical values usually fall between **0.35 and 1.0**.
+            Values above 4.0 are rarely useful.
+        refine: Number of additional refinement iterations to perform.
+
+            A value of 0 corresponds to a single WNNM pass (equivalent to `num_iterations=1`
+            in the original implementation).
+            Each increment adds another iterative regularization step using the previously denoised result.
+
+            Valid range is [0, +inf).
+        tr: Temporal radius (in frames) used for motion-compensated denoising.
+
+               - `tr=0`: purely spatial denoising.
+               - `tr>0`: includes `tr` frames before and after the current one, improving temporal stability
+                but significantly increasing computation time and memory usage.
+        ref: Reference clip. Must be the same dimensions and format as the input clip.
+        merge_factor: Blend factor for merging the last and current iteration during iterative regularization.
+        planes: Which planes to process. Default to all.
         **kwargs: Additional arguments to be passed to the plugin.
 
     Returns:
@@ -107,9 +117,6 @@ def wnnm(
                 merge_factor=merge_factor,
                 func=func.func,
             )
-
-        if self_refine:
-            dkwargs.update(rclip=denoised)
 
         denoised = core.wnnm.WNNM(previous, sigma, **dkwargs)
 
