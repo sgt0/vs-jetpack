@@ -5,7 +5,6 @@ from typing import Any, Callable, Iterable, Literal, Protocol, Sequence, overloa
 
 from jetpytools import MISSING, CustomEnum, CustomValueError, FuncExcept, MissingT, mod_x, to_arr
 from typing_extensions import TypeVar
-from vspreview import set_output
 
 from vsexprtools import norm_expr
 from vskernels import BicubicAuto, Lanczos, LeftShift, Scaler, ScalerLike, ScalerSpecializer, TopShift
@@ -563,7 +562,6 @@ def _apply_grainer(
 
         if protect_neutral_chroma:
             grained = _protect_neutral_chroma(clip, grained, base_clip, protect_neutral_chroma_blend, planes, func)
-            set_output(grained)
 
         if luma_scaling is not None:
             grained = core.std.MaskedMerge(base_clip, grained, adg_mask(clip, luma_scaling), planes)
