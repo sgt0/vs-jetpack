@@ -639,19 +639,19 @@ def is_noscale_like[_ScalerT: Scaler](obj: Any, specializer: type[_ScalerT] = Sc
     if isinstance(obj, NoScale):
         return isinstance(obj.specializer, specializer)
 
-    if isinstance(obj, GenericAlias):
-        obj = get_origin(obj)
-
-        if isinstance(obj, BaseScalerSpecializerMeta) and issubclass(obj, NoScale):
-            return (obj.__isspecialized__ and issubclass(obj.__specializer__, specializer)) or issubclass(
-                obj.default_scaler, specializer
-            )
-
     if isinstance(obj, str):
         try:
             NoScale.from_param(obj)
             return True
         except NoScale._err_class:
-            pass
+            return False
+
+    if isinstance(obj, GenericAlias):
+        obj = get_origin(obj)
+
+    if isinstance(obj, BaseScalerSpecializerMeta) and issubclass(obj, NoScale):
+        return (obj.__isspecialized__ and issubclass(obj.__specializer__, specializer)) or issubclass(
+            obj.default_scaler, specializer
+        )
 
     return False
