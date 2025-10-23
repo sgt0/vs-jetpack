@@ -148,7 +148,7 @@ class dre_edgemask(CustomEnum):  # noqa: N801
                 clip,
                 kwargs.pop("sigmas", [50, 200, 350]),
                 kwargs.pop("lower_thr", 0.001),
-                kwargs.pop("lower_thr", 0.005),
+                kwargs.pop("upper_thr", 0.005),
                 func=self,
                 **kwargs,
             )
