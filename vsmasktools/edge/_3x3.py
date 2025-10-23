@@ -444,13 +444,21 @@ class MinMax(EdgeDetect):
         self.radc = radc
         super().__init__(**kwargs)
 
-    def _compute_edge_mask(self, clip: ConstantFormatVideoNode, **kwargs: Any) -> ConstantFormatVideoNode:
+    def _compute_edge_mask(
+        self,
+        clip: ConstantFormatVideoNode,
+        *,
+        multi: float | Sequence[float] = 1.0,
+        planes: Planes = None,
+        **kwargs: Any,
+    ) -> ConstantFormatVideoNode:
         return join(
             [
                 ExprOp.SUB.combine(
                     Morpho.expand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
                     Morpho.inpand(p, rad, rad, XxpandMode.ELLIPSE, **kwargs),
-                    planes=kwargs.get("planes"),
+                    expr_suffix=[f"{m} *" if m != 1.0 else "" for m in to_arr(multi)],
+                    planes=planes,
                     func=self.__class__,
                 )
                 if rad > 0
