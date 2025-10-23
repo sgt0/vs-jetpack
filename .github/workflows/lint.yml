@@ -3,20 +3,19 @@ name: Lint Python code with Ruff & mypy
 on:
   push:
     branches:
-      - main
+      - v0.8.X
     paths:
-      - '**.py'
+      - "**.py"
   pull_request:
     paths:
-      - '**.py'
+      - "**.py"
 
 permissions:
   contents: read
 
-
-env:  
-  VAPOURSYNTH_VERSION: 71  
-  PYTHON_VERSION: "3.13"  
+env:
+  VAPOURSYNTH_VERSION: 71
+  PYTHON_VERSION: "3.13"
 
 jobs:
   lint:
