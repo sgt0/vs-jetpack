@@ -6,8 +6,7 @@ from typing import Any, ClassVar
 from jetpytools import fallback, to_arr
 
 from vskernels.types import BorderHandling, SampleGridModel
-from vstools import UnsupportedVideoFormatError, core, get_video_format, vs
-from vstools.enums.other import Dar, Sar
+from vstools import Dar, Sar, UnsupportedVideoFormatError, core, get_video_format, vs
 
 from ..abstract import ComplexScaler
 from ..types import Center, LeftShift, Slope, TopShift
