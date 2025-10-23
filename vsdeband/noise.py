@@ -5,6 +5,7 @@ from typing import Any, Callable, Iterable, Literal, Protocol, Sequence, overloa
 
 from jetpytools import MISSING, CustomEnum, CustomValueError, FuncExcept, MissingT, mod_x, to_arr
 from typing_extensions import TypeVar
+from vspreview import set_output
 
 from vsexprtools import norm_expr
 from vskernels import BicubicAuto, Lanczos, LeftShift, Scaler, ScalerLike, ScalerSpecializer, TopShift
@@ -449,6 +450,30 @@ class Grainer(AbstractGrainer, CustomEnum):
 
         return _apply_grainer(clip, _noise_function, **kwargs, func=self.name)
 
+    @staticmethod
+    def norm_brightness() -> Callable[[vs.VideoNode], vs.VideoNode]:
+        """
+        Normalize the brightness of the grained clip to match the original clip's average luminance.
+
+        Designed for use in the `post_process` parameter of [Grainer()][vsdeband.Grainer.__call__].
+
+        Returns:
+            A function that takes a grained clip and returns a brightness-normalized version.
+        """
+
+        def _funtion(grained: vs.VideoNode) -> vs.VideoNode:
+            for i in range(grained.format.num_planes):
+                grained = core.std.PlaneStats(grained, plane=i, prop=f"PS{i}")
+
+            if grained.format.sample_type is vs.FLOAT:
+                expr = "x x.PS{plane_idx}Average -"
+            else:
+                expr = "x neutral range_size / x.PS{plane_idx}Average - range_size * +"
+
+            return norm_expr(grained, expr, func=Grainer.norm_brightness)
+
+        return _funtion
+
 
 def _apply_grainer(
     clip: vs.VideoNode,
@@ -538,6 +563,7 @@ def _apply_grainer(
 
         if protect_neutral_chroma:
             grained = _protect_neutral_chroma(clip, grained, base_clip, protect_neutral_chroma_blend, planes, func)
+            set_output(grained)
 
         if luma_scaling is not None:
             grained = core.std.MaskedMerge(base_clip, grained, adg_mask(clip, luma_scaling), planes)
