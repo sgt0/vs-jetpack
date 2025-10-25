@@ -2,17 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable, Mapping, Self
 
-from jetpytools import CustomEnum, CustomError, CustomIntEnum, CustomStrEnum, FuncExcept, classproperty
+from jetpytools import CustomIntEnum, CustomValueError, FuncExcept, classproperty
 
 from ..vs_proxy import vs
 
-__all__ = [
-    "CustomEnum",
-    "CustomIntEnum",
-    "CustomStrEnum",
-    "PropEnum",
-    "_base_from_video",
-]
+__all__ = ["PropEnum"]
 
 
 class PropEnum(CustomIntEnum):
@@ -153,7 +147,7 @@ class PropEnum(CustomIntEnum):
 def _base_from_video[PropEnumT: PropEnum](
     cls: type[PropEnumT],
     src: vs.VideoNode | vs.VideoFrame | Mapping[str, Any],
-    exception: type[CustomError],
+    exception: type[CustomValueError],
     strict: bool,
     func: FuncExcept | None = None,
 ) -> PropEnumT:
