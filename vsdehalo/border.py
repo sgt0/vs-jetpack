@@ -4,9 +4,10 @@ This module implements utilities for correcting dirty or damaged borders.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, SupportsIndex, TypeAlias, TypeIs
+from typing import TYPE_CHECKING, Any, SupportsIndex, TypeAlias
 
 from jetpytools import CustomOverflowError, CustomTypeError, FuncExcept, normalize_seq
+from typing_extensions import TypeIs
 
 from vsexprtools import ExprList, ExprOp, ExprToken, norm_expr
 from vstools import check_variable_format, get_lowest_values, get_peak_values, get_resolutions, vs, vs_object
