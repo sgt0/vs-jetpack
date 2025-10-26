@@ -12,6 +12,8 @@ from typing_extensions import TypeIs
 from vsexprtools import ExprList, ExprOp, ExprToken, norm_expr
 from vstools import check_variable_format, get_lowest_values, get_peak_values, get_resolutions, vs, vs_object
 
+__all__ = ["FixBorderBrightness"]
+
 if TYPE_CHECKING:
     NoneSlice: TypeAlias = slice[None, None, None] | None
     IndexLike: TypeAlias = SupportsIndex | slice[SupportsIndex, SupportsIndex, SupportsIndex]
