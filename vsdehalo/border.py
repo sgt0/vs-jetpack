@@ -12,6 +12,8 @@ from typing_extensions import TypeIs
 from vsexprtools import ExprList, ExprOp, ExprToken, norm_expr
 from vstools import VSObject, get_lowest_values, get_peak_values, get_resolutions, vs
 
+__all__ = ["FixBorderBrightness"]
+
 if TYPE_CHECKING:
     type NoneSlice = slice[None, None, None] | None
     """A slice with all components possibly None, or None itself."""
