@@ -35,7 +35,7 @@ def _normalize_slice(index: IndexLike | NoneSlice, length: int, func: FuncExcept
         if index < 0:
             index += length
 
-        if not 0 < index < length:
+        if not 0 <= index < length:
             raise CustomOverflowError(
                 "Passed 'num' is out of bound. Must be in the range (-{last}, {last})",
                 func,
