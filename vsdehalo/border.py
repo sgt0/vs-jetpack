@@ -64,6 +64,19 @@ class _BorderDict(dict[int, float]):
 class FixBorderBrightness(vs_object):
     """
     Utility class to adjust or correct brightness inconsistencies along clip borders.
+
+    Example:
+        ```py
+        # The following example darkens the top and right borders slightly (0.9x)
+        # to reduce edge brightness inconsistencies, then applies the correction.
+
+        fbb = FixBorderBrightness(clip)
+        fbb.fix_row(-2, 0.9)  # Adjust brightness near the bottom edge
+        fbb.fix_row(1, 0.9)  # Adjust brightness near the top edge
+        fbb.fix_column(1, 0.9)  # Adjust brightness near the left edge
+        fbb.fix_column(-2, 0.9)  # Adjust brightness near the right edge
+        out = fbb.process()  # Apply all configured border corrections
+        ```
     """
 
     def __init__(
