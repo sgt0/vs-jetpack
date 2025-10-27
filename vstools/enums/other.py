@@ -3,50 +3,12 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Callable, Iterator, Literal, NamedTuple, Self
 
-from jetpytools import Coordinate, CustomIntEnum, CustomRuntimeError, CustomStrEnum, Position, Sentinel, SentinelT, Size
+from jetpytools import CustomIntEnum, CustomRuntimeError, Sentinel, SentinelT
 
 from ..types import HoldsPropValue
 from ..vs_proxy import vs
 
-__all__ = ["Coordinate", "Dar", "Direction", "Position", "Region", "Resolution", "Sar", "SceneChangeMode", "Size"]
-
-
-class Direction(CustomIntEnum):
-    """
-    Enum to simplify the direction argument.
-    """
-
-    HORIZONTAL = 0
-    VERTICAL = 1
-
-    LEFT = 2
-    RIGHT = 3
-    UP = 4
-    DOWN = 5
-
-    @property
-    def is_axis(self) -> bool:
-        """
-        Whether the Direction represents an axis (horizontal/vertical).
-        """
-
-        return self <= self.VERTICAL
-
-    @property
-    def is_way(self) -> bool:
-        """
-        Whether the Direction is one of the 4 arrow directions.
-        """
-
-        return self > self.VERTICAL
-
-    @property
-    def string(self) -> str:
-        """
-        A string representation of the Direction.
-        """
-
-        return self._name_.lower()
+__all__ = ["Dar", "Resolution", "Sar", "SceneChangeMode"]
 
 
 class Dar(Fraction):
@@ -165,93 +127,6 @@ class Sar(Fraction):
         """
 
         return vs.core.std.SetFrameProps(clip, _SARNum=self.numerator, _SARDen=self.denominator)
-
-
-class Region(CustomStrEnum):
-    """
-    StrEnum signifying an analog television region.
-    """
-
-    UNKNOWN = "unknown"
-    """
-    Unknown region.
-    """
-
-    NTSC = "NTSC"
-    """
-    The first American standard for analog television broadcast was developed by
-    National Television System Committee (NTSC) in 1941.
-
-    For more information see `this <https://en.wikipedia.org/wiki/NTSC>`_.
-    """
-
-    NTSCi = "NTSCi"
-    """
-    Interlaced NTSC.
-    """
-
-    PAL = "PAL"
-    """
-    Phase Alternating Line (PAL) colour encoding system.
-
-    For more information see `this <https://en.wikipedia.org/wiki/PAL>`_.
-    """
-
-    PALi = "PALi"
-    """
-    Interlaced PAL.
-    """
-
-    FILM = "FILM"
-    """
-    True 24fps content.
-    """
-
-    NTSC_FILM = "NTSC (FILM)"
-    """
-    NTSC 23.976fps content.
-    """
-
-    @property
-    def framerate(self) -> Fraction:
-        """
-        Obtain the Region's framerate.
-        """
-
-        return _region_framerate_map[self]
-
-    @classmethod
-    def from_framerate(cls, framerate: float | Fraction, strict: bool = False) -> Self:
-        """
-        Determine the Region using a given framerate.
-        """
-
-        key = Fraction(framerate)
-
-        if strict:
-            return cls(_framerate_region_map[key])
-
-        if key not in _framerate_region_map:
-            diffs = [(k, abs(float(key) - float(v))) for k, v in _region_framerate_map.items()]
-
-            diffs.sort(key=lambda x: x[1])
-
-            return cls(diffs[0][0])
-
-        return cls(_framerate_region_map[key])
-
-
-_region_framerate_map = {
-    Region.UNKNOWN: Fraction(0),
-    Region.NTSC: Fraction(30000, 1001),
-    Region.NTSCi: Fraction(60000, 1001),
-    Region.PAL: Fraction(25, 1),
-    Region.PALi: Fraction(50, 1),
-    Region.FILM: Fraction(24, 1),
-    Region.NTSC_FILM: Fraction(24000, 1001),
-}
-
-_framerate_region_map = {r.framerate: r for r in Region}
 
 
 class Resolution(NamedTuple):
