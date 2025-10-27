@@ -42,7 +42,6 @@ from vstools import (
     VideoFormatLike,
     VSObjectABC,
     VSObjectABCMeta,
-    check_correct_subsampling,
     check_variable_resolution,
     core,
     get_video_format,
@@ -496,7 +495,6 @@ class Scaler(BaseScaler):
             The scaled clip.
         """
         width, height = self._wh_norm(clip, width, height)
-        check_correct_subsampling(clip, width, height)
 
         return self.scale_function(clip, **_norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs)))
 
@@ -601,7 +599,6 @@ class Descaler(BaseScaler):
             The descaled clip.
         """
         width, height = self._wh_norm(clip, width, height)
-        check_correct_subsampling(clip, width, height)
 
         return self.descale_function(
             clip, **_norm_props_enums(self.get_descale_args(clip, shift, width, height, **kwargs))
@@ -632,7 +629,6 @@ class Descaler(BaseScaler):
             The scaled clip.
         """
         width, height = self._wh_norm(clip, width, height)
-        check_correct_subsampling(clip, width, height)
 
         return self.rescale_function(
             clip, **_norm_props_enums(self.get_rescale_args(clip, shift, width, height, **kwargs))

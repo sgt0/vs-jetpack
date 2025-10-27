@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal, Sequence
 
 from jetpytools import CustomValueError, FuncExcept
+from typing_extensions import deprecated
 
 from ..enums import FieldBased
 from ..exceptions import (
@@ -103,9 +104,10 @@ def check_variable(clip: vs.VideoNode, func: FuncExcept) -> Literal[True]:
     return True
 
 
-def check_correct_subsampling(
-    clip: vs.VideoNode, width: int | None = None, height: int | None = None, func: FuncExcept | None = None
-) -> None:
+@deprecated(
+    "check_correct_subsampling is deprecated and will be removed in a future version.", category=DeprecationWarning
+)
+def check_correct_subsampling(clip: vs.VideoNode, width: int, height: int, func: FuncExcept | None = None) -> None:
     """
     Check if the subsampling is correct and return an error if it's not.
 

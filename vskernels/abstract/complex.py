@@ -24,7 +24,6 @@ from vstools import (
     FieldBasedLike,
     Resolution,
     Sar,
-    check_correct_subsampling,
     depth,
     expect_bits,
     get_video_format,
@@ -510,8 +509,6 @@ class KeepArScaler(Scaler):
         """
         width, height = self._wh_norm(clip, width, height)
 
-        check_correct_subsampling(clip, width, height)
-
         if 0 in (clip.width, clip.height):
             _check_dynamic_keeparscaler_params(
                 border_handling, sample_grid_model, sar, dar, dar_in, keep_ar, self.scale
@@ -738,7 +735,6 @@ class ComplexDescaler(LinearDescaler):
             The descaled video node, optionally processed in linear light.
         """
         width, height = self._wh_norm(clip, width, height)
-        check_correct_subsampling(clip, width, height)
 
         field_based = FieldBased.from_param_or_video(field_based, clip)
 
@@ -838,7 +834,6 @@ class ComplexDescaler(LinearDescaler):
             The scaled clip.
         """
         width, height = self._wh_norm(clip, width, height)
-        check_correct_subsampling(clip, width, height)
 
         field_based = FieldBased.from_param_or_video(field_based, clip)
 
