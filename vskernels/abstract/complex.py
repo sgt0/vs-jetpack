@@ -654,7 +654,7 @@ class ComplexScaler(KeepArScaler, LinearScaler):
 
         for i, (plane, top, left) in enumerate(zip(split(clip), shift_top, shift_left)):
             if i:
-                w = round(width * 1 / 2**format_out.subsampling_h)
+                w = round(width * 1 / 2**format_out.subsampling_w)
                 h = round(height * 1 / 2**format_out.subsampling_h)
             else:
                 w, h = width, height
