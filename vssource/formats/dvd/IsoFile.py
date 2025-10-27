@@ -8,7 +8,7 @@ from typing import cast
 
 from jetpytools import CustomValueError, DependencyNotFoundError, SPath
 
-from vstools import Region, core, get_prop, vs
+from vstools import core, get_prop, vs
 
 from ...dataclasses import AllNeddedDvdFrameData
 from ...rff import apply_rff_array, apply_rff_video
@@ -21,6 +21,7 @@ from .parsedvd import (
     IFO0,
     IFOX,
     IFO0Title,
+    Region,
     SectorReadHelper,
 )
 from .title import Title

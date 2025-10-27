@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from fractions import Fraction
+from typing import Any, Mapping
 
-from vstools import Region
+from jetpytools import CustomEnum, classproperty
 
-__all__ = ["VTS_FRAMERATE", "TimeSpan"]
+__all__ = ["VTS_FRAMERATE", "Region", "TimeSpan"]
 
 
 @dataclass
@@ -23,7 +25,7 @@ class TimeSpan:
 
         fps = frames >> 6
 
-        if fps not in VTS_FRAMERATE:
+        if fps not in Region.vts_framerate:
             raise ValueError
 
         self.hour = hours
@@ -42,4 +44,34 @@ class TimeSpan:
         )
 
 
-VTS_FRAMERATE = {0x01: Region.PAL.framerate, 0x03: Region.NTSC.framerate}
+class Region(CustomEnum):
+    PAL = "PAL", Fraction(25, 1), 0x01
+    NTSC = "NTSC", Fraction(30000, 1001), 0x03
+
+    def __init__(self, value: Any, framerate: Fraction, vts: int) -> None:
+        self._value_ = value
+        self.framerate = framerate
+        self.vts = vts
+
+    @classmethod
+    def from_framerate(cls, framerate: float | Fraction) -> Region:
+        key = Fraction(framerate)
+
+        framerate_region_map = {r.framerate: r for r in Region}
+
+        if framerate in framerate_region_map:
+            return framerate_region_map[key]
+
+        diffs = [(r, abs(float(key) - float(r.framerate))) for r in Region]
+
+        diffs.sort(key=lambda x: x[1])
+
+        return diffs[0][0]
+
+    @classproperty.cached
+    @classmethod
+    def vts_framerate(cls) -> Mapping[int, Fraction]:
+        return {r.vts: r.framerate for r in Region}
+
+
+VTS_FRAMERATE = Region.vts_framerate
