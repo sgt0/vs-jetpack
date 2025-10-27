@@ -8,8 +8,8 @@ from vsexprtools import ExprOp, ExprToken, norm_expr
 from vsmasktools import EdgeDetect, EdgeDetectLike, FDoG, range_mask
 from vsrgtools import bilateral, box_blur, gauss_blur
 from vstools import (
-    InvalidColorFamilyError,
     Planes,
+    UnsupportedColorFamilyError,
     check_ref_clip,
     flatten_vnodes,
     get_y,
@@ -78,20 +78,20 @@ def decrease_size(
 
     Raises:
         IndexError: `min_in` is greater than `max_in`.
-        InvalidColorFamilyError: Input clip is not a YUV clip.
-        InvalidColorFamilyError: A VideoNode is passed to `mask` and the clip is not a GRAY clip.
+        UnsupportedColorFamilyError: Input clip is not a YUV clip.
+        UnsupportedColorFamilyError: A VideoNode is passed to `mask` and the clip is not a GRAY clip.
     """
     if min_in > max_in:
         raise CustomIndexError("The blur min must be lower than max!", decrease_size, {"min": min_in, "max": max_in})
 
-    InvalidColorFamilyError.check(clip, vs.YUV, decrease_size)
+    UnsupportedColorFamilyError.check(clip, vs.YUV, decrease_size)
 
     planes = normalize_planes(clip, planes)
 
     pre = get_y(clip)
 
     if isinstance(mask, vs.VideoNode):
-        InvalidColorFamilyError.check(mask, vs.GRAY, decrease_size)
+        UnsupportedColorFamilyError.check(mask, vs.GRAY, decrease_size)
         check_ref_clip(pre, mask)
     else:
         pm_min, pm_max, *emask = mask

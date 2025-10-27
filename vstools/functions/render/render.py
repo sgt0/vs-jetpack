@@ -9,7 +9,7 @@ from typing import Any, BinaryIO, Callable, Literal, Protocol, Union, overload
 
 from jetpytools import CustomRuntimeError, CustomValueError, Sentinel, SentinelT, SPathLike, fallback
 
-from ...exceptions import InvalidColorFamilyError
+from ...exceptions import UnsupportedColorFamilyError
 from ...utils import get_prop
 from ...vs_proxy import vs
 from ..ranges import normalize_list_to_ranges, replace_ranges
@@ -256,7 +256,7 @@ def clip_async_render[T](
                     "You cannot have y4m=True when rendering a variable resolution clip!", clip_async_render
                 )
             else:
-                InvalidColorFamilyError.check(
+                UnsupportedColorFamilyError.check(
                     rend_clip,
                     (vs.YUV, vs.GRAY),
                     clip_async_render,

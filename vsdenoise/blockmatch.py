@@ -19,9 +19,9 @@ from jetpytools import (
 from vsexprtools import norm_expr
 from vskernels import Point
 from vstools import (
+    ColorRange,
     FunctionUtil,
     Planes,
-    UnsupportedVideoFormatError,
     check_progressive,
     check_ref_clip,
     core,
@@ -557,7 +557,7 @@ def bm3d(
         ref: A clip to be used as the basic estimate. It replaces BM3D's internal basic estimate and serves as the
             reference for the final estimate. Must be of the same format and dimensions as the input clip. Either `ref`
             or `pre` can be specified, not both. Defaults to None.
-        backend: The backend to use for processing. Defaults to BM3D.Backend.A
+        backend: The backend to use for processing. Defaults to BM3D.Backend.AUTO.
         basic_args: Additional arguments to pass to the basic estimate step. Defaults to None.
         final_args: Additional arguments to pass to the final estimate step. Defaults to None.
         planes: Planes to process. Default to all.
@@ -636,13 +636,25 @@ def bm3d(
         Internal function for mawen1250 implementation.
         """
 
-        preclip = core.bm3d.RGB2OPP(preclip, preclip.format.sample_type)
+        preclip = (
+            core.bm3d.RGB2OPP(preclip, preclip.format.sample_type)
+            if preclip.format.color_family != vs.GRAY
+            else depth(preclip, range_out=ColorRange.FULL)
+        )
 
         if pre:
-            pre = core.bm3d.RGB2OPP(pre, pre.format.sample_type)
+            pre = (
+                core.bm3d.RGB2OPP(pre, pre.format.sample_type)
+                if pre.format.color_family != vs.GRAY
+                else depth(pre, range_out=ColorRange.FULL)
+            )
 
         if ref:
-            ref = core.bm3d.RGB2OPP(ref, ref.format.sample_type)
+            ref = (
+                core.bm3d.RGB2OPP(ref, ref.format.sample_type)
+                if ref.format.color_family != vs.GRAY
+                else depth(ref, range_out=ColorRange.FULL)
+            )
 
         if not ref:
             b_args = profile.basic_args(radius_basic) | nbasic_args | kwargs
@@ -676,7 +688,11 @@ def bm3d(
         if 0 in nsigma:
             final = join({p: preclip if s == 0 else final for p, s in zip(range(3), nsigma)}, vs.YUV)
 
-        return core.bm3d.OPP2RGB(final, preclip.format.sample_type)
+        return (
+            core.bm3d.OPP2RGB(final, preclip.format.sample_type)
+            if preclip.format.color_family != vs.GRAY
+            else depth(final, range_out=preclip)
+        )
 
     if clip.format.color_family == vs.RGB:
         if backend == BM3D.Backend.OLD:
@@ -702,6 +718,7 @@ def bm3d(
     prepre = depth(pre, 32) if pre else pre
     preref = depth(ref, 32) if ref else ref
 
+    # YUV444 path
     if clip.format.color_family == vs.YUV and {clip.format.subsampling_w, clip.format.subsampling_h} == {0}:
         if backend == BM3D.Backend.OLD:
             point = Point()
@@ -726,12 +743,10 @@ def bm3d(
 
         return depth(denoised, clip)
 
+    # GRAY or subsampled YUV
     if backend == BM3D.Backend.OLD:
-        raise UnsupportedVideoFormatError(
-            "When using `BM3D.Backend.OLD`, the input clip must be in YUV444 or RGB format.",
-            func,
-            clip.format.color_family,
-        )
+        # Will error if clip is subsampled.
+        return _bm3d_mawen(clip, pre, ref)
 
     denoised = _bm3d_wolfram(preclip, prepre, preref)
 

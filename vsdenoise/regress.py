@@ -16,8 +16,8 @@ from vsscale import ScalingArgs
 from vstools import (
     CustomIntEnum,
     CustomStrEnum,
-    InvalidColorFamilyError,
-    InvalidSubsamplingError,
+    UnsupportedColorFamilyError,
+    UnsupportedSubsamplingError,
     VSFunction,
     VSObject,
     core,
@@ -544,7 +544,7 @@ class ChromaReconstruct(ABC):
     def _get_bases(
         self, clip: vs.VideoNode, include_edges: bool, func: FuncExcept
     ) -> tuple[vs.VideoNode, vs.VideoNode, vs.VideoNode, vs.VideoNode, Sequence[vs.VideoNode], Sequence[vs.VideoNode]]:
-        InvalidColorFamilyError.check(clip, vs.YUV, func)
+        UnsupportedColorFamilyError.check(clip, vs.YUV, func)
 
         clip32 = depth(clip, 32)
 
@@ -553,7 +553,9 @@ class ChromaReconstruct(ABC):
         base = self.get_base_clip(clip32)
 
         if get_subsampling(base) != "444":
-            raise InvalidSubsamplingError(self.__class__, base, "``get_base_clip`` should return a YUV444 clip!")
+            raise UnsupportedSubsamplingError(
+                self.__class__, base, "444", "``get_base_clip`` should return a YUV444 clip!"
+            )
 
         y_base, *chroma_base = split(base)
 

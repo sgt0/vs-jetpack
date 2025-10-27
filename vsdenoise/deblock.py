@@ -14,8 +14,8 @@ from vstools import (
     FieldBased,
     FrameRangeN,
     FrameRangesN,
-    InvalidColorFamilyError,
     Planes,
+    UnsupportedColorFamilyError,
     check_progressive,
     core,
     depth,
@@ -98,10 +98,9 @@ class dpir(CustomStrEnum):  # noqa: N801
         planes = normalize_planes(clip, planes)
 
         if isinstance(strength, Sequence):
-            if clip.format.num_planes < 3:
-                raise InvalidColorFamilyError(
-                    func, vs.GRAY, vs.YUV, "Input clip must be {correct} when passing a sequence of strength."
-                )
+            UnsupportedColorFamilyError.check(
+                clip, vs.YUV, func, "Input clip must be {correct} when passing a sequence of strength."
+            )
 
             if len(strength) == 1:
                 return join(self.__call__(get_y(clip), strength[0], zones, **kwargs), clip)

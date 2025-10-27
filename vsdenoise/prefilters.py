@@ -21,9 +21,9 @@ from vsexprtools import norm_expr
 from vsrgtools import bilateral, flux_smooth, gauss_blur, min_blur
 from vstools import (
     ColorRange,
-    InvalidColorFamilyError,
     MissingT,
     Planes,
+    UnsupportedColorFamilyError,
     get_peak_value,
     get_y,
     normalize_planes,
@@ -593,7 +593,7 @@ def prefilter_to_full_range(
     """
     func = func or prefilter_to_full_range
 
-    InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), func)
+    UnsupportedColorFamilyError.check(clip, (vs.YUV, vs.GRAY), func)
 
     if smooth < 0 or not 0 <= slope <= (1 + 2 * smooth) / smooth:
         raise CustomValueError("Curve parameters out of range", func, (slope, smooth))

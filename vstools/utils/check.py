@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, Sequence
 
-from jetpytools import FuncExcept
+from jetpytools import CustomValueError, FuncExcept
 
 from ..enums import FieldBased
 from ..exceptions import (
@@ -116,19 +116,16 @@ def check_correct_subsampling(
         func: Function returned for custom error handling. This should only be set by VS package developers.
 
     Raises:
-        InvalidSubsamplingError: The clip has invalid subsampling.
+        CustomValueError: The clip has invalid subsampling.
     """
-    from ..exceptions import InvalidSubsamplingError
+    if (width % (1 << clip.format.subsampling_w)) or (height % (1 << clip.format.subsampling_h)):
+        from .info import get_subsampling
 
-    if clip.format and (
-        (width is not None and width % (1 << clip.format.subsampling_w))
-        or (height is not None and height % (1 << clip.format.subsampling_h))
-    ):
-        raise InvalidSubsamplingError(
-            func or check_correct_subsampling,
-            clip,
+        raise CustomValueError(
             "The {subsampling} subsampling is not supported for this resolution!",
-            reason={"width": width, "height": height},
+            func or check_correct_subsampling,
+            {"width": width, "height": height},
+            subsampling=get_subsampling(clip),
         )
 
 

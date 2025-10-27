@@ -619,8 +619,10 @@ def _protect_neutral_chroma(
             return core.std.MaskedMerge(
                 grained, base_clip, norm_expr(split(clip), "x y = x z = and mask_max *", planes, func=func)
             )
-        case _:
-            raise UnsupportedColorFamilyError("Can't use `protect_neutral_chroma=True` when input clip is GRAY", func)
+
+    raise UnsupportedColorFamilyError(
+        func, clip, (vs.YUV, vs.RGB), "Can't use `protect_neutral_chroma=True` when input clip is {wrong}"
+    )
 
 
 class GrainerPartial(AbstractGrainer):

@@ -3,10 +3,10 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import SupportsFloat, SupportsInt
 
-from jetpytools import fallback, mod_x
+from jetpytools import CustomNotImplementedError, fallback, mod_x
 
 from ..enums import Dar, Sar
-from ..exceptions import UnsupportedColorFamilyError, UnsupportedSubsamplingError
+from ..exceptions import UnsupportedColorFamilyError
 from ..types import HoldsVideoFormat, VideoFormatLike
 from ..vs_proxy import vs
 
@@ -171,10 +171,7 @@ def get_subsampling(clip: VideoFormatLike | HoldsVideoFormat, /) -> str:
 
     fmt = get_video_format(clip)
 
-    if fmt.color_family != vs.YUV:
-        raise UnsupportedColorFamilyError(
-            "Only the YUV color family can have chroma subsampling.", get_subsampling, fmt.color_family
-        )
+    UnsupportedColorFamilyError.check(fmt, vs.YUV, get_subsampling)
 
     if fmt.subsampling_w == 2 and fmt.subsampling_h == 2:
         return "410"
@@ -194,7 +191,9 @@ def get_subsampling(clip: VideoFormatLike | HoldsVideoFormat, /) -> str:
     if fmt.subsampling_w == 0 and fmt.subsampling_h == 0:
         return "444"
 
-    raise UnsupportedSubsamplingError("Unknown subsampling.", get_subsampling)
+    raise CustomNotImplementedError(
+        "This subsampling doesn't have a supported human-readable name", get_subsampling, fmt.name
+    )
 
 
 def get_w(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import TYPE_CHECKING, Any, Iterable, Sized
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sized, SupportsInt
 
 from jetpytools import (
     CustomKeyError,
@@ -29,11 +29,6 @@ __all__ = [
     "FramerateMismatchError",
     "FramerateRefClipMismatchError",
     "FramesLengthError",
-    "InvalidColorFamilyError",
-    "InvalidFramerateError",
-    "InvalidSubsamplingError",
-    "InvalidTimecodeVersionError",
-    "InvalidVideoFormatError",
     "LengthMismatchError",
     "LengthRefClipMismatchError",
     "MismatchError",
@@ -42,7 +37,10 @@ __all__ = [
     "ResolutionsRefClipMismatchError",
     "TopFieldFirstError",
     "UnsupportedColorFamilyError",
+    "UnsupportedFramerateError",
+    "UnsupportedSampleTypeError",
     "UnsupportedSubsamplingError",
+    "UnsupportedTimecodeVersionError",
     "UnsupportedVideoFormatError",
     "VariableFormatError",
     "VariableResolutionError",
@@ -88,38 +86,99 @@ class VariableResolutionError(CustomValueError):
         super().__init__(message, func, **kwargs)
 
 
-class UnsupportedVideoFormatError(CustomValueError):
-    """
-    Raised when an undefined video format value is passed.
-    """
+class _UnsupportedError(CustomValueError):
+    def __init__(
+        self,
+        func: FuncExcept | None,
+        wrong: Iterable[SupportsString],
+        correct: Iterable[SupportsString],
+        message: SupportsString,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, func, wrong=iter(wrong), correct=iter(correct), **kwargs)
+
+    @classmethod
+    def _check_builder[T](
+        cls,
+        norm_function: Callable[[T], Any],
+        to_check: T | Iterable[T],
+        correct: T | Iterable[T],
+        func: FuncExcept | None = None,
+        message: SupportsString | None = None,
+        **kwargs: Any,
+    ) -> None:
+        to_check_set = {norm_function(c) for c in to_arr(to_check)}
+        correct_set = {norm_function(c) for c in to_arr(correct)}
+
+        if to_check_set - correct_set:
+            if message is not None:
+                kwargs.update(message=message)
+            raise cls(func, to_check_set, correct_set, **kwargs)
 
 
-class InvalidVideoFormatError(CustomValueError):
+class UnsupportedVideoFormatError(_UnsupportedError):
     """
-    Raised when the given clip has an invalid format.
+    Raised when an video format value is not supported.
     """
 
     def __init__(
         self,
-        func: FuncExcept,
-        format: VideoFormatLike | HoldsVideoFormat,
-        message: SupportsString = "The format {format.name} is not supported!",
+        func: FuncExcept | None,
+        wrong: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        correct: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        message: SupportsString = "Input clip must be of {correct} format, not {wrong}.",
         **kwargs: Any,
     ) -> None:
+        """
+        Initialize the exception.
+
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported video format(s).
+            correct: The expected video format(s).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
         from ..utils import get_video_format
 
-        super().__init__(message, func, format=get_video_format(format), **kwargs)
+        super().__init__(
+            func,
+            {get_video_format(f).name for f in to_arr(wrong)},  # type: ignore[arg-type]
+            {get_video_format(f).name for f in to_arr(correct)},  # type: ignore[arg-type]
+            message,
+            **kwargs,
+        )
+
+    @classmethod
+    def check(
+        cls,
+        to_check: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        correct: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        func: FuncExcept | None = None,
+        message: SupportsString | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ensure that the given video format(s) match the expected format(s).
+
+        Args:
+            to_check: The video format(s) to check.
+            correct: The expected video format(s).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+
+        Raises:
+            UnsupportedVideoFormatError: If any given format does not match the expected format(s).
+        """
+        from ..utils import get_video_format
+
+        cls._check_builder(get_video_format, to_check, correct, func, message, **kwargs)  # type: ignore[arg-type]
 
 
-class UnsupportedColorFamilyError(CustomValueError):
+class UnsupportedColorFamilyError(_UnsupportedError):
     """
-    Raised when an undefined color family value is passed.
-    """
-
-
-class InvalidColorFamilyError(CustomValueError):
-    """
-    Raised when the given clip uses an invalid format.
+    Raised when an color family value is not supported.
     """
 
     def __init__(
@@ -133,16 +192,26 @@ class InvalidColorFamilyError(CustomValueError):
         | HoldsVideoFormat
         | vs.ColorFamily
         | Iterable[VideoFormatLike | HoldsVideoFormat | vs.ColorFamily] = vs.YUV,
-        message: SupportsString = "Input clip must be of {correct} color family, not {wrong}!",
+        message: SupportsString = "Input clip must be of {correct} color family, not {wrong}.",
         **kwargs: Any,
     ) -> None:
+        """
+        Initialize the exception.
+
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported color family(ies).
+            correct: The expected color family(ies).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
         from ..utils import get_color_family
 
         super().__init__(
-            message,
             func,
-            wrong=iter({get_color_family(c).name for c in to_arr(wrong)}),  # type: ignore[arg-type]
-            correct=iter({get_color_family(c).name for c in to_arr(correct)}),  # type: ignore[arg-type]
+            {get_color_family(c).name for c in to_arr(wrong)},  # type: ignore[arg-type]
+            {get_color_family(c).name for c in to_arr(correct)},  # type: ignore[arg-type]
+            message,
             **kwargs,
         )
 
@@ -162,54 +231,280 @@ class InvalidColorFamilyError(CustomValueError):
         **kwargs: Any,
     ) -> None:
         """
-        Check whether the given values are correct, and if not, throw this exception.
+        Ensure that the given color family(ies) match the expected family(ies).
 
         Args:
-            to_check: Value to check. Must be either a ColorFamily value, or a value a ColorFamily can be derived from
-                such as VideoFormat.
-            correct: A correct value or an array of correct color families.
-            func: Function returned for custom error handling. This should only be set by VS package developers.
-            message: Message to print when throwing the exception. The message will be formatted to display the correct
-                and wrong values (`{correct}` and `{wrong}` respectively).
-            **kwargs: Keyword arguments to pass on to the exception.
+            to_check: The color family(ies) to check.
+            correct: The expected color family(ies).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
 
         Raises:
-            InvalidColorFamilyError: Given color family is not in list of correct color families.
+            UnsupportedColorFamilyError: If any given color family does not match the expected color family(ies).
         """
         from ..utils import get_color_family
 
-        to_check_set = {get_color_family(c) for c in to_arr(to_check)}  # type: ignore[arg-type]
-        correct_set = {get_color_family(c) for c in to_arr(correct)}  # type: ignore[arg-type]
-
-        if not to_check_set.issubset(correct_set):
-            if message is not None:
-                kwargs.update(message=message)
-            raise cls(func, to_check_set, correct_set, **kwargs)
+        cls._check_builder(get_color_family, to_check, correct, func, message, **kwargs)  # type: ignore[arg-type]
 
 
-class UnsupportedSubsamplingError(CustomValueError):
+class UnsupportedSampleTypeError(_UnsupportedError):
     """
-    Raised when an undefined subsampling value is passed.
+    Raised when an sample type value is not supported.
     """
 
+    def __init__(
+        self,
+        func: FuncExcept | None,
+        wrong: VideoFormatLike
+        | HoldsVideoFormat
+        | vs.SampleType
+        | Iterable[VideoFormatLike | HoldsVideoFormat | vs.SampleType],
+        correct: VideoFormatLike
+        | HoldsVideoFormat
+        | vs.SampleType
+        | Iterable[VideoFormatLike | HoldsVideoFormat | vs.SampleType],
+        message: SupportsString = "Input clip must be of {correct} sample type, not {wrong}.",
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize the exception.
 
-class InvalidSubsamplingError(CustomValueError):
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported sample type(s).
+            correct: The expected sample type(s).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
+        from ..utils import get_sample_type
+
+        super().__init__(
+            func,
+            {get_sample_type(c).name for c in to_arr(wrong)},  # type: ignore[arg-type]
+            {get_sample_type(c).name for c in to_arr(correct)},  # type: ignore[arg-type]
+            message,
+            **kwargs,
+        )
+
+    @classmethod
+    def check(
+        cls,
+        to_check: VideoFormatLike
+        | HoldsVideoFormat
+        | vs.SampleType
+        | Iterable[VideoFormatLike | HoldsVideoFormat | vs.SampleType],
+        correct: VideoFormatLike
+        | HoldsVideoFormat
+        | vs.SampleType
+        | Iterable[VideoFormatLike | HoldsVideoFormat | vs.SampleType],
+        func: FuncExcept | None = None,
+        message: SupportsString | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ensure that the given sample type(s) match the expected type(s).
+
+        Args:
+            to_check: The sample type(s) to check.
+            correct: The expected sample type(s).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+
+        Raises:
+            UnsupportedSampleTypeError: If any given color family does not match the expected sample type(s).
+        """
+        from ..utils import get_sample_type
+
+        cls._check_builder(get_sample_type, to_check, correct, func, message, **kwargs)  # type: ignore[arg-type]
+
+
+class UnsupportedSubsamplingError(_UnsupportedError):
     """
-    Raised when the given clip has invalid subsampling.
+    Raised when an subsampling value is not supported.
     """
 
     def __init__(
         self,
         func: FuncExcept,
-        subsampling: str | VideoFormatLike | HoldsVideoFormat,
-        message: SupportsString = "The subsampling {subsampling} is not supported!",
+        wrong: str | VideoFormatLike | HoldsVideoFormat | Iterable[str | VideoFormatLike | HoldsVideoFormat],
+        correct: str | VideoFormatLike | HoldsVideoFormat | Iterable[str | VideoFormatLike | HoldsVideoFormat],
+        message: SupportsString = "Input clip must be of {correct} subsampling, not {wrong}.",
         **kwargs: Any,
     ) -> None:
-        from ..utils import get_video_format
+        """
+        Initialize the exception.
 
-        subsampling = subsampling if isinstance(subsampling, str) else get_video_format(subsampling).name
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported subsampling(s).
+            correct: The expected subsampling(s).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
+        from ..utils import get_subsampling
 
-        super().__init__(message, func, subsampling=subsampling, **kwargs)
+        super().__init__(
+            func,
+            {f if isinstance(f, str) else get_subsampling(f) for f in to_arr(wrong)},  # type: ignore[arg-type]
+            {f if isinstance(f, str) else get_subsampling(f) for f in to_arr(correct)},  # type: ignore[arg-type]
+            message,
+            **kwargs,
+        )
+
+    @classmethod
+    def check(
+        cls,
+        to_check: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        correct: VideoFormatLike | HoldsVideoFormat | Iterable[VideoFormatLike | HoldsVideoFormat],
+        func: FuncExcept | None = None,
+        message: SupportsString | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ensure that the given subsampling(s) match the expected subsampling(s).
+
+        Args:
+            to_check: The subsampling(s) to check.
+            correct: The expected subsampling(s).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+
+        Raises:
+            UnsupportedSubsamplingError: If any given format does not match the expected format(s).
+        """
+        from ..utils import get_subsampling
+
+        cls._check_builder(get_subsampling, to_check, correct, func, message, **kwargs)  # type: ignore[arg-type]
+
+
+class UnsupportedFramerateError(_UnsupportedError):
+    """
+    Raised when a clip's framerate does not match the expected framerate.
+    """
+
+    def __init__(
+        self,
+        func: FuncExcept,
+        wrong: vs.VideoNode | Fraction | Iterable[vs.VideoNode | Fraction],
+        correct: vs.VideoNode | Fraction | Iterable[vs.VideoNode | Fraction],
+        message: SupportsString = "Input clip must be of {correct} framerate, not {wrong}.",
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize the exception.
+
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported framerate(s).
+            correct: The expected framerate(s).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
+        from ..utils import get_framerate
+
+        super().__init__(
+            func,
+            {get_framerate(f) for f in to_arr(wrong)},  # type: ignore[arg-type]
+            {get_framerate(f) for f in to_arr(correct)},  # type: ignore[arg-type]
+            message,
+            **kwargs,
+        )
+
+    @classmethod
+    def check(
+        cls,
+        to_check: vs.VideoNode
+        | Fraction
+        | tuple[int, int]
+        | float
+        | Iterable[vs.VideoNode | Fraction | tuple[int, int] | float],
+        correct: vs.VideoNode
+        | Fraction
+        | tuple[int, int]
+        | float
+        | Iterable[vs.VideoNode | Fraction | tuple[int, int] | float],
+        func: FuncExcept | None = None,
+        message: SupportsString = "Input clip must have {correct} framerate, not {wrong}!",
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ensure that the given framerate(s) match the expected framerate(s).
+
+        Args:
+            to_check: The framerate(s) to check.
+            correct: The expected framerate(s).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+
+        Raises:
+            UnsupportedFramerateError: If any given format does not match the expected format(s).
+        """
+        from ..utils import get_framerate
+
+        def _resolve_correct(val: Any) -> Iterable[vs.VideoNode | Fraction | tuple[int, int] | float]:
+            if isinstance(val, Iterable):
+                if isinstance(val, tuple) and len(val) == 2 and all(isinstance(x, int) for x in val):
+                    return [val]
+                return val
+            return [val]
+
+        cls._check_builder(
+            get_framerate, _resolve_correct(to_check), _resolve_correct(correct), func, message, **kwargs
+        )
+
+
+class UnsupportedTimecodeVersionError(_UnsupportedError):
+    """
+    Raised when a timecode version does not match the expected version.
+    """
+
+    def __init__(
+        self,
+        func: FuncExcept,
+        wrong: SupportsInt | Iterable[SupportsInt],
+        correct: SupportsInt | Iterable[SupportsInt] = (1, 2),
+        message: SupportsString = "Timecodes version be in {correct}, not {wrong}.",
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize the exception.
+
+        Args:
+            func: Function where the exception was raised.
+            wrong: The unsupported timecode(s).
+            correct: The expected timecode(s).
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+        """
+        super().__init__(func, {int(t) for t in to_arr(wrong)}, {int(t) for t in to_arr(correct)}, message, **kwargs)
+
+    @classmethod
+    def check(
+        cls,
+        func: FuncExcept,
+        to_check: SupportsInt | Iterable[SupportsInt],
+        correct: SupportsInt | Iterable[SupportsInt] = (1, 2),
+        message: SupportsString | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ensure that the given timecode(s) match the expected timecode(s).
+
+        Args:
+            to_check: The timecode(s) to check.
+            correct: The expected timecode(s).
+            func: Function where the exception was raised.
+            message: Exception message template supporting `{correct}` and `{wrong}` placeholders.
+            **kwargs: Additional keyword arguments passed to the exception.
+
+        Raises:
+            UnsupportedTimecodeVersionError: If any given format does not match the expected format(s).
+        """
+        cls._check_builder(int, to_check, correct, func, message, **kwargs)
 
 
 class FormatsMismatchError(MismatchError):
@@ -442,107 +737,3 @@ class TopFieldFirstError(CustomValueError):
         self, func: FuncExcept, message: SupportsString = "You must set `tff` for this clip!", **kwargs: Any
     ) -> None:
         super().__init__(message, func, **kwargs)
-
-
-class InvalidFramerateError(CustomValueError):
-    """
-    Raised when the given clip has an invalid framerate.
-    """
-
-    def __init__(
-        self,
-        func: FuncExcept,
-        clip: vs.VideoNode | Fraction,
-        message: SupportsString = "{fps} clips are not allowed!",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(message, func, fps=clip.fps if isinstance(clip, vs.VideoNode) else clip, **kwargs)
-
-    @staticmethod
-    def check(
-        func: FuncExcept,
-        to_check: vs.VideoNode | Fraction | tuple[int, int] | float,
-        correct: vs.VideoNode
-        | Fraction
-        | tuple[int, int]
-        | float
-        | Iterable[vs.VideoNode | Fraction | tuple[int, int] | float],
-        message: SupportsString = "Input clip must have {correct} framerate, not {wrong}!",
-        **kwargs: Any,
-    ) -> None:
-        """
-        Check whether the given values are correct, and if not, throw this exception.
-
-        Args:
-            to_check: Value to check. Must be either a VideoNode holding the correct framerate, a Fraction, a tuple
-                representing a fraction, or a float.
-            correct: A correct value or an array of correct values.
-            func: Function returned for custom error handling. This should only be set by VS package developers.
-            message: Message to print when throwing the exception. The message will be formatted to display the correct
-                and wrong values (`{correct}` and `{wrong}` respectively).
-            **kwargs: Keyword arguments to pass on to the exception.
-
-        Raises:
-            InvalidFramerateError: Given framerate is not in list of correct framerates.
-        """
-        from ..utils import get_framerate
-
-        to_check = get_framerate(to_check)
-
-        def _resolve_correct(val: Any) -> Iterable[vs.VideoNode | Fraction | tuple[int, int] | float]:
-            if isinstance(val, Iterable):
-                if isinstance(val, tuple) and len(val) == 2 and all(isinstance(x, int) for x in val):
-                    return [val]
-                return val
-            return [val]
-
-        correct_list = [get_framerate(c) for c in _resolve_correct(correct)]
-
-        if to_check not in correct_list:
-            raise InvalidFramerateError(
-                func, to_check, message, wrong=to_check, correct=iter(set(correct_list)), **kwargs
-            )
-
-
-class InvalidTimecodeVersionError(CustomValueError):
-    """
-    Raised when an invalid timecode version is passed.
-    """
-
-    def __init__(
-        self,
-        func: FuncExcept,
-        version: int,
-        message: SupportsString = "{version} is not a valid timecodes version!",
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(message, func, version=version, **kwargs)
-
-    @staticmethod
-    def check(
-        func: FuncExcept,
-        to_check: int,
-        correct: int | Iterable[int] = [1, 2],
-        message: SupportsString = "Timecodes version be in {correct}, not {wrong}!",
-        **kwargs: Any,
-    ) -> None:
-        """
-        Check whether the given values are correct, and if not, throw this exception.
-
-        Args:
-            func: Function returned for custom error handling. This should only be set by VS package developers.
-            to_check: Value to check. Must be an integer representing the timecodes version.
-            correct: A correct value or an array of correct values. Defaults to [1, 2] (V1, V2).
-            message: Message to print when throwing the exception. The message will be formatted to display the correct
-                and wrong values (`{correct}` and `{wrong}` respectively).
-            **kwargs: Keyword arguments to pass on to the exception.
-
-        Raises:
-            InvalidTimecodeVersionError: Given timecodes version is not in list of correct versions.
-        """
-        correct_list = to_arr(correct)
-
-        if to_check not in correct_list:
-            raise InvalidTimecodeVersionError(
-                func, to_check, message, wrong=to_check, correct=iter(set(correct_list)), **kwargs
-            )

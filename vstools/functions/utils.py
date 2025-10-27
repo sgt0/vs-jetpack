@@ -17,7 +17,7 @@ from jetpytools import (
 )
 
 from ..enums import ColorRange, ColorRangeLike
-from ..exceptions import ClipLengthError, InvalidColorFamilyError
+from ..exceptions import ClipLengthError, UnsupportedColorFamilyError
 from ..types import HoldsVideoFormat, Planes, VideoFormatLike, VideoNodeIterable
 from ..utils import flatten, get_depth, get_video_format
 from ..vs_proxy import vs
@@ -455,10 +455,10 @@ def get_y(clip: vs.VideoNode, /) -> vs.VideoNode:
         Y plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not GRAY or YUV.
+        UnsupportedColorFamilyError: Clip is not GRAY or YUV.
     """
 
-    InvalidColorFamilyError.check(clip, [vs.YUV, vs.GRAY], get_y)
+    UnsupportedColorFamilyError.check(clip, [vs.YUV, vs.GRAY], get_y)
 
     return plane(clip, 0)
 
@@ -474,10 +474,10 @@ def get_u(clip: vs.VideoNode, /) -> vs.VideoNode:
         Y plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not YUV.
+        UnsupportedColorFamilyError: Clip is not YUV.
     """
 
-    InvalidColorFamilyError.check(clip, vs.YUV, get_u)
+    UnsupportedColorFamilyError.check(clip, vs.YUV, get_u)
 
     return plane(clip, 1)
 
@@ -493,10 +493,10 @@ def get_v(clip: vs.VideoNode, /) -> vs.VideoNode:
         V plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not YUV.
+        UnsupportedColorFamilyError: Clip is not YUV.
     """
 
-    InvalidColorFamilyError.check(clip, vs.YUV, get_v)
+    UnsupportedColorFamilyError.check(clip, vs.YUV, get_v)
 
     return plane(clip, 2)
 
@@ -512,10 +512,10 @@ def get_r(clip: vs.VideoNode, /) -> vs.VideoNode:
         R plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not RGB.
+        UnsupportedColorFamilyError: Clip is not RGB.
     """
 
-    InvalidColorFamilyError.check(clip, vs.RGB, get_r)
+    UnsupportedColorFamilyError.check(clip, vs.RGB, get_r)
 
     return plane(clip, 0)
 
@@ -531,10 +531,10 @@ def get_g(clip: vs.VideoNode, /) -> vs.VideoNode:
         G plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not RGB.
+        UnsupportedColorFamilyError: Clip is not RGB.
     """
 
-    InvalidColorFamilyError.check(clip, vs.RGB, get_g)
+    UnsupportedColorFamilyError.check(clip, vs.RGB, get_g)
 
     return plane(clip, 1)
 
@@ -550,10 +550,10 @@ def get_b(clip: vs.VideoNode, /) -> vs.VideoNode:
         B plane of the input clip.
 
     Raises:
-        CustomValueError: Clip is not RGB.
+        UnsupportedColorFamilyError: Clip is not RGB.
     """
 
-    InvalidColorFamilyError.check(clip, vs.RGB, get_b)
+    UnsupportedColorFamilyError.check(clip, vs.RGB, get_b)
 
     return plane(clip, 2)
 
@@ -744,7 +744,7 @@ def join(
         raise CustomTypeError(func=join)
 
     if not plane2:
-        InvalidColorFamilyError.check(
+        UnsupportedColorFamilyError.check(
             (family, plane1_or_family),
             vs.YUV,
             join,

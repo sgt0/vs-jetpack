@@ -21,7 +21,7 @@ from jetpytools import (
 )
 
 from ..enums import Matrix, SceneChangeMode
-from ..exceptions import FramesLengthError, InvalidTimecodeVersionError
+from ..exceptions import FramesLengthError, UnsupportedTimecodeVersionError
 from ..utils import DynamicClipsCache, PackageStorage
 from ..vs_proxy import VSObject, vs
 from .ranges import replace_ranges
@@ -337,7 +337,7 @@ class Timecodes(list[FrameDur]):
 
         check_perms(out_path, "w+", func=func)
 
-        InvalidTimecodeVersionError.check(self.to_file, format)
+        UnsupportedTimecodeVersionError.check(self.to_file, format)
 
         out_text = [f"# timecode format v{format}"]
 

@@ -3,10 +3,10 @@ from __future__ import annotations
 from math import ceil
 from typing import Any, ClassVar
 
-from jetpytools import fallback, to_arr
+from jetpytools import CustomValueError, fallback, to_arr
 
 from vskernels.types import BorderHandling, SampleGridModel
-from vstools import Dar, Sar, UnsupportedVideoFormatError, core, get_video_format, vs
+from vstools import Dar, Sar, core, get_video_format, vs
 
 from ..abstract import ComplexScaler
 from ..types import Center, LeftShift, Slope, TopShift
@@ -133,16 +133,12 @@ class Placebo(ComplexScaler, abstract=True):
             fmt = get_video_format(fmt)
 
             if (
-                any(
-                    in_v != out_v
-                    for (k, in_v), out_v in zip(clip.format._as_dict().items(), fmt._as_dict().values())
-                    if not k.startswith("subsampling")
-                )
-                and clip.format.color_family is fmt.color_family is vs.YUV
+                clip.format.color_family != fmt.color_family
+                or clip.format.num_planes != fmt.num_planes
+                or clip.format.sample_type != fmt.sample_type
+                or clip.format.bits_per_sample != fmt.bits_per_sample
             ):
-                raise UnsupportedVideoFormatError(
-                    "Only YUV subsampling scaling is supported.", self.__class__, fmt.name
-                )
+                raise CustomValueError("Only YUV subsampling scaling is supported.", self.__class__, fmt.name)
 
             shift = (to_arr(shift[0]), to_arr(shift[1]))
 

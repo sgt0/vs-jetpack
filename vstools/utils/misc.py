@@ -6,14 +6,14 @@ from math import floor
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Iterable, Iterator, Self, Sequence, overload
 
-from jetpytools import MISSING, MissingT, normalize_seq, to_arr
+from jetpytools import MISSING, CustomValueError, MissingT, normalize_seq, to_arr
 from jetpytools import flatten as jetp_flatten
 
 from ..enums import Align, Matrix
-from ..exceptions import InvalidSubsamplingError
 from ..types import Planes
 from ..vs_proxy import core, vs
 from .check import check_variable
+from .info import get_subsampling
 from .props import get_props
 from .scale import get_lowest_values, get_neutral_values, get_peak_values
 
@@ -223,11 +223,11 @@ class padder:
 
         w_sub, h_sub = 1 << clip.format.subsampling_w, 1 << clip.format.subsampling_h
 
-        if width % w_sub and height % h_sub:
-            raise InvalidSubsamplingError(
-                "padder",
-                clip.format,
-                "Values must result in a mod congruent to the clip's subsampling ({subsampling})!",
+        if width % w_sub or height % h_sub:
+            raise CustomValueError(
+                "Values must result in a mod congruent to the clip's subsampling ({subsampling}).",
+                "patter",
+                subsampling=get_subsampling(clip),
             )
 
         return width, height, clip.format, w_sub, h_sub

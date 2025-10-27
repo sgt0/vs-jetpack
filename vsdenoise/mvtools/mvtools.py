@@ -9,8 +9,8 @@ from jetpytools import CustomRuntimeError, KwargsNotNone, KwargsT, fallback, nor
 from vstools import (
     ColorRange,
     FieldBased,
-    InvalidColorFamilyError,
     Planes,
+    UnsupportedColorFamilyError,
     VSFunctionNoArgs,
     VSObject,
     core,
@@ -148,7 +148,7 @@ class MVTools(VSObject):
             sc_detection_args: Arguments passed to every
                 [MVToolsPlugin.SCDetection][vsdenoise.MVToolsPlugin.SCDetection] calls.
         """
-        InvalidColorFamilyError.check(clip, (vs.YUV, vs.GRAY), self.__class__)
+        UnsupportedColorFamilyError.check(clip, (vs.YUV, vs.GRAY), self.__class__)
 
         self.mvtools = MVToolsPlugin.from_video(clip)
         self.vectors = fallback(vectors, MotionVectors())
