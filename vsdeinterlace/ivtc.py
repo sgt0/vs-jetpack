@@ -6,7 +6,7 @@ from vstools import (
     FieldBased,
     FieldBasedLike,
     FunctionUtil,
-    InvalidFramerateError,
+    UnsupportedFramerateError,
     VSFunctionKwArgs,
     VSFunctionNoArgs,
     core,
@@ -79,7 +79,7 @@ def jivtc(
 
     tff = FieldBased.from_param_or_video(tff, clip, True, jivtc).is_tff
 
-    InvalidFramerateError.check(jivtc, clip, (30000, 1001))
+    UnsupportedFramerateError.check(clip, (30000, 1001), jivtc)
 
     ivtced = clip.std.SeparateFields(tff).std.DoubleWeave(tff)
     ivtced = ivtc_cycle.decimate(ivtced, pattern)

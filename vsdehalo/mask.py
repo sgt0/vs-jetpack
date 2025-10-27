@@ -25,9 +25,9 @@ from vsscale import pre_ss as pre_supersample
 from vstools import (
     ConvMode,
     FunctionUtil,
-    InvalidColorFamilyError,
     OneDimConvMode,
     Planes,
+    UnsupportedColorFamilyError,
     VSFunctionPlanesArgs,
     VSObjectABC,
     check_progressive,
@@ -153,7 +153,7 @@ class FineDehalo[**P, R]:
             """
             func = func or self.__class__
 
-            InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
+            UnsupportedColorFamilyError.check(clip, (vs.GRAY, vs.YUV), func)
 
             thmif, thmaf, thlimif, thlimaf = [
                 [scale_mask(x, 8, clip) for x in th]

@@ -10,8 +10,8 @@ from vsexprtools import norm_expr
 from vsrgtools import gauss_blur
 from vstools import (
     CustomIntEnum,
-    InvalidColorFamilyError,
     Planes,
+    UnsupportedColorFamilyError,
     core,
     depth,
     expect_bits,
@@ -398,13 +398,12 @@ def f3k_deband(
 
     Raises:
         CustomValueError: If inconsistent grain parameters are provided across chroma planes.
-        InvalidColorFamilyError: If input clip is not YUV or GRAY.
+        UnsupportedColorFamilyError: If input clip is not YUV or GRAY.
 
     Returns:
         Debanded and optionally grained clip.
     """
-
-    InvalidColorFamilyError.check(clip, (vs.GRAY, vs.YUV), f3k_deband)
+    UnsupportedColorFamilyError.check(clip, (vs.GRAY, vs.YUV), f3k_deband)
 
     clip, bits = expect_bits(clip, 16)
 

@@ -3,7 +3,7 @@ from unittest import TestCase
 from vstools import (
     ColorRange,
     DitherType,
-    InvalidColorFamilyError,
+    UnsupportedColorFamilyError,
     depth,
     get_b,
     get_g,
@@ -75,7 +75,7 @@ class TestUtils(TestCase):
 
     def test_get_y_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_y(clip)
 
     def test_get_u(self) -> None:
@@ -86,7 +86,7 @@ class TestUtils(TestCase):
 
     def test_get_u_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_u(clip)
 
     def test_get_v(self) -> None:
@@ -97,7 +97,7 @@ class TestUtils(TestCase):
 
     def test_get_v_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_v(clip)
 
     def test_get_r(self) -> None:
@@ -108,7 +108,7 @@ class TestUtils(TestCase):
 
     def test_get_r_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.YUV420P8)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_r(clip)
 
     def test_get_g(self) -> None:
@@ -119,7 +119,7 @@ class TestUtils(TestCase):
 
     def test_get_g_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.YUV420P8)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_g(clip)
 
     def test_get_b(self) -> None:
@@ -130,7 +130,7 @@ class TestUtils(TestCase):
 
     def test_get_b_invalid(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.YUV420P8)
-        with self.assertRaises(InvalidColorFamilyError):
+        with self.assertRaises(UnsupportedColorFamilyError):
             get_b(clip)
 
     def test_plane(self) -> None:
