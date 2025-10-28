@@ -59,7 +59,7 @@ doc = [
 
     # Additional packages to be documented.
     "vspreview==0.15.0",
-    "vstransitions==0.1.3",
+    "vstransitions==0.1.4",
 ]
 
 [build-system]
