@@ -29,14 +29,16 @@ def get_var_infos(frame: vs.VideoNode | vs.VideoFrame) -> tuple[vs.VideoFormat, 
     """
     Get information from a variable resolution clip or frame.
     """
+    infos = (frame.format, frame.width, frame.height)
 
-    if isinstance(frame, vs.VideoNode) and not (frame.width and frame.height and frame.format):
+    if all(infos):
+        return infos
+
+    if isinstance(frame, vs.VideoNode):
         with frame.get_frame(0) as frame:
             return get_var_infos(frame)
 
-    assert frame.format
-
-    return frame.format, frame.width, frame.height
+    return get_var_infos(frame)
 
 
 def get_video_format(
