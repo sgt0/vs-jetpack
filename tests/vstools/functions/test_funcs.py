@@ -1,37 +1,9 @@
-from typing import Callable, cast
 from unittest import TestCase
 
-from vstools import (
-    FunctionUtil,
-    InvalidColorspacePathError,
-    UndefinedMatrixError,
-    fallback,
-    iterate,
-    kwargs_fallback,
-    vs,
-)
+from vstools import FunctionUtil, InvalidColorspacePathError, UndefinedMatrixError, vs
 
 
 class TestFuncs(TestCase):
-    def test_iterate(self) -> None:
-        result = iterate(5, cast(Callable[[int], int], lambda x: x * 2), 2)
-        self.assertEqual(result, 20)
-
-    def test_iterate_clip(self) -> None:
-        clip = vs.core.std.BlankClip()
-        result = iterate(clip, vs.core.std.Maximum, 3, threshold=0.5)
-        self.assertEqual(type(result), vs.VideoNode)
-
-    def test_fallback(self) -> None:
-        self.assertEqual(fallback(5, 6), 5)
-        self.assertEqual(fallback(None, 6), 6)
-
-    def test_kwargs_fallback(self) -> None:
-        kwargs = {"overlap": 1, "search": 2, "block_size": 4, "sad_mode": 8, "motion": 12, "thSAD": 16}
-        self.assertEqual(kwargs_fallback(5, (kwargs, "block_size"), 8), 5)
-        self.assertEqual(kwargs_fallback(None, (kwargs, "block_size"), 8), 4)
-        self.assertEqual(kwargs_fallback(None, ({}, "block_size"), 8), 8)
-
     def test_functionutil_bitdepth_tuple(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.YUV420P8)
         result = FunctionUtil(clip, "FunctionUtilTest", bitdepth=(8, 16))
