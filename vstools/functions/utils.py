@@ -155,8 +155,6 @@ class DitherType(CustomStrEnum):
         Apply the given DitherType to a clip.
         """
 
-        from ..utils import get_video_format
-
         assert self != DitherType.AUTO, CustomValueError("Cannot apply AUTO.", self.__class__)
 
         fmt = get_video_format(clip)
@@ -205,19 +203,6 @@ class DitherType(CustomStrEnum):
         """
         Automatically determines whether dithering is needed for a given depth/range/sample type conversion.
 
-        If an input range is specified, an output range *should* be specified, otherwise it assumes a range conversion.
-
-        For an explanation of when dithering is needed:
-            - Dithering is NEVER needed if the conversion results in a float sample type.
-            - Dithering is ALWAYS needed for a range conversion (i.e. full to limited or vice-versa).
-            - Dithering is ALWAYS needed to convert a float sample type to an integer sample type.
-            - Dithering is needed when upsampling full range content except when one depth is a multiple of the other,
-              when the upsampling is a simple integer multiplication, e.g. for 8 -> 16: (0-255) * 257 -> (0-65535).
-            - Dithering is needed when downsampling limited or full range.
-
-        Dithering is theoretically needed when converting from an integer depth greater than 10 to half float,
-        despite the higher bit depth, but zimg's internal resampler currently does not dither for float output.
-
         Args:
             in_fmt: Input clip, frame or video format.
             out_fmt: Output clip, frame or video format.
@@ -242,26 +227,13 @@ class DitherType(CustomStrEnum):
         """
         Automatically determines whether dithering is needed for a given depth/range/sample type conversion.
 
-        If an input range is specified, an output range *should* be specified, otherwise it assumes a range conversion.
-
-        For an explanation of when dithering is needed:
-            - Dithering is NEVER needed if the conversion results in a float sample type.
-            - Dithering is ALWAYS needed for a range conversion (i.e. full to limited or vice-versa).
-            - Dithering is ALWAYS needed to convert a float sample type to an integer sample type.
-            - Dithering is needed when upsampling full range content except when one depth is a multiple of the other,
-              when the upsampling is a simple integer multiplication, e.g. for 8 -> 16: (0-255) * 257 -> (0-65535).
-            - Dithering is needed when downsampling limited or full range.
-
-        Dithering is theoretically needed when converting from an integer depth greater than 10 to half float,
-        despite the higher bit depth, but zimg's internal resampler currently does not dither for float output.
-
         Args:
             in_bits: Input bitdepth.
             out_bits: Output bitdepth.
-            in_sample_type: Input sample type.
-            out_sample_type: Output sample type.
             in_range: Input color range.
             out_range: Output color range.
+            in_sample_type: Input sample type.
+            out_sample_type: Output sample type.
 
         Returns:
             Whether the clip should be dithered.
@@ -277,8 +249,34 @@ class DitherType(CustomStrEnum):
         in_sample_type: vs.SampleType | None = None,
         out_sample_type: vs.SampleType | None = None,
     ) -> bool:
-        from ..utils import get_video_format
+        """
+        Automatically determines whether dithering is needed for a given depth/range/sample type conversion.
 
+        If an input range is specified, an output range *should* be specified, otherwise it assumes a range conversion.
+
+        For an explanation of when dithering is needed:
+
+        - Dithering is NEVER needed if the conversion results in a float sample type.
+        - Dithering is ALWAYS needed for a range conversion (i.e. full to limited or vice-versa).
+        - Dithering is ALWAYS needed to convert a float sample type to an integer sample type.
+        - Dithering is needed when upsampling full range content except when one depth is a multiple of the other,
+            when the upsampling is a simple integer multiplication, e.g. for 8 -> 16: (0-255) * 257 -> (0-65535).
+        - Dithering is needed when downsampling limited or full range.
+
+        Dithering is theoretically needed when converting from an integer depth greater than 10 to half float,
+        despite the higher bit depth, but zimg's internal resampler currently does not dither for float output.
+
+        Args:
+            in_fmt: Input bitdepth, clip, frame or video format.
+            out_fmt: Output bitdepth, clip, frame or video format.
+            in_range: Input color range.
+            out_range: Output color range.
+            in_sample_type: Input sample type.
+            out_sample_type: Output sample type.
+
+        Returns:
+            Whether the clip should be dithered.
+        """
         in_fmt = get_video_format(in_bits_or_fmt, sample_type=in_sample_type)
         out_fmt = get_video_format(out_bits_or_fmt, sample_type=out_sample_type)
 
