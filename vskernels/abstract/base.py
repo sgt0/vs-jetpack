@@ -286,9 +286,15 @@ def _partial_abstract_kernel_radius(self: BaseScaler) -> int:
     raise CustomNotImplementedError("kernel_radius is not implemented!", self.__class__)
 
 
+setattr(_partial_abstract_kernel_radius, "__name__", "kernel_radius")
+
+
 @BaseScalerMeta.cachedproperty
 def _static_kernel_radius_property(self: BaseScaler) -> int:
     return ceil(self._static_kernel_radius)
+
+
+setattr(_static_kernel_radius_property, "__name__", "kernel_radius")
 
 
 class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
