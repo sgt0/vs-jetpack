@@ -337,9 +337,7 @@ def depth(
             See [DitherType][vstools.DitherType].
 
             When integer output is desired but the conversion may produce fractional values,
-            defaults to [VOID][vstools.DitherType.VOID] if it is available via the fmtc VapourSynth plugin,
-            or to [Floyd-Steinberg][vstools.DitherType.ERROR_DIFFUSION] for 8-bit output
-            or [ORDERED][vstools.DitherType.ORDERED] for higher bit depths.
+            defaults to [VOID][vstools.DitherType.VOID].
 
             In other cases, defaults to no dither.
 
