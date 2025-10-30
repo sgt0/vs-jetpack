@@ -3,18 +3,10 @@ from __future__ import annotations
 import operator
 from functools import partial, reduce, wraps
 from types import NoneType
-from typing import Any, Callable, Iterable, Mapping, Sequence, SupportsIndex, Union, overload
+from typing import Any, Callable, Iterable, Mapping, Self, Sequence, SupportsIndex, Union, overload
 from weakref import WeakValueDictionary
 
-from jetpytools import (
-    CustomIndexError,
-    CustomStrEnum,
-    CustomTypeError,
-    CustomValueError,
-    FuncExcept,
-    normalize_seq,
-    to_arr,
-)
+from jetpytools import CustomIndexError, CustomStrEnum, CustomTypeError, FuncExcept, normalize_seq, to_arr
 
 from ..enums import ColorRange, ColorRangeLike
 from ..exceptions import ClipLengthError, UnsupportedColorFamilyError
@@ -107,46 +99,56 @@ class DitherType(CustomStrEnum):
     Floyd-Steinberg error diffusion.
     """
 
-    ERROR_DIFFUSION_FMTC = "error_diffusion_fmtc"
+    ERROR_DIFFUSION_FMTC = "error_diffusion_fmtc", 6
     """
     Floyd-Steinberg error diffusion.
     Modified for serpentine scan (avoids worm artefacts).
     """
 
-    SIERRA_2_4A = "sierra_2_4a"
+    SIERRA_2_4A = "sierra_2_4a", 3
     """
     Another type of error diffusion.
     Quick and excellent quality, similar to Floyd-Steinberg.
     """
 
-    STUCKI = "stucki"
+    STUCKI = "stucki", 4
     """
     Another error diffusion kernel.
     Preserves delicate edges better but distorts gradients.
     """
 
-    ATKINSON = "atkinson"
+    ATKINSON = "atkinson", 5
     """
     Another error diffusion kernel.
     Generates distinct patterns but keeps clean the flat areas (noise modulation).
     """
 
-    OSTROMOUKHOV = "ostromoukhov"
+    OSTROMOUKHOV = "ostromoukhov", 7
     """
     Another error diffusion kernel.
     Slow, available only for integer input at the moment. Avoids usual F-S artefacts.
     """
 
-    VOID = "void"
+    VOID = "void", 8
     """
     A way to generate blue-noise dither and has a much better visual aspect than ordered dithering.
     """
 
-    QUASIRANDOM = "quasirandom"
+    QUASIRANDOM = "quasirandom", 9
     """
     Dither using quasirandom sequences.
     Good intermediary between void, cluster, and error diffusion algorithms.
     """
+
+    _fmtc_dmode: int | None
+
+    def __new__(cls, value: Any, fmtc_dmode: int | None = None) -> Self:
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+
+        obj._fmtc_dmode = fmtc_dmode
+
+        return obj
 
     def apply(
         self, clip: vs.VideoNode, out_fmt: vs.VideoFormat, range_in: ColorRange, range_out: ColorRange
@@ -160,7 +162,7 @@ class DitherType(CustomStrEnum):
         fmt = get_video_format(clip)
         clip = ColorRange.ensure_presence(clip, range_in)
 
-        if not self.is_fmtc:
+        if not self.is_fmtc():
             return clip.resize.Point(
                 format=out_fmt.id,
                 dither_type=self.value.lower(),
@@ -168,28 +170,22 @@ class DitherType(CustomStrEnum):
                 range=range_out.value_zimg,
             )
 
-        if fmt.sample_type is vs.FLOAT:
-            if self == DitherType.OSTROMOUKHOV:
-                raise CustomValueError("Ostromoukhov can't be used for float input.", self.__class__)
-
-            # Workaround because fmtc doesn't support FLOAT 16 input
-            if fmt.bits_per_sample < 32:
-                clip = DitherType.NONE.apply(clip, fmt.replace(bits_per_sample=32), range_in, range_out)
+        # Workaround because fmtc doesn't support FLOAT 16 input
+        if fmt.sample_type is vs.FLOAT and fmt.bits_per_sample == 16:
+            clip = DitherType.NONE.apply(clip, fmt.replace(bits_per_sample=32), range_in, range_out)
 
         return clip.fmtc.bitdepth(
-            dmode=_dither_fmtc_types.get(self),
+            dmode=self._fmtc_dmode,
             bits=out_fmt.bits_per_sample,
             fulls=range_in is ColorRange.FULL,
             fulld=range_out is ColorRange.FULL,
         )
 
-    @property
     def is_fmtc(self) -> bool:
         """
         Whether the DitherType is applied through fmtc.
         """
-
-        return self in _dither_fmtc_types
+        return self._fmtc_dmode is not None
 
     @overload
     @staticmethod
@@ -302,17 +298,6 @@ class DitherType(CustomStrEnum):
             return True
 
         return in_range == ColorRange.FULL and bool(out_bits % in_bits)
-
-
-_dither_fmtc_types: dict[DitherType, int] = {
-    DitherType.SIERRA_2_4A: 3,
-    DitherType.STUCKI: 4,
-    DitherType.ATKINSON: 5,
-    DitherType.ERROR_DIFFUSION_FMTC: 6,
-    DitherType.OSTROMOUKHOV: 7,
-    DitherType.VOID: 8,
-    DitherType.QUASIRANDOM: 9,
-}
 
 
 def depth(
