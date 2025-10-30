@@ -448,10 +448,10 @@ class Grainer(AbstractGrainer, CustomEnum):
         """
 
         def _funtion(grained: vs.VideoNode) -> vs.VideoNode:
-            for i in range(grained.format.num_planes):
+            for i in range(grained.format.num_planes):  # type: ignore
                 grained = core.std.PlaneStats(grained, plane=i, prop=f"PS{i}")
 
-            if grained.format.sample_type is vs.FLOAT:
+            if grained.format.sample_type is vs.FLOAT:  # type: ignore
                 expr = "x x.PS{plane_idx}Average -"
             else:
                 expr = "x neutral range_size / x.PS{plane_idx}Average - range_size * +"
@@ -600,7 +600,7 @@ def _protect_neutral_chroma(
                 grained,
                 base_clip,
                 core.std.ShufflePlanes([clip, mask, mask], [0, 0, 0], vs.YUV, clip),
-                {1, 2}.intersection(planes),
+                {1, 2}.intersection(planes),  # type:ignore
             )
         case vs.RGB:
             return core.std.MaskedMerge(
