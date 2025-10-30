@@ -149,20 +149,20 @@ class DitherType(CustomStrEnum):
     """
 
     def apply(
-        self, clip: vs.VideoNode, fmt_out: vs.VideoFormat, range_in: ColorRange, range_out: ColorRange
+        self, clip: vs.VideoNode, out_fmt: vs.VideoFormat, range_in: ColorRange, range_out: ColorRange
     ) -> vs.VideoNode:
         """
         Apply the given DitherType to a clip.
         """
-
-        assert self != DitherType.AUTO, CustomValueError("Cannot apply AUTO.", self.__class__)
+        if self is DitherType.AUTO:
+            self = DitherType.VOID if DitherType.should_dither(clip, out_fmt, range_in, range_out) else DitherType.NONE
 
         fmt = get_video_format(clip)
         clip = ColorRange.ensure_presence(clip, range_in)
 
         if not self.is_fmtc:
             return clip.resize.Point(
-                format=fmt_out.id,
+                format=out_fmt.id,
                 dither_type=self.value.lower(),
                 range_in=range_in.value_zimg,
                 range=range_out.value_zimg,
@@ -178,7 +178,7 @@ class DitherType(CustomStrEnum):
 
         return clip.fmtc.bitdepth(
             dmode=_dither_fmtc_types.get(self),
-            bits=fmt_out.bits_per_sample,
+            bits=out_fmt.bits_per_sample,
             fulls=range_in is ColorRange.FULL,
             fulld=range_out is ColorRange.FULL,
         )
@@ -376,16 +376,9 @@ def depth(
     ):
         return clip
 
-    dither_type = DitherType(dither_type)
-
-    if dither_type is DitherType.AUTO:
-        should_dither = DitherType.should_dither(in_fmt, out_fmt, range_in, range_out)
-
-        dither_type = DitherType.VOID if should_dither else DitherType.NONE
-
     new_format = in_fmt.replace(bits_per_sample=out_fmt.bits_per_sample, sample_type=out_fmt.sample_type)
 
-    return dither_type.apply(clip, new_format, range_in, range_out)
+    return DitherType.from_param(dither_type, depth).apply(clip, new_format, range_in, range_out)
 
 
 def expect_bits(clip: vs.VideoNode, /, expected_depth: int = 16, **kwargs: Any) -> tuple[vs.VideoNode, int]:
