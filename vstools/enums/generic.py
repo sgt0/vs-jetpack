@@ -14,7 +14,15 @@ from ..types import HoldsVideoFormat, VideoFormatLike
 from ..vs_proxy import vs
 from .base import PropEnum, _base_from_video
 
-__all__ = ["ChromaLocation", "ChromaLocationLike", "ChromaLocationT", "FieldBased", "FieldBasedLike", "FieldBasedT"]
+__all__ = [
+    "ChromaLocation",
+    "ChromaLocationLike",
+    "ChromaLocationT",
+    "Field",
+    "FieldBased",
+    "FieldBasedLike",
+    "FieldBasedT",
+]
 
 
 class ChromaLocation(PropEnum):
