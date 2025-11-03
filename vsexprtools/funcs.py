@@ -208,7 +208,6 @@ def norm_expr(
     boundary: bool = True,
     func: FuncExcept | None = None,
     split_planes: bool = False,
-    debug: bool = False,
     **kwargs: Iterable[SupportsString] | SupportsString,
 ) -> vs.VideoNode:
     """
@@ -236,7 +235,6 @@ def norm_expr(
                - `False`: Clamped edges.
         func: Function returned for custom error handling. This should only be set by VS package developers.
         split_planes: Splits the VideoNodes into their individual planes.
-        debug: Print out the normalized expr.
         **kwargs: Additional keywords arguments to be passed to the expression function.
 
             These arguments are key-value pairs, where the keys are placeholders that will be replaced
@@ -275,9 +273,6 @@ def norm_expr(
     tokenized_expr = [
         bitdepth_aware_tokenize_expr(clips, e, bool(is_chroma)) for is_chroma, e in enumerate(normalized_expr)
     ]
-
-    if debug:
-        print(tokenized_expr)
 
     return expr_func(clips, tokenized_expr, format, opt, boundary, func)
 
