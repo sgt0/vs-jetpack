@@ -363,7 +363,7 @@ def f3k_deband(
     clip: vs.VideoNode,
     radius: int = 16,
     thr: int | Sequence[int] = 96,
-    grain: float | Sequence[float] = 0.0,
+    grain: int | Sequence[int] = 0,
     planes: Planes = None,
     *,
     sample_mode: F3KDeband.SampleMode = F3KDeband.SampleMode.SQUARE,
@@ -383,7 +383,7 @@ def f3k_deband(
         radius: Radius used for banding detection. Valid range is [1, 255].
         thr: Banding detection threshold(s) for each plane (Y, Cb, Cr). A pixel is considered banded if the difference
             with its reference pixel(s) is less than the corresponding threshold.
-        grain: Amount of grain to add after debanding. Accepts a float or sequence of floats.
+        grain: Amount of grain to add after debanding. Accepts a int or sequence of ints.
         planes: Specifies which planes to process. Default is all planes.
         sample_mode: Strategy used to sample reference pixels. See
             [SampleMode][vsdeband.debanders.F3KDeband.SampleMode].
@@ -524,7 +524,7 @@ class _DebanderFunc[_Nb: (float, int)](Protocol):
         clip: vs.VideoNode,
         radius: int = ...,
         thr: _Nb | Sequence[_Nb] = ...,
-        grain: float | Sequence[float] = ...,
+        grain: _Nb | Sequence[_Nb] = ...,
         planes: Planes = ...,
     ) -> vs.VideoNode: ...
 
