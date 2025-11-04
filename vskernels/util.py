@@ -356,12 +356,17 @@ class LinearLightProcessing(VSObject):
         """
         Getter for `linear` cached property.
         """
+        if (
+            self.ll._wclip.format.sample_type,
+            self.ll._wclip.format.subsampling_w,
+            self.ll._wclip.format.subsampling_h,
+        ) != (vs.FLOAT, 0, 0):
+            fmt = vs.RGBS if self.ll._wclip.format.color_family in (vs.YUV, vs.RGB) else vs.GRAYS
+        else:
+            fmt = self.ll._wclip
+
         wclip = self.ll._resampler.resample(
-            self.ll._wclip,
-            vs.RGBS if self.ll._wclip.format.color_family in (vs.YUV, vs.RGB) else vs.GRAYS,
-            matrix_in=self.ll._matrix,
-            transfer_in=self.ll._curve,
-            transfer=Transfer.LINEAR,
+            self.ll._wclip, fmt, matrix_in=self.ll._matrix, transfer_in=self.ll._curve, transfer=Transfer.LINEAR
         )
 
         if self.ll.sigmoid:
