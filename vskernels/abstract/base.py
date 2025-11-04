@@ -39,6 +39,10 @@ from vstools import (
     HoldsVideoFormat,
     Matrix,
     MatrixLike,
+    Primaries,
+    PrimariesLike,
+    Transfer,
+    TransferLike,
     VideoFormatLike,
     VSObjectABC,
     VSObjectABCMeta,
@@ -707,6 +711,10 @@ class Resampler(BaseScaler):
         format: int | VideoFormatLike | HoldsVideoFormat,
         matrix: MatrixLike | None = None,
         matrix_in: MatrixLike | None = None,
+        transfer: TransferLike | None = None,
+        transfer_in: TransferLike | None = None,
+        primaries: PrimariesLike | None = None,
+        primaries_in: PrimariesLike | None = None,
         **kwargs: Any,
     ) -> vs.VideoNode:
         """
@@ -725,13 +733,22 @@ class Resampler(BaseScaler):
                    - or a source from which a valid `VideoFormat` can be extracted.
             matrix: An optional color transformation matrix to apply.
             matrix_in: An optional input matrix for color transformations.
+            transfer: An optional color transformation transfer to apply.
+            transfer_in: An optional input transfer for color transformations.
+            primaries: Optional color transformation primaries to apply.
+            primaries_in: Optional input primaries for color transformations.
             **kwargs: Additional keyword arguments passed to the `resample_function`.
 
         Returns:
             The resampled clip.
         """
         return self.resample_function(
-            clip, **_norm_props_enums(self.get_resample_args(clip, format, matrix, matrix_in, **kwargs))
+            clip,
+            **_norm_props_enums(
+                self.get_resample_args(
+                    clip, format, matrix, matrix_in, transfer, transfer_in, primaries, primaries_in, **kwargs
+                )
+            ),
         )
 
     def get_resample_args(
@@ -740,6 +757,10 @@ class Resampler(BaseScaler):
         format: int | VideoFormatLike | HoldsVideoFormat,
         matrix: MatrixLike | None,
         matrix_in: MatrixLike | None,
+        transfer: TransferLike | None = None,
+        transfer_in: TransferLike | None = None,
+        primaries: PrimariesLike | None = None,
+        primaries_in: PrimariesLike | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -754,6 +775,10 @@ class Resampler(BaseScaler):
                    - or a source from which a valid `VideoFormat` can be extracted.
             matrix: The matrix for color transformation.
             matrix_in: The input matrix for color transformation.
+            transfer: The transfer for color transformation.
+            transfer_in: The input transfer for color transformation.
+            primaries: The primaries for color transformation.
+            primaries_in: The input primaries for color transformation.
             **kwargs: Additional keyword arguments for resampling.
 
         Returns:
@@ -764,6 +789,10 @@ class Resampler(BaseScaler):
                 "format": get_video_format(format).id,
                 "matrix": Matrix.from_param_with_fallback(matrix),
                 "matrix_in": Matrix.from_param_with_fallback(matrix_in),
+                "transfer": Transfer.from_param_with_fallback(transfer),
+                "transfer_in": Transfer.from_param_with_fallback(transfer_in),
+                "primaries": Primaries.from_param_with_fallback(primaries),
+                "primaries_in": Primaries.from_param_with_fallback(primaries_in),
             }
             | self.kwargs
             | kwargs
@@ -979,6 +1008,10 @@ class Kernel(Scaler, Descaler, Resampler):
         format: int | VideoFormatLike | HoldsVideoFormat,
         matrix: MatrixLike | None,
         matrix_in: MatrixLike | None,
+        transfer: TransferLike | None = None,
+        transfer_in: TransferLike | None = None,
+        primaries: PrimariesLike | None = None,
+        primaries_in: PrimariesLike | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
@@ -993,6 +1026,10 @@ class Kernel(Scaler, Descaler, Resampler):
                    - or a source from which a valid `VideoFormat` can be extracted.
             matrix: Target color matrix.
             matrix_in: Source color matrix.
+            transfer: Target color transfer.
+            transfer_in: Source color transfer.
+            primaries: Target color primaries.
+            primaries_in: Source color primaries.
             **kwargs: Additional arguments to pass to the resample function.
 
         Returns:
@@ -1002,6 +1039,10 @@ class Kernel(Scaler, Descaler, Resampler):
             "format": get_video_format(format).id,
             "matrix": Matrix.from_param_with_fallback(matrix),
             "matrix_in": Matrix.from_param_with_fallback(matrix_in),
+            "transfer": Transfer.from_param_with_fallback(transfer),
+            "transfer_in": Transfer.from_param_with_fallback(transfer_in),
+            "primaries": Primaries.from_param_with_fallback(primaries),
+            "primaries_in": Primaries.from_param_with_fallback(primaries_in),
         } | self.get_params_args(False, clip, **kwargs)
 
 
