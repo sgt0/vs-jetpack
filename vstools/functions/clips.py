@@ -26,7 +26,7 @@ from ..exceptions import FramesLengthError
 from ..types import HoldsVideoFormat, VideoFormatLike
 from ..utils import DynamicClipsCache, get_depth
 from ..vs_proxy import vs
-from .utils import DitherType, depth
+from .utils import DitherType, depth, limiter
 
 __all__ = [
     "ProcessVariableClip",
@@ -250,8 +250,6 @@ def finalize_clip(
     Returns:
         Dithered down and optionally clamped clip.
     """
-    from ..functions import limiter
-
     if bits:
         clip = depth(clip, bits, dither_type=dither_type)
 
