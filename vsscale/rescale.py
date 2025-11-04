@@ -6,7 +6,7 @@ from typing import Any, Callable, Iterable
 from jetpytools import cachedproperty
 
 from vsexprtools import ExprToken, norm_expr
-from vskernels import Bilinear, BorderHandling, Hermite, Kernel, KernelLike, Scaler, ScalerLike
+from vskernels import Bilinear, BorderHandling, ComplexKernel, ComplexKernelLike, Hermite, Scaler, ScalerLike
 from vskernels.types import LeftShift, TopShift
 from vsmasktools import Kirsch, based_diff_mask, region_rel_mask, stabilize_mask
 from vstools import (
@@ -48,7 +48,7 @@ class RescaleBase(VSObjectABC):
         self,
         clip: vs.VideoNode,
         /,
-        kernel: KernelLike,
+        kernel: ComplexKernelLike,
         upscaler: ScalerLike = ArtCNN,
         downscaler: ScalerLike = Hermite(linear=True),
         field_based: FieldBasedLike | bool | None = None,
@@ -58,7 +58,7 @@ class RescaleBase(VSObjectABC):
         self._clipy, *chroma = split(clip)
         self._chroma = chroma
 
-        self._kernel = Kernel.ensure_obj(kernel)
+        self._kernel = ComplexKernel.ensure_obj(kernel)
         self._upscaler = Scaler.ensure_obj(upscaler)
 
         self._downscaler = Scaler.ensure_obj(downscaler)
@@ -265,7 +265,7 @@ class Rescale(RescaleBase):
         clip: vs.VideoNode,
         /,
         height: int | float,
-        kernel: KernelLike,
+        kernel: ComplexKernelLike,
         upscaler: ScalerLike = ArtCNN,
         downscaler: ScalerLike = Hermite(linear=True),
         width: int | float | None = None,
