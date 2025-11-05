@@ -76,7 +76,7 @@ class Matrix(PropEnum):
     """
     KR = 0.299; KB = 0.114
 
-    (Functionally the same as [Matrix.SMPTE170M][vstools.Matrix.SMPTE170M])
+    (Functionally the same as [Matrix.ST170_M][vstools.Matrix.ST170_M])
 
     Rec. ITU-R BT.470-6 System B, G (historical)
 
@@ -97,7 +97,7 @@ class Matrix(PropEnum):
     """
     Kr = 0.299; Kb = 0.114
 
-    (Functionally the same as [Matrix.BT470BG][vstools.Matrix.BT470BG])
+    (Functionally the same as [Matrix.BT470_BG][vstools.Matrix.BT470_BG])
 
     Rec. ITU-R BT.601-7 525
 
@@ -304,7 +304,7 @@ class Transfer(PropEnum):
     """
     IEC 61966-2-1 sRGB when matrix is equal to [Matrix.RGB][vstools.Matrix.RGB]
 
-    IEC 61966-2-1 sYCC when matrix is equal to [Matrix.BT470BG][vstools.Matrix.BT470BG]
+    IEC 61966-2-1 sYCC when matrix is equal to [Matrix.BT470_BG][vstools.Matrix.BT470_BG]
     """
 
     BT2020_10 = 14, "2020_10", "BT.2020 10 bits"
@@ -464,7 +464,7 @@ class Primaries(PropEnum):
 
     ST170_M = 6, "170m", "SMPTE ST 170m"
     """
-    (Functionally the same as [Primaries.SMPTE240M][vstools.Primaries.SMPTE240M])
+    (Functionally the same as [Primaries.ST240_M][vstools.Primaries.ST240_M])
 
     ```
     Primary      x      y
@@ -487,7 +487,7 @@ class Primaries(PropEnum):
     """
     SMPTE ST 240 (1999, historical)
 
-    (Functionally the same as [Primaries.SMPTE170M][vstools.Primaries.SMPTE170M])
+    (Functionally the same as [Primaries.ST170_M][vstools.Primaries.ST170_M])
 
     ```
     Primary      x      y

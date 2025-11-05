@@ -196,7 +196,7 @@ class FieldBased(PropEnum):
         Args:
             src: Input clip, frame, or props.
             strict: Be strict about the properties. Will ALWAYS error if the FieldBased is missing.
-            func_except: Function returned for custom error handling.
+            func: Function returned for custom error handling.
 
         Returns:
             FieldBased object.
@@ -215,7 +215,7 @@ class FieldBased(PropEnum):
         Args:
             clip: Input clip.
             value: Value or FieldBased object. If it's bool, it specifies whether it's TFF or BFF.
-            func_except: Function returned for custom error handling.
+            func: Function returned for custom error handling.
 
         Returns:
             Clip with the FieldBased set.
@@ -250,7 +250,7 @@ class Field(PropEnum):
         Args:
             src: Input clip, frame, or props.
             strict: Be strict about the properties. Will ALWAYS error if the Field is missing.
-            func_except: Function returned for custom error handling.
+            func: Function returned for custom error handling.
 
         Returns:
             Field object.

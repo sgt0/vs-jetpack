@@ -263,8 +263,8 @@ class DitherType(CustomStrEnum):
         despite the higher bit depth, but zimg's internal resampler currently does not dither for float output.
 
         Args:
-            in_fmt: Input bitdepth, clip, frame or video format.
-            out_fmt: Output bitdepth, clip, frame or video format.
+            in_bits_or_fmt: Input bitdepth, clip, frame or video format.
+            out_bits_or_fmt: Output bitdepth, clip, frame or video format.
             in_range: Input color range.
             out_range: Output color range.
             in_sample_type: Input sample type.
