@@ -5,7 +5,7 @@ from typing import Any, Sequence, overload
 
 from vapoursynth import AudioNode, RawNode, VideoNode
 
-from vstools import Keyframes, vs, VideoNodeIterable, AudioNodeIterable, RawNodeIterable
+from vstools import AudioNodeIterable, Keyframes, RawNodeIterable, VideoNodeIterable, vs
 
 __all__ = ["is_preview", "set_output", "set_scening", "set_timecodes", "start_preview", "update_node_info"]
 
