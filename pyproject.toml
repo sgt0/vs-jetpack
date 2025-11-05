@@ -36,11 +36,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.18.2",
+    "mypy~=1.18.2",
     "packaging>=25.0",
     "pytest>=8.4.1, <9.0.0",
     "pytest-cov>=6.2.1, <7.0.0",
-    "ruff>=0.14.0",
+    "ruff~=0.14.0",
     "scipy-stubs>=1.16.0.0",
     "twine>=6.1.0",
     "types-psutil>=7.0.0.20250801",
