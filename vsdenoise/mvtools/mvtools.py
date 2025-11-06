@@ -151,7 +151,7 @@ class MVTools(VSObject):
         self.pad = normalize_seq(pad, 2)
         self.chroma = chroma
         self.fields = field is not None
-        self.tff = Field.from_param_with_fallback(field, self.__class__)
+        self.tff = Field.from_param_with_fallback(field)
 
         self.vectors = fallback(vectors, MotionVectors())
 
