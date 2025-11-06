@@ -844,7 +844,11 @@ class QTempGaussMC(VSObject):
     def _apply_denoise(self) -> None:
         self.denoise_output = self.clip
 
-        if self.denoise_mode == self.NoiseProcessMode.NONE:
+        no_restore = not self.basic_noise_restore == self.final_noise_restore == 0.0
+
+        if self.denoise_mode == self.NoiseProcessMode.NONE or (
+            self.denoise_mode == self.NoiseProcessMode.IDENTIFY and no_restore
+        ):
             return
 
         if self.denoise_mc_denoise:
@@ -865,7 +869,7 @@ class QTempGaussMC(VSObject):
 
         self.noise = self.clip.std.MakeDiff(denoised)
 
-        if self.basic_noise_restore == self.final_noise_restore == 0.0:
+        if no_restore:
             return
 
         if self.input_type == self.InputType.INTERLACE:
