@@ -151,7 +151,7 @@ class MVTools(VSObject):
         self.pad = normalize_seq(pad, 2)
         self.chroma = chroma
         self.fields = field is not None
-        self.tff = Field.from_param(field, self.__class__)
+        self.tff = field if field is None else Field.from_param(field, self.__class__)
 
         self.vectors = fallback(vectors, MotionVectors())
 
@@ -802,6 +802,7 @@ class MVTools(VSObject):
         super_clip = self.get_super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
+        tr = fallback(tr, vectors.tr)
         vect_b, vect_f = vectors.get_vectors(tr=tr)
 
         thscd1, thscd2 = normalize_thscd(thscd)
