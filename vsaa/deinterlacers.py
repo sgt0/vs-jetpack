@@ -440,7 +440,7 @@ class NNEDI3(SuperSampler):
         return core.lazy.sneedif.NNEDI3 if self.opencl else core.lazy.znedi3.nnedi3
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = bool(tff) + int(double_rate) * 2
+        field = tff + int(double_rate) * 2
 
         return self._deinterlacer_function(clip, field, dh, **self.get_deint_args(**kwargs))
 
@@ -549,7 +549,7 @@ class EEDI2(SuperSampler):
         return core.lazy.eedi2cuda.EEDI2 if self.cuda else core.lazy.eedi2.EEDI2
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = bool(tff) + int(double_rate) * 2
+        field = tff + int(double_rate) * 2
 
         if not dh:
             clip = clip.std.SeparateFields(tff)
@@ -690,7 +690,7 @@ class EEDI3(SuperSampler):
         return core.lazy.eedi3m.EEDI3
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = bool(tff) + int(double_rate) * 2
+        field = tff + int(double_rate) * 2
 
         kwargs = self.get_deint_args(**kwargs)
 
@@ -810,7 +810,7 @@ class BWDIF(Deinterlacer):
         return core.lazy.bwdif.Bwdif
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = bool(tff) + int(double_rate) * 2
+        field = tff + int(double_rate) * 2
 
         if callable(self.edeint):
             kwargs.update(edeint=self.edeint(clip))
