@@ -5,11 +5,9 @@ description = "Full suite of filters, wrappers, and helper functions for filteri
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
-authors = [
-    {name = "Jaded Encoding Thaumaturgy"}
-]
+authors = [{ name = "Jaded Encoding Thaumaturgy" }]
 maintainers = [
-    {name = "Jaded Encoding Thaumaturgy", email = "jaded.encoding.thaumaturgy@gmail.com"}
+    { name = "Jaded Encoding Thaumaturgy", email = "jaded.encoding.thaumaturgy@gmail.com" },
 ]
 classifiers = [
     "Topic :: Multimedia :: Graphics",
@@ -19,7 +17,7 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Typing :: Typed"
+    "Typing :: Typed",
 ]
 dependencies = [
     "VapourSynth>=69",
@@ -67,7 +65,7 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages=[
+packages = [
     "vstools",
     "vskernels",
     "vsexprtools",
@@ -151,22 +149,8 @@ docstring-code-format = true
 exclude = ["stubs/vapoursynth/__init__.pyi"]
 
 [tool.ruff.lint]
-exclude = [
-    "stubs/vspreview",
-    "stubs/dfttest2.pyi",
-    "stubs/vsmlrt.pyi",
-]
-extend-select = [
-    "E",
-    "C4",
-    "I",
-    "PYI",
-    "Q",
-    "SIM",
-    "N",
-    "W",
-    "RUF"
-]
+exclude = ["stubs/vspreview", "stubs/dfttest2.pyi", "stubs/vsmlrt.pyi"]
+extend-select = ["E", "C4", "I", "PYI", "Q", "SIM", "N", "W", "RUF"]
 ignore = ["PYI041"]
 
 [tool.ruff.lint.per-file-ignores]
