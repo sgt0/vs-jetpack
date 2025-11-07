@@ -19,15 +19,7 @@ from vskernels import (
     Scaler,
     TopShift,
 )
-from vstools import (
-    ChromaLocation,
-    FieldBased,
-    FieldBasedLike,
-    VSFunctionAllArgs,
-    VSFunctionNoArgs,
-    core,
-    vs,
-)
+from vstools import ChromaLocation, FieldBased, FieldBasedLike, VSFunctionAllArgs, VSFunctionNoArgs, core, vs
 
 __all__ = [
     "BWDIF",
@@ -79,7 +71,7 @@ class Deinterlacer(Bobber, ABC):
     Abstract base class for deinterlacing operations.
     """
 
-    tff: bool = False
+    tff: bool | None = None
     """The field order."""
 
     double_rate: bool = True
@@ -147,13 +139,9 @@ class Deinterlacer(Bobber, ABC):
         Returns:
             Deinterlaced clip.
         """
-        return self._interpolate(
-            clip,
-            FieldBased.from_param(fallback(tff, self.tff), self.__class__).is_tff(),
-            fallback(double_rate, self.double_rate),
-            False,
-            **kwargs,
-        )
+        field_based = FieldBased.from_param_or_video(fallback(tff, self.tff, default=None), clip, True, self.__class__)
+
+        return self._interpolate(clip, field_based.is_tff(), fallback(double_rate, self.double_rate), False, **kwargs)
 
     def bob(self, clip: vs.VideoNode, *, tff: FieldBasedLike | bool | None = None, **kwargs: Any) -> vs.VideoNode:
         """
@@ -167,9 +155,9 @@ class Deinterlacer(Bobber, ABC):
         Returns:
             Deinterlaced clip.
         """
-        return self._interpolate(
-            clip, FieldBased.from_param(fallback(tff, self.tff), self.__class__).is_tff(), True, False, **kwargs
-        )
+        field_based = FieldBased.from_param_or_video(fallback(tff, self.tff, default=None), clip, True, self.__class__)
+
+        return self._interpolate(clip, field_based.is_tff(), True, False, **kwargs)
 
     def copy(self, **kwargs: Any) -> Self:
         """
@@ -219,12 +207,14 @@ class AntiAliaser(Deinterlacer, ABC):
         Returns:
             Anti-aliased clip.
         """
+        tff = fallback(kwargs.pop("tff", self.tff), True)
+
         for y in sorted((aa_dir for aa_dir in self.AADirection), key=lambda x: x.value, reverse=self.transpose_first):
             if direction in (y, self.AADirection.BOTH):
                 if y == self.AADirection.HORIZONTAL:
                     clip = self.transpose(clip)
 
-                clip = self.deinterlace(clip, **kwargs)
+                clip = self._interpolate(clip, tff, dh=False, **kwargs)
 
                 if self.double_rate:
                     clip = core.std.Merge(clip[::2], clip[1::2])
@@ -287,6 +277,8 @@ class SuperSampler(Scaler, AntiAliaser, ABC):
         Returns:
             The scaled clip.
         """
+        tff_fallback = fallback(kwargs.pop("tff", self.tff), True)
+
         dims = self._wh_norm(clip, width, height)
         dest_dimensions = list(dims)
         sy, sx = shift
@@ -313,7 +305,7 @@ class SuperSampler(Scaler, AntiAliaser, ABC):
 
             while clip.height < dim:
                 delta = max(nshift[x], key=lambda y: abs(y))
-                tff = False if delta < 0 else True if delta > 0 else self.tff
+                tff = False if delta < 0 else True if delta > 0 else tff_fallback
                 offset = -0.25 if tff else 0.25
 
                 for y in range(clip.format.num_planes):
@@ -448,7 +440,7 @@ class NNEDI3(SuperSampler):
         return core.lazy.sneedif.NNEDI3 if self.opencl else core.lazy.znedi3.nnedi3
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = int(tff) + int(double_rate) * 2
+        field = bool(tff) + int(double_rate) * 2
 
         return self._deinterlacer_function(clip, field, dh, **self.get_deint_args(**kwargs))
 
@@ -557,7 +549,7 @@ class EEDI2(SuperSampler):
         return core.lazy.eedi2cuda.EEDI2 if self.cuda else core.lazy.eedi2.EEDI2
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = int(tff) + int(double_rate) * 2
+        field = bool(tff) + int(double_rate) * 2
 
         if not dh:
             clip = clip.std.SeparateFields(tff)
@@ -698,7 +690,7 @@ class EEDI3(SuperSampler):
         return core.lazy.eedi3m.EEDI3
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = int(tff) + int(double_rate) * 2
+        field = bool(tff) + int(double_rate) * 2
 
         kwargs = self.get_deint_args(**kwargs)
 
@@ -818,7 +810,7 @@ class BWDIF(Deinterlacer):
         return core.lazy.bwdif.Bwdif
 
     def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = int(tff) + int(double_rate) * 2
+        field = bool(tff) + int(double_rate) * 2
 
         if callable(self.edeint):
             kwargs.update(edeint=self.edeint(clip))

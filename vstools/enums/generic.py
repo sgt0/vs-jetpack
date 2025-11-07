@@ -122,9 +122,7 @@ class FieldBased(PropEnum):
             UnsupportedFieldBasedError: If PROGRESSIVE value is passed.
         """
         if self is self.PROGRESSIVE:
-            raise UnsupportedFieldBasedError(
-                "Progressive video aren't field based!", f"{self.__class__.__name__}.field"
-            )
+            raise UnsupportedFieldBasedError("Progressive video isn't field based.", "FieldBased.field")
 
         return Field.from_param(self.value - 1)
 
@@ -134,12 +132,10 @@ class FieldBased(PropEnum):
         Get the inverted field order.
 
         Raises:
-            UnsupportedFieldBasedError: PROGRESSIVE value is passed.
+            UnsupportedFieldBasedError: If PROGRESSIVE value is passed.
         """
-        if self == self.PROGRESSIVE:
-            raise UnsupportedFieldBasedError(
-                "Progressive video aren't field based!", f"{self.__class__.__name__}.inverted_field"
-            )
+        if self is self.PROGRESSIVE:
+            raise UnsupportedFieldBasedError("Progressive video isn't field based.", "FieldBased.inverted_field")
 
         return FieldBased.BFF if self.is_tff() else FieldBased.TFF
 
@@ -159,7 +155,13 @@ class FieldBased(PropEnum):
     def is_tff(self) -> bool:
         """
         Check whether the value is Top-Field-First.
+
+        Raises:
+            UnsupportedFieldBasedError: If PROGRESSIVE value is passed
         """
+        if self is self.PROGRESSIVE:
+            raise UnsupportedFieldBasedError("Progressive video isn't field based.", self.is_tff)
+
         return self is self.TFF
 
     @classmethod

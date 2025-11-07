@@ -95,7 +95,8 @@ class TestFieldBased(TestCase):
     def test_is_tff(self) -> None:
         self.assertTrue(FieldBased.TFF.is_tff())
         self.assertFalse(FieldBased.BFF.is_tff())
-        self.assertFalse(FieldBased.PROGRESSIVE.is_tff())
+        with self.assertRaises(UnsupportedFieldBasedError):
+            self.assertFalse(FieldBased.PROGRESSIVE.is_tff())
 
     def test_inverted(self) -> None:
         self.assertEqual(FieldBased.TFF.inverted_field, FieldBased.BFF)

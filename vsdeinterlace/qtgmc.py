@@ -319,13 +319,14 @@ class QTempGaussMC(VSObject):
 
         self.clip = clip
         self.input_type = input_type
-        self.tff = clip_fieldbased.is_tff()
-        self.double_rate = self.input_type != self.InputType.REPAIR
 
         if self.input_type == self.InputType.PROGRESSIVE and clip_fieldbased.is_inter():
             raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with interlaced video!", self.__class__)
         elif self.input_type in (self.InputType.INTERLACE, self.InputType.REPAIR) and not clip_fieldbased.is_inter():
             raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with progressive video!", self.__class__)
+
+        self.tff = clip_fieldbased.is_tff()
+        self.double_rate = self.input_type != self.InputType.REPAIR
 
     def prefilter(
         self,
