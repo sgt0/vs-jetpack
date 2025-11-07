@@ -94,7 +94,7 @@ include = [
     "vsdeinterlace/py.typed",
     "vssource/py.typed",
 ]
-exclude = ["docs", "scripts", "site", "stubs", "tests"]
+exclude = ["docs", "scripts", "site", "stubs", "tests", "README.*"]
 
 [tool.hatch.build.targets.sdist]
 include = [
