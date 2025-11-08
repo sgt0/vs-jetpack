@@ -101,6 +101,10 @@ path = "scripts/add_version_pkgs.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
+    "/docs",
+    "/scripts",
+    "/stubs",
+    "/tests",
     "/vsaa",
     "/vsdeband",
     "/vsdehalo",
@@ -114,6 +118,7 @@ include = [
     "/vssource",
     "/vstools",
     "_version.py",
+    "mkdocs.yml",
 ]
 
 [tool.hatch.version]
