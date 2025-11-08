@@ -102,7 +102,7 @@ class DitherType(CustomStrEnum):
     ERROR_DIFFUSION_FMTC = "error_diffusion_fmtc", 6
     """
     Floyd-Steinberg error diffusion.
-    Modified for serpentine scan (avoids worm artefacts).
+    Modified for serpentine scan (avoids worm artifacts).
     """
 
     SIERRA_2_4A = "sierra_2_4a", 3
@@ -126,7 +126,7 @@ class DitherType(CustomStrEnum):
     OSTROMOUKHOV = "ostromoukhov", 7
     """
     Another error diffusion kernel.
-    Slow, available only for integer input at the moment. Avoids usual F-S artefacts.
+    Slow, available only for integer input at the moment. Avoids usual F-S artifacts.
     """
 
     VOID = "void", 8

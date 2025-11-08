@@ -117,7 +117,7 @@ class QTempGaussMC(VSObject):
 
         REPAIR = 2
         """
-        Repair badly deinterlaced material with considerable horizontal artefacts.
+        Repair badly deinterlaced material with considerable horizontal artifacts.
         """
 
     class SearchPostProcess(CustomIntEnum):
@@ -263,7 +263,7 @@ class QTempGaussMC(VSObject):
 
         BASIC = 1
         """
-        Conservative halfway stage that rarely introduces artefacts.
+        Conservative halfway stage that rarely introduces artifacts.
         """
 
         REFINED = 2
@@ -278,7 +278,7 @@ class QTempGaussMC(VSObject):
 
     class LosslessMode(CustomIntEnum):
         """
-        When to put exact source fields into result & clean any artefacts.
+        When to put exact source fields into result & clean any artifacts.
         """
 
         NONE = 0
