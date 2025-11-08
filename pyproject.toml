@@ -96,6 +96,9 @@ include = [
 ]
 exclude = ["docs", "scripts", "site", "stubs", "tests", "README.*"]
 
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "scripts/add_version_pkgs.py"
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/vsaa",
@@ -110,11 +113,11 @@ include = [
     "/vsscale",
     "/vssource",
     "/vstools",
-    "_metadata.py",
+    "_version.py",
 ]
 
 [tool.hatch.version]
-path = "_metadata.py"
+path = "_version.py"
 
 [tool.pytest.ini_options]
 pythonpath = "."

@@ -19,6 +19,9 @@ from .kernels import *
 from .types import *
 from .util import *
 
+__version__: str
+
+
 # ruff: noqa: F405
 _alias_map = {
     "ScalerT": ScalerLike,
@@ -40,6 +43,14 @@ simplefilter("module", _TypeAliasDeprecation)
 
 
 def __getattr__(name: str) -> Any:
+    if name == "__version__":
+        from importlib import import_module
+
+        try:
+            return import_module("._version", package=__package__).__version__
+        except ModuleNotFoundError:
+            return "unknown"
+
     if name in _alias_map:
         from pathlib import Path
 
@@ -51,4 +62,5 @@ def __getattr__(name: str) -> Any:
         )
 
         return _alias_map[name]
-    raise AttributeError(f"module {__name__} has no attribute {name}")
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

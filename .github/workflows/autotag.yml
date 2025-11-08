@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - _metadata.py
+      - _version.py
 
 jobs:
   new_version:
@@ -19,9 +19,14 @@ jobs:
         id: branch-names
         run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Get version number
         run: |
-          echo "CURR_VER=v$(python -c "import runpy;runpy.run_path('_metadata.py', None, '__github__')")" >> $GITHUB_ENV
+          echo "CURR_VER=v$(uvx hatch version)" >> $GITHUB_ENV
       - name: Check if version exists
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
