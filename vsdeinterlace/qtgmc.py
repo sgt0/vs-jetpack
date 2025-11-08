@@ -863,10 +863,7 @@ class QTempGaussMC(VSObject):
 
         self.noise = self.clip.std.MakeDiff(denoised)
 
-        if no_restore:
-            return
-
-        if self.input_type == self.InputType.INTERLACE:
+        if self.input_type == self.InputType.INTERLACE and not no_restore:
             match self.denoise_deint:
                 case self.NoiseDeintMode.WEAVE:
                     self.noise = self.noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
