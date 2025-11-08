@@ -10,7 +10,7 @@ their own settings and expected behavior.
 """
 
 # TODO: remove this
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from warnings import simplefilter, warn
 
 from .abstract import *
@@ -22,45 +22,43 @@ from .util import *
 __version__: str
 
 
-# ruff: noqa: F405
-_alias_map = {
-    "ScalerT": ScalerLike,
-    "DescalerT": DescalerLike,
-    "ResamplerT": ResamplerLike,
-    "KernelT": KernelLike,
-    "ComplexScalerT": ComplexScalerLike,
-    "ComplexDescalerT": ComplexDescalerLike,
-    "ComplexKernelT": ComplexKernelLike,
-    "CustomComplexKernelT": CustomComplexKernelLike,
-    "ZimgComplexKernelT": ZimgComplexKernelLike,
-}
+if not TYPE_CHECKING:
+    # ruff: noqa: F405
+    _alias_map = {
+        "ScalerT": ScalerLike,
+        "DescalerT": DescalerLike,
+        "ResamplerT": ResamplerLike,
+        "KernelT": KernelLike,
+        "ComplexScalerT": ComplexScalerLike,
+        "ComplexDescalerT": ComplexDescalerLike,
+        "ComplexKernelT": ComplexKernelLike,
+        "CustomComplexKernelT": CustomComplexKernelLike,
+        "ZimgComplexKernelT": ZimgComplexKernelLike,
+    }
 
+    class _TypeAliasDeprecation(DeprecationWarning): ...
 
-class _TypeAliasDeprecation(DeprecationWarning): ...
+    simplefilter("module", _TypeAliasDeprecation)
 
+    def __getattr__(name: str) -> Any:
+        if name == "__version__":
+            from importlib import import_module
 
-simplefilter("module", _TypeAliasDeprecation)
+            try:
+                return import_module("._version", package=__package__).__version__
+            except ModuleNotFoundError:
+                return "unknown"
 
+        if name in _alias_map:
+            from pathlib import Path
 
-def __getattr__(name: str) -> Any:
-    if name == "__version__":
-        from importlib import import_module
+            warn(
+                f"'{name}' is deprecated and will be removed in a future version. Use '{name[:-1]}Like' instead.",
+                _TypeAliasDeprecation,
+                stacklevel=2,
+                skip_file_prefixes=(str(Path(__file__).resolve()),),
+            )
 
-        try:
-            return import_module("._version", package=__package__).__version__
-        except ModuleNotFoundError:
-            return "unknown"
+            return _alias_map[name]
 
-    if name in _alias_map:
-        from pathlib import Path
-
-        warn(
-            f"'{name}' is deprecated and will be removed in a future version. Use '{name[:-1]}Like' instead.",
-            _TypeAliasDeprecation,
-            stacklevel=2,
-            skip_file_prefixes=(str(Path(__file__).resolve()),),
-        )
-
-        return _alias_map[name]
-
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
