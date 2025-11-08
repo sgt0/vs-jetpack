@@ -1,5 +1,4 @@
 from copy import deepcopy
-from functools import partial
 from math import factorial
 from typing import Any, Iterable, Literal, Protocol, Self
 
@@ -27,7 +26,6 @@ from vstools import (
     FieldBased,
     FieldBasedLike,
     UnsupportedFieldBasedError,
-    VSFunctionKwArgs,
     VSObject,
     core,
     get_y,
@@ -42,7 +40,7 @@ __all__ = ["QTempGaussMC"]
 
 
 class _DenoiseFuncTr(Protocol):
-    def __call__(self, clip: vs.VideoNode, /, *, tr: int = ...) -> vs.VideoNode: ...
+    def __call__(self, clip: vs.VideoNode, /, *, tr: int) -> vs.VideoNode: ...
 
 
 class QTempGaussMC(VSObject):
@@ -403,7 +401,7 @@ class QTempGaussMC(VSObject):
         self,
         *,
         tr: int = 2,
-        func: _DenoiseFuncTr | VSFunctionKwArgs = partial(DFTTest().denoise, sigma=8),
+        func: DFTTest | _DenoiseFuncTr = DFTTest(sigma=8),
         mode: NoiseProcessMode = NoiseProcessMode.IDENTIFY,
         deint: NoiseDeintMode = NoiseDeintMode.GENERATE,
         mc_denoise: bool = True,
@@ -428,7 +426,7 @@ class QTempGaussMC(VSObject):
         """
 
         self.denoise_tr = tr
-        self.denoise_func = func
+        self.denoise_func = func.denoise if isinstance(func, DFTTest) else func
         self.denoise_mode = mode
         self.denoise_deint = deint
         self.denoise_mc_denoise = mc_denoise
