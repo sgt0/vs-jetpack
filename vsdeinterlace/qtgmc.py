@@ -147,19 +147,14 @@ class QTempGaussMC(VSObject):
         How to handle processing noise in the source.
         """
 
-        NONE = 0
+        IDENTIFY = 0
         """
-        No noise processing.
+        Identify noise only & optionally restore some noise back at the end of basic or final stages.
         """
 
         DENOISE = 1
         """
         Denoise source & optionally restore some noise back at the end of basic or final stages.
-        """
-
-        IDENTIFY = 2
-        """
-        Identify noise only & optionally restore some noise back at the end of basic or final stages.
         """
 
     class NoiseDeintMode(CustomIntEnum):
@@ -847,9 +842,7 @@ class QTempGaussMC(VSObject):
 
         no_restore = self.basic_noise_restore == self.final_noise_restore == 0.0
 
-        if self.denoise_mode == self.NoiseProcessMode.NONE or (
-            self.denoise_mode == self.NoiseProcessMode.IDENTIFY and no_restore
-        ):
+        if self.denoise_mode == self.NoiseProcessMode.IDENTIFY and no_restore:
             return
 
         if self.denoise_mc_denoise:
