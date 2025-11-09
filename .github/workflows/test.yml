@@ -13,6 +13,7 @@ on:
       - ".github/actions/**"
       - ".github/workflows/test.yml"
       - "**.py"
+  workflow_dispatch:
 
 permissions:
   contents: read

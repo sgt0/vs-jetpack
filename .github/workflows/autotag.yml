@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - _version.py
+  workflow_dispatch:
 
 jobs:
   new_version:
