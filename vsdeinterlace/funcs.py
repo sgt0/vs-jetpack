@@ -228,7 +228,6 @@ def vinverse(
     contra_str: float = 2.7,
     amnt: int | float | None = None,
     scl: float = 0.25,
-    thr: int | float = 0,
     planes: Planes = None,
 ) -> vs.VideoNode:
     """
@@ -240,31 +239,18 @@ def vinverse(
         contra_blur: Filter used to calculate contra sharpening.
         contra_str: Strength of contra sharpening.
         amnt: Change no pixel by more than this in 8bit.
-        thr: Skip processing if abs(clip - comb_blur(clip)) < thr
         scl: Scale factor for vshrpD * vblurD < 0.
     """
-    blurred = comb_blur(clip, planes=planes) if callable(comb_blur) else comb_blur
 
+    blurred = comb_blur(clip, planes=planes) if callable(comb_blur) else comb_blur
     blurred2 = contra_blur(blurred, planes=planes) if callable(contra_blur) else contra_blur
 
     FormatsMismatchError.check(vinverse, clip, blurred, blurred2)
 
-    expr = (
-        "x y - D1! D1@ abs D1A! D1A@ {thr} < x y z - {sstr} * D2! D1A@ D2@ abs < D1@ D2@ ? D3! "
-        "D1@ D2@ xor D3@ {scl} * D3@ ? y + "
-    )
+    expr = "x y - D1! y z - {sstr} * D2! D1@ abs D2@ abs < D1@ D2@ ? D3! D1@ D2@ xor D3@ {scl} * D3@ ? y +"
 
     if amnt is not None:
-        expr += "x {amnt} - x {amnt} + clip "
+        expr += " x {amnt} - x {amnt} + clip"
         amnt = scale_delta(amnt, 8, clip)
 
-    return norm_expr(
-        [clip, blurred, blurred2],
-        f"{expr} ?",
-        planes,
-        sstr=contra_str,
-        amnt=amnt,
-        scl=scl,
-        thr=scale_delta(thr, 8, clip),
-        func=vinverse,
-    )
+    return norm_expr([clip, blurred, blurred2], expr, planes, sstr=contra_str, amnt=amnt, scl=scl, func=vinverse)
