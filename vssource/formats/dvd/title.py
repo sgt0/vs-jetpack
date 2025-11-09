@@ -284,7 +284,8 @@ class SplitHelper:
         with open(outfile, "wb") as outf:
             start = int(start_pts / AC3_FRAME_LENGTH)
 
-            for i, frame in enumerate(nd.frames(close=True)):
+            for j, frame in enumerate(nd[start:].frames(close=True)):
+                i = j + start
                 pkt_start_pts = i * AC3_FRAME_LENGTH
                 pkt_end_pts = (i + 1) * AC3_FRAME_LENGTH
 
