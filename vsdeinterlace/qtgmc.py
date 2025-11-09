@@ -725,7 +725,7 @@ class QTempGaussMC(VSObject):
 
         return clip
 
-    def _binomial_degrain(self, clip: vs.VideoNode, tr: int) -> vs.VideoNode:
+    def _binomial_degrain(self, clip: vs.VideoNode, tr: int, **degrain_args: Any) -> vs.VideoNode:
         from numpy import linalg, zeros
 
         def _get_weights(n: int) -> Iterable[Any]:
@@ -753,9 +753,7 @@ class QTempGaussMC(VSObject):
             vectors.set_vector(forward[delta], MVDirection.FORWARD, 1)
 
             degrained.append(
-                self.mv.degrain(
-                    clip, vectors=vectors, thsad=self.basic_thsad, thscd=self.analyze_thscd, **self.basic_degrain_args
-                )
+                self.mv.degrain(clip, vectors=vectors, thsad=self.basic_thsad, thscd=self.analyze_thscd, **degrain_args)
             )
             vectors.clear()
 
@@ -919,7 +917,7 @@ class QTempGaussMC(VSObject):
             )
             self.bobbed = self.denoise_output.std.MaskedMerge(self.bobbed, mask)
 
-        smoothed = self._binomial_degrain(self.bobbed, self.basic_tr)
+        smoothed = self._binomial_degrain(self.bobbed, self.basic_tr, **self.basic_degrain_args)
         if self.basic_tr:
             smoothed = self._mask_shimmer(smoothed, self.bobbed, **self.basic_mask_shimmer_args)
 
@@ -955,7 +953,7 @@ class QTempGaussMC(VSObject):
 
         adjusted1 = _error_adjustment(clip, ref, self.basic_tr)
         bobbed1 = self._interpolate(adjusted1, self.basic_bobber)
-        match1 = self._binomial_degrain(bobbed1, self.basic_tr)
+        match1 = self._binomial_degrain(bobbed1, self.basic_tr, **self.basic_degrain_args)
 
         if self.match_mode > self.SourceMatchMode.BASIC:
             if self.match_enhance:
@@ -966,11 +964,11 @@ class QTempGaussMC(VSObject):
 
             diff = ref.std.MakeDiff(clip)
             bobbed2 = self._interpolate(diff, self.match_bobber)
-            match2 = self._binomial_degrain(bobbed2, self.match_tr)
+            match2 = self._binomial_degrain(bobbed2, self.match_tr, **self.match_degrain_args)
 
             if self.match_mode == self.SourceMatchMode.TWICE_REFINED:
                 adjusted2 = _error_adjustment(match2, bobbed2, self.match_tr)
-                match2 = self._binomial_degrain(adjusted2, self.match_tr)
+                match2 = self._binomial_degrain(adjusted2, self.match_tr, **self.match_degrain_args)
 
             return match1.std.MergeDiff(match2)
 
