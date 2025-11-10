@@ -6,9 +6,11 @@ on:
       - main
     paths:
       - "**.py"
+      - "pyproject.toml"
   pull_request:
     paths:
       - "**.py"
+      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:
@@ -16,54 +18,45 @@ permissions:
 
 env:
   VAPOURSYNTH_VERSION: 72
-  PYTHON_VERSION: "3.14"
+  PYTHON_VERSION: 3.14
 
 jobs:
   lint:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: qoomon/actions--context@v5
-        id: context
-      - name: Determine branch name
-        id: branch-names
-        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
 
       - name: Set up VapourSynth ${{ env.VAPOURSYNTH_VERSION }}
-        uses: ./.github/actions/setup-vapoursynth
+        uses: Jaded-Encoding-Thaumaturgy/setup-vapoursynth@v1
         with:
           vapoursynth-version: ${{ env.VAPOURSYNTH_VERSION }}
 
       - name: Install dependencies
-        run: |
-          uv sync --locked
+        run: uv sync --locked
 
-      - name: Running ruff
-        run: |
-          uv run ruff check .
-          uv run ruff format --check --diff
+      - name: Run Ruff check
+        id: ruff_check
+        run: uv run ruff check .
+
+      - name: Run Ruff format
+        id: ruff_format
+        if: success() || (failure() && steps.ruff_check.conclusion == 'failure')
+        run: uv run ruff format --check --diff
 
       - name: Running mypy
+        if: success() || (failure() && (steps.ruff_check.conclusion == 'failure' || steps.ruff_format.conclusion == 'failure'))
         run: uv run mypy .
 
       - name: Post webhook for failure
-        if: failure() && github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login
-        uses: tsickert/discord-webhook@v7.0.0
+        if: failure()
+        uses: Jaded-Encoding-Thaumaturgy/discord-failure-notifier@v1
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
-          embed-url: ${{ steps.context.outputs.job_html_url }}
-          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job_name }} failed on ${{ steps.branch-names.outputs.current_branch }}"
-          username: "GitHub - ${{ github.repository }}"
-          avatar-url: https://github.githubassets.com/favicons/favicon.png

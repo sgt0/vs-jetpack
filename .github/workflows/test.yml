@@ -8,11 +8,13 @@ on:
       - ".github/actions/**"
       - ".github/workflows/test.yml"
       - "**.py"
+      - "pyproject.toml"
   pull_request:
     paths:
       - ".github/actions/**"
       - ".github/workflows/test.yml"
       - "**.py"
+      - "pyproject.toml"
   workflow_dispatch:
 
 permissions:
@@ -24,34 +26,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        vs-versions: [72]
+        vapoursynth-version: [72]
         python-version: ["3.12", "3.14"]
         vszip-version: [10]
         fmtc-version: [30]
 
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: qoomon/actions--context@v5
-        id: context
-      - name: Determine branch name
-        id: branch-names
-        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ matrix.python-version }}
           enable-cache: true
 
-      - name: Set up VapourSynth ${{ matrix.vs-versions }}
-        uses: ./.github/actions/setup-vapoursynth
+      - name: Set up VapourSynth ${{ matrix.vapoursynth-version }}
+        uses: Jaded-Encoding-Thaumaturgy/setup-vapoursynth@v1
         with:
-          vapoursynth-version: ${{ matrix.vs-versions }}
+          vapoursynth-version: ${{ matrix.vapoursynth-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Set up akarin
         uses: ./.github/actions/setup-akarin
@@ -69,10 +63,9 @@ jobs:
           fmtc-version: ${{ matrix.fmtc-version }}
 
       - name: Install dependencies
-        run: |
-          uv sync --locked
+        run: uv sync --locked
 
-      - name: Running tests
+      - name: Run tests
         run: uv run pytest --cov-report=term-missing:skip-covered --cov=vskernels --cov=vstools --cov=vsexprtools tests
 
       - name: Convert coverage report to cobertura
@@ -88,19 +81,15 @@ jobs:
           fail-on-error: false
 
       - name: Post webhook for failure
-        if: failure() && github.event.pull_request.head.repo.owner.login == github.event.pull_request.base.repo.owner.login
-        uses: tsickert/discord-webhook@v7.0.0
+        if: failure()
+        uses: Jaded-Encoding-Thaumaturgy/discord-failure-notifier@v1
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
-          embed-url: ${{ steps.context.outputs.job_html_url }}
-          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job_name }} failed on ${{ steps.branch-names.outputs.current_branch }}"
-          username: "GitHub - ${{ github.repository }}"
-          avatar-url: https://github.githubassets.com/favicons/favicon.png
 
   post-test:
     needs: [test]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Mark Coveralls as finished
         uses: coverallsapp/github-action@v2.3.6

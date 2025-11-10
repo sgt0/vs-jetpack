@@ -5,47 +5,36 @@ on:
       - v[0-9]+**
   workflow_dispatch:
 
+env:
+  VAPOURSYNTH_VERSION: 72
+  PYTHON_VERSION: 3.14
+
 jobs:
   package_build:
     name: Build and push to PyPI
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        vs-versions:
-          - 72
-        python-version:
-          - "3.14"
-
     environment:
       name: pypi
       url: https://pypi.org/p/vsjetpack
+
     permissions:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-      - uses: qoomon/actions--context@v5
-        id: context
-      - name: Determine branch name
-        id: branch-names
-        run: echo "current_branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-
-      - name: Prep Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
+      - name: Set up uv
         uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
 
-      - name: Set up VapourSynth
-        uses: ./.github/actions/setup-vapoursynth
+      - name: Set up VapourSynth ${{ env.VAPOURSYNTH_VERSION }}
+        uses: Jaded-Encoding-Thaumaturgy/setup-vapoursynth@v1
         with:
-          vapoursynth-version: ${{ matrix.vs-versions }}
+          vapoursynth-version: ${{ env.VAPOURSYNTH_VERSION }}
 
       - name: Install dependencies
         run: uv sync --locked
@@ -61,10 +50,6 @@ jobs:
 
       - name: Post webhook for failure
         if: failure()
-        uses: tsickert/discord-webhook@v7.0.0
+        uses: Jaded-Encoding-Thaumaturgy/discord-failure-notifier@v1
         with:
           webhook-url: ${{ secrets.WEBHOOK_URL }}
-          embed-url: ${{ steps.context.outputs.job_html_url }}
-          embed-title: "[${{ github.event.repository.name }}] ${{ steps.context.outputs.job_name }} failed on ${{ steps.branch-names.outputs.current_branch }}"
-          username: "GitHub - ${{ github.repository }}"
-          avatar-url: https://github.githubassets.com/favicons/favicon.png
