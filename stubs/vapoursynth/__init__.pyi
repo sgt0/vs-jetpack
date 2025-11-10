@@ -1010,6 +1010,10 @@ class VideoNode(RawNode):
     akarin: Final[_akarin._VideoNode_bound.Plugin]
     """Akarin's Experimental Filters"""
 # </attribute/VideoNode_bound/akarin>
+# <attribute/VideoNode_bound/awarp>
+    awarp: Final[_awarp._VideoNode_bound.Plugin]
+    """Sharpen images by warping"""
+# </attribute/VideoNode_bound/awarp>
 # <attribute/VideoNode_bound/bilateralgpu>
     bilateralgpu: Final[_bilateralgpu._VideoNode_bound.Plugin]
     """Bilateral filter using CUDA"""
@@ -1178,10 +1182,6 @@ class VideoNode(RawNode):
     vszip: Final[_vszip._VideoNode_bound.Plugin]
     """VapourSynth Zig Image Process"""
 # </attribute/VideoNode_bound/vszip>
-# <attribute/VideoNode_bound/warp>
-    warp: Final[_warp._VideoNode_bound.Plugin]
-    """Sharpen images by warping"""
-# </attribute/VideoNode_bound/warp>
 # <attribute/VideoNode_bound/wnnm>
     wnnm: Final[_wnnm._VideoNode_bound.Plugin]
     """Weighted Nuclear Norm Minimization Denoiser"""
@@ -1280,6 +1280,10 @@ class Core:
     akarin: Final[_akarin._Core_bound.Plugin]
     """Akarin's Experimental Filters"""
 # </attribute/Core_bound/akarin>
+# <attribute/Core_bound/awarp>
+    awarp: Final[_awarp._Core_bound.Plugin]
+    """Sharpen images by warping"""
+# </attribute/Core_bound/awarp>
 # <attribute/Core_bound/bilateralgpu>
     bilateralgpu: Final[_bilateralgpu._Core_bound.Plugin]
     """Bilateral filter using CUDA"""
@@ -1464,10 +1468,6 @@ class Core:
     vszip: Final[_vszip._Core_bound.Plugin]
     """VapourSynth Zig Image Process"""
 # </attribute/Core_bound/vszip>
-# <attribute/Core_bound/warp>
-    warp: Final[_warp._Core_bound.Plugin]
-    """Sharpen images by warping"""
-# </attribute/Core_bound/warp>
 # <attribute/Core_bound/wnnm>
     wnnm: Final[_wnnm._Core_bound.Plugin]
     """Weighted Nuclear Norm Minimization Denoiser"""
@@ -1554,6 +1554,20 @@ class _akarin:
             def Tmpl(self, prop: _AnyStr | _SequenceLike[_AnyStr], text: _AnyStr | _SequenceLike[_AnyStr]) -> VideoNode: ...
 
 # </implementation/akarin>
+
+# <implementation/awarp>
+class _awarp:
+    class _Core_bound:
+        class Plugin(_VSPlugin):
+            @_Wrapper.Function
+            def AWarp(self, clip: VideoNode, mask: VideoNode, depth_h: int | _SequenceLike[int] | None = None, depth_v: int | _SequenceLike[int] | None = None, mask_first_plane: int | None = None, planes: int | _SequenceLike[int] | None = None) -> VideoNode: ...
+
+    class _VideoNode_bound:
+        class Plugin(_VSPlugin):
+            @_Wrapper.Function
+            def AWarp(self, mask: VideoNode, depth_h: int | _SequenceLike[int] | None = None, depth_v: int | _SequenceLike[int] | None = None, mask_first_plane: int | None = None, planes: int | _SequenceLike[int] | None = None) -> VideoNode: ...
+
+# </implementation/awarp>
 
 # <implementation/bilateralgpu>
 class _bilateralgpu:
@@ -3013,32 +3027,6 @@ class _vszip:
             def XPSNR(self, distorted: VideoNode, temporal: int | None = None, verbose: int | None = None) -> VideoNode: ...
 
 # </implementation/vszip>
-
-# <implementation/warp>
-class _warp:
-    class _Core_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def ABlur(self, clip: VideoNode, blur: int | None = None, type: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def ASobel(self, clip: VideoNode, thresh: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def AWarp(self, clip: VideoNode, mask: VideoNode, depth: int | _SequenceLike[int] | None = None, chroma: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None, cplace: _AnyStr | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def AWarpSharp2(self, clip: VideoNode, thresh: int | None = None, blur: int | None = None, type: int | None = None, depth: int | _SequenceLike[int] | None = None, chroma: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None, cplace: _AnyStr | None = None) -> VideoNode: ...
-
-    class _VideoNode_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def ABlur(self, blur: int | None = None, type: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def ASobel(self, thresh: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def AWarp(self, mask: VideoNode, depth: int | _SequenceLike[int] | None = None, chroma: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None, cplace: _AnyStr | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def AWarpSharp2(self, thresh: int | None = None, blur: int | None = None, type: int | None = None, depth: int | _SequenceLike[int] | None = None, chroma: int | None = None, planes: int | _SequenceLike[int] | None = None, opt: int | None = None, cplace: _AnyStr | None = None) -> VideoNode: ...
-
-# </implementation/warp>
 
 # <implementation/wnnm>
 class _wnnm:
