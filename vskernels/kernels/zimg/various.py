@@ -64,9 +64,11 @@ class Lanczos(ZimgComplexKernel):
         self, is_descale: bool, clip: vs.VideoNode, width: int | None = None, height: int | None = None, **kwargs: Any
     ) -> dict[str, Any]:
         args = super().get_params_args(is_descale, clip, width, height, **kwargs)
+
         if is_descale:
-            return args | {"taps": self.kernel_radius}
-        return args | {"filter_param_a": self.kernel_radius}
+            return {"taps": self.kernel_radius} | args
+
+        return {"filter_param_a": self.kernel_radius} | args
 
     def get_bob_args(
         self,
@@ -74,7 +76,7 @@ class Lanczos(ZimgComplexKernel):
         shift: tuple[TopShift, LeftShift] = (0, 0),
         **kwargs: Any,
     ) -> dict[str, Any]:
-        return super().get_bob_args(clip, shift, filter_param_a=self.kernel_radius, **kwargs)
+        return super().get_bob_args(clip, shift, **{"filter_param_a": self.kernel_radius} | kwargs)
 
     @ZimgComplexKernel.cachedproperty
     def kernel_radius(self) -> int:

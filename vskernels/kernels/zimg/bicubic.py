@@ -55,9 +55,11 @@ class Bicubic(ZimgComplexKernel):
         self, is_descale: bool, clip: vs.VideoNode, width: int | None = None, height: int | None = None, **kwargs: Any
     ) -> dict[str, Any]:
         args = super().get_params_args(is_descale, clip, width, height, **kwargs)
+
         if is_descale:
-            return args | {"b": self.b, "c": self.c}
-        return args | {"filter_param_a": self.b, "filter_param_b": self.c}
+            return {"b": self.b, "c": self.c} | args
+
+        return {"filter_param_a": self.b, "filter_param_b": self.c} | args
 
     def get_bob_args(
         self,
@@ -66,7 +68,7 @@ class Bicubic(ZimgComplexKernel):
         **kwargs: Any,
     ) -> dict[str, Any]:
         return super().get_bob_args(
-            clip, shift, filter="bicubic", filter_param_a=self.b, filter_param_b=self.c, **kwargs
+            clip, shift, filter="bicubic", **{"filter_param_a": self.b, "filter_param_b": self.c} | kwargs
         )
 
     @ZimgComplexKernel.cachedproperty
