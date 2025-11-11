@@ -1,8 +1,8 @@
 from copy import deepcopy
 from math import factorial
-from typing import Any, Iterable, Literal, Protocol, Self
+from typing import Any, Iterable, Literal, Protocol, Self, TypedDict
 
-from jetpytools import CustomIntEnum, KwargsT, fallback, normalize_seq
+from jetpytools import CustomIntEnum, CustomValueError, fallback, normalize_seq
 
 from vsaa import NNEDI3
 from vsdeband import Grainer
@@ -25,6 +25,7 @@ from vstools import (
     ConvMode,
     FieldBased,
     FieldBasedLike,
+    Planes,
     UnsupportedFieldBasedError,
     VSObject,
     core,
@@ -43,6 +44,73 @@ class _DenoiseFuncTr(Protocol):
     def __call__(self, clip: vs.VideoNode, /, *, tr: int) -> vs.VideoNode: ...
 
 
+class QTGMCArgs:
+    """Namespace containing helper TypedDict definitions for various argument groups."""
+
+    class PrefilterToFullRange(TypedDict, total=False):
+        """
+        Arguments available when passing to [prefilter_to_full_range][vsdenoise.prefilters.prefilter_to_full_range].
+        """
+
+        slope: float
+        smooth: float
+
+    class MaskShimmer(TypedDict, total=False):
+        """
+        Arguments available when passing to the internal `_mask_shimmer` method through
+        [QTempGaussMC.prefilter][vsdeinterlace.QTempGaussMC.prefilter],
+        [QTempGaussMC.basic][vsdeinterlace.QTempGaussMC.basic]
+        and [QTempGaussMC.final][vsdeinterlace.QTempGaussMC.final].
+        """
+
+        threshold: float
+        """Threshold of change to perform masking."""
+        erosion_distance: int
+        """How much to deflate then reflate to remove thin areas."""
+        over_dilation: int
+        """Extra inflation to ensure areas to restore back are fully caught."""
+
+    class Compensate(TypedDict, total=False):
+        """
+        Arguments available when passing to [MVTools.compensate][vsdenoise.mvtools.mvtools.MVTools.compensate].
+        """
+
+        scbehavior: bool | None
+        thsad: int | None
+        time: float | None
+
+    class Degrain(TypedDict, total=False):
+        """
+        Arguments available when passing to the internal `binomial_degrain` method,
+        calling [MVTools.degrain][vsdenoise.mvtools.mvtools.MVTools.degrain] through
+        [QTempGaussMC.basic][vsdeinterlace.QTempGaussMC.basic]
+        and [QTempGaussMC.source_match][vsdeinterlace.QTempGaussMC.source_match]
+        or directly calling [MVTools.degrain][vsdenoise.mvtools.mvtools.MVTools.degrain] through
+        [QTempGaussMC.final][vsdeinterlace.QTempGaussMC.final]
+        """
+
+        limit: float | tuple[float | None, float | None] | None
+        planes: Planes
+
+    class Mask(TypedDict, total=False):
+        """
+        Arguments available when passing to [MVTools.mask][vsdenoise.mvtools.mvtools.MVTools.mask].
+        """
+
+        delta: int
+        ml: float | None
+        gamma: float | None
+        time: float | None
+        ysc: int | None
+
+    class Blur(TypedDict, total=False):
+        """
+        Arguments available when passing to [MVTools.flow_blur][vsdenoise.mvtools.mvtools.MVTools.flow_blur].
+        """
+
+        prec: int | None
+
+
 class QTempGaussMC(VSObject):
     """
     Quasi Temporal Gaussian Motion Compensated (QTGMC)
@@ -55,23 +123,33 @@ class QTempGaussMC(VSObject):
 
     Basic usage:
         ```py
-        deinterlace = (
-            QTempGaussMC(clip)
-            .prefilter()
-            .analyze()
-            .denoise()
-            .basic()
-            .source_match()
-            .lossless()
-            .sharpen()
-            .back_blend()
-            .sharpen_limit()
-            .final()
-            .motion_blur()
+        deinterlace = QTempGaussMC(clip).deinterlace()
+        ```
+
+    Refer to the [AviSynth QTGMC documentation](http://avisynth.nl/index.php/QTGMC)
+    and the [havsfunc implementation](https://github.com/HomeOfVapourSynthEvolution/havsfunc/blob/aa79ebc9eb5517a3a76a74caa98a9d41993ac39b/havsfunc/havsfunc.py#L598-L848)
+    for detailed explanations of the underlying algorithm.
+
+    These resources remain relevant, as the core algorithm used here is largely similar.
+
+    Note that parameter names differ in this implementation due to a complete rewrite.
+    A mapping between vsjetpack and havsfunc parameters is available [here](https://gist.github.com/emotion3459/33bd2b2a2c21afc6497f65adaf7f0b02).
+
+    Examples:
+        - ...
+        - Passing a progressive input to reduce shimmering (equivalent to `InputType=2, ProgSADMask=12.0`):
+        ```python
+        clip = (
+            QTempGaussMC(clip, QTempGaussMC.InputType.REPAIR)
+            .basic(mask_args={"ml": 12.0})
             .deinterlace()
         )
         ```
-    """
+        Or:
+        ```python
+        clip = QTempGaussMC(clip, QTempGaussMC.InputType.REPAIR, basic_mask_args={"ml": 12.0}).deinterlace()
+        ```
+    """  # fmt: skip
 
     clip: vs.VideoNode
     """Clip to process."""
@@ -301,12 +379,17 @@ class QTempGaussMC(VSObject):
         clip: vs.VideoNode,
         input_type: InputType = InputType.INTERLACE,
         tff: FieldBasedLike | bool | None = None,
+        **kwargs: Any,
     ) -> None:
         """
         Args:
             clip: Clip to process.
             input_type: Indicates processing routine.
             tff: Field order of the clip.
+            **kwargs: Additional arguments to be passed to the parameter stage methods.
+                Use the method's name as prefix to pass an argument to the respective method.
+
+                Example for passing tr=1 to the prefilter stage: `prefilter_tr=1`.
         """
         clip_fieldbased = FieldBased.from_param_or_video(tff, clip, True, self.__class__)
 
@@ -321,6 +404,29 @@ class QTempGaussMC(VSObject):
         self.tff = None if self.input_type == self.InputType.PROGRESSIVE else clip_fieldbased.is_tff()
         self.double_rate = self.input_type != self.InputType.REPAIR
 
+        # Set default parameters for all the stages in this exact order
+        self._settings_methods = (
+            self.prefilter,
+            self.analyze,
+            self.denoise,
+            self.basic,
+            self.source_match,
+            self.lossless,
+            self.sharpen,
+            self.back_blend,
+            self.sharpen_limit,
+            self.final,
+            self.motion_blur,
+        )
+
+        for method in self._settings_methods:
+            prefix = f"{method.__name__}_"
+
+            method(**{k.removeprefix(prefix): kwargs.pop(k) for k in tuple(kwargs) if k.startswith(prefix)})
+
+        if kwargs:
+            raise CustomValueError("Unknown arguments were passed", self.__class__, kwargs)
+
     def prefilter(
         self,
         *,
@@ -328,9 +434,9 @@ class QTempGaussMC(VSObject):
         sc_threshold: float | Literal[False] = 0.1,
         postprocess: SearchPostProcess = SearchPostProcess.GAUSSBLUR_EDGESOFTEN,
         strength: tuple[float, float] = (1.9, 0.1),
-        limit: tuple[int | float, int | float, int | float] = (3, 7, 2),
-        range_expansion_args: dict[str, Any] | None | Literal[False] = None,
-        mask_shimmer_args: dict[str, Any] | None = None,
+        limit: tuple[float, float, float] = (3, 7, 2),
+        range_expansion_args: QTGMCArgs.PrefilterToFullRange | Literal[False] | None = None,
+        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = None,
     ) -> Self:
         """
         Configure parameters for the prefilter stage.
@@ -340,7 +446,7 @@ class QTempGaussMC(VSObject):
             sc_threshold: Threshold for scene changes, disables sc detection if False.
             postprocess: Post-processing routine to use.
             strength: Tuple containing gaussian blur sigma & blend weight of the blur.
-            limit: 3-step limiting thresholds for the gaussian blur post-processing.
+            limit: 3-step limiting (8-bits) thresholds for the gaussian blur post-processing.
             range_expansion_args: Arguments passed to
                 [prefilter_to_full_range][vsdenoise.prefilters.prefilter_to_full_range].
             mask_shimmer_args: mask_shimmer_args: Arguments passed to the mask_shimmer call.
@@ -351,8 +457,10 @@ class QTempGaussMC(VSObject):
         self.prefilter_postprocess = postprocess
         self.prefilter_blur_strength = strength
         self.prefilter_soften_limit = limit
-        self.prefilter_range_expansion_args: dict[str, Any] | Literal[False] = fallback(range_expansion_args, {})
-        self.prefilter_mask_shimmer_args = fallback(mask_shimmer_args, {})
+        self.prefilter_range_expansion_args: QTGMCArgs.PrefilterToFullRange | Literal[False] = fallback(
+            range_expansion_args, QTGMCArgs.PrefilterToFullRange()
+        )
+        self.prefilter_mask_shimmer_args = fallback(mask_shimmer_args, QTGMCArgs.MaskShimmer())
 
         return self
 
@@ -366,7 +474,7 @@ class QTempGaussMC(VSObject):
         overlap: int | tuple[int, int] = 2,
         refine: int = 1,
         thsad_recalc: int | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = (180, 38.5),
+        thscd: int | tuple[int | None, float | None] | None = (180, 38.5),
     ) -> Self:
         """
         Configure parameters for the motion analysis stage.
@@ -380,8 +488,10 @@ class QTempGaussMC(VSObject):
             refine: Number of times to recalculate motion vectors with halved block size.
             thsad_recalc: Only bad quality new vectors with a SAD above this will be re-estimated by search. thsad value
                 is scaled to 8x8 block size.
-            thscd: Scene change detection thresholds: - First value: SAD threshold for considering a block changed
-                between frames. - Second value: Percentage of changed blocks needed to trigger a scene change.
+            thscd: Scene change detection thresholds:
+
+                   - First value: SAD threshold for considering a block changed between frames.
+                   - Second value: Percentage of changed blocks needed to trigger a scene change.
         """
 
         preset.pop("search_clip", None)
@@ -406,8 +516,8 @@ class QTempGaussMC(VSObject):
         deint: NoiseDeintMode = NoiseDeintMode.GENERATE,
         mc_denoise: bool = True,
         stabilize: tuple[float, float] | Literal[False] = (0.6, 0.2),
-        func_comp_args: KwargsT | None = None,
-        stabilize_comp_args: KwargsT | None = None,
+        func_comp_args: QTGMCArgs.Compensate | None = None,
+        stabilize_comp_args: QTGMCArgs.Compensate | None = None,
     ) -> Self:
         """
         Configure parameters for the denoise stage.
@@ -431,8 +541,8 @@ class QTempGaussMC(VSObject):
         self.denoise_deint = deint
         self.denoise_mc_denoise = mc_denoise
         self.denoise_stabilize: tuple[float, float] | Literal[False] = stabilize
-        self.denoise_func_comp_args = fallback(func_comp_args, KwargsT())
-        self.denoise_stabilize_comp_args = fallback(stabilize_comp_args, KwargsT())
+        self.denoise_func_comp_args = fallback(func_comp_args, QTGMCArgs.Compensate())
+        self.denoise_stabilize_comp_args = fallback(stabilize_comp_args, QTGMCArgs.Compensate())
 
         return self
 
@@ -443,9 +553,9 @@ class QTempGaussMC(VSObject):
         thsad: int | tuple[int, int] = 640,
         bobber: BobberLike = NNEDI3(nsize=1),
         noise_restore: float = 0.0,
-        degrain_args: KwargsT | None = None,
-        mask_args: KwargsT | None | Literal[False] = None,
-        mask_shimmer_args: KwargsT | None = KwargsT(erosion_distance=0),
+        degrain_args: QTGMCArgs.Degrain | None = None,
+        mask_args: QTGMCArgs.Mask | Literal[False] | None = None,
+        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = {"erosion_distance": 0},
     ) -> Self:
         """
         Configure parameters for the basic stage.
@@ -467,12 +577,11 @@ class QTempGaussMC(VSObject):
         self.basic_bobber = (
             deepcopy(bobber) if isinstance(bobber, Bobber) else Bobber.ensure_obj(bobber, self.__class__)
         )
-        self.basic_bobber.kwargs.update(tff=self.tff, double_rate=self.double_rate)
 
         self.basic_noise_restore = noise_restore
-        self.basic_degrain_args = fallback(degrain_args, KwargsT())
-        self.basic_mask_shimmer_args = fallback(mask_shimmer_args, KwargsT())
-        self.basic_mask_args: KwargsT | Literal[False] = fallback(mask_args, KwargsT())
+        self.basic_degrain_args = fallback(degrain_args, QTGMCArgs.Degrain())
+        self.basic_mask_shimmer_args = fallback(mask_shimmer_args, QTGMCArgs.MaskShimmer())
+        self.basic_mask_args: QTGMCArgs.Mask | Literal[False] = fallback(mask_args, QTGMCArgs.Mask())
 
         return self
 
@@ -484,14 +593,14 @@ class QTempGaussMC(VSObject):
         mode: SourceMatchMode = SourceMatchMode.NONE,
         similarity: float = 0.5,
         enhance: float = 0.5,
-        degrain_args: KwargsT | None = None,
+        degrain_args: QTGMCArgs.Degrain | None = None,
     ) -> Self:
         """
         Configure parameters for the source_match stage.
 
         Args:
             tr: Temporal radius of the refinement motion compensated binomial smooth.
-            bobber: Bobber to use for refined spatial interpolation.
+            bobber: Bobber to use for refined spatial interpolation. Defaut to the basic bobber.
             mode: Specifies number of refinement steps to perform.
             similarity: Temporal similarity of the error created by smoothing.
             enhance: Sharpening strength prior to source match refinement.
@@ -499,28 +608,30 @@ class QTempGaussMC(VSObject):
         """
 
         self.match_tr = tr
-
-        if bobber is None:
-            self.match_bobber = deepcopy(self.basic_bobber)
-        elif isinstance(bobber, Bobber):
-            self.match_bobber = deepcopy(bobber)
-        else:
-            self.match_bobber = Bobber.ensure_obj(bobber, self.__class__)
-
-        self.match_bobber.kwargs.update(tff=self.tff, double_rate=self.double_rate)
-
+        self.match_bobber = bobber
         self.match_mode = mode
         self.match_similarity = similarity
         self.match_enhance = enhance
-        self.match_degrain_args = fallback(degrain_args, KwargsT())
+        self.match_degrain_args = fallback(degrain_args, QTGMCArgs.Degrain())
 
         return self
 
-    def lossless(
-        self,
-        *,
-        mode: LosslessMode = LosslessMode.NONE,
-    ) -> Self:
+    @property
+    def match_bobber(self) -> Bobber:
+        return fallback(self._match_bobber, self.basic_bobber)
+
+    @match_bobber.setter
+    def match_bobber(self, value: BobberLike | None) -> None:
+        if value is None:
+            self._match_bobber = value
+            return
+
+        if isinstance(value, Bobber):
+            self._match_bobber = deepcopy(value)
+        else:
+            self._match_bobber = Bobber.ensure_obj(value, self.__class__)
+
+    def lossless(self, *, mode: LosslessMode = LosslessMode.NONE) -> Self:
         """
         Configure parameter for the lossless stage.
 
@@ -537,7 +648,7 @@ class QTempGaussMC(VSObject):
         *,
         mode: SharpMode | None = None,
         strength: tuple[int, float] = (1, 1.0),
-        clamp: int | float | tuple[int | float, int | float] = 1,
+        clamp: float | tuple[float, float] = 1,
         thin: float = 0.0,
     ) -> Self:
         """
@@ -552,19 +663,22 @@ class QTempGaussMC(VSObject):
             thin: How much to vertically thin edges.
         """
 
-        self.sharp_mode = fallback(mode, self.SharpMode.NONE if self.match_mode else self.SharpMode.UNSHARP_MINMAX)
+        self.sharp_mode = mode
         self.sharp_strength = strength
         self.sharp_clamp = normalize_seq(clamp, 2)
         self.sharp_thin = thin
 
         return self
 
-    def back_blend(
-        self,
-        *,
-        mode: BackBlendMode = BackBlendMode.BOTH,
-        sigma: float = 1.4,
-    ) -> Self:
+    @property
+    def sharp_mode(self) -> SharpMode:
+        return fallback(self._sharp_mode, self.SharpMode.NONE if self.match_mode else self.SharpMode.UNSHARP_MINMAX)
+
+    @sharp_mode.setter
+    def sharp_mode(self, value: SharpMode | None) -> None:
+        self._sharp_mode = value
+
+    def back_blend(self, *, mode: BackBlendMode = BackBlendMode.BOTH, sigma: float = 1.4) -> Self:
         """
         Configure parameters for the back_blend stage.
 
@@ -583,8 +697,8 @@ class QTempGaussMC(VSObject):
         *,
         mode: SharpLimitMode | None = None,
         radius: int = 3,
-        clamp: int | float | tuple[int | float, int | float] = 0,
-        comp_args: KwargsT | None = None,
+        clamp: float | tuple[float, float] = 0,
+        comp_args: QTGMCArgs.Compensate | None = None,
     ) -> Self:
         """
         Configure parameters for the sharpen_limit stage.
@@ -597,14 +711,22 @@ class QTempGaussMC(VSObject):
                 temporal limiting.
         """
 
-        self.limit_mode = fallback(
-            mode, self.SharpLimitMode.NONE if self.match_mode else self.SharpLimitMode.TEMPORAL_PRESMOOTH
-        )
+        self.limit_mode = mode
         self.limit_radius = radius
         self.limit_clamp = clamp
-        self.limit_comp_args = fallback(comp_args, KwargsT())
+        self.limit_comp_args = fallback(comp_args, QTGMCArgs.Compensate())
 
         return self
+
+    @property
+    def limit_mode(self) -> SharpLimitMode:
+        return fallback(
+            self._limit_mode, self.SharpLimitMode.NONE if self.match_mode else self.SharpLimitMode.TEMPORAL_PRESMOOTH
+        )
+
+    @limit_mode.setter
+    def limit_mode(self, value: SharpLimitMode | None) -> None:
+        self._limit_mode = value
 
     def final(
         self,
@@ -612,8 +734,8 @@ class QTempGaussMC(VSObject):
         tr: int = 3,
         thsad: int | tuple[int, int] = 256,
         noise_restore: float = 0.0,
-        degrain_args: KwargsT | None = None,
-        mask_shimmer_args: KwargsT | None = None,
+        degrain_args: QTGMCArgs.Degrain | None = None,
+        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = None,
     ) -> Self:
         """
         Configure parameters for the final stage.
@@ -623,24 +745,24 @@ class QTempGaussMC(VSObject):
             thsad: Thsad of the motion compensated smooth.
             noise_restore: How much noise to restore after this stage.
             degrain_args: Arguments passed to [MVTools.degrain][vsdenoise.mvtools.mvtools.MVTools.degrain].
-            mask_shimmer_args: mask_shimmer_args: Arguments passed to the mask_shimmer call.
+            mask_shimmer_args: Arguments passed to the mask_shimmer call.
         """
 
         self.final_tr = tr
         self.final_thsad = thsad
         self.final_noise_restore = noise_restore
-        self.final_degrain_args = fallback(degrain_args, KwargsT())
-        self.final_mask_shimmer_args = fallback(mask_shimmer_args, KwargsT())
+        self.final_degrain_args = fallback(degrain_args, QTGMCArgs.Degrain())
+        self.final_mask_shimmer_args = fallback(mask_shimmer_args, QTGMCArgs.MaskShimmer())
 
         return self
 
     def motion_blur(
         self,
         *,
-        shutter_angle: tuple[int | float, int | float] = (180, 180),
+        shutter_angle: tuple[float, float] = (180, 180),
         fps_divisor: int = 1,
-        blur_args: KwargsT | None = None,
-        mask_args: KwargsT | None | Literal[False] = KwargsT(ml=4),
+        blur_args: QTGMCArgs.Blur | None = None,
+        mask_args: QTGMCArgs.Mask | Literal[False] | None = {"ml": 4},
     ) -> Self:
         """
         Configure parameters for the motion blur stage.
@@ -655,8 +777,8 @@ class QTempGaussMC(VSObject):
 
         self.motion_blur_shutter_angle = shutter_angle
         self.motion_blur_fps_divisor = fps_divisor
-        self.motion_blur_args = fallback(blur_args, KwargsT())
-        self.motion_blur_mask_args: KwargsT | Literal[False] = fallback(mask_args, KwargsT())
+        self.motion_blur_args = fallback(blur_args, QTGMCArgs.Blur())
+        self.motion_blur_mask_args: QTGMCArgs.Mask | Literal[False] = fallback(mask_args, QTGMCArgs.Mask())
 
         return self
 
@@ -664,7 +786,7 @@ class QTempGaussMC(VSObject):
         self,
         flt: vs.VideoNode,
         src: vs.VideoNode,
-        threshold: int | float = 1,
+        threshold: float = 1,
         erosion_distance: int = 4,
         over_dilation: int = 0,
     ) -> vs.VideoNode:
@@ -721,7 +843,7 @@ class QTempGaussMC(VSObject):
 
     def _interpolate(self, clip: vs.VideoNode, bobber: Bobber) -> vs.VideoNode:
         if self.input_type != self.InputType.PROGRESSIVE:
-            clip = bobber.deinterlace(clip)
+            clip = bobber.deinterlace(clip, tff=self.tff, double_rate=self.double_rate)
 
         return clip
 
@@ -760,7 +882,7 @@ class QTempGaussMC(VSObject):
         return BlurMatrix.custom(_get_weights(tr), ConvMode.TEMPORAL)([clip, *degrained], func=self._binomial_degrain)
 
     def _apply_prefilter(self) -> None:
-        self.draft = Catrom(tff=self.tff).bob(self.clip) if self.input_type == self.InputType.INTERLACE else self.clip
+        self.draft = Catrom().bob(self.clip, tff=self.tff) if self.input_type == self.InputType.INTERLACE else self.clip
 
         search = self.draft
 
@@ -864,7 +986,7 @@ class QTempGaussMC(VSObject):
                 case self.NoiseDeintMode.WEAVE:
                     self.noise = self.noise.std.SeparateFields(self.tff).std.DoubleWeave(self.tff)
                 case self.NoiseDeintMode.BOB:
-                    self.noise = Catrom(tff=self.tff).bob(self.noise)
+                    self.noise = Catrom().bob(self.noise, tff=self.tff)
                 case self.NoiseDeintMode.GENERATE:
                     noise_source = self.noise.std.SeparateFields(self.tff)
 
@@ -999,7 +1121,7 @@ class QTempGaussMC(VSObject):
 
         out = reweave(fields_src, fields_flt.std.MakeDiff(processed_diff), self.tff, self._apply_lossless)
 
-        return core.std.SetFieldBased(out, FieldBased.PROGRESSIVE)
+        return FieldBased.PROGRESSIVE.apply(out)
 
     def _apply_sharpen(self, clip: vs.VideoNode) -> vs.VideoNode:
         match self.sharp_mode:
