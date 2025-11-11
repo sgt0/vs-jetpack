@@ -97,9 +97,9 @@ class MotionVectors(defaultdict[MVDirection, dict[int, vs.VideoNode]], VSObject)
 
         for delta in range(1, tr + 1):
             if direction in [MVDirection.BACKWARD, MVDirection.BOTH]:
-                vectors_backward.append(self.get_vector(MVDirection.BACKWARD, delta))
+                vectors_backward.append(self[MVDirection.BACKWARD][delta])
             if direction in [MVDirection.FORWARD, MVDirection.BOTH]:
-                vectors_forward.append(self.get_vector(MVDirection.FORWARD, delta))
+                vectors_forward.append(self[MVDirection.FORWARD][delta])
 
         return (vectors_backward, vectors_forward)
 
