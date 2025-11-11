@@ -1,6 +1,6 @@
 from copy import deepcopy
 from math import factorial
-from typing import Any, Iterable, Literal, Protocol, Self, TypedDict
+from typing import Any, Iterable, Literal, Mapping, Protocol, Self, TypedDict
 
 from jetpytools import CustomIntEnum, CustomValueError, fallback, normalize_seq
 
@@ -444,7 +444,7 @@ class QTempGaussMC(VSObject):
         self,
         *,
         force_tr: int = 0,
-        preset: MVToolsPreset = MVToolsPreset.HQ_SAD,
+        preset: Mapping[str, Any] = MVToolsPreset.HQ_SAD,
         blksize: int | tuple[int, int] = 16,
         overlap: int | tuple[int, int] = 2,
         refine: int = 1,
@@ -468,10 +468,8 @@ class QTempGaussMC(VSObject):
                    - Second value: Percentage of changed blocks needed to trigger a scene change.
         """
 
-        preset.pop("search_clip", None)
-
         self.analyze_force_tr = force_tr
-        self.analyze_preset = preset
+        self.analyze_preset = {k: deepcopy(v) for k, v in preset.items() if k != "search_clip"}
         self.analyze_blksize = blksize
         self.analyze_overlap = overlap
         self.analyze_refine = refine
