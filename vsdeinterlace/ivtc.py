@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import warnings
 from typing import Any
 
 from vstools import (
     FieldBased,
     FieldBasedLike,
+    FramerateMismatchError,
     FunctionUtil,
     UnsupportedFramerateError,
     VSFunctionKwArgs,
@@ -157,11 +157,12 @@ def vfm(
         if callable(postprocess):
             postprocess = postprocess(kwargs.get("clip2", clip))
 
-        if clip.num_frames != postprocess.num_frames:
-            warnings.warn(
-                "vfm: Post-processed clip has a different number of frames than the input clip "
-                f"({clip.num_frames=} != {postprocess.num_frames=})! This may cause the wrong frames to be replaced!"
-            )
+        FramerateMismatchError.check(
+            vfm,
+            clip,
+            postprocess,
+            message="Post-processed clip has a different number of frames than the input clip!",
+        )
 
         fieldmatch = find_prop_rfs(fieldmatch, postprocess, "_Combed", "==", 1)
 
