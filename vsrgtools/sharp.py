@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING, Any, Literal, Sequence
 
-from jetpytools import FuncExcept
+from jetpytools import FuncExcept, fallback
 
 from vsexprtools import norm_expr
 
@@ -73,7 +73,7 @@ def awarpsharp(
     blur: int | VSFunctionPlanesArgs | Literal[False] = 3,
     depth_h: int | Sequence[int] | None = None,
     depth_v: int | Sequence[int] | None = None,
-    mask_first_plane: bool = False,
+    mask_first_plane: bool | None = None,
     planes: Planes = None,
     **kwargs: Any,
 ) -> vs.VideoNode:
@@ -97,6 +97,7 @@ def awarpsharp(
         depth_v: Controls how far to warp vertically.
             Negative values warp in the other direction, i.e. will blur the image instead of sharpening.
         mask_first_plane: Controls the chroma handling method.
+            None defaults to True for YUV color family, False otherwise.
             True will use the edge mask from the luma to warp the chroma.
             False will create an edge mask from each chroma channel and use those to warp each chroma channel
             individually.
@@ -111,6 +112,7 @@ def awarpsharp(
     func = FunctionUtil(clip, awarpsharp, planes)
 
     thresh = scale_mask(thresh, 8, func.work_clip)
+    mask_first_plane = fallback(mask_first_plane, func.work_clip.format.color_family == vs.YUV)
     mask_planes = 0 if mask_first_plane else planes
 
     if mask is None:
