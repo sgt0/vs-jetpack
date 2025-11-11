@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+import warnings
 
 from vstools import (
     FieldBased,
@@ -155,6 +156,12 @@ def vfm(
     if postprocess:
         if callable(postprocess):
             postprocess = postprocess(kwargs.get("clip2", clip))
+
+        if clip.num_frames != postprocess.num_frames:
+            warnings.warn(
+                "vfm: Post-processed clip has a different number of frames than the input clip "
+                f"({clip.num_frames=} != {postprocess.num_frames=})! This may cause the wrong frames to be replaced!"
+            )
 
         fieldmatch = find_prop_rfs(fieldmatch, postprocess, "_Combed", "==", 1)
 
