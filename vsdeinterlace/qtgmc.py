@@ -1147,7 +1147,7 @@ class QTempGaussMC(VSObject):
 
             resharp = norm_expr(
                 [resharp, BlurMatrix.BINOMIAL()(blurred_diff), blurred_diff],
-                "y neutral - dup abs z neutral - abs < swap x + x ?",
+                "y neutral - dup abs z neutral - abs > swap x + x ?",
                 func=self._apply_sharpen,
             )
 
