@@ -84,7 +84,7 @@ def contrasharpening_dehalo(
 
     return norm_expr(
         [flt, src, blur, blur2],
-        "y x - D1! z a - {alpha} * {level} * D2! D1@ D2@ xor x x D1@ abs D2@ abs < D1@ D2@ ? + ?",
+        "z a - {alpha} * {level} * D1! y x - D2! D1@ D2@ xor x x D1@ abs D2@ abs < D1@ D2@ ? + ?",
         planes,
         alpha=alpha,
         level=level,
