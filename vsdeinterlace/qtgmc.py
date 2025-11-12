@@ -469,7 +469,7 @@ class QTempGaussMC(VSObject):
         """
 
         self.analyze_force_tr = force_tr
-        self.analyze_preset = {k: deepcopy(v) for k, v in preset.items() if k != "search_clip"}
+        self.analyze_preset = preset
         self.analyze_blksize = blksize
         self.analyze_overlap = overlap
         self.analyze_refine = refine
@@ -922,7 +922,7 @@ class QTempGaussMC(VSObject):
             round((self.basic_thsad[0] if isinstance(self.basic_thsad, tuple) else self.basic_thsad) / 2),
         )
 
-        self.mv = MVTools(self.draft, self.prefilter_output, **self.analyze_preset)
+        self.mv = MVTools(self.draft, **{**self.analyze_preset, "search_clip": self.prefilter_output})
         self.mv.analyze(tr=tr, blksize=blksize, overlap=refine_blksize(blksize, overlap))
 
         for _ in range(self.analyze_refine):
