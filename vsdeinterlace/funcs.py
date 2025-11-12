@@ -247,7 +247,7 @@ def vinverse(
 
     FormatsMismatchError.check(vinverse, clip, blurred, blurred2)
 
-    expr = "x y - D1! y z - {sstr} * D2! D1@ abs D2@ abs < D1@ D2@ ? D3! D1@ D2@ xor D3@ {scl} * D3@ ? y +"
+    expr = "y z - {sstr} * D1! x y - D2! D1@ abs D2@ abs < D1@ D2@ ? D3! D1@ D2@ xor D3@ {scl} * D3@ ? y +"
 
     if amnt is not None:
         expr += " x {amnt} - x {amnt} + clip"
