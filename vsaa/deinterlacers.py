@@ -214,7 +214,7 @@ class AntiAliaser(Deinterlacer, ABC):
                 if y == self.AADirection.HORIZONTAL:
                     clip = self.transpose(clip)
 
-                clip = self._interpolate(clip, tff, dh=False, **kwargs)
+                clip = self._interpolate(clip, tff, self.double_rate, False, **kwargs)
 
                 if self.double_rate:
                     clip = core.std.Merge(clip[::2], clip[1::2])
