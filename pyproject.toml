@@ -130,6 +130,8 @@ pythonpath = "."
 mypy_path = "$MYPY_CONFIG_FILE_DIR/stubs"
 
 exclude = ["scripts/"]
+exclude_gitignore = true
+
 # Flags changed by --strict
 warn_return_any = false
 extra_checks = false
