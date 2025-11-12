@@ -81,44 +81,6 @@ class Deinterlacer(Bobber, ABC):
         self.kwargs = DeinterlacerKwargs()
         self.kwargs.deinterlacer = self
 
-    @property
-    @abstractmethod
-    def _deinterlacer_function(self) -> VSFunctionAllArgs:
-        """
-        Get the plugin function.
-        """
-
-    @abstractmethod
-    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        """
-        Performs deinterlacing if dh is False or doubling if dh is True.
-
-        Subclasses should handle tff to field if needed and add the kwargs from `get_deint_args`
-
-        Args:
-            clip: The input clip.
-            tff: The field order of the input clip.
-            double_rate: Whether to double the FPS.
-            dh: If True, doubles the height of the input by copying each line to every other line of the output, with
-                the missing lines interpolated.
-
-        Returns:
-            Interpolated clip.
-        """
-
-    @abstractmethod
-    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
-        """
-        Retrieves arguments for deinterlacing processing.
-
-        Args:
-            **kwargs: Additional arguments.
-
-        Returns:
-            Passed keyword arguments.
-        """
-        return kwargs
-
     def deinterlace(
         self,
         clip: vs.VideoNode,
@@ -164,6 +126,44 @@ class Deinterlacer(Bobber, ABC):
         Returns a new Antialiaser class replacing specified fields with new values
         """
         return replace(self, **kwargs)
+
+    @abstractmethod
+    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Retrieves arguments for deinterlacing processing.
+
+        Args:
+            **kwargs: Additional arguments.
+
+        Returns:
+            Passed keyword arguments.
+        """
+        return kwargs
+
+    @property
+    @abstractmethod
+    def _deinterlacer_function(self) -> VSFunctionAllArgs:
+        """
+        Get the plugin function.
+        """
+
+    @abstractmethod
+    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
+        """
+        Performs deinterlacing if dh is False or doubling if dh is True.
+
+        Subclasses should handle tff to field if needed and add the kwargs from `get_deint_args`
+
+        Args:
+            clip: The input clip.
+            tff: The field order of the input clip.
+            double_rate: Whether to double the FPS.
+            dh: If True, doubles the height of the input by copying each line to every other line of the output, with
+                the missing lines interpolated.
+
+        Returns:
+            Interpolated clip.
+        """
 
 
 @dataclass(kw_only=True)
@@ -435,24 +435,6 @@ class NNEDI3(SuperSampler):
     Enables the use of the OpenCL variant.
     """
 
-    @property
-    def _deinterlacer_function(self) -> VSFunctionAllArgs:
-        return core.lazy.sneedif.NNEDI3 if self.opencl else core.lazy.znedi3.nnedi3
-
-    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = tff + int(double_rate) * 2
-
-        return self._deinterlacer_function(clip, field, dh, **self.get_deint_args(**kwargs))
-
-    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
-        return {
-            "nsize": self.nsize,
-            "nns": self.nns,
-            "qual": self.qual,
-            "etype": self.etype,
-            "pscrn": self.pscrn,
-        } | kwargs
-
     @Scaler.cachedproperty
     def kernel_radius(self) -> int:
         match self.nsize:
@@ -464,6 +446,24 @@ class NNEDI3(SuperSampler):
                 return 48
             case _:
                 return 32
+
+    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
+        return {
+            "nsize": self.nsize,
+            "nns": self.nns,
+            "qual": self.qual,
+            "etype": self.etype,
+            "pscrn": self.pscrn,
+        } | kwargs
+
+    @property
+    def _deinterlacer_function(self) -> VSFunctionAllArgs:
+        return core.lazy.sneedif.NNEDI3 if self.opencl else core.lazy.znedi3.nnedi3
+
+    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
+        field = tff + int(double_rate) * 2
+
+        return self._deinterlacer_function(clip, field, dh, **self.get_deint_args(**kwargs))
 
 
 @dataclass
@@ -544,20 +544,9 @@ class EEDI2(SuperSampler):
     cuda: bool = False
     """Enables the use of the CUDA variant for processing."""
 
-    @property
-    def _deinterlacer_function(self) -> VSFunctionAllArgs:
-        return core.lazy.eedi2cuda.EEDI2 if self.cuda else core.lazy.eedi2.EEDI2
-
-    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = tff + int(double_rate) * 2
-
-        if not dh:
-            clip = clip.std.SeparateFields(tff)
-
-            if not double_rate:
-                clip = clip[::2]
-
-        return self._deinterlacer_function(clip, field, **self.get_deint_args(**kwargs))
+    @Scaler.cachedproperty
+    def kernel_radius(self) -> int:
+        return self.maxd
 
     def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
         return {
@@ -572,9 +561,20 @@ class EEDI2(SuperSampler):
             "pp": self.pp,
         } | kwargs
 
-    @Scaler.cachedproperty
-    def kernel_radius(self) -> int:
-        return self.maxd
+    @property
+    def _deinterlacer_function(self) -> VSFunctionAllArgs:
+        return core.lazy.eedi2cuda.EEDI2 if self.cuda else core.lazy.eedi2.EEDI2
+
+    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
+        field = tff + int(double_rate) * 2
+
+        if not dh:
+            clip = clip.std.SeparateFields(tff)
+
+            if not double_rate:
+                clip = clip[::2]
+
+        return self._deinterlacer_function(clip, field, **self.get_deint_args(**kwargs))
 
 
 @dataclass
@@ -674,33 +674,29 @@ class EEDI3(SuperSampler):
     by limiting edge-directed interpolation to certain pixels.
     """
 
-    def _set_sclip_mclip(self, kwargs: dict[str, Any]) -> dict[str, Any]:
-        sclip, mclip = kwargs.pop("sclip", MISSING), kwargs.pop("mclip", MISSING)
+    @Scaler.cachedproperty
+    def kernel_radius(self) -> int:
+        return self.mdis
 
-        if sclip is not MISSING:
-            self.sclip = sclip
+    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
+        if self.vthresh is None:
+            self.vthresh = (None, None, None)
 
-        if mclip is not MISSING:
-            self.mclip = mclip
-
-        return kwargs
-
-    @property
-    def _deinterlacer_function(self) -> VSFunctionAllArgs:
-        return core.lazy.eedi3m.EEDI3
-
-    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
-        field = tff + int(double_rate) * 2
-
-        kwargs = self.get_deint_args(**kwargs)
-
-        if callable(self.sclip):
-            kwargs.update(sclip=self.sclip(clip))
-
-        if callable(self.mclip):
-            kwargs.update(mclip=self.mclip(clip))
-
-        return self._deinterlacer_function(clip, field, dh, **kwargs)
+        return {
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "gamma": self.gamma,
+            "nrad": self.nrad,
+            "mdis": self.mdis,
+            "ucubic": self.ucubic,
+            "cost3": self.cost3,
+            "vcheck": self.vcheck,
+            "vthresh0": self.vthresh[0],
+            "vthresh1": self.vthresh[1],
+            "vthresh2": self.vthresh[2],
+            "sclip": self.sclip,
+            "mclip": self.mclip,
+        } | kwargs
 
     def antialias(
         self, clip: vs.VideoNode, direction: AntiAliaser.AADirection = AntiAliaser.AADirection.BOTH, **kwargs: Any
@@ -734,29 +730,33 @@ class EEDI3(SuperSampler):
     ) -> vs.VideoNode:
         return super().scale(clip, width, height, shift, **self._set_sclip_mclip(kwargs))
 
-    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
-        if self.vthresh is None:
-            self.vthresh = (None, None, None)
+    @property
+    def _deinterlacer_function(self) -> VSFunctionAllArgs:
+        return core.lazy.eedi3m.EEDI3
 
-        return {
-            "alpha": self.alpha,
-            "beta": self.beta,
-            "gamma": self.gamma,
-            "nrad": self.nrad,
-            "mdis": self.mdis,
-            "ucubic": self.ucubic,
-            "cost3": self.cost3,
-            "vcheck": self.vcheck,
-            "vthresh0": self.vthresh[0],
-            "vthresh1": self.vthresh[1],
-            "vthresh2": self.vthresh[2],
-            "sclip": self.sclip,
-            "mclip": self.mclip,
-        } | kwargs
+    def _interpolate(self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any) -> vs.VideoNode:
+        field = tff + int(double_rate) * 2
 
-    @Scaler.cachedproperty
-    def kernel_radius(self) -> int:
-        return self.mdis
+        kwargs = self.get_deint_args(**kwargs)
+
+        if callable(self.sclip):
+            kwargs.update(sclip=self.sclip(clip))
+
+        if callable(self.mclip):
+            kwargs.update(mclip=self.mclip(clip))
+
+        return self._deinterlacer_function(clip, field, dh, **kwargs)
+
+    def _set_sclip_mclip(self, kwargs: dict[str, Any]) -> dict[str, Any]:
+        sclip, mclip = kwargs.pop("sclip", MISSING), kwargs.pop("mclip", MISSING)
+
+        if sclip is not MISSING:
+            self.sclip = sclip
+
+        if mclip is not MISSING:
+            self.mclip = mclip
+
+        return kwargs
 
 
 @dataclass
@@ -771,6 +771,11 @@ class SangNom(SuperSampler):
     Must be an integer between 0 and 128, inclusive.
     """
 
+    _static_kernel_radius = 3
+
+    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
+        return {"aa": self.aa} | kwargs
+
     @property
     def _deinterlacer_function(self) -> VSFunctionAllArgs:
         return core.lazy.sangnom.SangNom
@@ -783,11 +788,6 @@ class SangNom(SuperSampler):
             order = 1 if tff else 2
 
         return self._deinterlacer_function(clip, order, dh, **self.get_deint_args(**kwargs))
-
-    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
-        return {"aa": self.aa} | kwargs
-
-    _static_kernel_radius = 3
 
 
 @dataclass
@@ -805,6 +805,11 @@ class BWDIF(Deinterlacer):
     If using double rate output, this clip should have twice as many frames as the input.
     """
 
+    _static_kernel_radius = 2
+
+    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
+        return {"edeint": self.edeint} | kwargs
+
     @property
     def _deinterlacer_function(self) -> VSFunctionAllArgs:
         return core.lazy.bwdif.Bwdif
@@ -817,21 +822,16 @@ class BWDIF(Deinterlacer):
 
         return self._deinterlacer_function(clip, field, **self.get_deint_args(**kwargs))
 
-    def get_deint_args(self, **kwargs: Any) -> dict[str, Any]:
-        return {"edeint": self.edeint} | kwargs
-
-    _static_kernel_radius = 2
-
 
 if TYPE_CHECKING:
     # Let's assume the specialized SuperSampler isn't abstract
     class _ConcreteSuperSampler(SuperSampler):
+        def get_deint_args(self, **kwargs: Any) -> dict[str, Any]: ...
         @property
         def _deinterlacer_function(self) -> VSFunctionAllArgs: ...
         def _interpolate(
             self, clip: vs.VideoNode, tff: bool, double_rate: bool, dh: bool, **kwargs: Any
         ) -> vs.VideoNode: ...
-        def get_deint_args(self, **kwargs: Any) -> dict[str, Any]: ...
 else:
     _ConcreteSuperSampler = SuperSampler
 
