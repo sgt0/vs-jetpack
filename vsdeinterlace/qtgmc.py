@@ -1066,6 +1066,8 @@ class QTempGaussMC(VSObject):
 
             if self.input_type == self.InputType.INTERLACE:
                 clip = reinterlace(matched, self.tff, self._apply_source_match)
+            else:
+                clip = matched
 
             diff = ref.std.MakeDiff(clip)
             refine_bobbed = self._interpolate(diff, self.source_match_bobber)
