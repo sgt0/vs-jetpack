@@ -627,13 +627,13 @@ class QTempGaussMC(VSObject):
 
         Args:
             mode: Specifies the type of sharpening to use.
-                Defaults to [SharpMode.UNSHARP][vsdeinterlace.qtgmc.QTempGaussMC.SharpMode.UNSHARP] for
+                Defaults to [SharpenMode.UNSHARP][vsdeinterlace.qtgmc.QTempGaussMC.SharpenMode.UNSHARP] for
                     [InputType.PROGRESSIVE][vsdeinterlace.qtgmc.QTempGaussMC.InputType.PROGRESSIVE] or
-                    [SharpMode.UNSHARP_MINMAX][vsdeinterlace.qtgmc.QTempGaussMC.SharpMode.UNSHARP_MINMAX] otherwise.
+                    [SharpenMode.UNSHARP_MINMAX][vsdeinterlace.qtgmc.QTempGaussMC.SharpenMode.UNSHARP_MINMAX] otherwise.
             strength: Sharpening strength. Defaults to 1 for
                 [SourceMatchMode.NONE][vsdeinterlace.qtgmc.QTempGaussMC.SourceMatchMode.NONE] or 0 otherwise.
             clamp: Clamp the sharpening strength of
-                [SharpMode.UNSHARP_MINMAX][vsdeinterlace.qtgmc.QTempGaussMC.SharpMode.UNSHARP_MINMAX] to the min/max
+                [SharpenMode.UNSHARP_MINMAX][vsdeinterlace.qtgmc.QTempGaussMC.SharpenMode.UNSHARP_MINMAX] to the min/max
                 average plus/minus this.
             thin: How much to vertically thin edges.
         """
