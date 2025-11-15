@@ -210,8 +210,8 @@ class BaseOnnxScaler(BaseGenericScaler, ABC):
     Abstract generic scaler class for an ONNX model.
     """
 
-    _REQUIRED_VSMLRT_SCRIPT_VERSION = Version("3.22.35")
-    _REQUIRED_VSMLRT_PLUGIN_VERSION = Version("15.13")
+    _REQUIRED_VSMLRT_SCRIPT_VERSION = Version("3.22.36")
+    _REQUIRED_VSMLRT_PLUGIN_VERSION = Version("15.14")
 
     if not TYPE_CHECKING:
 
