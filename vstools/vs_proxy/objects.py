@@ -14,11 +14,19 @@ from .proxy import core, register_on_creation, register_on_destroy
 
 __all__ = ["VSDebug", "VSObject", "VSObjectABC", "VSObjectABCMeta", "VSObjectMeta", "vs_object"]
 
-_vs_module = sys.modules["vapoursynth"]
-
 
 def _get_mangle_name(name: str) -> str:
     return "_" + name.lstrip("_")
+
+
+_vs_module = sys.modules["vapoursynth"]
+
+
+def _is_vs_module(obj: Any) -> bool:
+    if hasattr(obj, "__module__"):
+        return sys.modules[obj.__module__] is _vs_module
+
+    return getmodule(type(obj)) is _vs_module
 
 
 def _iterative_check(x: Any) -> bool:
@@ -27,8 +35,8 @@ def _iterative_check(x: Any) -> bool:
     while stack:
         current = stack.pop()
 
-        if getmodule(current) is _vs_module:
-            return True
+        if res := _is_vs_module(current):
+            return res
 
         if isinstance(current, (str, bytes, bytearray, Flag)):
             continue
