@@ -1140,7 +1140,7 @@ class QTempGaussMC(VSObject):
 
                 clamp = norm_expr(
                     [clip, source_min, source_max],
-                    "y z + 2 / x {undershoot} - x {overshoot} + clip",
+                    "y z + 2 / AVG! AVG@ x > AVG@ {undershoot} - AVG@ x < AVG@ {overshoot} + AVG@ ? ?",
                     undershoot=scale_delta(undershoot, 8, clip),
                     overshoot=scale_delta(overshoot, 8, clip),
                     func=self._apply_sharpen,
