@@ -940,14 +940,14 @@ core_on_creation_callbacks_cores = set[int]()
 
 
 def _get_core_with_cb(self: VSCoreProxy | None = None) -> Core:
-    _vs_core = _get_core(self) if self else None
+    vs_core = _get_core(self) if self else None
 
-    if not _vs_core:
+    if not vs_core:
         import vapoursynth
 
-        _vs_core = vapoursynth.core.core
+        vs_core = vapoursynth.core.core
 
-    if (core_id := id(_vs_core)) not in core_on_creation_callbacks_cores:
+    if (core_id := id(vs_core)) not in core_on_creation_callbacks_cores:
         for cb_id in list(core_on_creation_callbacks.keys()):
             callback_ref = core_on_creation_callbacks.get(cb_id)
 
@@ -960,9 +960,9 @@ def _get_core_with_cb(self: VSCoreProxy | None = None) -> Core:
                 # remove dead references
                 core_on_creation_callbacks.pop(cb_id, None)
 
-        core_on_creation_callbacks_cores.add(id(_vs_core))
+        core_on_creation_callbacks_cores.add(id(vs_core))
 
-    return _vs_core
+    return vs_core
 
 
 def _find_ref(start_data: Any, to_return: type | tuple[type, ...], it: int = 3) -> Any:

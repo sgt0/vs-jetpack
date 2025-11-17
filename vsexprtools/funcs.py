@@ -260,7 +260,7 @@ def norm_expr(
                 **kwargs,
             )
         else:
-            nexpr = tuple([to_arr(x) for x in expr])
+            nexpr = tuple(to_arr(x) for x in expr)
     else:
         nexpr = (to_arr(expr),)
 

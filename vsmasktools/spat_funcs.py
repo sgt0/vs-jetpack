@@ -185,7 +185,7 @@ def texture_mask(
     points: list[tuple[bool, float]] = [(False, 1.75), (True, 2.5), (True, 5), (False, 10)],
 ) -> vs.VideoNode:
     levels = [x for x, _ in points]
-    _points = [scale_value(x, 8, clip) for _, x in points]
+    points_ = [scale_value(x, 8, clip) for _, x in points]
     thr = scale_value(thr, 8, 32, ColorRange.FULL)
 
     qm, peak = len(points), get_peak_value(clip)
@@ -198,17 +198,17 @@ def texture_mask(
         rmask, (Morpho.minimum(Morpho.binarize(emask, thr, 1.0, 0), iterations=it) for thr, it in stages)
     )
 
-    expr = [f"x {_points[0]} < x {_points[-1]} > or 0"]
+    expr = [f"x {points_[0]} < x {points_[-1]} > or 0"]
 
-    for x in range(len(_points) - 1):
-        if _points[x + 1] < _points[-1]:
-            expr.append(f"x {_points[x + 1]} <=")
+    for x in range(len(points_) - 1):
+        if points_[x + 1] < points_[-1]:
+            expr.append(f"x {points_[x + 1]} <=")
 
         if levels[x] == levels[x + 1]:
             expr.append(f"{peak if levels[x] else 0}")
         else:
-            mean = peak * (levels[x + 1] - levels[x]) / (_points[x + 1] - _points[x])
-            expr.append(f"x {_points[x]} - {mean} * {peak * levels[x]} +")
+            mean = peak * (levels[x + 1] - levels[x]) / (points_[x + 1] - points_[x])
+            expr.append(f"x {points_[x]} - {mean} * {peak * levels[x]} +")
 
     weighted = norm_expr(rm_txt, [expr, ExprOp.TERN * (qm - 1)], func=texture_mask)
 

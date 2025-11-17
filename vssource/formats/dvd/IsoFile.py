@@ -342,12 +342,12 @@ def dvdsrc_parse_vts(
 
     if not disable_rff:
         rnode = apply_rff_video(rawnode, staff.rff, staff.tff, staff.prog, staff.progseq)
-        _vobids = apply_rff_array(staff.vobids, staff.rff, staff.tff, staff.progseq)
+        vobids = apply_rff_array(staff.vobids, staff.rff, staff.tff, staff.progseq)
     else:
         rnode = rawnode
-        _vobids = staff.vobids
+        vobids = staff.vobids
 
-    return rnode, staff.rff, _vobids, vts_indices
+    return rnode, staff.rff, vobids, vts_indices
 
 
 def dvdsrc_extract_data(rawnode: vs.VideoNode) -> AllNeddedDvdFrameData:

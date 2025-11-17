@@ -156,7 +156,7 @@ class FileSignatures(list[FileSignature]):
             for filename in filenames:
                 header_data.extend(json_loads(filename.read_text()))
 
-            _file_headers_data = list(
+            file_headers_data = list(
                 {
                     FileSignature(
                         info["file_type"],
@@ -170,10 +170,10 @@ class FileSignatures(list[FileSignature]):
                 }.keys()
             )
 
-            self._file_headers_data = _file_headers_data
+            self._file_headers_data = file_headers_data
 
             if isinstance(custom_header_data, list):
-                return custom_header_data + _file_headers_data
+                return custom_header_data + file_headers_data
 
         return self._file_headers_data
 

@@ -39,14 +39,14 @@ def scale_var_clip(
     Returns:
         Scaled clip.
     """
-    _cached_clips = dict[str, vs.VideoNode]()
+    cached_clips = dict[str, vs.VideoNode]()
 
     no_accepts_var = list[Scaler]()
 
     def _eval_scale(f: vs.VideoFrame, n: int) -> vs.VideoNode:
         key = f"{f.width}_{f.height}"
 
-        if key not in _cached_clips:
+        if key not in cached_clips:
             res = Resolution(f.width, f.height)
 
             norm_scaler = scaler(res) if callable(scaler) else scaler
@@ -76,9 +76,9 @@ def scale_var_clip(
             if debug:
                 scaled = scaled.std.SetFrameProps(var_width=res.width, var_height=res.height)
 
-            _cached_clips[key] = scaled
+            cached_clips[key] = scaled
 
-        return _cached_clips[key]
+        return cached_clips[key]
 
     out_clip = clip if callable(width) or callable(height) else clip.std.BlankClip(width, height)
 

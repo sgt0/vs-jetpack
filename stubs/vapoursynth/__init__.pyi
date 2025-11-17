@@ -10,7 +10,6 @@ from typing import Any, Callable, Concatenate, Final, IO, Iterable, Iterator, Li
 from warnings import deprecated
 from weakref import ReferenceType
 
-
 __all__ = [
     "CHROMA_BOTTOM",
     "CHROMA_BOTTOM_LEFT",

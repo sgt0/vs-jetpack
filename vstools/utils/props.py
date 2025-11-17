@@ -189,7 +189,7 @@ def get_prop(
             with obj.get_frame(0) as f:
                 props = f.props.copy()
 
-            _get_prop_cache[(obj, 0)] = props
+            _get_prop_cache[obj, 0] = props
 
     elif isinstance(obj, vs.RawFrame):
         props = obj.props

@@ -999,18 +999,18 @@ def limiter[**P](
         Clamped clip.
     """
     if callable(clip_or_func):
-        _func = clip_or_func
+        func_ = clip_or_func
 
-        @wraps(_func)
+        @wraps(func_)
         def _wrapper(*args: P.args, **kwargs: P.kwargs) -> vs.VideoNode:
             return limiter(
-                _func(*args, **kwargs),
+                func_(*args, **kwargs),
                 min_val,
                 max_val,
                 tv_range=tv_range,
                 mask=mask,
                 planes=planes,
-                func=func or _func,
+                func=func or func_,
             )
 
         return _wrapper

@@ -253,7 +253,7 @@ class Timecodes(list[FrameDur]):
 
         denominator = den or fb_den or 1001
 
-        version, *_timecodes = file.read_text().splitlines()
+        version, *timecodes = file.read_text().splitlines()
 
         if "v1" in version:
 
@@ -264,20 +264,20 @@ class Timecodes(list[FrameDur]):
 
             timecodes_d = dict[tuple[int | None, int | None], Fraction]()
 
-            for line in _timecodes:
+            for line in timecodes:
                 if line.startswith("#"):
                     continue
 
                 if line.startswith("Assume"):
-                    assume = _norm(_timecodes[0][7:])
+                    assume = _norm(timecodes[0][7:])
                     continue
 
-                starts, ends, _fps = line.split(",")
-                timecodes_d[(int(starts), int(ends) + 1)] = _norm(_fps)
+                starts, ends, fps = line.split(",")
+                timecodes_d[int(starts), int(ends) + 1] = _norm(fps)
 
             norm_timecodes = cls.normalize_range_timecodes(timecodes_d, length, assume)
         elif "v2" in version:
-            timecodes_l = [float(t) for t in _timecodes if not t.startswith("#")]
+            timecodes_l = [float(t) for t in timecodes if not t.startswith("#")]
             norm_timecodes = [
                 Fraction(denominator, int(denominator / float(f"{round((x - y) * 100, 4) / 100000:.08f}"[:-1])))
                 for x, y in zip(timecodes_l[1:], timecodes_l[:-1])

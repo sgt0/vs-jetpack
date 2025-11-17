@@ -34,19 +34,19 @@ class SplitTitle:
         if self.video is None:
             return "None"
         # TODO: use absolutetime from title
-        _duration_times = [1 / float(self.video.fps)] * len(self.video)
-        _absolute_time = absolute_time_from_timecode(_duration_times)
+        duration_times = [1 / float(self.video.fps)] * len(self.video)
+        absolute_time = absolute_time_from_timecode(duration_times)
 
         chapters = self.chapters
 
         chapter_lengths = [
-            (_absolute_time[chapters[i + 1] - 1] + _duration_times[chapters[i + 1] - 1]) - _absolute_time[chapters[i]]
+            (absolute_time[chapters[i + 1] - 1] + duration_times[chapters[i + 1] - 1]) - absolute_time[chapters[i]]
             for i in range(len(self.chapters) - 1)
         ]
 
         chapter_lengths_str = [str(datetime.timedelta(seconds=x)) for x in chapter_lengths]
 
-        timestrings = [str(datetime.timedelta(seconds=_absolute_time[x])) for x in self.chapters]
+        timestrings = [str(datetime.timedelta(seconds=absolute_time[x])) for x in self.chapters]
 
         to_print = ["Chapters:"]
 

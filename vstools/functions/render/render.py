@@ -175,12 +175,12 @@ def clip_async_render[T](
         if not async_conf or async_conf.n == 1:
             blankclip = clip.std.BlankClip(keep=True)
 
-            _cb = get_callback()
+            cb = get_callback()
 
             if async_conf:
-                rend_clip = blankclip.std.FrameEval(lambda n: blankclip.std.ModifyFrame(clip, _cb))
+                rend_clip = blankclip.std.FrameEval(lambda n: blankclip.std.ModifyFrame(clip, cb))
             else:
-                rend_clip = blankclip.std.ModifyFrame(clip, _cb)
+                rend_clip = blankclip.std.ModifyFrame(clip, cb)
         else:
             if outfile:
                 raise CustomValueError("You cannot have and output file with multi async request!", clip_async_render)
@@ -200,7 +200,7 @@ def clip_async_render[T](
                     ]
                 )
             else:
-                _cb = get_callback()
+                cb = get_callback()
 
                 clip_indices = list(range(cl))
                 range_indices = list(range(async_conf.n))
@@ -209,7 +209,7 @@ def clip_async_render[T](
 
                 def _var(n: int, f: list[vs.VideoFrame]) -> vs.VideoFrame:
                     for i, fi in zip(range_indices, f):
-                        _cb(indices[i][n], fi)
+                        cb(indices[i][n], fi)
 
                     return f[0]
 
@@ -363,15 +363,15 @@ def prop_compare_cb(
 
         callback = _cb_one_px_return_frame_n if return_frame_n else _cb_one_px_not_return_frame_n
     else:
-        _op = _operators[op][0] if isinstance(op, str) else op
+        op_ = _operators[op][0] if isinstance(op, str) else op
 
         def _cb_return_frame_n(n: int, f: vs.VideoFrame) -> int | SentinelT:
-            assert _op
-            return Sentinel.check(n, _op(get_prop(f, prop, (float, bool)), ref))
+            assert op_
+            return Sentinel.check(n, op_(get_prop(f, prop, (float, bool)), ref))
 
         def _cb_not_return_frame_n(n: int, f: vs.VideoFrame) -> bool:
-            assert _op
-            return _op(get_prop(f, prop, (float, bool)), ref)
+            assert op_
+            return op_(get_prop(f, prop, (float, bool)), ref)
 
         callback = _cb_return_frame_n if return_frame_n else _cb_not_return_frame_n
 

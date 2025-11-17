@@ -104,10 +104,10 @@ def cache_clip[_NodeT: vs.RawNode](_clip: _NodeT, cache_size: int = 10) -> _Node
 
         blank = vs.core.std.BlankClip(_clip)
 
-        _to_cache_node = vs.core.std.ModifyFrame(blank, _clip, cache.add_frame)
-        _from_cache_node = vs.core.std.ModifyFrame(blank, blank, cache.get_frame)
+        to_cache_node = vs.core.std.ModifyFrame(blank, _clip, cache.add_frame)
+        from_cache_node = vs.core.std.ModifyFrame(blank, blank, cache.get_frame)
 
-        return vs.core.std.FrameEval(blank, lambda n: _from_cache_node if n in cache else _to_cache_node)  # type: ignore[return-value]
+        return vs.core.std.FrameEval(blank, lambda n: from_cache_node if n in cache else to_cache_node)  # type: ignore[return-value]
 
     # elif isinstance(_clip, vs.AudioNode):
     #     ...
