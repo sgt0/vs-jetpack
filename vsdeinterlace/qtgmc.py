@@ -155,6 +155,9 @@ class QTempGaussMC(VSObject):
     draft: vs.VideoNode
     """Draft processed clip, used as a base for prefiltering & denoising."""
 
+    input: vs.VideoNode
+    """Prepared input clip for high quality interpolation."""
+
     bobbed: vs.VideoNode
     """High quality bobbed clip, initial spatial interpolation."""
 
@@ -380,7 +383,6 @@ class QTempGaussMC(VSObject):
             raise UnsupportedFieldBasedError(f"{self.input_type} incompatible with progressive video!", self.__class__)
 
         self.tff = None if self.input_type == self.InputType.PROGRESSIVE else clip_fieldbased.is_tff()
-        self.double_rate = self.input_type != self.InputType.REPAIR
 
         # Set default parameters for all the stages in this exact order
         self._settings_methods = (
@@ -425,7 +427,7 @@ class QTempGaussMC(VSObject):
             sc_threshold: Threshold for scene changes, disables sc detection if False.
             postprocess: Post-processing routine to use.
             strength: Tuple containing gaussian blur sigma & blend weight of the blur.
-            limit: 3-step limiting (8-bits) thresholds for the gaussian blur post-processing. Only for
+            limit: 3-step limiting (8-bit) thresholds for the gaussian blur post-processing. Only for
                 [SearchPostProcess.GAUSSBLUR_EDGESOFTEN][vsdeinterlace.qtgmc.QTempGaussMC.SearchPostProcess.GAUSSBLUR_EDGESOFTEN].
             bias: Bias for blending the gaussian blurred clip with the limited output. Only for
                 [SearchPostProcess.GAUSSBLUR_EDGESOFTEN][vsdeinterlace.qtgmc.QTempGaussMC.SearchPostProcess.GAUSSBLUR_EDGESOFTEN].
@@ -826,7 +828,7 @@ class QTempGaussMC(VSObject):
 
     def _interpolate(self, clip: vs.VideoNode, bobber: Bobber) -> vs.VideoNode:
         if self.input_type != self.InputType.PROGRESSIVE:
-            clip = bobber.deinterlace(clip, tff=self.tff, double_rate=self.double_rate)
+            clip = bobber.deinterlace(clip, tff=self.tff, double_rate=True)
 
         return clip
 
@@ -1012,7 +1014,12 @@ class QTempGaussMC(VSObject):
             )
 
     def _apply_basic(self) -> None:
-        self.bobbed = self._interpolate(self.denoise_output, self.basic_bobber)
+        if self.input_type == self.InputType.REPAIR:
+            self.input = reinterlace(self.denoise_output, self.tff, self._interpolate)
+        else:
+            self.input = self.denoise_output
+
+        self.bobbed = self._interpolate(self.input, self.basic_bobber)
 
         if self.input_type == self.InputType.REPAIR and self.basic_mask_args.get("ml", 0):
             mask = self.mv.mask(
@@ -1029,7 +1036,7 @@ class QTempGaussMC(VSObject):
             smoothed = self._mask_shimmer(smoothed, self.bobbed, **self.basic_mask_shimmer_args)
 
         if self.source_match_mode:
-            smoothed = self._apply_source_match(smoothed, self.denoise_output)
+            smoothed = self._apply_source_match(smoothed)
 
         if self.lossless_mode == self.LosslessMode.PRESHARPEN:
             smoothed = self._apply_lossless(smoothed)
@@ -1050,18 +1057,18 @@ class QTempGaussMC(VSObject):
 
         self.basic_output = self._apply_noise_restore(resharp, self.basic_noise_restore)
 
-    def _apply_source_match(self, clip: vs.VideoNode, ref: vs.VideoNode) -> vs.VideoNode:
-        def _error_adjustment(clip: vs.VideoNode, ref: vs.VideoNode, tr: int) -> vs.VideoNode:
+    def _apply_source_match(self, clip: vs.VideoNode) -> vs.VideoNode:
+        def _error_adjustment(ref: vs.VideoNode, clip: vs.VideoNode, tr: int) -> vs.VideoNode:
             tr_f = 2 * tr - 1
             binomial_coeff = factorial(tr_f) // factorial(tr) // factorial(tr_f - tr)
             error_adj = 2**tr_f / (binomial_coeff + self.source_match_similarity * (2**tr_f - binomial_coeff))
 
-            return norm_expr([clip, ref], "y 1 {adj} + * x {adj} * -", adj=error_adj, func=_error_adjustment)
+            return norm_expr([ref, clip], "x {adj} 1 + * y {adj} * -", adj=error_adj, func=_error_adjustment)
 
-        if self.input_type == self.InputType.INTERLACE:
+        if self.input_type != self.InputType.PROGRESSIVE:
             clip = reinterlace(clip, self.tff, self._apply_source_match)
 
-        adjusted = _error_adjustment(clip, ref, self.basic_tr)
+        adjusted = _error_adjustment(self.input, clip, self.basic_tr)
         new_bobbed = self._interpolate(adjusted, self.basic_bobber)
         matched = self._binomial_degrain(new_bobbed, self.basic_tr, **self.basic_degrain_args)
 
@@ -1071,19 +1078,19 @@ class QTempGaussMC(VSObject):
                     matched, self.source_match_enhance, BlurMatrix.BINOMIAL(), func=self._apply_source_match
                 )
 
-            if self.input_type == self.InputType.INTERLACE:
+            if self.input_type != self.InputType.PROGRESSIVE:
                 clip = reinterlace(matched, self.tff, self._apply_source_match)
             else:
                 clip = matched
 
-            diff = ref.std.MakeDiff(clip)
+            diff = self.input.std.MakeDiff(clip)
             refine_bobbed = self._interpolate(diff, self.source_match_bobber)
             refine_matched = self._binomial_degrain(
                 refine_bobbed, self.source_match_tr, **self.source_match_degrain_args
             )
 
             if self.source_match_mode == self.SourceMatchMode.TWICE_REFINED:
-                refine_adjusted = _error_adjustment(refine_matched, refine_bobbed, self.source_match_tr)
+                refine_adjusted = _error_adjustment(refine_bobbed, refine_matched, self.source_match_tr)
                 refine_matched = self._binomial_degrain(
                     refine_adjusted, self.source_match_tr, **self.source_match_degrain_args
                 )
