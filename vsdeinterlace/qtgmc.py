@@ -248,7 +248,7 @@ class QTempGaussMC(VSObject):
 
     class SharpenMode(CustomIntEnum):
         """
-        How to re-sharpen the clip after temporally blurring.
+        How to re-sharpen the clip after temporal smoothing.
         """
 
         UNSHARP = 0
@@ -413,6 +413,7 @@ class QTempGaussMC(VSObject):
         postprocess: SearchPostProcess = SearchPostProcess.GAUSSBLUR_EDGESOFTEN,
         strength: tuple[float, float] | Literal[False] = (1.9, 0.1),
         limit: tuple[float, float, float] = (3, 7, 2),
+        bias: float = 0.51,
         range_expansion_args: QTGMCArgs.PrefilterToFullRange | None = None,
         mask_shimmer_args: QTGMCArgs.MaskShimmer | None = None,
     ) -> Self:
@@ -424,7 +425,10 @@ class QTempGaussMC(VSObject):
             sc_threshold: Threshold for scene changes, disables sc detection if False.
             postprocess: Post-processing routine to use.
             strength: Tuple containing gaussian blur sigma & blend weight of the blur.
-            limit: 3-step limiting (8-bits) thresholds for the gaussian blur post-processing.
+            limit: 3-step limiting (8-bits) thresholds for the gaussian blur post-processing. Only for
+                [SearchPostProcess.GAUSSBLUR_EDGESOFTEN][vsdeinterlace.qtgmc.QTempGaussMC.SearchPostProcess.GAUSSBLUR_EDGESOFTEN].
+            bias: Bias for blending the gaussian blurred clip with the limited output. Only for
+                [SearchPostProcess.GAUSSBLUR_EDGESOFTEN][vsdeinterlace.qtgmc.QTempGaussMC.SearchPostProcess.GAUSSBLUR_EDGESOFTEN].
             range_expansion_args: Arguments passed to
                 [prefilter_to_full_range][vsdenoise.prefilters.prefilter_to_full_range].
             mask_shimmer_args: mask_shimmer_args: Arguments passed to the mask_shimmer call.
@@ -435,6 +439,7 @@ class QTempGaussMC(VSObject):
         self.prefilter_postprocess = postprocess
         self.prefilter_strength: tuple[float, float] | Literal[False] = strength
         self.prefilter_limit = limit
+        self.prefilter_bias = bias
         self.prefilter_range_expansion_args = fallback(range_expansion_args, QTGMCArgs.PrefilterToFullRange())
         self.prefilter_mask_shimmer_args = fallback(mask_shimmer_args, QTGMCArgs.MaskShimmer())
 
@@ -890,10 +895,12 @@ class QTempGaussMC(VSObject):
                 blurred = norm_expr(
                     [blurred, smoothed, search],
                     "z y {lim1} - y {lim1} + clip TWEAK! "
-                    "x {lim2} + TWEAK@ < x {lim3} + x {lim2} - TWEAK@ > x {lim3} - x 0.51 * TWEAK@ 0.49 * + ? ?",
+                    "x {lim2} + TWEAK@ < x {lim3} + x {lim2} - TWEAK@ > x {lim3} - "
+                    "x {bias} * TWEAK@ 1 {bias} - * + ? ?",
                     lim1=lim1,
                     lim2=lim2,
                     lim3=lim3,
+                    bias=self.prefilter_bias,
                     func=self._apply_prefilter,
                 )
         else:
