@@ -172,9 +172,7 @@ class padder_ctx(AbstractContextManager["padder_ctx"]):
         self.pad_ops.append((padding, (out.width, out.height)))
         return out
 
-    def COLOR(
-        self, clip: vs.VideoNode, color: int | float | bool | None | Sequence[int | float | bool | None] = (False, None)
-    ) -> vs.VideoNode:
+    def COLOR(self, clip: vs.VideoNode, color: float | None | Sequence[float | None] = (False, None)) -> vs.VideoNode:
         """
         Pad a clip with a constant color.
 
@@ -338,7 +336,7 @@ class padder:
         right: int = 0,
         top: int = 0,
         bottom: int = 0,
-        color: int | float | bool | None | MissingT | Sequence[int | float | bool | None | MissingT] = (False, MISSING),
+        color: float | None | MissingT | Sequence[float | None | MissingT] = (False, MISSING),
     ) -> vs.VideoNode:
         """
         Pad a clip with a constant color.
@@ -369,7 +367,7 @@ class padder:
         """
         cls._base(clip, left, right, top, bottom)
 
-        def _norm(colr: int | float | bool | None | MissingT) -> Sequence[int | float]:
+        def _norm(colr: float | bool | None | MissingT) -> Sequence[float]:
             if colr is MISSING:
                 colr = False if clip.format.color_family is vs.RGB else None
 

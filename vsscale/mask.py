@@ -53,7 +53,7 @@ def descale_error_mask(
     rescaled: vs.VideoNode,
     thr: float | list[float] = 0.038,
     expands: int | tuple[int, int, int] = (2, 2, 3),
-    blur: int | float = 3,
+    blur: float = 3,
     bwbias: int = 1,
     tr: int = 0,
 ) -> vs.VideoNode:

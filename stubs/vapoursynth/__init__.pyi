@@ -865,7 +865,7 @@ class FramePtr: ...
 # These memoryview-likes don't exist at runtime.
 class _video_view(memoryview):  # type: ignore[misc]
     def __getitem__(self, index: tuple[int, int]) -> int | float: ...  # type: ignore[override]
-    def __setitem__(self, index: tuple[int, int], other: int | float) -> None: ...  # type: ignore[override]
+    def __setitem__(self, index: tuple[int, int], other: float) -> None: ...  # type: ignore[override]
     @property
     def shape(self) -> tuple[int, int]: ...
     @property
@@ -878,7 +878,7 @@ class _video_view(memoryview):  # type: ignore[misc]
 
 class _audio_view(memoryview):  # type: ignore[misc]
     def __getitem__(self, index: int) -> int | float: ...  # type: ignore[override]
-    def __setitem__(self, index: int, other: int | float) -> None: ...  # type: ignore[override]
+    def __setitem__(self, index: int, other: float) -> None: ...  # type: ignore[override]
     @property
     def shape(self) -> tuple[int]: ...
     @property

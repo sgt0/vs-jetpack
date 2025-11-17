@@ -21,7 +21,7 @@ __all__ = [
 
 
 class _SetItemMeta:
-    def __setitem__(self, key: str, value: float | int) -> None:
+    def __setitem__(self, key: str, value: float) -> None:
         return self.__setattr__(key, value)
 
 

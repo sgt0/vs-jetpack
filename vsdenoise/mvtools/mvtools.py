@@ -497,7 +497,7 @@ class MVTools(VSObject):
         scbehavior: bool | None = None,
         thsad: int | None = None,
         time: float | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: Literal[True] = True,
         temporal_func: None = None,
     ) -> tuple[vs.VideoNode, tuple[int, int]]: ...
@@ -513,7 +513,7 @@ class MVTools(VSObject):
         scbehavior: bool | None = None,
         thsad: int | None = None,
         time: float | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: Literal[True] = True,
         *,
         temporal_func: VSFunctionNoArgs,
@@ -530,7 +530,7 @@ class MVTools(VSObject):
         scbehavior: bool | None = None,
         thsad: int | None = None,
         time: float | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         *,
         interleave: Literal[False],
         temporal_func: None = None,
@@ -546,7 +546,7 @@ class MVTools(VSObject):
         scbehavior: bool | None = None,
         thsad: int | None = None,
         time: float | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: bool = True,
         temporal_func: VSFunctionNoArgs | None = None,
     ) -> Union[
@@ -636,7 +636,7 @@ class MVTools(VSObject):
         tr: int | None = None,
         time: float | None = None,
         mode: FlowMode | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: Literal[True] = True,
         temporal_func: None = None,
     ) -> tuple[vs.VideoNode, tuple[int, int]]: ...
@@ -651,7 +651,7 @@ class MVTools(VSObject):
         tr: int | None = None,
         time: float | None = None,
         mode: FlowMode | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: Literal[True] = True,
         *,
         temporal_func: VSFunctionNoArgs,
@@ -667,7 +667,7 @@ class MVTools(VSObject):
         tr: int | None = None,
         time: float | None = None,
         mode: FlowMode | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         *,
         interleave: Literal[False],
         temporal_func: None = None,
@@ -682,7 +682,7 @@ class MVTools(VSObject):
         tr: int | None = None,
         time: float | None = None,
         mode: FlowMode | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: bool = True,
         temporal_func: VSFunctionNoArgs | None = None,
     ) -> Union[
@@ -838,7 +838,7 @@ class MVTools(VSObject):
         time: float | None = None,
         ml: float | None = None,
         blend: bool | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
         interleave: bool = True,
     ) -> vs.VideoNode:
         """
@@ -897,7 +897,7 @@ class MVTools(VSObject):
         mask: int | None = None,
         ml: float | None = None,
         blend: bool | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
     ) -> vs.VideoNode:
         """
         Changes the framerate of the clip by interpolating frames between existing frames.
@@ -952,7 +952,7 @@ class MVTools(VSObject):
         mode: int | None = None,
         ml: float | None = None,
         blend: bool | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
     ) -> vs.VideoNode:
         """
         Changes the framerate of the clip by interpolating frames between existing frames
@@ -1006,7 +1006,7 @@ class MVTools(VSObject):
         vectors: MotionVectors | None = None,
         blur: float | None = None,
         prec: int | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
     ) -> vs.VideoNode:
         """
         Creates a motion blur effect by simulating finite shutter time, similar to film cameras.
@@ -1054,7 +1054,7 @@ class MVTools(VSObject):
         kind: MaskMode | None = None,
         time: float | None = None,
         ysc: int | None = None,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
     ) -> vs.VideoNode:
         """
         Creates a mask clip from motion vectors data.
@@ -1100,7 +1100,7 @@ class MVTools(VSObject):
         clip: vs.VideoNode | None = None,
         vectors: MotionVectors | None = None,
         delta: int = 1,
-        thscd: int | tuple[int | None, int | float | None] | None = None,
+        thscd: int | tuple[int | None, float | None] | None = None,
     ) -> vs.VideoNode:
         """
         Creates scene change frameprops from motion vectors data.

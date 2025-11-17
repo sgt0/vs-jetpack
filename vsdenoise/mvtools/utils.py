@@ -41,7 +41,7 @@ def planes_to_mvtools(clip: vs.VideoNode, planes: Planes) -> int:
 
 
 def normalize_thscd(
-    thscd: int | tuple[int | None, int | float | None] | None, scale: bool = True
+    thscd: int | tuple[int | None, float | None] | None, scale: bool = True
 ) -> tuple[int | None, int | None]:
     """
     Normalize and scale the thscd parameter.

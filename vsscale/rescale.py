@@ -264,11 +264,11 @@ class Rescale(RescaleBase):
         self,
         clip: vs.VideoNode,
         /,
-        height: int | float,
+        height: int | float,  # noqa: PYI041
         kernel: ComplexKernelLike,
         upscaler: ScalerLike = ArtCNN,
         downscaler: ScalerLike = Hermite(linear=True),
-        width: int | float | None = None,
+        width: int | float | None = None,  # noqa: PYI041
         base_height: int | None = None,
         base_width: int | None = None,
         crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] = CropRel(),

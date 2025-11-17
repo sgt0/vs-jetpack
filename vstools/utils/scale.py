@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from jetpytools import normalize_seq
+from jetpytools import clamp, normalize_seq
 
 from ..enums import ColorRange, ColorRangeLike
 from ..types import HoldsVideoFormat, VideoFormatLike
@@ -21,7 +21,7 @@ __all__ = [
 
 
 def scale_value(
-    value: int | float,
+    value: float,
     input_depth: int | VideoFormatLike | HoldsVideoFormat,
     output_depth: int | VideoFormatLike | HoldsVideoFormat,
     range_in: ColorRangeLike | None = None,
@@ -29,7 +29,7 @@ def scale_value(
     scale_offsets: bool = True,
     chroma: bool = False,
     family: vs.ColorFamily | None = None,
-) -> int | float:
+) -> float:
     """
     Converts the value to the specified bit depth, or bit depth of the clip/format specified.
 
@@ -99,16 +99,16 @@ def scale_value(
             out_value += 16 << (out_fmt.bits_per_sample - 8)
 
     if out_fmt.sample_type is vs.INTEGER:
-        out_value = max(min(round(out_value), get_peak_value(out_fmt, range_in=ColorRange.FULL)), 0)
+        out_value = clamp(round(out_value), 0, get_peak_value(out_fmt, range_in=ColorRange.FULL))
 
     return out_value
 
 
 def scale_mask(
-    value: int | float,
+    value: float,
     input_depth: int | VideoFormatLike | HoldsVideoFormat,
     output_depth: int | VideoFormatLike | HoldsVideoFormat,
-) -> int | float:
+) -> float:
     """
     Converts the value to the specified bit depth, or bit depth of the clip/format specified.
     Intended for mask clips which are always full range.
@@ -126,12 +126,12 @@ def scale_mask(
 
 
 def scale_delta(
-    value: int | float,
+    value: float,
     input_depth: int | VideoFormatLike | HoldsVideoFormat,
     output_depth: int | VideoFormatLike | HoldsVideoFormat,
     range_in: ColorRangeLike | None = None,
     range_out: ColorRangeLike | None = None,
-) -> int | float:
+) -> float:
     """
     Converts the value to the specified bit depth, or bit depth of the clip/format specified.
     Uses the clip's range (if only one clip is passed) for both depths.

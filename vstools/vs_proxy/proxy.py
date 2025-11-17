@@ -1115,7 +1115,7 @@ class VSCoreProxy(CoreProxyBase):
 
     def set_affinity(
         self,
-        threads: int | float | range | tuple[int, int] | list[int] | None = None,
+        threads: int | float | range | tuple[int, int] | list[int] | None = None,  # noqa: PYI041
         max_cache: int | None = None,
         reserve: Iterable[int] = [],
     ) -> None:

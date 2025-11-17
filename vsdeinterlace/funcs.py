@@ -226,7 +226,7 @@ def vinverse(
     comb_blur: VSFunctionKwArgs | vs.VideoNode = partial(sbr, mode=ConvMode.VERTICAL),
     contra_blur: VSFunctionKwArgs | vs.VideoNode = BlurMatrix.BINOMIAL(mode=ConvMode.VERTICAL),
     contra_str: float = 2.7,
-    amnt: int | float | None = None,
+    amnt: float | None = None,
     scl: float = 0.25,
     planes: Planes = None,
 ) -> vs.VideoNode:

@@ -179,7 +179,7 @@ def texture_mask(
     clip: vs.VideoNode,
     rady: int = 2,
     radc: int | None = None,
-    blur: int | float = 8,
+    blur: float = 8,
     thr: float = 0.2,
     stages: list[tuple[int, int]] = [(60, 2), (40, 4), (20, 2)],
     points: list[tuple[bool, float]] = [(False, 1.75), (True, 2.5), (True, 5), (False, 10)],
@@ -212,6 +212,6 @@ def texture_mask(
 
     weighted = norm_expr(rm_txt, [expr, ExprOp.TERN * (qm - 1)], func=texture_mask)
 
-    weighted = gauss_blur(weighted, blur) if isinstance(blur, float) else box_blur(weighted, blur)
+    weighted = box_blur(weighted, blur) if isinstance(blur, int) else gauss_blur(weighted, blur)
 
     return norm_expr(weighted, f"x {peak * thr} - {1 / (1 - thr)} *", func=texture_mask)

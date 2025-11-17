@@ -69,7 +69,7 @@ def unsharpen(
 def awarpsharp(
     clip: vs.VideoNode,
     mask: MaskLike | None = None,
-    thresh: int | float = 128,
+    thresh: float = 128,
     blur: int | VSFunctionPlanesArgs | Literal[False] = 3,
     depth_h: int | Sequence[int] | None = None,
     depth_v: int | Sequence[int] | None = None,

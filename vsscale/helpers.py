@@ -181,8 +181,8 @@ class ScalingArgs:
     def from_args(
         cls,
         base_clip: vs.VideoNode,
-        height: int | float,
-        width: int | float | None = None,
+        height: int | float,  # noqa: PYI041
+        width: int | float | None = None,  # noqa: PYI041
         base_height: int | None = None,
         base_width: int | None = None,
         src_top: float = 0,
@@ -195,7 +195,7 @@ class ScalingArgs:
 
         Args:
             base_clip: Source clip.
-            height:  Target (de)scaling height. Casting to float will ensure fractional calculations.
+            height: Target (de)scaling height. Casting to float will ensure fractional calculations.
             width: Target (de)scaling width. Casting to float will ensure fractional calculations. If None, it will be
                 calculated from the height and the aspect ratio of the base_clip.
             base_height: The height from which to contain the clip. If None, it will be calculated from the height.

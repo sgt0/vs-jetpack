@@ -157,7 +157,7 @@ def mc_clamp(
     flt: vs.VideoNode,
     src: vs.VideoNode,
     mv_obj: MVTools,
-    clamp: int | float | tuple[int | float, int | float] = 0,
+    clamp: float | tuple[float, float] = 0,
     func: FuncExcept | None = None,
     **kwargs: Any,
 ) -> vs.VideoNode:
