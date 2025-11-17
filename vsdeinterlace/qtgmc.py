@@ -828,7 +828,7 @@ class QTempGaussMC(VSObject):
 
     def _interpolate(self, clip: vs.VideoNode, bobber: Bobber) -> vs.VideoNode:
         if self.input_type != self.InputType.PROGRESSIVE:
-            clip = bobber.deinterlace(clip, tff=self.tff, double_rate=True)
+            clip = bobber.bob(clip, tff=self.tff)
 
         return clip
 
