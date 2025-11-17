@@ -102,6 +102,7 @@ def hq_dering(
         bright_thr: LimitFilter parameter. Threshold (8-bit scale) to limit bright filtering diff.
             Since `bright_thr` is "how much to limit overshoot", increasing this threshold
             will effectively remove more dark halos.
+            None defaults to `bright_thr` / 4.
         elast: LimitFilter parameter. Elasticity of the soft threshold.
 
     Returns:
