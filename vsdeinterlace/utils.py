@@ -95,7 +95,7 @@ def reweave(
     """
     func = func or reweave
 
-    return weave(core.std.Interleave([clipa, clipb]), tff, func)
+    return weave(core.std.Interleave([clipa, clipb]).std.SelectEvery(4, (0, 1, 3, 2)), tff, func)
 
 
 def reinterlace(
