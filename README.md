@@ -1,7 +1,6 @@
 # vs-jetpack
 
-[![Coverage Status](https://coveralls.io/repos/github/Jaded-Encoding-Thaumaturgy/vs-jetpack/badge.svg?branch=main)](https://coveralls.io/github/Jaded-Encoding-Thaumaturgy/vs-jetpack?branch=main)
-[![Documentation](https://img.shields.io/badge/API%20Docs-purple)](https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/)
+[![Documentation](https://img.shields.io/badge/API%20Docs-purple)](https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/) [![Coverage Status](https://coveralls.io/repos/github/Jaded-Encoding-Thaumaturgy/vs-jetpack/badge.svg?branch=main)](https://coveralls.io/github/Jaded-Encoding-Thaumaturgy/vs-jetpack?branch=main) [![PyPI Version](https://img.shields.io/pypi/v/vsjetpack)](https://pypi.org/project/vsjetpack/)
 
 Full suite of filters, wrappers, and helper functions for filtering video using VapourSynth
 
@@ -13,24 +12,19 @@ For support you can check out the [JET Discord server](https://discord.gg/XTpc6F
 
 ## How to install
 
-Install `vsjetpack` with the following command:
+`vsjetpack` is distributed via **PyPI**, and the latest stable release can be installed using:
 
 ```sh
 pip install vsjetpack
 ```
 
-Or if you want the latest git version, install it with this command:
+As of version **1.0.0**, prebuilt wheels are also provided in the [**GitHub Releases**](https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack/releases).
+<br><br>
 
-```sh
-pip install git+https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack.git
-```
+## Dependencies
 
-Note that `vsjetpack` only provides Python functions,
-many of them wrapping or combining existing plugins.
-You will need to install these plugins separately,
-for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
-
-#### Dependencies
+Note that `vsjetpack` only provides Python functions, many of them wrapping or combining existing plugins.
+You will need to install these plugins separately, for example using [vsrepo](https://github.com/vapoursynth/vsrepo).
 
 | **Essential**                                                                          | **Source filters**                                                    | **Optional**                                                                   |                                                                              |
 | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
