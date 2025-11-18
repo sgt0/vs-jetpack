@@ -111,7 +111,7 @@ class QTGMCArgs:
 
 class QTempGaussMC(VSObject):
     """
-    Q Temporal Gaussian Motion Compensated (QTGMC)
+    Quick Temporal Gaussian Motion Compensated (QTGMC)
 
     A very high quality deinterlacer with a range of features for both quality and convenience.
     These include extensive noise processing capabilities, support for repair of progressive material,
