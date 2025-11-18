@@ -289,7 +289,7 @@ class RemoveGrain[**P, R]:
 
         MINMAX_MEDIAN = 4
         """
-        Deprecated. Similar to mode 1, but clamps to fourth-lowest/highest.
+        Similar to mode 1, but clamps to fourth-lowest/highest.
         """
 
         EDGE_CLIP_STRONG = 5
@@ -324,7 +324,7 @@ class RemoveGrain[**P, R]:
 
         BINOMIAL_BLUR = 11
         """
-        Deprecated. Use `BlurMatrix.BINOMIAL`. Applies weighted 3x3 blur.
+        Applies a 3x3 binomial blur.
         """
 
         BOB_TOP_CLOSE = 13
@@ -359,12 +359,12 @@ class RemoveGrain[**P, R]:
 
         MEAN_NO_CENTER = 19
         """
-        Deprecated. Use `BlurMatrix.MEAN_NO_CENTER`. Mean of neighborhood (excluding center).
+        Mean of neighborhood (excluding center).
         """
 
         MEAN = 20
         """
-        Deprecated. Use `BlurMatrix.MEAN`. Arithmetic mean of 3x3 neighborhood.
+        Arithmetic mean of 3x3 neighborhood.
         """
 
         BOX_BLUR_NO_CENTER = MEAN_NO_CENTER
