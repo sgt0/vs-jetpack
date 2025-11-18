@@ -1089,10 +1089,6 @@ class VideoNode(RawNode):
     eedi3m: Final[_eedi3m._VideoNode_bound.Plugin]
     """Enhanced Edge Directed Interpolation 3"""
 # </attribute/VideoNode_bound/eedi3m>
-# <attribute/VideoNode_bound/fft3dfilter>
-    fft3dfilter: Final[_fft3dfilter._VideoNode_bound.Plugin]
-    """systems"""
-# </attribute/VideoNode_bound/fft3dfilter>
 # <attribute/VideoNode_bound/fmtc>
     fmtc: Final[_fmtc._VideoNode_bound.Plugin]
     """Format converter"""
@@ -1371,10 +1367,6 @@ class Core:
     ffms2: Final[_ffms2._Core_bound.Plugin]
     """FFmpegSource 2 for VapourSynth"""
 # </attribute/Core_bound/ffms2>
-# <attribute/Core_bound/fft3dfilter>
-    fft3dfilter: Final[_fft3dfilter._Core_bound.Plugin]
-    """systems"""
-# </attribute/Core_bound/fft3dfilter>
 # <attribute/Core_bound/fmtc>
     fmtc: Final[_fmtc._Core_bound.Plugin]
     """Format converter"""
@@ -2084,20 +2076,6 @@ class _ffms2:
             def Version(self) -> _AnyStr: ...
 
 # </implementation/ffms2>
-
-# <implementation/fft3dfilter>
-class _fft3dfilter:
-    class _Core_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def FFT3DFilter(self, clip: VideoNode, sigma: float | None = None, beta: float | None = None, planes: int | _SequenceLike[int] | None = None, bw: int | None = None, bh: int | None = None, bt: int | None = None, ow: int | None = None, oh: int | None = None, kratio: float | None = None, sharpen: float | None = None, scutoff: float | None = None, svr: float | None = None, smin: float | None = None, smax: float | None = None, measure: int | None = None, interlaced: int | None = None, wintype: int | None = None, pframe: int | None = None, px: int | None = None, py: int | None = None, pshow: int | None = None, pcutoff: float | None = None, pfactor: float | None = None, sigma2: float | None = None, sigma3: float | None = None, sigma4: float | None = None, degrid: float | None = None, dehalo: float | None = None, hr: float | None = None, ht: float | None = None, ncpu: int | None = None) -> VideoNode: ...
-
-    class _VideoNode_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def FFT3DFilter(self, sigma: float | None = None, beta: float | None = None, planes: int | _SequenceLike[int] | None = None, bw: int | None = None, bh: int | None = None, bt: int | None = None, ow: int | None = None, oh: int | None = None, kratio: float | None = None, sharpen: float | None = None, scutoff: float | None = None, svr: float | None = None, smin: float | None = None, smax: float | None = None, measure: int | None = None, interlaced: int | None = None, wintype: int | None = None, pframe: int | None = None, px: int | None = None, py: int | None = None, pshow: int | None = None, pcutoff: float | None = None, pfactor: float | None = None, sigma2: float | None = None, sigma3: float | None = None, sigma4: float | None = None, degrid: float | None = None, dehalo: float | None = None, hr: float | None = None, ht: float | None = None, ncpu: int | None = None) -> VideoNode: ...
-
-# </implementation/fft3dfilter>
 
 # <implementation/fmtc>
 class _fmtc:
