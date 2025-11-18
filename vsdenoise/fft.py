@@ -21,20 +21,10 @@ from jetpytools import (
     classproperty,
     fallback,
 )
-from typing_extensions import deprecated
 
-from vstools import (
-    FieldBased,
-    Planes,
-    check_progressive,
-    core,
-    flatten,
-    get_depth,
-    get_sample_type,
-    vs,
-)
+from vstools import Planes, check_progressive, core, flatten, vs
 
-__all__ = ["DFTTest", "SLocationLike", "fft3d"]
+__all__ = ["DFTTest", "SLocationLike"]
 
 
 class _BackendBase(CustomEnum):
@@ -1124,36 +1114,3 @@ ensuring every frequency has an associated sigma.
 
 SLocationT = SLocationLike
 """Deprecated alias of SLocationLike."""
-
-
-@deprecated("`fft3d` is permanently deprecated and known to contain many bugs. Use with caution.")
-def fft3d(clip: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
-    """
-    Applies FFT3DFilter, a 3D frequency-domain filter used for strong denoising and mild sharpening.
-
-    This filter processes frames using the Fast Fourier Transform (FFT) in the frequency domain.
-    Unlike local filters, FFT3DFilter performs block-based, non-local processing.
-
-       - [Official documentation](https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md)
-       - [Possibly faster implementation](https://github.com/AmusementClub/VapourSynth-FFT3DFilter/releases)
-
-    Note: Sigma values are internally scaled according to bit depth, unlike when using the plugin directly.
-
-    Args:
-        clip: Input video clip.
-        **kwargs: Additional parameters passed to the FFT3DFilter plugin.
-
-    Returns:
-        A heavily degraded version of DFTTest, with added banding and color shifts.
-    """
-    kwargs |= {"interlaced": FieldBased.from_video(clip, False, fft3d).is_inter()}
-
-    # fft3dfilter requires sigma values to be scaled to bit depth
-    # https://github.com/myrsloik/VapourSynth-FFT3DFilter/blob/master/doc/fft3dfilter.md#scaling-parameters-according-to-bit-depth
-    sigma_multiplier = 1.0 / 256.0 if get_sample_type(clip) is vs.FLOAT else 1 << (get_depth(clip) - 8)
-
-    for sigma in ["sigma", "sigma2", "sigma3", "sigma4", "smin ", "smax"]:
-        if sigma in kwargs:
-            kwargs[sigma] *= sigma_multiplier
-
-    return core.fft3dfilter.FFT3DFilter(clip, **kwargs)
