@@ -9,11 +9,33 @@ authors = [{ name = "Jaded Encoding Thaumaturgy" }]
 maintainers = [
     { name = "Jaded Encoding Thaumaturgy", email = "jaded.encoding.thaumaturgy@gmail.com" },
 ]
+keywords = [
+    "vapoursynth",
+    "video",
+    "encoding",
+    "wrappers",
+    "helpers",
+    "vstools",
+    "vskernels",
+    "vsexprtools",
+    "vsrgtools",
+    "vsmasktools",
+    "vsaa",
+    "vsscale",
+    "vsdenoise",
+    "vsdehalo",
+    "vsdeband",
+    "vsdeinterlace",
+    "vssource",
+]
 classifiers = [
     "Topic :: Multimedia :: Graphics",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -29,7 +51,9 @@ dependencies = [
 ]
 
 [project.urls]
+Documentation = "https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/"
 "Source Code" = "https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack"
+Tracker = "https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack/issues"
 "Contact" = "https://discord.gg/XTpc6Fa9eB"
 
 [dependency-groups]
