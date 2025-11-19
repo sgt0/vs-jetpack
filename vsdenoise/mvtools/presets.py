@@ -233,14 +233,14 @@ class MVToolsPreset(Mapping[str, Any], VSObjectABC):
         return self.__clean_dict__.__len__()
 
     def __or__(self, value: Mapping[str, Any], /) -> dict[str, Any]:
-        return self._dict | dict(value)
+        return self.__clean_dict__ | dict(value)
 
     def __ror__(self, value: Mapping[str, Any], /) -> dict[str, Any]:
-        return dict(value) | self._dict
+        return dict(value) | self.__clean_dict__
 
     def copy(self) -> dict[str, Any]:
         """Return a shallow copy of the preset."""
-        return self._dict.copy()
+        return self.__clean_dict__.copy()
 
     @classproperty
     @classmethod
