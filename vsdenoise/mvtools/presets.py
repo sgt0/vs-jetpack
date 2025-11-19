@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Iterator, Mapping, Self, TypedDict
 
-from jetpytools import classproperty
+from jetpytools import KwargsNotNone, classproperty
 
 from vstools import VSFunctionNoArgs, VSObjectABC, vs
 
@@ -189,7 +189,7 @@ class MVToolsPreset(Mapping[str, Any], VSObjectABC):
         mask_args: MaskArgs | None = None,
         sc_detection_args: ScDetectionArgs | None = None,
     ) -> None:
-        self._dict = dict[str, Any](
+        self._dict = KwargsNotNone(
             search_clip=search_clip,
             tr=tr,
             pel=pel,
@@ -209,38 +209,34 @@ class MVToolsPreset(Mapping[str, Any], VSObjectABC):
             sc_detection_args=sc_detection_args,
         )
 
-    @property
-    def __clean_dict__(self) -> dict[str, Any]:
-        return {k: v for k, v in self._dict.items() if v is not None}
-
     def __str__(self) -> str:
-        return self.__clean_dict__.__str__()
+        return self._dict.__str__()
 
     def __getattr__(self, name: str) -> Any:
         try:
-            return self.__clean_dict__[name]
+            return self._dict[name]
         except KeyError:
             pass
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'") from None
 
     def __getitem__(self, key: str) -> Any:
-        return self.__clean_dict__.__getitem__(key)
+        return self._dict.__getitem__(key)
 
     def __iter__(self) -> Iterator[str]:
-        return self.__clean_dict__.__iter__()
+        return self._dict.__iter__()
 
     def __len__(self) -> int:
-        return self.__clean_dict__.__len__()
+        return self._dict.__len__()
 
     def __or__(self, value: Mapping[str, Any], /) -> dict[str, Any]:
-        return self.__clean_dict__ | dict(value)
+        return self._dict | dict(value)
 
     def __ror__(self, value: Mapping[str, Any], /) -> dict[str, Any]:
-        return dict(value) | self.__clean_dict__
+        return dict(value) | self._dict
 
     def copy(self) -> dict[str, Any]:
         """Return a shallow copy of the preset."""
-        return self.__clean_dict__.copy()
+        return self._dict.copy()
 
     @classproperty
     @classmethod
