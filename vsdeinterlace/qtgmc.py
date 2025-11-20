@@ -796,7 +796,7 @@ class QTempGaussMC(VSObject):
         if not erosion_distance:
             return flt
 
-        ed_iter1, ed_iter2 = (1 + (erosion_distance + 1) // 3, 1 + (erosion_distance + 2) // 3)
+        ed_iter1, ed_iter2 = (1 + erosion_distance // 3, 1 + (erosion_distance + 1) // 3)
         od_iter1, od_iter2 = (over_dilation // 3, over_dilation % 3)
 
         diff = src.std.MakeDiff(flt)
