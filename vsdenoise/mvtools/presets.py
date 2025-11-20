@@ -149,7 +149,7 @@ class ScDetectionArgs(TypedDict, total=False):
     thscd2: int | None
 
 
-class MVToolsPreset(Mapping[str, Any], VSObjectABC):
+class MVToolsPreset(VSObjectABC, Mapping[str, Any]):
     search_clip: vs.VideoNode | VSFunctionNoArgs
     tr: int
     pel: int
