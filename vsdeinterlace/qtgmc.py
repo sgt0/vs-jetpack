@@ -855,12 +855,14 @@ class QTempGaussMC(VSObject):
         vectors = MotionVectors()
         degrained = list[vs.VideoNode]()
 
+        super = self.mv.super(clip, levels=1)
+
         for delta in range(tr):
             vectors.set_vector(backward[delta], MVDirection.BACKWARD, 1)
             vectors.set_vector(forward[delta], MVDirection.FORWARD, 1)
 
             degrained.append(
-                self.mv.degrain(clip, vectors=vectors, thsad=self.basic_thsad, thscd=self.analyze_thscd, **degrain_args)
+                self.mv.degrain(clip, super, vectors, thsad=self.basic_thsad, thscd=self.analyze_thscd, **degrain_args)
             )
             vectors.clear()
 
