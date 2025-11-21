@@ -417,7 +417,7 @@ class QTempGaussMC(VSObject):
         limit: tuple[float, float, float] = (3, 7, 2),
         bias: float = 0.51,
         range_expansion_args: QTGMCArgs.PrefilterToFullRange | None = None,
-        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = None,
+        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = {"erosion_distance": 4},
     ) -> Self:
         """
         Configure parameters for the prefilter stage.
@@ -433,7 +433,12 @@ class QTempGaussMC(VSObject):
                 [SearchPostProcess.GAUSSBLUR_EDGESOFTEN][vsdeinterlace.qtgmc.QTempGaussMC.SearchPostProcess.GAUSSBLUR_EDGESOFTEN].
             range_expansion_args: Arguments passed to
                 [prefilter_to_full_range][vsdenoise.prefilters.prefilter_to_full_range].
-            mask_shimmer_args: mask_shimmer_args: Arguments passed to the mask_shimmer call.
+            mask_shimmer_args: Arguments passed to the mask_shimmer call:
+
+                   - erosion_distance: How much to deflate then reflate to remove thin areas.
+                     Default is 4 for this stage.
+                   - over_dilation: Extra inflation to ensure areas to restore back are fully caught.
+                     Default is 0.
         """
 
         self.prefilter_tr = tr
@@ -546,7 +551,12 @@ class QTempGaussMC(VSObject):
             degrain_args: Arguments passed to the binomial_degrain call.
             mask_args: Arguments passed to [MVTools.mask][vsdenoise.mvtools.mvtools.MVTools.mask] for
                 [InputType.REPAIR][vsdeinterlace.qtgmc.QTempGaussMC.InputType.REPAIR].
-            mask_shimmer_args: Arguments passed to the mask_shimmer call.
+            mask_shimmer_args: Arguments passed to the mask_shimmer call:
+
+                   - erosion_distance: How much to deflate then reflate to remove thin areas.
+                     Default is 0 for this stage.
+                   - over_dilation: Extra inflation to ensure areas to restore back are fully caught.
+                     Default is 0.
         """
 
         self.basic_tr = tr
@@ -729,7 +739,7 @@ class QTempGaussMC(VSObject):
         thsad: int | tuple[int, int] = 256,
         noise_restore: float = 0,
         degrain_args: QTGMCArgs.Degrain | None = None,
-        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = None,
+        mask_shimmer_args: QTGMCArgs.MaskShimmer | None = {"erosion_distance": 4},
     ) -> Self:
         """
         Configure parameters for the final stage.
@@ -739,7 +749,12 @@ class QTempGaussMC(VSObject):
             thsad: Thsad of the motion compensated smooth.
             noise_restore: How much noise to restore after this stage.
             degrain_args: Arguments passed to [MVTools.degrain][vsdenoise.mvtools.mvtools.MVTools.degrain].
-            mask_shimmer_args: Arguments passed to the mask_shimmer call.
+            mask_shimmer_args: Arguments passed to the mask_shimmer call:
+
+                   - erosion_distance: How much to deflate then reflate to remove thin areas.
+                     Default is 4 for this stage.
+                   - over_dilation: Extra inflation to ensure areas to restore back are fully caught.
+                     Default is 0.
         """
 
         self.final_tr = tr
@@ -780,7 +795,7 @@ class QTempGaussMC(VSObject):
         self,
         flt: vs.VideoNode,
         src: vs.VideoNode,
-        erosion_distance: int = 4,
+        erosion_distance: int,
         over_dilation: int = 0,
     ) -> vs.VideoNode:
         """
