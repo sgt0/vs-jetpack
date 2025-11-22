@@ -9,7 +9,7 @@ from vstools import core
 
 from .base import CacheIndexer, Indexer
 
-__all__ = ["FFMS2", "IMWRI", "LSMAS", "BestSource", "CarefulSource"]
+__all__ = ["FFMS2", "IMWRI", "LSMAS", "BestSource", "CarefulSource", "ZipSource"]
 
 
 # Video indexers
