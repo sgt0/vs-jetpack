@@ -2,21 +2,25 @@ from __future__ import annotations
 
 from typing import Any
 
-from jetpytools import CustomIntEnum
+from jetpytools import CustomIntEnum, SPathLike
+from vapoursynth import VideoNode
 
 from vstools import core
 
-from .base import Indexer
+from .base import CacheIndexer, Indexer
 
 __all__ = ["FFMS2", "IMWRI", "LSMAS", "BestSource", "CarefulSource"]
 
 
-class BestSource(Indexer):
+# Video indexers
+class BestSource(CacheIndexer):
     """
     BestSource indexer.
     """
 
     _source_func = core.lazy.bs.VideoSource
+    _cache_arg_name = "cachepath"
+    _ext = None
 
     class CacheMode(CustomIntEnum):
         """
@@ -52,24 +56,35 @@ class BestSource(Indexer):
         in the absolute path in *cachepath* with track number and index extension appended.
         """
 
-    def __init__(self, *, force: bool = True, cachemode: CacheMode = CacheMode.ABSOLUTE, **kwargs: Any) -> None:
+    def __init__(self, *, force: bool = True, cachemode: int = CacheMode.ABSOLUTE, **kwargs: Any) -> None:
         super().__init__(force=force, cachemode=cachemode, **kwargs)
 
+    @classmethod
+    def source_func(cls, path: SPathLike, **kwargs: Any) -> VideoNode:
+        if kwargs["cachemode"] <= cls.CacheMode.CACHE_PATH_WRITE and cls._cache_arg_name not in kwargs:
+            kwargs[cls._cache_arg_name] = None
 
-class IMWRI(Indexer):
+        return super().source_func(path, **kwargs)
+
+
+class FFMS2(CacheIndexer):
     """
-    ImageMagick Writer-Reader indexer
+    FFmpegSource2 indexer
     """
 
-    _source_func = core.lazy.imwri.Read
+    _source_func = core.lazy.ffms2.Source
+    _cache_arg_name = "cachefile"
+    _ext = ".ffindex"
 
 
-class LSMAS(Indexer):
+class LSMAS(CacheIndexer):
     """
     L-SMASH-Works indexer
     """
 
     _source_func = core.lazy.lsmas.LWLibavSource
+    _cache_arg_name = "cachefile"
+    _ext = ".lwi"
 
 
 class CarefulSource(Indexer):
@@ -80,12 +95,13 @@ class CarefulSource(Indexer):
     _source_func = core.lazy.cs.ImageSource
 
 
-class FFMS2(Indexer):
+# Image indexers
+class IMWRI(Indexer):
     """
-    FFmpegSource2 indexer
+    ImageMagick Writer-Reader indexer
     """
 
-    _source_func = core.lazy.ffms2.Source
+    _source_func = core.lazy.imwri.Read
 
 
 class ZipSource(Indexer):
