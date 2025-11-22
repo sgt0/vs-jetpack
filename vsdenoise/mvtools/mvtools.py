@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fractions import Fraction
 from itertools import chain
-from typing import Any, Literal, Mapping, Union, overload
+from typing import Any, Literal, Mapping, NamedTuple, Union, overload
 
 from jetpytools import KwargsNotNone, fallback, normalize_seq
 
@@ -34,6 +34,53 @@ from .motion import MotionVectors
 from .utils import normalize_thscd, planes_to_mvtools
 
 __all__ = ["MVTools"]
+
+
+class _SuperConfigKey(NamedTuple):
+    levels: int
+    args: tuple[tuple[str, Any], ...]
+
+
+class _SuperConfigCache(VSObject, dict[_SuperConfigKey, vs.VideoNode]):
+    def get_cached_super(self, clip: vs.VideoNode, levels: int, **args: Any) -> vs.VideoNode:
+        args_key = tuple(sorted(args.items()))
+        key = _SuperConfigKey(levels, args_key)
+
+        # Check if there is a cached level 0 clip with same args
+        if (key0 := _SuperConfigKey(0, args_key)) in self:
+            return self[key0]
+
+        # If not cached, compute or re use higher level compatible clip
+        if key not in self:
+            if levels == 0:
+                self[key] = super_clip = core.mv.Super(clip, levels=levels, **args)
+                return super_clip
+
+            # gather candidates with >= requested level and same args
+            candidates = sorted(
+                (k for k in self if k.levels >= levels and k.args == args_key), key=lambda k: k.levels, reverse=True
+            )
+
+            if candidates:
+                return self[candidates[0]]
+
+            # If still no match, create a new clip
+            self[key] = core.mv.Super(clip, levels=levels, **args)
+
+        return self[key]
+
+
+class _ClipSuperCache(VSObject, dict[vs.VideoNode, _SuperConfigCache]):
+    def get_cached_super(self, clip: vs.VideoNode, levels: int, **args: Any) -> vs.VideoNode:
+        cache = self.get(clip)
+
+        if cache is None:
+            self[clip] = cache = _SuperConfigCache()
+
+        return cache.get_cached_super(clip, levels, **args)
+
+
+_super_clip_cache = _ClipSuperCache()
 
 
 class MVTools(VSObject):
@@ -222,31 +269,19 @@ class MVTools(VSObject):
         if callable(pelclip):
             pelclip = pelclip(clip)
 
-        super_args = self.super_args | KwargsNotNone(
-            hpad=hpad,
-            vpad=vpad,
-            pel=self.pel,
-            levels=levels,
-            chroma=self.chroma,
-            sharp=sharp,
-            rfilter=rfilter,
-            pelclip=pelclip,
-        )
+        super_args = self.super_args | {
+            "hpad": fallback(hpad, 16),
+            "vpad": fallback(vpad, 16),
+            "pel": fallback(self.pel, 2),
+            "chroma": fallback(self.chroma, True),
+            "sharp": fallback(sharp, 2),
+            "rfilter": fallback(rfilter, 2),
+            "pelclip": pelclip,
+        }
 
-        if levels := super_args.pop("levels", None) is None and clip is not self.search_clip:
-            levels = 1
+        levels = 1 if levels is None and clip is not self.search_clip else fallback(levels, 0)
 
-        super_clip = core.proxied.mv.Super(clip, levels=levels, **super_args)
-
-        super_clip = clip.std.ClipToProp(super_clip, prop="MSuper")
-
-        if clip is self.clip:
-            self.clip = super_clip
-
-        if clip is self.search_clip:
-            self.search_clip = super_clip
-
-        return super_clip
+        return _super_clip_cache.get_cached_super(clip, levels, **super_args)
 
     def analyze(
         self,
@@ -340,7 +375,7 @@ class MVTools(VSObject):
             These vectors describe the estimated motion between frames and can be used for motion compensation.
         """
 
-        super_clip = self.get_super(fallback(super, self.search_clip))
+        super_clip = self.super(fallback(super, self.search_clip))
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
@@ -381,9 +416,7 @@ class MVTools(VSObject):
         for delta in range(1, tr + 1):
             for direction in MVDirection:
                 self.vectors.set_vector(
-                    core.proxied.mv.Analyse(
-                        super_clip, isb=direction is MVDirection.BACKWARD, delta=delta, **analyze_args
-                    ),
+                    core.mv.Analyse(super_clip, isb=direction is MVDirection.BACKWARD, delta=delta, **analyze_args),
                     direction,
                     delta,
                 )
@@ -447,7 +480,7 @@ class MVTools(VSObject):
             scale_lambda: Whether to scale lambda_ value according to truemotion's default value formula.
         """
 
-        super_clip = self.get_super(fallback(super, self.search_clip))
+        super_clip = self.super(fallback(super, self.search_clip))
 
         vectors = fallback(vectors, self.vectors)
 
@@ -481,7 +514,7 @@ class MVTools(VSObject):
         for delta in range(1, vectors.tr + 1):
             for direction in MVDirection:
                 vectors.set_vector(
-                    core.proxied.mv.Recalculate(super_clip, vectors.get_vector(direction, delta), **recalculate_args),
+                    core.mv.Recalculate(super_clip, vectors.get_vector(direction, delta), **recalculate_args),
                     direction,
                     delta,
                 )
@@ -590,7 +623,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(direction, tr)
@@ -608,7 +641,7 @@ class MVTools(VSObject):
         )
 
         comp_back, comp_fwrd = [
-            [core.proxied.mv.Compensate(clip, super_clip, vectors=vect, **compensate_args) for vect in vectors]
+            [core.mv.Compensate(clip, super_clip, vectors=vect, **compensate_args) for vect in vectors]
             for vectors in (reversed(vect_b), vect_f)
         ]
 
@@ -726,7 +759,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(direction, tr)
@@ -743,7 +776,7 @@ class MVTools(VSObject):
         )
 
         flow_back, flow_fwrd = [
-            [core.proxied.mv.Flow(clip, super_clip, vectors=vect, **flow_args) for vect in vectors]
+            [core.mv.Flow(clip, super_clip, vectors=vect, **flow_args) for vect in vectors]
             for vectors in (reversed(vect_b), vect_f)
         ]
 
@@ -799,7 +832,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         tr = fallback(tr, vectors.tr)
@@ -826,7 +859,7 @@ class MVTools(VSObject):
             thscd2=thscd2,
         )
 
-        return getattr(core.proxied.mv, f"Degrain{tr}")(
+        return getattr(core.mv, f"Degrain{tr}")(
             clip, super_clip, *chain.from_iterable(zip(vect_b, vect_f)), **degrain_args
         )
 
@@ -870,7 +903,7 @@ class MVTools(VSObject):
         """
         clip = fallback(clip, self.clip)
 
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -881,7 +914,7 @@ class MVTools(VSObject):
             time=time, ml=ml, blend=blend, thscd1=thscd1, thscd2=thscd2
         )
 
-        interpolated = core.proxied.mv.FlowInter(clip, super_clip, vect_b[0], vect_f[0], **flow_interpolate_args)
+        interpolated = core.mv.FlowInter(clip, super_clip, vect_b[0], vect_f[0], **flow_interpolate_args)
 
         if interleave:
             interpolated = core.std.Interleave([clip, interpolated])
@@ -927,7 +960,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -941,7 +974,7 @@ class MVTools(VSObject):
 
         flow_fps_args = self.flow_fps_args | flow_fps_args
 
-        return core.proxied.mv.FlowFPS(clip, super_clip, vect_b[0], vect_f[0], **flow_fps_args)
+        return core.mv.FlowFPS(clip, super_clip, vect_b[0], vect_f[0], **flow_fps_args)
 
     def block_fps(
         self,
@@ -983,7 +1016,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -997,7 +1030,7 @@ class MVTools(VSObject):
 
         block_fps_args = self.block_fps_args | block_fps_args
 
-        return core.proxied.mv.BlockFPS(clip, super_clip, vect_b[0], vect_f[0], **block_fps_args)
+        return core.mv.BlockFPS(clip, super_clip, vect_b[0], vect_f[0], **block_fps_args)
 
     def flow_blur(
         self,
@@ -1032,7 +1065,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.get_super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip))
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -1041,7 +1074,7 @@ class MVTools(VSObject):
 
         flow_blur_args = self.flow_blur_args | KwargsNotNone(blur=blur, prec=prec, thscd1=thscd1, thscd2=thscd2)
 
-        return core.proxied.mv.FlowBlur(clip, super_clip, vect_b[0], vect_f[0], **flow_blur_args)
+        return core.mv.FlowBlur(clip, super_clip, vect_b[0], vect_f[0], **flow_blur_args)
 
     def mask(
         self,
@@ -1091,7 +1124,7 @@ class MVTools(VSObject):
             ml=ml, gamma=gamma, kind=kind, time=time, ysc=ysc, thscd1=thscd1, thscd2=thscd2
         )
 
-        mask_clip = core.proxied.mv.Mask(depth(clip, 8), vect, **mask_args)
+        mask_clip = core.mv.Mask(depth(clip, 8), vect, **mask_args)
 
         return depth(mask_clip, clip, range_in=ColorRange.FULL, range_out=ColorRange.FULL)
 
@@ -1128,30 +1161,6 @@ class MVTools(VSObject):
 
         detect = clip
         for direction in MVDirection:
-            detect = core.proxied.mv.SCDetection(detect, vectors.get_vector(direction, delta), **sc_detection_args)
+            detect = core.mv.SCDetection(detect, vectors.get_vector(direction, delta), **sc_detection_args)
 
         return detect
-
-    def get_super(self, clip: vs.VideoNode | None = None) -> vs.VideoNode:
-        """
-        Get the super clips from the specified clip.
-
-        If [super][vsdenoise.MVTools.super] wasn't previously called,
-        it will do so here with default values or kwargs specified in the constructor.
-
-        Args:
-            clip: The clip to get the super clip from.
-
-        Returns:
-            VideoNode containing the super clip.
-        """
-
-        clip = fallback(clip, self.clip)
-
-        try:
-            super_clip = clip.std.PropToClip(prop="MSuper")
-        except vs.Error:
-            clip = self.super(clip)
-            super_clip = clip.std.PropToClip(prop="MSuper")
-
-        return super_clip
