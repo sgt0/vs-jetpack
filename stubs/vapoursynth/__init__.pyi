@@ -1152,10 +1152,6 @@ class VideoNode(RawNode):
     eedi2: Final[_eedi2._VideoNode_bound.Plugin]
     """EEDI2"""
 # </attribute/VideoNode_bound/eedi2>
-# <attribute/VideoNode_bound/eedi2cuda>
-    eedi2cuda: Final[_eedi2cuda._VideoNode_bound.Plugin]
-    """EEDI2 filter using CUDA"""
-# </attribute/VideoNode_bound/eedi2cuda>
 # <attribute/VideoNode_bound/eedi3m>
     eedi3m: Final[_eedi3m._VideoNode_bound.Plugin]
     """Enhanced Edge Directed Interpolation 3"""
@@ -1429,10 +1425,6 @@ class Core:
     eedi2: Final[_eedi2._Core_bound.Plugin]
     """EEDI2"""
 # </attribute/Core_bound/eedi2>
-# <attribute/Core_bound/eedi2cuda>
-    eedi2cuda: Final[_eedi2cuda._Core_bound.Plugin]
-    """EEDI2 filter using CUDA"""
-# </attribute/Core_bound/eedi2cuda>
 # <attribute/Core_bound/eedi3m>
     eedi3m: Final[_eedi3m._Core_bound.Plugin]
     """Enhanced Edge Directed Interpolation 3"""
@@ -2091,30 +2083,6 @@ class _eedi2:
             def EEDI2(self, field: _IntLike, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None) -> VideoNode: ...
 
 # </implementation/eedi2>
-
-# <implementation/eedi2cuda>
-class _eedi2cuda:
-    class _Core_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def AA2(self, clip: VideoNode, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def BuildConfig(self) -> _AnyStr: ...
-            @_Wrapper.Function
-            def EEDI2(self, clip: VideoNode, field: _IntLike, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def Enlarge2(self, clip: VideoNode, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-
-    class _VideoNode_bound:
-        class Plugin(_VSPlugin):
-            @_Wrapper.Function
-            def AA2(self, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def EEDI2(self, field: _IntLike, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-            @_Wrapper.Function
-            def Enlarge2(self, mthresh: _IntLike | None = None, lthresh: _IntLike | None = None, vthresh: _IntLike | None = None, estr: _IntLike | None = None, dstr: _IntLike | None = None, maxd: _IntLike | None = None, map: _IntLike | None = None, nt: _IntLike | None = None, pp: _IntLike | None = None, planes: _IntLike | _SequenceLike[_IntLike] | None = None, num_streams: _IntLike | None = None, device_id: _IntLike | None = None) -> VideoNode: ...
-
-# </implementation/eedi2cuda>
 
 # <implementation/eedi3m>
 class _eedi3m:
