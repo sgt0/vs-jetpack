@@ -429,8 +429,8 @@ class NNEDI3(SuperSampler):
 
     The new prescreener is not available with float input.
 
-    Wrapper default is 4 for integer input and 1 for float input,
-    plugin default is 2 for integer input and 1 for float input.
+    - Wrapper default is 4 for integer input and 1 for float input. When `opencl=True` it is always 1.
+    - Plugin default is 2 for integer input and 1 for float input.
     """
 
     opencl: bool = False
@@ -451,7 +451,11 @@ class NNEDI3(SuperSampler):
                 return 32
 
     def get_deint_args(self, *, clip: vs.VideoNode | None = None, **kwargs: Any) -> dict[str, Any]:
-        pscrn = fallback(self.pscrn, 1 if clip.format.sample_type is vs.FLOAT else 4) if clip else self.pscrn
+        pscrn = (
+            fallback(self.pscrn, (1 if clip.format.sample_type is vs.FLOAT else 4) if not self.opencl else 1)
+            if clip
+            else self.pscrn
+        )
 
         return {
             "nsize": self.nsize,
