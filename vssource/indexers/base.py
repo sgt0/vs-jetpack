@@ -107,6 +107,13 @@ class Indexer(ABC):
         idx_props: bool = True,
         **kwargs: Any,
     ) -> vs.VideoNode:
+        """
+        Load one or more input files using the indexer and return a processed clip.
+
+        The returned clip is passed through [initialize_clip][vstools.initialize_clip] to apply bit depth conversion
+        and frame props initialization.
+        """
+
         nfiles = self.normalize_filenames(file)
         clip = self._source(
             [self.source_func(f.to_str(), **self.indexer_kwargs | kwargs) for f in nfiles],

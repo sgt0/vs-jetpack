@@ -15,7 +15,13 @@ __all__ = ["FFMS2", "IMWRI", "LSMAS", "BestSource", "CarefulSource"]
 # Video indexers
 class BestSource(CacheIndexer):
     """
-    BestSource indexer.
+    [BestSource](https://github.com/vapoursynth/bestsource) indexer.
+
+    Unlike the plugin's default behavior, the indexer cache file will be stored in `.vsjet/vssource/cache`
+    next to the script directory.
+
+    When ``cachemode`` is 0, 1, or 2 (NEVER, CACHE_PATH, or CACHE_PATH_WRITE), the behavior falls back
+    to the default cache handling defined by the BestSource plugin itself.
     """
 
     _source_func = core.lazy.bs.VideoSource
@@ -69,7 +75,10 @@ class BestSource(CacheIndexer):
 
 class FFMS2(CacheIndexer):
     """
-    FFmpegSource2 indexer
+    (FFmpegSource2)[https://github.com/FFMS/ffms2] indexer.
+
+    Unlike the plugin's default behavior, the indexer cache file will be stored in ``.vsjet/vssource/cache``
+    next to the script directory.
     """
 
     _source_func = core.lazy.ffms2.Source
@@ -79,7 +88,10 @@ class FFMS2(CacheIndexer):
 
 class LSMAS(CacheIndexer):
     """
-    L-SMASH-Works indexer
+    (L-SMASH-Works)[https://github.com/HomeOfAviSynthPlusEvolution/L-SMASH-Works] indexer.
+
+    Unlike the plugin's default behavior, the indexer cache file will be stored in `.vsjet/vssource/cache`
+    next to the script directory.
     """
 
     _source_func = core.lazy.lsmas.LWLibavSource
