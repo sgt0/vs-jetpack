@@ -452,9 +452,7 @@ class NNEDI3(SuperSampler):
 
     def get_deint_args(self, *, clip: vs.VideoNode | None = None, **kwargs: Any) -> dict[str, Any]:
         pscrn = (
-            fallback(self.pscrn, (1 if clip.format.sample_type is vs.FLOAT else 4) if not self.opencl else 1)
-            if clip
-            else self.pscrn
+            fallback(self.pscrn, 1 if self.opencl or clip.format.sample_type is vs.FLOAT else 4) if clip else self.pscrn
         )
 
         return {
