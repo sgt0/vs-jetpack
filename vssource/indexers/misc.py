@@ -62,8 +62,10 @@ class BestSource(CacheIndexer):
         in the absolute path in *cachepath* with track number and index extension appended.
         """
 
-    def __init__(self, *, force: bool = True, cachemode: int = CacheMode.ABSOLUTE, **kwargs: Any) -> None:
-        super().__init__(force=force, cachemode=cachemode, **kwargs)
+    def __init__(
+        self, *, force: bool = True, cachemode: int = CacheMode.ABSOLUTE, rff: int | None = True, **kwargs: Any
+    ) -> None:
+        super().__init__(force=force, cachemode=cachemode, rff=rff, **kwargs)
 
     @classmethod
     def source_func(cls, path: SPathLike, **kwargs: Any) -> VideoNode:
