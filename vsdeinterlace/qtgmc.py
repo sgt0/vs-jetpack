@@ -29,7 +29,6 @@ from vstools import (
     UnsupportedFieldBasedError,
     VSObject,
     core,
-    get_y,
     sc_detect,
     scale_delta,
     vs,
@@ -884,13 +883,10 @@ class QTempGaussMC(VSObject):
     def _apply_prefilter(self) -> None:
         self.draft = Catrom().bob(self.clip, tff=self.tff) if self.input_type == self.InputType.INTERLACE else self.clip
 
-        search = self.draft
-
-        if not self.analyze_preset.get("chroma", True):
-            search = get_y(search)
-
         if self.input_type == self.InputType.REPAIR:
-            search = BlurMatrix.BINOMIAL()(search, mode=ConvMode.VERTICAL, func=self._apply_prefilter)
+            search = BlurMatrix.BINOMIAL()(self.draft, mode=ConvMode.VERTICAL, func=self._apply_prefilter)
+        else:
+            search = self.draft
 
         if self.prefilter_tr:
             scenes = sc_detect(search, self.prefilter_sc_threshold)
