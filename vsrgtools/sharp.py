@@ -148,6 +148,31 @@ def fine_sharp(
     hdmp: float = 0.01,
     planes: Planes = 0,
 ) -> vs.VideoNode:
+    """
+    Original author: Didée (https://forum.doom9.org/showthread.php?t=166082)
+    Small and relatively fast realtime-sharpening function, for 1080p,
+    or after scaling 720p → 1080p during playback.
+    (to make 720p look more like being 1080p)
+    It's a generic sharpener. Only for good quality sources!
+    (If the source is crap, FineSharp will happily sharpen the crap) :)
+    Noise/grain will be enhanced, too. The method is GENERIC.
+
+    Modus operandi: A basic nonlinear sharpening method is performed,
+    then the *blurred* sharp-difference gets subtracted again.
+
+    Args:
+        mode: 0 or 1, weakest to strongest.
+        sstr: strength of sharpening.
+        cstr: strength of equalisation.
+        xstr: strength of XSharpen-style final sharpening.
+        lstr: modifier for non-linear sharpening.
+        pstr: exponent for non-linear sharpening.
+        ldmp: "low damp" - Avoid over-enhancing very small differences.
+        hdmp: "high damp" - Avoid over-enhancing very large differences.
+
+    Returns:
+        Sharpened clip.
+    """
     func = FunctionUtil(clip, fine_sharp, planes)
 
     if cstr is None:
@@ -207,6 +232,23 @@ def soothe(
     scenechange: bool = False,
     planes: Planes = None,
 ) -> vs.VideoNode:
+    """
+    Lessens the temporal instability and aliasing caused by sharpening, by comparing the original and sharpened clip,
+    leaving a smoother and slightly softer output. Soothe is a small postprocessor function for sharpening filters.
+    The goal is temporal stabilization of clips that have been sharpened before.
+
+    Args:
+        clip: Clip to process.
+        spatial_strength: Spatial soothing strength.
+        temporal_strength: Temporal soothing strength.
+        spatial_radius: Spatial soothing radius.
+        temporal_radius: Temporal soothing radius.
+        scenechange: Avoid applying temporal soothing across scene changes.
+        planes: Planes to process.
+
+    Returns:
+        Soothed clip.
+    """
     sharp_diff = src.std.MakeDiff(flt, planes)
 
     expr = (
@@ -253,6 +295,9 @@ def fast_line_darken(
             threshold too high, some lines will not be darkened.
         thinning: Optional line thinning amount. Setting this to 0 will disable it, which gives a big speed
             increase. Note that thinning the lines will inherently darken the remaining pixels in each line a little.
+
+    Returns:
+        Line-darkened clip.
     """
     from vsmasktools import Morpho
 
