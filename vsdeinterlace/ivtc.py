@@ -113,21 +113,31 @@ def vfm(
     You can pass a post-processing clip or function that will act on leftover combed frames.
     If you pass a clip, it will replace combed frames with that clip. If you pass a function,
     it will run that function on your input clip and replace combed frames with it.
+    The output of the clip or function must have the same framerate as the input clip.
 
     Example:
         ```py
-        # Run vsaa.NNEDI3 on combed frames
-        vfm(clip, postprocess=NNEDI3().deinterlace)
+        # Run vsaa.NNEDI3 on leftover combed frames
+        vfm(clip, postprocess=NNEDI3(double_rate=False).deinterlace)
         ```
 
     Args:
         clip: Input clip to field matching telecine on.
-        tff: Field order of the input clip. If None, it will be automatically detected.
-        mode: VFM matching mode. For more information, see [VFMMode][vsdeinterlace.VFMMode]. Default:
-            VFMMode.TWO_WAY_MATCH_THIRD_COMBED.
-        postprocess: Optional function or clip to process combed frames. If a function is passed, it should take a clip
-            as input and return a clip as output. If a clip is passed, it will be used as the postprocessed clip.
-        **kwargs: Additional keyword arguments to pass to VFM. For a list of parameters, see the VIVTC documentation.
+        tff:
+            Field order of the input clip.
+            If None, it will be automatically detected.
+        mode:
+            VFM matching mode. For more information, see [VFMMode][vsdeinterlace.VFMMode].
+            Default: VFMMode.TWO_WAY_MATCH_THIRD_COMBED.
+        postprocess:
+            Optional function or clip to process combed frames.
+                If a function is passed, it should take a clip as input and return a clip as output.
+                If a clip is passed, it will be used as the postprocessed clip.
+
+                The output of the clip or function must have the same framerate as the input clip.
+        **kwargs:
+            Additional keyword arguments to pass to VFM.
+            For a list of parameters, see the VIVTC documentation.
 
     Returns:
         Field matched clip with progressive frames.
@@ -161,7 +171,7 @@ def vfm(
             vfm,
             clip,
             postprocess,
-            message="Post-processed clip has a different number of frames than the input clip!",
+            message="The post-processing function must return a clip with the same framerate as the input clip!",
         )
 
         fieldmatch = find_prop_rfs(fieldmatch, postprocess, "_Combed", "==", 1)
