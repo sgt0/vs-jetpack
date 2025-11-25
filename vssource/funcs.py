@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections import deque
 from functools import partial
+from logging import getLogger
 from os import PathLike
 from typing import Any, Callable, Iterable, Literal, overload
 
@@ -16,14 +18,16 @@ from vstools import (
     ParsedFile,
     PrimariesLike,
     TransferLike,
-    initialize_clip,
     match_clip,
     vs,
 )
 
-from .indexers import IMWRI, LSMAS, BestSource, D2VWitch, Indexer
+from .indexers import FFMS2, IMWRI, LSMAS, BestSource, D2VWitch, Indexer
 
 __all__ = ["parse_video_filepath", "source"]
+
+
+log = getLogger(__name__)
 
 
 def parse_video_filepath(filepath: SPathLike | Iterable[SPathLike]) -> tuple[SPath, ParsedFile]:
@@ -123,6 +127,10 @@ def source(
     If `filepath` is not provided, a partially-applied version of this function is returned,
     allowing delayed path specification.
 
+    - If `filepath` is an image, the indexer is hardcoded as `IMWRI`.
+    - If `filepath` is a video, the indexer order is: `BestSource` -> `LSMAS` -> `FFMS2` -> `D2VWitch`.
+      `BestSource` is moved to the end when in preview mode.
+
     Args:
         filepath: The path to the video file or image sequence. Can be a string path or an iterable of paths.
             If set to `None`, returns a callable that takes the file path later.
@@ -143,69 +151,10 @@ def source(
     Returns:
         If `filepath` is provided, returns a `VideoNode` representing the loaded clip.
         If `filepath` is `None`, returns a callable that accepts a file path and returns the corresponding clip.
-
     """
-    if filepath is None:
-        return partial(
-            source,
-            bits=bits if bits is not None else filepath,
-            matrix=matrix,
-            transfer=transfer,
-            primaries=primaries,
-            chroma_location=chroma_location,
-            color_range=color_range,
-            field_based=field_based,
-            ref=ref,
-            name=name,
-            **kwargs,
-        )
 
-    filepath, file = parse_video_filepath(filepath)
-    to_skip = to_arr(kwargs.get("_to_skip", []))
-    clip = None
-
-    if file.ext is IndexingType.LWI:
-        indexer = LSMAS
-        clip = indexer.source_func(filepath, **kwargs)
-    elif file.file_type is FileType.IMAGE:
-        indexer = IMWRI
-        clip = indexer.source_func(filepath, **kwargs)
-
-    if clip is None:
-        try:
-            from vspreview import is_preview
-        except (ImportError, ModuleNotFoundError):
-            best_last = False
-        else:
-            best_last = is_preview()
-
-        indexers = [i for i in list[type[Indexer]]([LSMAS, D2VWitch]) if i not in to_skip]
-
-        if best_last:
-            indexers.append(BestSource)
-        else:
-            indexers.insert(0, BestSource)
-
-        for indexer in indexers:
-            try:
-                clip = indexer.source(filepath, bits=bits)
-                break
-            except Exception as e:
-                if "bgr0 is not supported" in str(e):
-                    clip = indexer.source(filepath, format="rgb24", bits=bits)
-                    break
-        else:
-            raise CustomRuntimeError(f'None of the indexers you have installed work on this file! "{filepath}"')
-
-    if name:
-        clip = clip.std.SetFrameProps(Name=name)
-
-    if ref:
-        clip = match_clip(clip, ref, length=file.file_type is FileType.IMAGE)
-
-    return initialize_clip(
-        clip,
-        bits,
+    kwargs.update(
+        bits=bits,
         matrix=matrix,
         transfer=transfer,
         primaries=primaries,
@@ -213,3 +162,52 @@ def source(
         color_range=color_range,
         field_based=field_based,
     )
+
+    if filepath is None:
+        return partial(source, **kwargs)
+
+    filepath, file = parse_video_filepath(filepath)
+    to_skip = to_arr(kwargs.get("_to_skip", []))
+    clip = None
+
+    if file.ext is IndexingType.LWI:
+        clip = LSMAS.source(filepath, **kwargs)
+    elif file.file_type is FileType.IMAGE:
+        clip = IMWRI.source(filepath, **kwargs)
+    elif clip is None:
+        try:
+            from vspreview import is_preview
+
+        except (ImportError, ModuleNotFoundError):
+
+            def is_preview() -> bool:
+                return False
+
+        indexers = deque[type[Indexer]]((BestSource, LSMAS, FFMS2, D2VWitch))
+
+        if is_preview():
+            indexers.rotate(-1)
+
+        for indexer in filter(lambda i: i not in to_skip, indexers):
+            try:
+                clip = indexer.source(filepath, **kwargs)
+                break
+            except AttributeError:
+                continue
+            except vs.Error as e:
+                if "bgr0 is not supported" in str(e) and indexer is LSMAS:
+                    clip = indexer.source(filepath, format="rgb24", **kwargs)
+                    break
+                log.debug("Exception:", exc_info=False)
+            except Exception:
+                log.debug("Exception:", exc_info=False)
+        else:
+            raise CustomRuntimeError(f'None of the indexers you have installed work on this file! "{filepath}"', source)
+
+    if name:
+        clip = clip.std.SetFrameProps(Name=name)
+
+    if ref:
+        clip = match_clip(clip, ref, length=file.file_type is FileType.IMAGE)
+
+    return clip
