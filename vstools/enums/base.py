@@ -7,6 +7,7 @@ from typing import Any, Iterable, Mapping, Self, overload
 
 from jetpytools import (
     CustomIntEnum,
+    CustomOverflowError,
     CustomValueError,
     EnumABCMeta,
     FuncExcept,
@@ -39,6 +40,9 @@ class PropEnum(CustomIntEnum, metaclass=EnumABCMeta):
     def _missing_(cls, value: object) -> Self | None:
         if isinstance(value, (vs.VideoNode, vs.VideoFrame, Mapping)):
             return cls.from_video(value, func=cls)
+
+        if isinstance(value, str):
+            return cls.from_string(value, func=cls)
 
         return None
 
@@ -150,6 +154,34 @@ class PropEnum(CustomIntEnum, metaclass=EnumABCMeta):
             return cls.from_video(src, strict, func_except)
 
         return prop
+
+    @classmethod
+    def from_string(cls, string: str, func: FuncExcept | None = None) -> Self:
+        """
+        Get the enum member whose `string` attribute matches the given value.
+
+        Args:
+            string: The string to match against the enum members `string` attribute.
+
+        Raises:
+            NotFoundEnumValueError: If no enum member has a `string` value equal to the provided one.
+            CustomOverflowError: If multiple enum members share the same `string` value, making the lookup ambiguous.
+
+        Returns:
+            The matching enum member.
+        """
+
+        matched_strings = [m for m in cls if m.string == string]
+
+        if not matched_strings:
+            raise NotFoundEnumValueError(f"No enum member found with string value {string!r}.", func)
+
+        if len(matched_strings) > 1:
+            raise CustomOverflowError(
+                f"Multiple enum members found with string value {string!r}; expected exactly one.", func
+            )
+
+        return matched_strings.pop()
 
     @classmethod
     def ensure_presence(cls, clip: vs.VideoNode, value: Any, func: FuncExcept | None = None) -> vs.VideoNode:
