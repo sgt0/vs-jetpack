@@ -103,7 +103,7 @@ class Deinterlacer(Bobber, ABC):
         """
         field_based = FieldBased.from_param_or_video(fallback(tff, self.tff, default=None), clip, True, self.__class__)
 
-        return self._interpolate(clip, field_based.is_tff(), fallback(double_rate, self.double_rate), False, **kwargs)
+        return self._interpolate(clip, field_based.is_tff, fallback(double_rate, self.double_rate), False, **kwargs)
 
     def bob(self, clip: vs.VideoNode, *, tff: FieldBasedLike | bool | None = None, **kwargs: Any) -> vs.VideoNode:
         """
@@ -119,7 +119,7 @@ class Deinterlacer(Bobber, ABC):
         """
         field_based = FieldBased.from_param_or_video(fallback(tff, self.tff, default=None), clip, True, self.__class__)
 
-        return self._interpolate(clip, field_based.is_tff(), True, False, **kwargs)
+        return self._interpolate(clip, field_based.is_tff, True, False, **kwargs)
 
     def copy(self, **kwargs: Any) -> Self:
         """

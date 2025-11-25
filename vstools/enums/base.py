@@ -42,6 +42,13 @@ class PropEnum(CustomIntEnum, metaclass=EnumABCMeta):
 
         return None
 
+    @property
+    def is_unspecified(self) -> bool:
+        """
+        Whether the value is unspecified.
+        """
+        return False
+
     @cachedproperty
     def pretty_string(self) -> str:
         """
@@ -69,12 +76,6 @@ class PropEnum(CustomIntEnum, metaclass=EnumABCMeta):
         Applies the property to the VideoNode.
         """
         return clip.std.SetFrameProp(self.prop_key, self.value)
-
-    def is_unspecified(self) -> bool:
-        """
-        Whether the value is unspecified.
-        """
-        return False
 
     @classmethod
     @abstractmethod
@@ -116,7 +117,7 @@ class PropEnum(CustomIntEnum, metaclass=EnumABCMeta):
             casted = cls.from_param(value)
 
             # If unspecified, fallbacks to `fallback` value
-            if casted.is_unspecified():
+            if casted.is_unspecified:
                 raise CustomValueError
 
             return casted
@@ -190,7 +191,7 @@ def _base_from_video[PropEnumT: PropEnum](
 
     value = get_prop(src, cls, int, cast=cls, default=None, func=func)
 
-    if value is None or value.is_unspecified():
+    if value is None or value.is_unspecified:
         if strict:
             raise exception(f"{cls.__name__} is undefined.", func, value)
 

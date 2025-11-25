@@ -33,7 +33,7 @@ from .util import ExprVars
 
 __all__ = ["combine", "combine_expr", "expr_func", "norm_expr"]
 
-log = getLogger(__name__)
+_log = getLogger(__name__)
 
 
 class _LazyLogExpr:
@@ -86,7 +86,7 @@ def expr_func(
 
     fmt = get_video_format(format).id if format is not None else None
 
-    log.debug("expr_func (%s): %s", func, _LazyLogExpr(expr))
+    _log.debug("expr_func (%s): %s", func, _LazyLogExpr(expr))
 
     try:
         return core.akarin.Expr(clips, expr, fmt, opt, boundary)

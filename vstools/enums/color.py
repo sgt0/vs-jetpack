@@ -177,6 +177,7 @@ class Matrix(PropEnum):
 
     """
 
+    @property
     def is_unspecified(self) -> bool:
         """
         Check if the matrix is Matrix.UNSPECIFIED.
@@ -342,6 +343,7 @@ class Transfer(PropEnum):
     Rec. ITU-R BT.2100-2 hybrid loggamma (HLG) system
     """
 
+    @property
     def is_unspecified(self) -> bool:
         """
         Check if the transfer is Transfer.UNSPECIFIED.
@@ -592,6 +594,7 @@ class Primaries(PropEnum):
     ```
     """
 
+    @property
     def is_unspecified(self) -> bool:
         """
         Check if the primaries are Primaries.UNSPECIFIED.
@@ -664,6 +667,20 @@ class ColorRange(PropEnum):
     """
 
     @property
+    def is_limited(self) -> bool:
+        """
+        Check if ColorRange is limited.
+        """
+        return bool(self.value)
+
+    @property
+    def is_full(self) -> bool:
+        """
+        Check if ColorRange is full.
+        """
+        return not self.value
+
+    @property
     def value_vs(self) -> int:
         """
         VapourSynth (props) value.
@@ -676,18 +693,6 @@ class ColorRange(PropEnum):
         zimg (resize plugin) value.
         """
         return ~self.value + 2
-
-    def is_limited(self) -> bool:
-        """
-        Check if ColorRange is limited.
-        """
-        return bool(self.value)
-
-    def is_full(self) -> bool:
-        """
-        Check if ColorRange is full.
-        """
-        return not self.value
 
     @classmethod
     def from_res(cls, frame: vs.VideoNode | vs.VideoFrame) -> ColorRange:

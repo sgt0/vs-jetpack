@@ -87,7 +87,7 @@ def scale_value(
     if scale_offsets and in_fmt.sample_type is vs.INTEGER:
         if chroma:
             out_value -= 128 << (in_fmt.bits_per_sample - 8)
-        elif range_in.is_limited():
+        elif range_in.is_limited:
             out_value -= 16 << (in_fmt.bits_per_sample - 8)
 
     out_value *= (output_peak - output_lowest) / (input_peak - input_lowest)
@@ -95,7 +95,7 @@ def scale_value(
     if scale_offsets and out_fmt.sample_type is vs.INTEGER:
         if chroma:
             out_value += 128 << (out_fmt.bits_per_sample - 8)
-        elif range_out.is_limited():
+        elif range_out.is_limited:
             out_value += 16 << (out_fmt.bits_per_sample - 8)
 
     if out_fmt.sample_type is vs.INTEGER:
@@ -196,7 +196,7 @@ def get_lowest_value(
         else:
             range_in = ColorRange.LIMITED
 
-    if ColorRange.from_param(range_in, get_lowest_value).is_limited():
+    if ColorRange.from_param(range_in, get_lowest_value).is_limited:
         return 16 << get_depth(fmt) - 8
 
     return 0
@@ -287,7 +287,7 @@ def get_peak_value(
         else:
             range_in = ColorRange.LIMITED
 
-    if ColorRange.from_param(range_in, get_peak_value).is_limited():
+    if ColorRange.from_param(range_in, get_peak_value).is_limited:
         return (240 if chroma else 235) << get_depth(fmt) - 8
 
     return (1 << get_depth(fmt)) - 1

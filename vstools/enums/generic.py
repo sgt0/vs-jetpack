@@ -137,24 +137,16 @@ class FieldBased(PropEnum):
         if self is self.PROGRESSIVE:
             raise UnsupportedFieldBasedError("Progressive video isn't field based.", "FieldBased.inverted_field")
 
-        return FieldBased.BFF if self.is_tff() else FieldBased.TFF
+        return FieldBased.BFF if self.is_tff else FieldBased.TFF
 
     @property
-    def pretty_string(self) -> str:
-        if self.is_inter():
-            return f"{'Top' if self.is_tff() else 'Bottom'} Field First"
-
-        return super().pretty_string
-
-    def apply(self, clip: vs.VideoNode) -> vs.VideoNode:
-        return clip.std.SetFieldBased(self.value)
-
     def is_inter(self) -> bool:
         """
         Check whether the value belongs to an interlaced value.
         """
         return self != FieldBased.PROGRESSIVE
 
+    @property
     def is_tff(self) -> bool:
         """
         Check whether the value is Top-Field-First.
@@ -163,9 +155,19 @@ class FieldBased(PropEnum):
             UnsupportedFieldBasedError: If PROGRESSIVE value is passed
         """
         if self is self.PROGRESSIVE:
-            raise UnsupportedFieldBasedError("Progressive video isn't field based.", self.is_tff)
+            raise UnsupportedFieldBasedError("Progressive video isn't field based.", "FieldBased.is_tff")
 
         return self is self.TFF
+
+    @property
+    def pretty_string(self) -> str:
+        if self.is_inter:
+            return f"{'Top' if self.is_tff else 'Bottom'} Field First"
+
+        return super().pretty_string
+
+    def apply(self, clip: vs.VideoNode) -> vs.VideoNode:
+        return clip.std.SetFieldBased(self.value)
 
     @classmethod
     def from_param(cls, value: Any, func_except: FuncExcept | None = None) -> FieldBased:

@@ -5,12 +5,12 @@ from vstools import ColorRange, Matrix, Primaries, Transfer, vs
 
 class TestMatrix(TestCase):
     def test_is_unspecified(self) -> None:
-        self.assertTrue(Matrix.UNSPECIFIED.is_unspecified())
-        self.assertTrue(Matrix(2).is_unspecified())
-        self.assertTrue(Matrix.from_param(2).is_unspecified())
-        self.assertFalse(Matrix.RGB.is_unspecified())
-        self.assertFalse(Matrix(0).is_unspecified())
-        self.assertFalse(Matrix.from_param(0).is_unspecified())
+        self.assertTrue(Matrix.UNSPECIFIED.is_unspecified)
+        self.assertTrue(Matrix(2).is_unspecified)
+        self.assertTrue(Matrix.from_param(2).is_unspecified)
+        self.assertFalse(Matrix.RGB.is_unspecified)
+        self.assertFalse(Matrix(0).is_unspecified)
+        self.assertFalse(Matrix.from_param(0).is_unspecified)
 
     def test_from_res_rgb(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
@@ -77,12 +77,12 @@ class TestMatrix(TestCase):
 
 class TestTransfer(TestCase):
     def test_is_unspecified(self) -> None:
-        self.assertTrue(Transfer.UNSPECIFIED.is_unspecified())
-        self.assertTrue(Transfer(2).is_unspecified())
-        self.assertTrue(Transfer.from_param(2).is_unspecified())
-        self.assertFalse(Transfer.BT709.is_unspecified())
-        self.assertFalse(Transfer(1).is_unspecified())
-        self.assertFalse(Transfer.from_param(1).is_unspecified())
+        self.assertTrue(Transfer.UNSPECIFIED.is_unspecified)
+        self.assertTrue(Transfer(2).is_unspecified)
+        self.assertTrue(Transfer.from_param(2).is_unspecified)
+        self.assertFalse(Transfer.BT709.is_unspecified)
+        self.assertFalse(Transfer(1).is_unspecified)
+        self.assertFalse(Transfer.from_param(1).is_unspecified)
 
     def test_from_res_rgb(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
@@ -169,12 +169,12 @@ class TestTransfer(TestCase):
 
 class TestPrimaries(TestCase):
     def test_is_unspecified(self) -> None:
-        self.assertTrue(Primaries.UNSPECIFIED.is_unspecified())
-        self.assertTrue(Primaries(2).is_unspecified())
-        self.assertTrue(Primaries.from_param(2).is_unspecified())
-        self.assertFalse(Primaries.BT709.is_unspecified())
-        self.assertFalse(Primaries(1).is_unspecified())
-        self.assertFalse(Primaries.from_param(1).is_unspecified())
+        self.assertTrue(Primaries.UNSPECIFIED.is_unspecified)
+        self.assertTrue(Primaries(2).is_unspecified)
+        self.assertTrue(Primaries.from_param(2).is_unspecified)
+        self.assertFalse(Primaries.BT709.is_unspecified)
+        self.assertFalse(Primaries(1).is_unspecified)
+        self.assertFalse(Primaries.from_param(1).is_unspecified)
 
     def test_from_res_rgb(self) -> None:
         clip = vs.core.std.BlankClip(format=vs.RGB24)
@@ -281,9 +281,9 @@ class TestColorRange(TestCase):
         self.assertEqual(ColorRange.FULL.value_zimg, 1)
 
     def test_value_is_limited(self) -> None:
-        self.assertTrue(ColorRange.LIMITED.is_limited())
-        self.assertFalse(ColorRange.FULL.is_limited())
+        self.assertTrue(ColorRange.LIMITED.is_limited)
+        self.assertFalse(ColorRange.FULL.is_limited)
 
     def test_value_is_full(self) -> None:
-        self.assertFalse(ColorRange.LIMITED.is_full())
-        self.assertTrue(ColorRange.FULL.is_full())
+        self.assertFalse(ColorRange.LIMITED.is_full)
+        self.assertTrue(ColorRange.FULL.is_full)

@@ -152,7 +152,7 @@ class FunctionUtil(VSObject, list[int]):
             return clip
 
         if cfamily is vs.RGB:
-            if self._matrix is None or self._matrix.is_unspecified():
+            if self._matrix is None or self._matrix.is_unspecified:
                 raise UndefinedMatrixError(
                     "You must specify a matrix for RGB to {} conversions!".format(
                         "/".join(cf.name for cf in sorted(self.allowed_cfamilies, key=lambda x: x.name))
