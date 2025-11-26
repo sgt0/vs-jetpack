@@ -971,7 +971,7 @@ class DFTTest:
         """
         Denoises a clip using Discrete Fourier Transform (DFT).
 
-        More informations:
+        More information:
             - [VapourSynth DFTTest plugin](https://github.com/HomeOfVapourSynthEvolution/VapourSynth-DFTTest/blob/master/README.md)
             - [AviSynth DFTTest docs](http://avisynth.nl/index.php/Dfttest)
             - [vs-dfttest2 docstring](https://github.com/AmusementClub/vs-dfttest2/blob/573bb36c53df93c46a38926c7c654569e3679732/dfttest2.py#L614-L764)

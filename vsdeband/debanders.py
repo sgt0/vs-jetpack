@@ -378,7 +378,7 @@ def f3k_deband(
     """
     Debanding filter wrapper using the `neo_f3kdb` plugin.
 
-    More informations can be found in the plugin documentation: <https://github.com/HomeOfAviSynthPlusEvolution/neo_f3kdb>
+    More information can be found in the plugin documentation: <https://github.com/HomeOfAviSynthPlusEvolution/neo_f3kdb>
 
     Args:
         clip: Input clip.

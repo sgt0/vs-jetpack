@@ -27,8 +27,8 @@ def apply_rff_array[T](
         warnings.warn("uneven amount of fields removing last\n")
         array_double_rate = array_double_rate[:-1]
 
-    # It seems really weird thats its allowed to have rff stuff across
-    # vob boundries even for multi angle stuff i have seen this so often though it is ok to remove the warnings
+    # It seems really weird that its allowed to have rff stuff across
+    # vob boundaries even for multi angle stuff i have seen this so often though it is ok to remove the warnings
     for i, f1, f2 in zip(count(), array_double_rate[::2], array_double_rate[1::2]):
         if f1 != f2:
             warnings.warn(f"Ambiguous pattern due to rff {f1}!={f2} on index {i}\n")
@@ -122,7 +122,7 @@ def apply_rff_video(
 
     woven = vs.core.std.ModifyFrame(woven, woven, _set_repeat)
 
-    # TODO: this seems to not work or atleast useless since its disable for non progressive sequence which is rare
+    # TODO: this seems to not work or at least useless since its disable for non progressive sequence which is rare
     def _update_progressive(n: int, f: vs.VideoFrame) -> vs.VideoFrame:
         fout = f.copy()
 

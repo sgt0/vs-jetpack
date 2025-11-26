@@ -60,7 +60,7 @@ class ProcessVariableClip[T](DynamicClipsCache[T]):
 
         Args:
             clip: Clip to process
-            out_dim: Ouput dimension.
+            out_dim: Output dimension.
             out_fmt: Output format.
             cache_size: The maximum number of items allowed in the cache. Defaults to 10.
         """
@@ -130,7 +130,7 @@ class ProcessVariableClip[T](DynamicClipsCache[T]):
         Args:
             clip: Clip to process.
             func: Function that takes and returns a single VideoNode.
-            out_dim: Ouput dimension.
+            out_dim: Output dimension.
             out_fmt: Output format.
             cache_size: The maximum number of VideoNode allowed in the cache. Defaults to 10.
 

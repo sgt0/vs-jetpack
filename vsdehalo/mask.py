@@ -374,7 +374,7 @@ def fine_dehalo(
         attach_masks: Stores the masks as frame properties in the output clip.
             The prop names are `FineDehaloMask` + the masking step.
         func: An optional function to use for error handling.
-        **kwargs: Additionnal advanced parameters.
+        **kwargs: Additional advanced parameters.
 
     Returns:
         Dehaloed clip.

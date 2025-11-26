@@ -219,7 +219,7 @@ class IsoFile:
         # (the splitting logic assumes though that there is a chapter at the start and end)
         # TODO: verify these claims and check the splitting logic and figure out what the best solution is
         # you could either always add the end as chapter or stretch the last chapter till the end
-        # Guess #1: We only need to handle the case where last is not acually a chapter so stretching
+        # Guess #1: We only need to handle the case where last is not actually a chapter so stretching
         # is the only correct solution there, adding would be wrong
         output_chapters = [0, *output_chapters]
         lastchpt = len(rnode)

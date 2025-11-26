@@ -85,10 +85,10 @@ def dehalo_alpha(
         attach_masks: Stores generated masks as frame properties in the output clip.
             The prop name is `DehaloAlphaMask_{i}`, where `i` is the iteration index.
         func: An optional function to use for error handling.
-        **kwargs: Additionnal advanced parameters.
+        **kwargs: Additional advanced parameters.
 
     Raises:
-        CustomIndexError: If `lowsens` or `highsens` are not beween 0 and 100 (inclusive).
+        CustomIndexError: If `lowsens` or `highsens` are not between 0 and 100 (inclusive).
 
     Returns:
         Dehaloed clip.

@@ -35,7 +35,7 @@ class MeanMode(CustomEnum):
     """Arithmetic mean."""
 
     CONTRAHARMONIC = 2
-    """Contraharmonic mean, implemented as a Lehmer mean withs p=2"""
+    """Contraharmonic mean, implemented as a Lehmer mean with p=2"""
 
     LEHMER = 3
     """

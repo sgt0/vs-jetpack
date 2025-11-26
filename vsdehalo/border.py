@@ -106,7 +106,7 @@ class FixBorderBrightness(VSObject):
         self._tofix_rows = {i: _BorderDict(h) for i, h in enumerate(hs)}
 
         if protect is True:
-            protect = [(low, hight) for low, hight in zip(get_lowest_values(clip), get_peak_values(clip))]
+            protect = list(zip(get_lowest_values(clip), get_peak_values(clip)))
         elif protect is False:
             protect = [(False, False)]
         elif isinstance(protect, tuple):

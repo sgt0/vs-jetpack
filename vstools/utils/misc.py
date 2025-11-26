@@ -223,7 +223,7 @@ class padder:
         if width % w_sub or height % h_sub:
             raise CustomValueError(
                 "Values must result in a mod congruent to the clip's subsampling ({subsampling}).",
-                "patter",
+                "padder",
                 subsampling=get_subsampling(clip),
             )
 

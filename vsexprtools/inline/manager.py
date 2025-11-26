@@ -267,7 +267,7 @@ def inline_expr(
             You must assign the final [ComputedVar][vsexprtools.inline.helpers.ComputedVar]
             (the result of your expression) to `ie.out`.
 
-            Additionnaly, you can use `print(ie.out)` to see the computed expression string
+            Additionally, you can use `print(ie.out)` to see the computed expression string
             or `print(ie.out.to_str_per_plane())` or `print(ie.out.to_str(plane=...))` to see the expression per plane.
     """
     clips = to_arr(clips)

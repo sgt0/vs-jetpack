@@ -368,7 +368,7 @@ class NNEDI3(SuperSampler):
     """
     Neural Network Edge Directed Interpolation (3rd gen.)
 
-    More informations: https://github.com/sekrit-twc/znedi3
+    More information: https://github.com/sekrit-twc/znedi3
     """
 
     nsize: int = 0

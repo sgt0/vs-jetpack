@@ -18,7 +18,7 @@ class CustomInlineExprError(CustomRuntimeError):
 
     def add_stack_infos(self, expr_vars: dict[str, Any], ie: InlineExprWrapper) -> None:
         """
-        Adds additional informations on the expr vars used within the with statement of a InlineExprWrapper.
+        Adds additional information on the expr vars used within the with statement of a InlineExprWrapper.
 
         Args:
             expr_vars: Dictionary containing the current scope's local expr variables.

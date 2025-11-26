@@ -606,7 +606,7 @@ def flux_smooth(
     Args:
         clip: Clip to process.
         temporal_threshold: Temporal neighbour pixels within this threshold from the current pixel are included in the
-            average. Can be specified as an array, with values corresonding to each plane of the input clip. A negative
+            average. Can be specified as an array, with values corresponding to each plane of the input clip. A negative
             value (such as -1) indicates that the plane should not be processed and will be copied from the input clip.
         spatial_threshold: Spatial neighbour pixels within this threshold from the current pixel are included in the
             average. A negative value (such as -1) indicates that the plane should not be processed and will be copied

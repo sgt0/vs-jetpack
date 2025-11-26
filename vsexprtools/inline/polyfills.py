@@ -198,7 +198,7 @@ PyTypeObject_as_types_dict: dict[str, type[ctypes.Structure]] = {
     "tp_as_mapping": PyMappingMethods,
 }
 
-# build override infomation for dunder methods
+# build override information for dunder methods
 as_number = (
     "tp_as_number",
     [

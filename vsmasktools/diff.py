@@ -155,7 +155,7 @@ def based_diff_mask(
     func: FuncExcept | None = None,
 ) -> vs.VideoNode:
     """
-    Make a difference mask between a clean source and a reference clip with additionnal pre and post processing
+    Make a difference mask between a clean source and a reference clip with additional pre and post processing
 
     Args:
         clip: Source clip
