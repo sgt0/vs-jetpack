@@ -6,7 +6,6 @@ from itertools import groupby
 from logging import getLogger
 from math import ceil
 from typing import Any, Callable, Iterable, Sequence, SupportsIndex
-from warnings import warn
 
 from jetpytools import CustomIndexError, CustomRuntimeError, FuncExcept, StrList, SupportsString, normalize_seq, to_arr
 
@@ -28,7 +27,7 @@ if sys.version_info >= (3, 14):
     from string.templatelib import Template
 
 from .error import CustomExprError
-from .exprop import ExprList, ExprOp, ExprOpBase, TupleExprList, _TokenDeprecation
+from .exprop import ExprList, ExprOp, ExprOpBase, TupleExprList
 from .util import ExprVars
 
 __all__ = ["combine", "combine_expr", "expr_func", "norm_expr"]
@@ -324,14 +323,6 @@ def bitdepth_aware_tokenize_expr(
     for token in sorted(ExprToken, key=lambda x: len(x), reverse=True):
         if token.value in expr:
             replaces.append((token.value, token.get_value))
-
-        if token.name in expr:
-            warn(
-                f"Using token name '{token.name}' in expressions is deprecated. "
-                "Use the token's string representation or its value instead.",
-                _TokenDeprecation,
-            )
-            replaces.append((f"{token.__class__.__name__}.{token.name}", token.get_value))
 
     if not replaces:
         return expr
