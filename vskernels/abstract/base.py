@@ -87,40 +87,6 @@ def _add_init_kwargs[_BaseScalerT: BaseScaler, **P, R](
 ) -> Callable[Concatenate[_BaseScalerT, P], R]:
     @wraps(method)
     def _wrapped(self: _BaseScalerT, *args: P.args, **kwargs: P.kwargs) -> R:
-        # TODO: remove this
-        if not TYPE_CHECKING and isinstance(self, vs.VideoNode):
-            import inspect
-            import pathlib
-            import re
-            import warnings
-
-            class _SyntaxMethod(DeprecationWarning, SyntaxWarning): ...
-
-            warnings.simplefilter("always", _SyntaxMethod)
-            warnings.warn(
-                f"The `{method.__name__}` method must be called on an instance, not the class. "
-                "For example, use: Bicubic().scale(...) instead of Bicubic.scale(...)",
-                _SyntaxMethod,
-                2,
-                skip_file_prefixes=(str(pathlib.Path(__file__).resolve()),),
-            )
-
-            frame_infos = inspect.stack()
-            frame_info = frame_infos[1]
-            f0 = inspect.currentframe()
-            f1 = f0.f_back  # pyright: ignore
-
-            try:
-                if code := frame_info.code_context:
-                    match = re.search(rf"(\w+)\.{method.__name__}", code[0])
-                    if match:
-                        clip = self
-                        self = eval(match.group(1), f1.f_globals, f1.f_locals)()  # pyright: ignore
-                        args = (clip, *args)  # pyright: ignore
-            finally:
-                frame_infos.clear()
-                del frame_info, f0, f1
-
         init_kwargs = {k: self.kwargs.pop(k) for k in self.kwargs.keys() & method.__annotations__.keys()}
 
         returned = method(self, *args, **init_kwargs | kwargs)
