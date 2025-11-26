@@ -7,8 +7,6 @@ from __future__ import annotations
 from abc import ABC
 from typing import ClassVar, Sequence
 
-from vsjetpack import deprecated
-
 from ._abstract import (
     EdgeDetect,
     EdgeMasksEdgeDetect,
@@ -18,7 +16,6 @@ from ._abstract import (
     NormalizeProcessor,
     RidgeDetect,
     SingleMatrix,
-    TCannyEdgeDetect,
 )
 
 # ruff: noqa: RUF022
@@ -35,7 +32,6 @@ __all__ = [
     "ExPrewitt",
     "ExSobel",
     "FDoG",
-    "FDoGTCanny",
     "Farid",
     # Max
     "ExKirsch",
@@ -132,20 +128,6 @@ class FDoG(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix5x5):
         [1, 2, 3, 2, 1, 1, 2, 3, 2, 1, 0, 0, 0, 0, 0, -1, -2, -3, -2, -1, -1, -2, -3, -2, -1],
     ]
     divisors: ClassVar[Sequence[float] | None] = [2, 2]
-
-
-@deprecated(
-    "FDoGTCanny is deprecated and will be removed in a future version. "
-    "Please use FDoG and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class FDoGTCanny(TCannyEdgeDetect, Matrix5x5):
-    """
-    Flow-based Difference of Gaussian TCanny Vapoursynth plugin.
-    """
-
-    _op = 6
-    _scale = 1 / 2
 
 
 class Farid(NormalizeProcessor, RidgeDetect, EuclideanDistance, Matrix5x5):
