@@ -9,7 +9,7 @@ from vstools import vs
 from .abstract import GeneralMask
 from .edge._abstract import EdgeDetectLike, RidgeDetectLike
 
-__all__ = ["Coordinates", "GenericMaskT", "MaskLike", "XxpandMode"]
+__all__ = ["Coordinates", "MaskLike", "XxpandMode"]
 
 
 class XxpandMode(CustomEnum):
@@ -61,6 +61,3 @@ MaskLike = Union[
     str,
 ]
 """Type alias for anything that can resolve to a mask."""
-
-GenericMaskT = MaskLike
-"""Deprecated alias of MaskLike"""
