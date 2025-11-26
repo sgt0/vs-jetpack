@@ -14,15 +14,7 @@ from ..types import HoldsPropValue, HoldsVideoFormat, VideoFormatLike
 from ..vs_proxy import vs
 from .base import PropEnum, _base_from_video
 
-__all__ = [
-    "ChromaLocation",
-    "ChromaLocationLike",
-    "ChromaLocationT",
-    "Field",
-    "FieldBased",
-    "FieldBasedLike",
-    "FieldBasedT",
-]
+__all__ = ["ChromaLocation", "ChromaLocationLike", "Field", "FieldBased", "FieldBasedLike"]
 
 
 class ChromaLocation(PropEnum):
@@ -276,9 +268,3 @@ type FieldBasedLike = int | vs.FieldBased | FieldBased | HoldsPropValue
 
 type FieldLike = int | Field | HoldsPropValue
 """Type alias for values that can be used to initialize a [Field][vstools.Field]."""
-
-ChromaLocationT = ChromaLocationLike
-"""Deprecated alias of ChromaLocationLike"""
-
-FieldBasedT = FieldBasedLike
-"""Deprecated alias of FieldBasedT = FieldBasedLike"""
