@@ -10,12 +10,9 @@ from .builtins import Planes
 __all__ = [
     "F_VD",
     "AudioNodeIterable",
-    "ConstantFormatVideoNode",
     "GenericVSFunction",
     "HoldsPropValue",
-    "HoldsPropValueT",  # Deprecated alias
     "HoldsVideoFormat",
-    "HoldsVideoFormatT",  # Deprecated alias
     "MissingT",
     "RawNodeIterable",
     "VSFunction",
@@ -25,9 +22,7 @@ __all__ = [
     "VSFunctionNoArgs",
     "VSFunctionPlanesArgs",
     "VideoFormatLike",
-    "VideoFormatT",  # Deprecated alias
     "VideoNodeIterable",
-    "VideoNodeIterableT",  # Deprecated alias
 ]
 
 type VideoNodeIterable = vs.VideoNode | Iterable[VideoNodeIterable]
@@ -50,21 +45,6 @@ Types from which a clear VideoFormat can be retrieved.
 HoldsPropValue = vs.FrameProps | vs.VideoFrame | vs.AudioFrame | vs.VideoNode | vs.AudioNode | Mapping[str, Any]
 """
 Types that can hold a vs.FrameProps.
-"""
-
-VideoFormatT = VideoFormatLike
-"""
-Deprecated alias of VideoFormatLike.
-"""
-
-HoldsVideoFormatT = HoldsVideoFormat
-"""
-Deprecated alias of HoldsVideoFormat.
-"""
-
-HoldsPropValueT = HoldsPropValue
-"""
-Deprecated alias of HoldsPropValue.
 """
 
 
@@ -102,8 +82,3 @@ class VSFunctionPlanesArgs(VSFunctionKwArgs, Protocol):
 
 
 GenericVSFunction = Callable[..., vs.VideoNode]
-
-ConstantFormatVideoNode = vs.VideoNode
-"""
-Deprecated alias of vs.VideoNode
-"""
