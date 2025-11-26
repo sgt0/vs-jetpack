@@ -11,7 +11,6 @@ from typing import Any, ClassVar, Sequence
 from jetpytools import interleave_arr, to_arr
 
 from vsexprtools import ExprList, ExprOp, norm_expr
-from vsjetpack import deprecated
 from vstools import Planes, join, split, vs
 
 from ..morpho import Morpho
@@ -27,7 +26,6 @@ from ._abstract import (
     NormalizeProcessor,
     RidgeDetect,
     SingleMatrix,
-    TCannyEdgeDetect,
 )
 
 # ruff: noqa: RUF022
@@ -43,17 +41,11 @@ __all__ = [
     # Euclidean Distance
     "Cross",
     "Prewitt",
-    "PrewittStd",
-    "PrewittTCanny",
     "Sobel",
-    "SobelStd",
-    "SobelTCanny",
     "ASobel",
     "Scharr",
     "RScharr",
-    "ScharrTCanny",
     "Kroon",
-    "KroonTCanny",
     "FreyChenG41",
     "FreyChen",
     # Max
@@ -61,7 +53,6 @@ __all__ = [
     "Robinson5",
     "TheToof",
     "Kirsch",
-    "KirschTCanny",
     # Misc
     "MinMax",
 ]
@@ -132,87 +123,12 @@ class Prewitt(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
     matrices: ClassVar[Sequence[Sequence[float]]] = [[1, 0, -1, 1, 0, -1, 1, 0, -1], [1, 1, 1, 0, 0, 0, -1, -1, -1]]
 
 
-@deprecated(
-    "PrewittStd is deprecated and will be removed in a future version. "
-    "Please use Prewitt and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class PrewittStd(Matrix3x3):
-    """
-    Judith M. S. Prewitt Vapoursynth plugin operator.
-    """
-
-    def _compute_edge_mask(
-        self,
-        clip: vs.VideoNode,
-        *,
-        multi: float | Sequence[float] = 1.0,
-        planes: Planes = None,
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        if not isinstance(multi, Sequence):
-            return clip.std.Prewitt(planes, multi)
-
-        return norm_expr(clip.std.Prewitt(planes), "x {multi} *", planes, func=self.__class__, multi=multi, **kwargs)
-
-
-@deprecated(
-    "PrewittTCanny is deprecated and will be removed in a future version. "
-    "Please use Prewitt and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class PrewittTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    Judith M. S. Prewitt TCanny plugin operator.
-    """
-
-    _op = 1
-    _scale = 2.0
-
-
 class Sobel(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
     """
     Sobel-Feldman operator.
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [[1, 0, -1, 2, 0, -2, 1, 0, -1], [1, 2, 1, 0, 0, 0, -1, -2, -1]]
-
-
-@deprecated(
-    "SobelStd is deprecated and will be removed in a future version. "
-    "Please use Sobel and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class SobelStd(Matrix3x3):
-    """
-    Sobel-Feldman Vapoursynth plugin operator.
-    """
-
-    def _compute_edge_mask(
-        self,
-        clip: vs.VideoNode,
-        *,
-        multi: float | Sequence[float] = 1.0,
-        planes: Planes = None,
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        if not isinstance(multi, Sequence):
-            return clip.std.Sobel(planes, multi)
-
-        return norm_expr(clip.std.Sobel(planes), "x {multi} *", planes, func=self.__class__, multi=multi, **kwargs)
-
-
-@deprecated(
-    "SobelTCanny is deprecated and will be removed in a future version. "
-    "Please use Sobel and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class SobelTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    Sobel-Feldman Vapoursynth plugin operator.
-    """
-
-    _op = 2
 
 
 class ASobel(Matrix3x3, EdgeDetect):
@@ -272,20 +188,6 @@ class RScharr(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
     divisors: ClassVar[Sequence[float] | None] = [47, 47]
 
 
-@deprecated(
-    "ScharrTCanny is deprecated and will be removed in a future version. "
-    "Please use Scharr and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class ScharrTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    H. Scharr optimised TCanny Vapoursynth plugin operator.
-    """
-
-    _op = 3
-    _scale = 1 / 3
-
-
 class Kroon(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
     """
     Dirk-Jan Kroon operator.
@@ -296,20 +198,6 @@ class Kroon(EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance, Matrix3x3):
         [-17, -61, -17, 0, 0, 0, 17, 61, 17],
     ]
     divisors: ClassVar[Sequence[float] | None] = [17, 17]
-
-
-@deprecated(
-    "KroonTCanny is deprecated and will be removed in a future version. "
-    "Please use Kroon and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class KroonTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    Dirk-Jan Kroon TCanny Vapoursynth plugin operator.
-    """
-
-    _op = 4
-    _scale = 1 / 17
 
 
 class FreyChen(NormalizeProcessor, MatrixEdgeDetect):
@@ -415,19 +303,6 @@ class Kirsch(MagnitudeEdgeMasks, Max, Matrix3x3):
         [-3, -3, 5, -3, 0, 5, -3, -3, 5],  # E
         [-3, 5, 5, -3, 0, 5, -3, -3, -3],  # NE
     ]
-
-
-@deprecated(
-    "KirschTCanny is deprecated and will be removed in a future version. "
-    "Please use Kirsch and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class KirschTCanny(TCannyEdgeDetect, Matrix3x3):
-    """
-    Russell Kirsch compass TCanny Vapoursynth plugin operator.
-    """
-
-    _op = 5
 
 
 # Misc
