@@ -1087,7 +1087,7 @@ class _Waifu2xCunet(BaseWaifu2x, BaseOnnxScalerRGB):
                        - A tint issue is also present but it is not constant. It leaves flat areas alone but tints
                        detailed areas.
                        Since most people will use Cunet to rescale details, the tint fix is enabled by default.
-                       This behavior can be disabled with `postprocess_no_tint_fix=True`
+                       This behavior can be disabled with `preprocess_no_tint_fix=True`
 
             Returns:
                 The scaled clip.
@@ -1099,27 +1099,23 @@ class _Waifu2xCunet(BaseWaifu2x, BaseOnnxScalerRGB):
         if kwargs.pop("no_pad", False):
             return super().inference(clip, **kwargs)
 
-        with padder.ctx(16, 4) as pad:
+        with padder.ctx(4, 4) as pad:
             padded = pad.MIRROR(clip)
             scaled = super().inference(padded, **kwargs)
             cropped = pad.CROP(scaled)
 
         return cropped
 
-    def postprocess_clip(self, clip: vs.VideoNode, input_clip: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
+    def preprocess_clip(self, clip: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         # Cunet model also has a tint issue but it is not constant
         # It leaves flat areas alone but tints detailed areas.
         # Since most people will use Cunet to rescale details, the tint fix is enabled by default.
         if kwargs.pop("no_tint_fix", False):
-            return super().postprocess_clip(clip, input_clip, **kwargs)
+            return super().preprocess_clip(clip, **kwargs)
 
-        tint_fix = norm_expr(
-            clip,
-            "x 0.5 255 / + 0 1 clamp",
-            planes=0 if get_video_format(input_clip).color_family is vs.GRAY else None,
-            func="Waifu2x." + self.__class__.__name__,
-        )
-        return super().postprocess_clip(tint_fix, input_clip, **kwargs)
+        tint_fix = norm_expr(clip, "x 0.5 255 / +", func="Waifu2x." + self.__class__.__name__)
+
+        return super().preprocess_clip(tint_fix, **kwargs)
 
 
 class Waifu2x(_Waifu2xCunet):
@@ -1396,7 +1392,7 @@ class BaseDPIR(BaseOnnxScaler):
         else:
             self.strength = clip.std.BlankClip(format=strength_fmt.id, color=float(self.strength) / 255, keep=True)
 
-        _log.debug("%s: Passing strength clip format: %s", self.inference, self.strength.forma)
+        _log.debug("%s: Passing strength clip format: %s", self.inference, self.strength.format)
 
         # Get model name
         self.model = (
