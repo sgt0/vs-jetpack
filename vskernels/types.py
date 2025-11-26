@@ -15,7 +15,6 @@ __all__ = [
     "FieldShift",
     "LeftShift",
     "SampleGridModel",
-    "ShiftT",
     "Slope",
     "TopFieldLeftShift",
     "TopFieldTopShift",
@@ -150,20 +149,6 @@ Type alias for shifts in interlaced content.
 Represents separate shifts for top and bottom fields.
 """
 
-type ShiftT = (
-    tuple[TopShift, LeftShift]
-    | tuple[
-        TopShift | tuple[TopFieldTopShift, BotFieldTopShift], LeftShift | tuple[TopFieldLeftShift, BotFieldLeftShift]
-    ]
-)
-"""
-Deprecated type alias for shift in both horizontal and vertical directions.
-
-Can either represent a single shift (for progressive video)
-or separate shifts for top and bottom fields (for interlaced video).
-
-The first value in the tuple represents vertical shift, and the second represents horizontal shift.
-"""
 
 type Slope = float
 """
