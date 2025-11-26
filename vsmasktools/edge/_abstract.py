@@ -311,36 +311,6 @@ class EdgeDetect(ABC):
         return clip
 
 
-class TCannyEdgeDetect(EdgeDetect):
-    """
-    Edge detection using VapourSynth's `tcanny` plugin.
-    """
-
-    _op: ClassVar[int]
-    _scale: ClassVar[float] = 1.0
-
-    def _compute_edge_mask(
-        self,
-        clip: vs.VideoNode,
-        *,
-        multi: float | Sequence[float] = 1.0,
-        planes: Planes = None,
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        tcanny_args = {"op": self._op, "planes": planes} | {"sigma": 0, "mode": 1} | kwargs
-
-        if not isinstance(multi, Sequence):
-            return clip.tcanny.TCanny(scale=self._scale * multi, **tcanny_args)
-
-        return norm_expr(
-            clip.tcanny.TCanny(scale=self._scale, **tcanny_args),
-            "x {multi} *",
-            planes,
-            func=self.__class__,
-            multi=[self._scale * m for m in multi],
-        )
-
-
 class MatrixEdgeDetect(EdgeDetect):
     """
     Edge detection based on convolution matrices.
