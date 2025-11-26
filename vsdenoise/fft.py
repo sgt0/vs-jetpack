@@ -1113,6 +1113,3 @@ The sequence or mapping must represent a pairing of frequency and sigma values f
 In the case of a sequence like `Sequence[Frequency, Sigma]`, it is essential that the number of items is even,
 ensuring every frequency has an associated sigma.
 """
-
-SLocationT = SLocationLike
-"""Deprecated alias of SLocationLike."""
