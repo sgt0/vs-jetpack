@@ -279,10 +279,9 @@ class MVTools(VSObject):
             "pelclip": fallback(pelclip, default=self.super_args.get("pelclip")),
         }
 
-        levels = levels if levels is not None else self.super_args.get("levels")
-        levels = fallback(levels, 0)
-
-        return _super_clip_cache.get_cached_super(clip, levels, **super_args)
+        return _super_clip_cache.get_cached_super(
+            clip, fallback(levels, self.super_args.get("levels"), 0), **super_args
+        )
 
     def analyze(
         self,
