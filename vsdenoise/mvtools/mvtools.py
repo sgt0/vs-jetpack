@@ -269,17 +269,17 @@ class MVTools(VSObject):
         if callable(pelclip):
             pelclip = pelclip(clip)
 
-        super_args = self.super_args | {
+        super_args = {
             "hpad": fallback(hpad, 16),
             "vpad": fallback(vpad, 16),
             "pel": fallback(self.pel, 2),
             "chroma": fallback(self.chroma, True),
-            "sharp": fallback(sharp, 2),
-            "rfilter": fallback(rfilter, 2),
-            "pelclip": pelclip,
+            "sharp": fallback(sharp, self.super_args.get("sharp"), 2),
+            "rfilter": fallback(rfilter, self.super_args.get("rfilter"), 2),
+            "pelclip": fallback(pelclip, default=self.super_args.get("pelclip")),
         }
-
-        levels = 1 if levels is None and clip is not self.search_clip else fallback(levels, 0)
+        levels = levels if levels is not None else self.super_args.get("levels")
+        levels = 1 if (levels is None and clip is not self.search_clip) else fallback(levels, 0)
 
         return _super_clip_cache.get_cached_super(clip, levels, **super_args)
 
