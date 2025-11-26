@@ -161,6 +161,7 @@ def fine_sharp(
     then the *blurred* sharp-difference gets subtracted again.
 
     Args:
+        clip: Clip to process.
         mode: 0 or 1, weakest to strongest.
         sstr: strength of sharpening.
         cstr: strength of equalisation.
@@ -238,7 +239,8 @@ def soothe(
     The goal is temporal stabilization of clips that have been sharpened before.
 
     Args:
-        clip: Clip to process.
+        flt: Filtered clip.
+        src: Source clip.
         spatial_strength: Spatial soothing strength.
         temporal_strength: Temporal soothing strength.
         spatial_radius: Spatial soothing radius.
