@@ -31,7 +31,6 @@ from ..exceptions import UnknownEdgeDetectError, UnknownRidgeDetectError, _Unkno
 __all__ = [
     "EdgeDetect",
     "EdgeDetectLike",
-    "EdgeDetectT",
     "EdgeMasksEdgeDetect",
     "EuclideanDistance",
     "MagDirection",
@@ -41,7 +40,6 @@ __all__ = [
     "Max",
     "RidgeDetect",
     "RidgeDetectLike",
-    "RidgeDetectT",
     "SingleMatrix",
     "get_all_edge_detects",
     "get_all_ridge_detect",
@@ -668,12 +666,6 @@ This includes:
  - A class type subclassing `RidgeDetect`.
  - An instance of a `RidgeDetect`.
 """
-
-EdgeDetectT = EdgeDetectLike
-"""Deprecated alias of EdgeDetectLike."""
-
-RidgeDetectT = RidgeDetectLike
-"""Deprecated alias of RidgeDetectLike."""
 
 
 def get_all_edge_detects(
