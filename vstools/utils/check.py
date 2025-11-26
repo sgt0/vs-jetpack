@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import Literal, Sequence
 
-from jetpytools import CustomValueError, FuncExcept
-
-from vsjetpack import deprecated
+from jetpytools import FuncExcept
 
 from ..enums import FieldBased
 from ..exceptions import (
@@ -17,7 +15,6 @@ from ..exceptions import (
 from ..vs_proxy import vs
 
 __all__ = [
-    "check_correct_subsampling",
     "check_progressive",
     "check_ref_clip",
     "check_variable",
@@ -103,33 +100,6 @@ def check_variable(clip: vs.VideoNode, func: FuncExcept) -> Literal[True]:
     check_variable_resolution(clip, func)
 
     return True
-
-
-@deprecated(
-    "check_correct_subsampling is deprecated and will be removed in a future version.", category=DeprecationWarning
-)
-def check_correct_subsampling(clip: vs.VideoNode, width: int, height: int, func: FuncExcept | None = None) -> None:
-    """
-    Check if the subsampling is correct and return an error if it's not.
-
-    Args:
-        clip: Clip to check.
-        width: Output width.
-        height: Output height.
-        func: Function returned for custom error handling. This should only be set by VS package developers.
-
-    Raises:
-        CustomValueError: The clip has invalid subsampling.
-    """
-    if (width % (2**clip.format.subsampling_w)) or (height % (2**clip.format.subsampling_h)):
-        from .info import get_subsampling
-
-        raise CustomValueError(
-            "The {subsampling} subsampling is not supported for this resolution!",
-            func or check_correct_subsampling,
-            {"width": width, "height": height},
-            subsampling=get_subsampling(clip),
-        )
 
 
 def check_progressive(clip: vs.VideoNode, func: FuncExcept) -> Literal[True]:
