@@ -12,16 +12,12 @@ from .base import PropEnum, _base_from_video
 __all__ = [
     "ColorRange",
     "ColorRangeLike",
-    "ColorRangeT",  # Deprecated alias
     "Matrix",
     "MatrixLike",
-    "MatrixT",  # Deprecated alias
     "Primaries",
     "PrimariesLike",
-    "PrimariesT",  # Deprecated alias
     "Transfer",
     "TransferLike",
-    "TransferT",  # Deprecated alias
 ]
 
 
@@ -741,18 +737,6 @@ type PrimariesLike = int | vs.ColorPrimaries | Primaries | HoldsPropValue
 
 type ColorRangeLike = int | vs.ColorRange | ColorRange | HoldsPropValue
 """Type alias for values that can be used to initialize a [ColorRange][vstools.ColorRange]."""
-
-MatrixT = MatrixLike
-"""Deprecated alias of MatrixLike"""
-
-TransferT = TransferLike
-"""Deprecated alias of TransferLike"""
-
-PrimariesT = PrimariesLike
-"""Deprecated alias of PrimariesLike"""
-
-ColorRangeT = ColorRangeLike
-"""Deprecated alias of ColorRangeLike"""
 
 
 def _norm_props_enums(kwargs: dict[str, Any]) -> dict[str, Any]:
