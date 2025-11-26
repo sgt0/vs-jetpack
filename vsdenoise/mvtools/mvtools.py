@@ -278,10 +278,8 @@ class MVTools(VSObject):
             "rfilter": fallback(rfilter, self.super_args.get("rfilter"), 2),
             "pelclip": fallback(pelclip, default=self.super_args.get("pelclip")),
         }
-        levels = levels if levels is not None else self.super_args.get("levels")
-        levels = 1 if (levels is None and clip is not self.search_clip) else fallback(levels, 0)
 
-        return _super_clip_cache.get_cached_super(clip, levels, **super_args)
+        return _super_clip_cache.get_cached_super(clip, fallback(self.super_args.get("levels"), 0), **super_args)
 
     def analyze(
         self,
@@ -375,7 +373,7 @@ class MVTools(VSObject):
             These vectors describe the estimated motion between frames and can be used for motion compensation.
         """
 
-        super_clip = self.super(fallback(super, self.search_clip))
+        super_clip = self.super(fallback(super, self.search_clip), levels=levels)
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
@@ -480,7 +478,7 @@ class MVTools(VSObject):
             scale_lambda: Whether to scale lambda_ value according to truemotion's default value formula.
         """
 
-        super_clip = self.super(fallback(super, self.search_clip))
+        super_clip = self.super(fallback(super, self.search_clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
 
@@ -623,7 +621,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(direction, tr)
@@ -759,7 +757,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(direction, tr)
@@ -832,7 +830,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         tr = fallback(tr, vectors.tr)
@@ -903,7 +901,7 @@ class MVTools(VSObject):
         """
         clip = fallback(clip, self.clip)
 
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -960,7 +958,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -1016,7 +1014,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
@@ -1065,7 +1063,7 @@ class MVTools(VSObject):
         """
 
         clip = fallback(clip, self.clip)
-        super_clip = self.super(fallback(super, clip))
+        super_clip = self.super(fallback(super, clip), levels=1)
 
         vectors = fallback(vectors, self.vectors)
         vect_b, vect_f = vectors.get_vectors(tr=1)
