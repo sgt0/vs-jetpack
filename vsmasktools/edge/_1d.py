@@ -7,13 +7,11 @@ from __future__ import annotations
 from abc import ABC
 from typing import Any, ClassVar, Sequence
 
-from vsexprtools import norm_expr
-from vsjetpack import deprecated
-from vstools import Planes, core, vs
+from vstools import core, vs
 
-from ._abstract import EdgeDetect, EdgeMasksEdgeDetect, EuclideanDistance, RidgeDetect, TCannyEdgeDetect
+from ._abstract import EdgeDetect, EdgeMasksEdgeDetect, EuclideanDistance, RidgeDetect
 
-__all__ = ["Matrix1D", "TEdge", "TEdgeTedgemask", "Tritical", "TriticalTCanny"]
+__all__ = ["Matrix1D", "TEdge", "Tritical"]
 
 
 class Matrix1D(EdgeDetect, ABC):
@@ -31,20 +29,6 @@ class Tritical(Matrix1D, EdgeMasksEdgeDetect, RidgeDetect, EuclideanDistance):
     """
 
     matrices: ClassVar[Sequence[Sequence[float]]] = [[-1, 0, 1], [1, 0, -1]]
-
-
-@deprecated(
-    "TriticalTCanny is deprecated and will be removed in a future version. "
-    "Please use Tritical and install the 'edgemasks' plugin instead.",
-    category=DeprecationWarning,
-)
-class TriticalTCanny(Matrix1D, TCannyEdgeDetect):
-    """
-    Operator used in Tritical's original TCanny filter.
-    Plain and simple orthogonal first order derivative.
-    """
-
-    _op = 0
 
 
 class TEdge(Matrix1D, EuclideanDistance):
@@ -72,28 +56,3 @@ class TEdge(Matrix1D, EuclideanDistance):
             return clip.tedgemask.TEdgeMask(0, 2, scale=multi, planes=planes, **kwargs)
 
         return super()._compute_edge_mask(clip, multi=multi, planes=planes, **kwargs)
-
-
-@deprecated(
-    "TEdgeTedgemask is deprecated and will be removed in a future version. Please use TEdge instead.",
-    category=DeprecationWarning,
-)
-class TEdgeTedgemask(Matrix1D):
-    """
-    (tedgemask.TEdgeMask(threshold=0.0, type=2)) Vapoursynth plugin.
-    """
-
-    def _compute_edge_mask(
-        self,
-        clip: vs.VideoNode,
-        *,
-        multi: float | Sequence[float] = 1.0,
-        planes: Planes = None,
-        **kwargs: Any,
-    ) -> vs.VideoNode:
-        if not isinstance(multi, Sequence):
-            return clip.tedgemask.TEdgeMask(0, 2, scale=multi, planes=planes, **kwargs)
-
-        return norm_expr(
-            clip.tedgemask.TEdgeMask(0, 2, **kwargs), "x {multi} *", planes, func=self.__class__, multi=multi
-        )
