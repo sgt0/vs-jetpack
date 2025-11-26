@@ -17,7 +17,6 @@ from vsjetpack import require_jet_dependency
 from vskernels import LeftShift, TopShift
 from vstools import (
     ChromaLocation,
-    ConstantFormatVideoNode,
     ConvMode,
     FormatsRefClipMismatchError,
     ResolutionsRefClipMismatchError,
@@ -452,7 +451,7 @@ class ChromaReconstruct(VSObjectABC):
     chroma_bases: Sequence[vs.VideoNode]
     """The chroma base planes."""
 
-    clip_src: ConstantFormatVideoNode
+    clip_src: vs.VideoNode
     """The original source clip."""
 
     chroma_loc: ChromaLocation = field(init=False)
