@@ -85,7 +85,7 @@ doc = [
     "black==25.11.0",
 
     # Additional packages to be documented.
-    "vspreview==0.18.0rc1.post1",
+    "vspreview==0.18.0",
     "vstransitions==0.1.4",
 ]
 
