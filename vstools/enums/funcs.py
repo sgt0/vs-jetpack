@@ -102,24 +102,6 @@ type SpatialConvMode = Literal[ConvMode.SQUARE, ConvMode.HORIZONTAL, ConvMode.VE
 type TempConvMode = Literal[ConvMode.TEMPORAL]
 """Type alias for temporal convolution mode only"""
 
-OnePassConvModeT = OnePassConvMode
-"""Deprecated alias of OnePassConvMode"""
-
-TwoPassesConvModeT = TwoPassesConvMode
-"""Deprecated alias of TwoPassesConvMode"""
-
-OneDimConvModeT = OneDimConvMode
-"""Deprecated alias of OneDimConvMode"""
-
-TwoDimConvModeT = TwoDimConvMode
-"""Deprecated alias of TwoDimConvMode"""
-
-SpatialConvModeT = SpatialConvMode
-"""Deprecated alias of SpatialConvMode"""
-
-TempConvModeT = TempConvMode
-"""Deprecated alias of TempConvMode"""
-
 
 class Align(Flag):
     """Defines alignment flags for positioning elements vertically and horizontally."""
