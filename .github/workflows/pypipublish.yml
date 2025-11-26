@@ -5,7 +5,6 @@ on:
   workflow_dispatch:
 
 env:
-  VAPOURSYNTH_VERSION: 73
   PYTHON_VERSION: 3.14
 
 jobs:
@@ -31,19 +30,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           enable-cache: true
 
-      - name: Set up VapourSynth ${{ env.VAPOURSYNTH_VERSION }}
-        uses: Jaded-Encoding-Thaumaturgy/setup-vapoursynth@v1
-        with:
-          vapoursynth-version: ${{ env.VAPOURSYNTH_VERSION }}
-
-      - name: Install dependencies
-        run: uv sync --locked
-
       - name: Build
         run: uv build
 
       - name: Check the output
-        run: uv run twine check --strict dist/*
+        run: uvx twine check --strict dist/*
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
