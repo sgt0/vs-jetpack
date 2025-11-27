@@ -60,8 +60,8 @@ __all__ = [
 
 
 def _check_dynamic_keeparscaler_params(
-    border_handling: BorderHandling,
-    sample_grid_model: SampleGridModel,
+    border_handling: int,
+    sample_grid_model: int,
     sar: Any,
     dar: Any,
     dar_in: Any,
@@ -477,8 +477,8 @@ class KeepArScaler(Scaler):
         shift: tuple[TopShift, LeftShift] = (0, 0),
         *,
         # KeepArScaler adds `border_handling`, `sample_grid_model`, `sar`, `dar`, `dar_in` and `keep_ar`
-        border_handling: BorderHandling = BorderHandling.MIRROR,
-        sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
+        border_handling: int = BorderHandling.MIRROR,
+        sample_grid_model: int = SampleGridModel.MATCH_EDGES,
         sar: Sar | float | bool | None = None,
         dar: Dar | float | bool | None = None,
         dar_in: Dar | bool | float | None = None,
@@ -515,15 +515,19 @@ class KeepArScaler(Scaler):
             )
             return super().scale(clip, width, height, shift, **kwargs)
 
-        if int(border_handling) == int(sample_grid_model) == 0 and sar is dar is dar_in is keep_ar is None:
+        if border_handling == sample_grid_model == 0 and sar is dar is dar_in is keep_ar is None:
             return super().scale(clip, width, height, shift, **kwargs)
 
         kwargs, shift, out_sar = self._handle_crop_resize_kwargs(
             clip, width, height, shift, sar, dar, dar_in, keep_ar, **kwargs
         )
 
-        kwargs, shift = sample_grid_model.for_dst(clip, width, height, shift, **kwargs)
-        padded, shift = border_handling.prepare_clip(clip, self.kernel_radius, shift)
+        kwargs, shift = SampleGridModel.from_param(sample_grid_model, self.scale).for_dst(
+            clip, width, height, shift, **kwargs
+        )
+        padded, shift = BorderHandling.from_param(border_handling, self.scale).prepare_clip(
+            clip, self.kernel_radius, shift
+        )
 
         scaled = super().scale(padded, width, height, shift, **kwargs)
 
@@ -556,8 +560,8 @@ class ComplexScaler(KeepArScaler, LinearScaler):
         linear: bool | None = None,
         sigmoid: bool | tuple[Slope, Center] = False,
         # `border_handling`, `sample_grid_model`, `sar`, `dar`, `dar_in` and `keep_ar` from KeepArScaler
-        border_handling: BorderHandling = BorderHandling.MIRROR,
-        sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
+        border_handling: int = BorderHandling.MIRROR,
+        sample_grid_model: int = SampleGridModel.MATCH_EDGES,
         sar: Sar | float | bool | None = None,
         dar: Dar | float | bool | None = None,
         dar_in: Dar | bool | float | None = None,

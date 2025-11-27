@@ -88,8 +88,8 @@ class Placebo(ComplexScaler, abstract=True):
         linear: bool | None = None,
         sigmoid: bool | tuple[Slope, Center] = False,
         # `border_handling`, `sample_grid_model`, `sar`, `dar`, `dar_in` and `keep_ar` from KeepArScaler
-        border_handling: BorderHandling = BorderHandling.MIRROR,
-        sample_grid_model: SampleGridModel = SampleGridModel.MATCH_EDGES,
+        border_handling: int = BorderHandling.MIRROR,
+        sample_grid_model: int = SampleGridModel.MATCH_EDGES,
         sar: Sar | float | bool | None = None,
         dar: Dar | float | bool | None = None,
         dar_in: Dar | bool | float | None = None,
