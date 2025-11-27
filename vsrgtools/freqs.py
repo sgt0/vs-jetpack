@@ -180,7 +180,6 @@ class MeanMode(CustomEnum):
 
         Args:
             n: Object from which to infer the variables.
-            eps: Small constant to avoid division by zero. Defaults to 1e-7.
             **kwargs: Additional keyword arguments for certain modes.
 
                    - p (float): Exponent for `LEHMER` mode. Defaults to 3.
