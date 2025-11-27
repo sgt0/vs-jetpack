@@ -274,13 +274,13 @@ class MVTools(VSObject):
             "vpad": fallback(vpad, 16),
             "pel": fallback(self.pel, 2),
             "chroma": fallback(self.chroma, True),
-            "sharp": fallback(sharp, self.super_args.get("sharp"), 2),
-            "rfilter": fallback(rfilter, self.super_args.get("rfilter"), 2),
+            "sharp": fallback(sharp, self.super_args.get("sharp", 2)),
+            "rfilter": fallback(rfilter, self.super_args.get("rfilter", 2)),
             "pelclip": fallback(pelclip, default=self.super_args.get("pelclip")),
         }
 
         return _super_clip_cache.get_cached_super(
-            clip, fallback(levels, self.super_args.get("levels"), 0), **super_args
+            clip, fallback(levels, self.super_args.get("levels", 0)), **super_args
         )
 
     def analyze(
@@ -375,7 +375,9 @@ class MVTools(VSObject):
             These vectors describe the estimated motion between frames and can be used for motion compensation.
         """
 
-        super_clip = self.super(fallback(super, self.search_clip), levels=levels)
+        super_clip = self.super(
+            fallback(super, self.search_clip), levels=fallback(levels, self.analyze_args.get("levels", 0))
+        )
 
         blksize, blksizev = normalize_seq(blksize, 2)
         overlap, overlapv = normalize_seq(overlap, 2)
