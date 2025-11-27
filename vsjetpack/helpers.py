@@ -111,6 +111,7 @@ def setup_logging(level: str | int = INFO, handlers: Iterable[Handler] | None = 
     if handlers is None:
         from rich.console import Console
         from rich.logging import RichHandler
+        from rich.text import Text
 
         class CustomJetHandler(RichHandler):
             def format(self, record: LogRecord) -> str:
@@ -126,9 +127,17 @@ def setup_logging(level: str | int = INFO, handlers: Iterable[Handler] | None = 
 
                 return super().format(record)
 
-        handlers = [CustomJetHandler(console=Console(stderr=True), show_time=False, rich_tracebacks=True)]
+        handlers = [
+            CustomJetHandler(
+                console=Console(stderr=True),
+                omit_repeated_times=False,
+                show_time=True,
+                rich_tracebacks=True,
+                log_time_format=lambda dt: Text("[{}.{:03d}]".format(dt.strftime("%H:%M:%S"), dt.microsecond // 1000)),
+            )
+        ]
 
-    kwargs = {"format": "{asctime}: {name}: {message}", "style": "{"} | kwargs
+    kwargs = {"format": "{name}: {message}", "style": "{"} | kwargs
 
     basicConfig(level=level, handlers=handlers, **kwargs)
 
