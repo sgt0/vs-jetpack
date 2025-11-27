@@ -23,13 +23,33 @@ __all__ = [
 
 
 class BorderHandling(CustomIntEnum):
+    """
+    Border padding strategy used when a clip requires alignment padding.
+    """
+
     MIRROR = 0
+    """Assume the image was resized with mirror padding."""
+
     ZERO = 1
+    """Assume the image was resized with zero padding."""
+
     REPEAT = 2
+    """Assume the image was resized with extend padding, where the outermost row was extended infinitely far."""
 
     def prepare_clip(
         self, clip: vs.VideoNode, min_pad: int = 2, shift: tuple[TopShift, LeftShift] = (0, 0)
     ) -> tuple[vs.VideoNode, tuple[TopShift, LeftShift]]:
+        """
+        Apply required padding and adjust shift.
+
+        Args:
+            clip: Input clip.
+            min_pad: Minimum padding before alignment.
+            shift: Current (top, left) shift.
+
+        Returns:
+            (padded clip, updated shift).
+        """
         pad_w, pad_h = (self.pad_amount(size, min_pad) for size in (clip.width, clip.height))
 
         if pad_w == pad_h == 0:
@@ -49,6 +69,18 @@ class BorderHandling(CustomIntEnum):
 
     @cache
     def pad_amount(self, size: int, min_amount: int = 2) -> int:
+        """
+        Return required padding for one dimension.
+
+        MIRROR always returns zero. Other modes pad to an 8-pixel boundary.
+
+        Args:
+            size: Dimension size.
+            min_amount: Minimum required padding.
+
+        Returns:
+            Padding amount.
+        """
         if self is BorderHandling.MIRROR:
             return 0
 
@@ -56,8 +88,49 @@ class BorderHandling(CustomIntEnum):
 
 
 class SampleGridModel(CustomIntEnum):
+    """
+    Sampling grid alignment model.
+
+    While match edges will align the edges of the outermost pixels in the target image,
+    match centers will instead align the *centers* of the outermost pixels.
+
+    Here's a visual example for a 3x1 image upsampled to 7x1:
+
+    - Match edges:
+        ```
+        +-------------+-------------+-------------+
+        |      ·      |      ·      |      ·      |
+        +-------------+-------------+-------------+
+        ↓                                         ↓
+        +-----+-----+-----+-----+-----+-----+-----+
+        |  ·  |  ·  |  ·  |  ·  |  ·  |  ·  |  ·  |
+        +-----+-----+-----+-----+-----+-----+-----+
+        ```
+
+    - Match centers:
+        ```
+        +-----------------+-----------------+-----------------+
+        |        ·        |        ·        |        ·        |
+        +-----------------+-----------------+-----------------+
+                 ↓                                   ↓
+              +-----+-----+-----+-----+-----+-----+-----+
+              |  ·  |  ·  |  ·  |  ·  |  ·  |  ·  |  ·  |
+              +-----+-----+-----+-----+-----+-----+-----+
+        ```
+
+    For a more detailed explanation, refer to this page: <https://entropymine.com/imageworsener/matching/>.
+
+    The formula for calculating values we can use during desampling is simple:
+
+    - width: `base_width * (target_width - 1) / (base_width - 1)`
+    - height: `base_height * (target_height - 1) / (base_height - 1)`
+    """
+
     MATCH_EDGES = 0
+    """Align edges."""
+
     MATCH_CENTERS = 1
+    """Align pixel centers."""
 
     def __call__(
         self,
@@ -68,6 +141,21 @@ class SampleGridModel(CustomIntEnum):
         shift: tuple[float, float],
         kwargs: dict[str, Any],
     ) -> tuple[dict[str, Any], tuple[float, float]]:
+        """
+        Apply sampling model to sizes and shift.
+
+        Args:
+            width: Destination width.
+            height: Destination height.
+            src_width: Current source width.
+            src_height: Current source height.
+            shift: (x, y) sampling shift.
+            kwargs: Parameter dict to update.
+
+        Returns:
+            (updated kwargs, updated shift).
+        """
+
         if self is SampleGridModel.MATCH_CENTERS:
             src_width = src_width * (width - 1) / (src_width - 1)
             src_height = src_height * (height - 1) / (src_height - 1)
@@ -83,6 +171,20 @@ class SampleGridModel(CustomIntEnum):
     def for_dst(
         self, clip: vs.VideoNode, width: int, height: int, shift: tuple[float, float], **kwargs: Any
     ) -> tuple[dict[str, Any], tuple[float, float]]:
+        """
+        Apply grid model using destination sizes.
+
+        Args:
+            clip: Source clip.
+            width: Destination width.
+            height: Destination height.
+            shift: Current shift.
+            **kwargs: Optional src_width/src_height.
+
+        Returns:
+            (updated kwargs, updated shift).
+        """
+
         src_width = kwargs.get("src_width", width)
         src_height = kwargs.get("src_height", height)
 
@@ -91,6 +193,20 @@ class SampleGridModel(CustomIntEnum):
     def for_src(
         self, clip: vs.VideoNode, width: int, height: int, shift: tuple[float, float], **kwargs: Any
     ) -> tuple[dict[str, Any], tuple[float, float]]:
+        """
+        Apply grid model using source sizes.
+
+        Args:
+            clip: Source clip (fallback for src dimensions).
+            width: Source width.
+            height: Source height.
+            shift: Current shift.
+            **kwargs: Optional overrides.
+
+        Returns:
+            (updated kwargs, updated shift).
+        """
+
         src_width = kwargs.get("src_width", clip.width)
         src_height = kwargs.get("src_height", clip.height)
 
