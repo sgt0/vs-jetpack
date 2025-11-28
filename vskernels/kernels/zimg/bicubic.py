@@ -78,7 +78,7 @@ class Bicubic(ZimgComplexKernel):
         return 2
 
     def _pretty_string(self, **attrs: Any) -> str:
-        return super()._pretty_string(**{"b": self.b, "c": self.c} | attrs)
+        return super()._pretty_string(**{"b": round(self.b, 3), "c": round(self.c, 3)} | attrs)
 
 
 class BSpline(Bicubic):
