@@ -1898,13 +1898,13 @@ doc = [
     { name = "mkdocs-redirects", specifier = "==1.2.2" },
     { name = "mkdocstrings", extras = ["python"], specifier = "==0.30.1" },
     { name = "orderedsets" },
-    { name = "vspreview", specifier = "==0.18.0" },
+    { name = "vspreview", specifier = "==0.18.1" },
     { name = "vstransitions", specifier = "==0.1.4" },
 ]
 
 [[package]]
 name = "vspreview"
-version = "0.18.0"
+version = "0.18.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -1921,9 +1921,9 @@ dependencies = [
     { name = "vsengine" },
     { name = "vsjetpack" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b0/80/4b9d20435839e9d78d8b361bcec9d9df3b46f039efe3faa5c14fa7441769/vspreview-0.18.0.tar.gz", hash = "sha256:e5f6af5cb44451d4f82864da6c4d81c6bd423effafed9262f0fd077dfdd3764c", size = 157068, upload-time = "2025-11-26T20:50:38.96Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/53/35/b843d4af0b5c2a59cb6e36445b35d1023ef610413b09f4411c34cd015ff4/vspreview-0.18.1.tar.gz", hash = "sha256:edd5bd040243b37098c1aea4d02babcb7f949be55f38559b4ab1246425c6dd6a", size = 157076, upload-time = "2025-11-28T15:24:06.605Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/39/6d/a92a3ba2ac4210489ad076d9c613a231e2bfd5f004d250ec828d30e5def4/vspreview-0.18.0-py3-none-any.whl", hash = "sha256:5593279830604159b22d34c181e6bde5aec7e8986e9230efcff21b1785f4f70f", size = 162292, upload-time = "2025-11-26T20:50:37.333Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/30/7de2580b856c9317e9d144d9875d1528d19235958df4be9ae57eb501b20e/vspreview-0.18.1-py3-none-any.whl", hash = "sha256:f9c85fcd8cc018466091f3cf2909670f8672ed0f84b8dbaccaa57955c75d841e", size = 162304, upload-time = "2025-11-28T15:24:05.507Z" },
 ]
 
 [[package]]
