@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        vapoursynth-version: [72]
+        vapoursynth-version: [73]
         python-version: ["3.12", "3.14"]
         vszip-version: [10]
         fmtc-version: [30]
