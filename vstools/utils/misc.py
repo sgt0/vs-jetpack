@@ -514,9 +514,11 @@ def set_output(
         outputs = vs.get_outputs()
         nodes = list(flatten(node))
         indices = to_arr(index) if index is not None else [max(outputs, default=-1) + 1]
-        indices = normalize_seq(indices, len(nodes))
 
-        for idx, n in zip(indices, nodes):
+        while len(indices) < len(nodes):
+            indices.append(indices[-1] + 1)
+
+        for idx, n in zip(indices[: len(nodes)], nodes):
             n.set_output(idx)
     else:
         kwargs.setdefault("frame_depth", 2)
