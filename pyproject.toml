@@ -64,7 +64,6 @@ dev = [
     "pytest-cov>=6.2.1, <8.0.0",
     "ruff~=0.14.0",
     "scipy-stubs>=1.16.0.0",
-    "twine>=6.1.0",
     "types-psutil>=7.0.0.20250801",
     # Needed for the folder "scripts"
     "mkdocs-gen-files==0.6.0",
