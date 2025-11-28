@@ -12,9 +12,9 @@ For support you can check out the [JET Discord server](https://discord.gg/XTpc6F
 
 ## Documentation
 
-You can find the full API reference on the project's documentation [site](https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/).
+You can find the full API reference on the project's documentation [site](https://jaded-encoding-thaumaturgy.github.io/vs-jetpack/api/vstools/).
 
-If you're looking for workflow recommendations, the JET Encoding Guide is available [here](https://github.com/Jaded-Encoding-Thaumaturgy/JET-guide).
+If you're looking for workflow recommendations, the JET Encoding Guide is available [here](https://github.com/Jaded-Encoding-Thaumaturgy/JET-guide). <br><br>
 
 ## How to install
 
