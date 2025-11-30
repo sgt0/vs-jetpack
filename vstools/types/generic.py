@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Mapping, Protocol, TypeVar, runtime_checkable
+from typing import Any, Callable, Iterable, Mapping, Protocol, runtime_checkable
 
 from jetpytools import MissingT
 
@@ -8,7 +8,6 @@ from ..vs_proxy import vs
 from .builtins import Planes
 
 __all__ = [
-    "F_VD",
     "AudioNodeIterable",
     "GenericVSFunction",
     "HoldsPropValue",
@@ -29,8 +28,6 @@ type VideoNodeIterable = vs.VideoNode | Iterable[VideoNodeIterable]
 type AudioNodeIterable = vs.AudioNode | Iterable[AudioNodeIterable]
 type RawNodeIterable = vs.RawNode | Iterable[RawNodeIterable]
 
-VideoNodeIterableT = VideoNodeIterable
-
 
 VideoFormatLike = vs.PresetVideoFormat | vs.VideoFormat
 """
@@ -46,9 +43,6 @@ HoldsPropValue = vs.FrameProps | vs.VideoFrame | vs.AudioFrame | vs.VideoNode | 
 """
 Types that can hold a vs.FrameProps.
 """
-
-
-F_VD = TypeVar("F_VD", bound=Callable[..., vs.VideoNode])
 
 
 @runtime_checkable
