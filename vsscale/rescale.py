@@ -271,7 +271,7 @@ class Rescale(RescaleBase):
         width: int | float | None = None,  # noqa: PYI041
         base_height: int | None = None,
         base_width: int | None = None,
-        crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] = CropRel(),
+        crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | None = None,
         shift: tuple[TopShift, LeftShift] = (0, 0),
         field_based: FieldBasedLike | bool | None = None,
         border_handling: int | BorderHandling = BorderHandling.MIRROR,
@@ -309,7 +309,7 @@ class Rescale(RescaleBase):
         self._line_mask: vs.VideoNode | None = None
         self._credit_mask: vs.VideoNode | None = None
         self._ignore_mask: vs.VideoNode | None = None
-        self._crop = crop
+        self._crop = crop or CropRel()
         self._pre = clip
 
         self.descale_args = ScalingArgs.from_args(

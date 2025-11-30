@@ -173,7 +173,7 @@ class ScalingArgs:
         base_width: int | None = ...,
         src_top: float = ...,
         src_left: float = ...,
-        crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | CropRel | CropAbs = ...,
+        crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | CropRel | CropAbs | None = ...,
         mode: str = "hw",
     ) -> Self: ...
 
