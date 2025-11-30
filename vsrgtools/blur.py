@@ -284,9 +284,11 @@ def min_blur(
         clip: Source clip.
         radius: Radius of blur to apply. Can be a single int or a list for per-plane control.
         mode: A tuple of two convolution modes:
+
                - First element: mode for binomial blur.
                - Second element: mode for median blur.
             Defaults to (HV, SQUARE).
+
         planes: Planes to process. Defaults to all.
         **kwargs: Additional arguments passed to the binomial blur.
 
