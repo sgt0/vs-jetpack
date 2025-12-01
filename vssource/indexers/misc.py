@@ -20,8 +20,8 @@ class BestSource(CacheIndexer):
     Unlike the plugin's default behavior, the indexer cache file will be stored in `.vsjet/vssource`
     next to the script file.
 
-    When ``cachemode`` is 0, 1, or 2 (NEVER, CACHE_PATH, or CACHE_PATH_WRITE), the behavior falls back
-    to the default cache handling defined by the BestSource plugin itself.
+    When `cachemode` is 0, 1, or 2 (NEVER, CACHE_PATH, or CACHE_PATH_WRITE) or `cachepath=None`,
+    the behavior falls back to the default cache handling defined by the BestSource plugin itself.
     """
 
     _source_func = core.lazy.bs.VideoSource
@@ -81,6 +81,8 @@ class FFMS2(CacheIndexer):
 
     Unlike the plugin's default behavior, the indexer cache file will be stored in `.vsjet/vssource`
     next to the script file.
+
+    When `cachefile=None`, the behavior falls back to the default cache handling defined by the plugin itself.
     """
 
     _source_func = core.lazy.ffms2.Source
@@ -94,6 +96,8 @@ class LSMAS(CacheIndexer):
 
     Unlike the plugin's default behavior, the indexer cache file will be stored in `.vsjet/vssource`
     next to the script file.
+
+    When `cachefile=None`, the behavior falls back to the default cache handling defined by the plugin itself.
     """
 
     _source_func = core.lazy.lsmas.LWLibavSource
