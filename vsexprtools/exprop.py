@@ -879,6 +879,33 @@ class ExprOp(ExprOpBase, metaclass=ExprOpExtraMeta):
         return planesa, planesb
 
     @classmethod
+    def mse(
+        cls,
+        planesa: ExprVars | HoldsVideoFormat | VideoFormatLike | SupportsIndex,
+        planesb: ExprVars | HoldsVideoFormat | VideoFormatLike | SupportsIndex | None = None,
+    ) -> ExprList:
+        """
+        Build an expression to compute the Mean Squared Error (MSE) between two plane sets.
+
+        Args:
+            planesa: The first plane set or clip.
+            planesb: The second plane set or clip. If None, uses same as `planesa`.
+
+        Returns:
+            An [ExprList][vsexprtools.ExprList] representing the MSE expression across all planes.
+        """
+        planesa, planesb = cls._parse_planes(planesa, planesb, cls.rmse)
+
+        expr = ExprList()
+
+        for a, b in zip(planesa, planesb):
+            expr.append([a, b, cls.SUB, cls.DUP, cls.MUL])
+
+        expr.append(cls.MAX * expr.mlength)
+
+        return expr
+
+    @classmethod
     def rmse(
         cls,
         planesa: ExprVars | HoldsVideoFormat | VideoFormatLike | SupportsIndex,
