@@ -13,7 +13,6 @@ from typing import (
     Callable,
     ClassVar,
     Concatenate,
-    Literal,
     NoReturn,
     Self,
     SupportsInt,
@@ -143,18 +142,8 @@ def _base_ensure_obj[_BaseScalerT: BaseScaler](
 
 
 @cache
-def _check_kernel_radius(cls: type[BaseScaler]) -> Literal[True]:
-    if cls in abstract_kernels:
-        raise CustomRuntimeError(f"Can't instantiate abstract class {cls.__name__}!", cls)
-
-    if "kernel_radius" in {attr for sub_cls in cls.__mro__ for attr in sub_cls.__dict__}:
-        return True
-
-    raise CustomRuntimeError(
-        "When inheriting from BaseScaler, you must implement the kernel radius by either adding "
-        "the `kernel_radius` property or setting the class variable `_static_kernel_radius`.",
-        cls,
-    )
+def _is_base_scaler_abstract(cls: type[BaseScaler]) -> bool:
+    return cls in abstract_kernels or not hasattr(cls, "kernel_radius")
 
 
 def _is_format_resolver(
@@ -326,8 +315,17 @@ class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
             """
             Create a new instance of the scaler, validating kernel radius if applicable.
             """
-            if _check_kernel_radius(cls):
+            if not _is_base_scaler_abstract(cls):
                 return super().__new__(cls)
+
+            if cls in abstract_kernels:
+                raise CustomRuntimeError(f"Can't instantiate abstract class {cls.__name__}.", cls)
+
+            raise CustomRuntimeError(
+                "When inheriting from BaseScaler, you must implement the kernel radius by either adding "
+                "the `kernel_radius` property or setting the class variable `_static_kernel_radius`.",
+                cls,
+            )
 
     def __init__(self, **kwargs: Any) -> None:
         """
@@ -448,6 +446,12 @@ class BaseScaler(VSObjectABC, metaclass=BaseScalerMeta, abstract=True):
             Pretty-printed string with arguments.
         """
         return self._pretty_string()
+
+    @classproperty
+    @classmethod
+    def is_abstract(cls) -> bool:
+        """Return True if this class can't be instantiated."""
+        return _is_base_scaler_abstract(cls)
 
     @classproperty.cached
     @classmethod
