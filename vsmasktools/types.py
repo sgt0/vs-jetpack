@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Union
+from collections.abc import Callable
 
 from jetpytools import CustomEnum
 
@@ -52,12 +52,12 @@ class Coordinates(tuple[int, ...], CustomEnum):
         return cls.RECTANGLE
 
 
-MaskLike = Union[
-    vs.VideoNode,
-    Callable[[vs.VideoNode, vs.VideoNode], vs.VideoNode],
-    EdgeDetectLike,
-    RidgeDetectLike,
-    GeneralMask,
-    str,
-]
+MaskLike = (
+    vs.VideoNode
+    | Callable[[vs.VideoNode, vs.VideoNode], vs.VideoNode]
+    | EdgeDetectLike
+    | RidgeDetectLike
+    | GeneralMask
+    | str
+)
 """Type alias for anything that can resolve to a mask."""
