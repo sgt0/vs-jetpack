@@ -214,7 +214,7 @@ class MVToolsPreset(VSObjectABC, Mapping[str, Any]):
         return self._dict.__str__()
 
     def __getattr__(self, name: str) -> Any:
-        d = self.__clean_dict__ if name in self.__annotations__ else self.__dict__
+        d = self._dict if name in self.__annotations__ else self.__dict__
 
         try:
             return d[name]
