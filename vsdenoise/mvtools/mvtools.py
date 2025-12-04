@@ -169,6 +169,10 @@ class MVTools(VSObject):
         The main method of measuring block similarity is by calculating the sum of absolute differences (SAD)
         of all pixels of these two blocks, which indicates how correct the motion estimation was.
 
+        More information:
+            - [VapourSynth plugin](https://github.com/dubhater/vapoursynth-mvtools)
+            - [AviSynth docs](https://htmlpreview.github.io/?https://github.com/pinterf/mvtools/blob/mvtools-pfmod/Documentation/mvtools2.html)
+
         Args:
             clip: The clip to process.
             search_clip: Optional clip or callable to be used for motion vector gathering only.
