@@ -165,7 +165,7 @@ class DitherType(CustomStrEnum):
 
         if not self.is_fmtc():
             return clip.resize.Point(
-                format=out_fmt.id,
+                format=out_fmt,
                 dither_type=self.value.lower(),
                 range_in=range_in.value_zimg,
                 range=range_out.value_zimg,
@@ -405,7 +405,7 @@ def frame2clip(frame: vs.VideoFrame) -> vs.VideoNode:
 
     if _f2c_cache.get(key, None) is None:
         _f2c_cache[key] = blank_clip = vs.core.std.BlankClip(
-            None, frame.width, frame.height, frame.format.id, 1, 1, 1, [0] * frame.format.num_planes, True
+            None, frame.width, frame.height, frame.format, 1, 1, 1, [0] * frame.format.num_planes, True
         )
     else:
         blank_clip = _f2c_cache[key]

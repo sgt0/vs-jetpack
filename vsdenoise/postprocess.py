@@ -105,7 +105,7 @@ def decrease_size(
         pm_max = scale_mask(pm_max, 32, clip)
 
         yuv444 = vs.core.resize.Bilinear(
-            range_mask(clip, rad=3, radc=2), format=clip.format.replace(subsampling_h=0, subsampling_w=0).id
+            range_mask(clip, rad=3, radc=2), format=clip.format.replace(subsampling_h=0, subsampling_w=0)
         )
 
         mask = EdgeDetect.ensure_obj(emask[0]).edgemask(pre) if emask else FDoG.edgemask(pre)

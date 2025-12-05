@@ -275,7 +275,7 @@ def ccd(
             raise CustomRuntimeError("`chroma_upscaler` didn't upscale chroma planes.", func, repr(full))
 
     if get_color_family(full) != vs.RGB:
-        rgb = vs.core.resize.Point(full, format=full.format.replace(color_family=vs.RGB).id)
+        rgb = vs.core.resize.Point(full, format=full.format.replace(color_family=vs.RGB))
     else:
         rgb = full
 

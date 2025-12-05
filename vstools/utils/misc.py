@@ -93,7 +93,7 @@ def match_clip(
     clip = clip.resize.Bicubic(ref.width, ref.height) if dimensions else clip
 
     if vformat:
-        clip = clip.resize.Bicubic(format=ref.format.id, matrix=Matrix.from_video(ref))
+        clip = clip.resize.Bicubic(format=ref.format, matrix=Matrix.from_video(ref))
 
     if matrices:
         clip = clip.std.SetFrameProps(

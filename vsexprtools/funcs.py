@@ -84,7 +84,7 @@ def expr_func(
 
     clips = to_arr(clips)
 
-    fmt = get_video_format(format).id if format is not None else None
+    fmt = get_video_format(format) if format is not None else None
 
     _log.debug("expr_func (%s): %s", func, _LazyLogExpr(expr))
 

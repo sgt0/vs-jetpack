@@ -87,7 +87,7 @@ class CustomMaskFromClipsAndRanges(VSObjectABC, GeneralMask):
         """
         mask = vs.core.std.BlankClip(
             ref,
-            format=ref.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0).id,
+            format=ref.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0),
             keep=True,
             color=0,
         )
@@ -316,7 +316,7 @@ class HardsubSign(HardsubMask):
     @limiter(mask=True)
     def _mask(self, clip: vs.VideoNode, ref: vs.VideoNode, **kwargs: Any) -> vs.VideoNode:
         hsmf = norm_expr([clip, ref], "x y - abs", func=self.__class__)
-        hsmf = core.resize.Bilinear(hsmf, format=clip.format.replace(subsampling_w=0, subsampling_h=0).id)
+        hsmf = core.resize.Bilinear(hsmf, format=clip.format.replace(subsampling_w=0, subsampling_h=0))
 
         hsmf = ExprOp.MAX(hsmf, split_planes=True)
 
@@ -504,7 +504,7 @@ def diff_hardsub_mask(a: vs.VideoNode, b: vs.VideoNode, **kwargs: Any) -> vs.Vid
 @limiter(mask=True)
 def get_all_sign_masks(hrdsb: vs.VideoNode, ref: vs.VideoNode, signs: list[HardsubMask]) -> vs.VideoNode:
     mask = core.std.BlankClip(
-        ref, format=ref.format.replace(color_family=vs.GRAY, subsampling_w=0, subsampling_h=0).id, keep=True
+        ref, format=ref.format.replace(color_family=vs.GRAY, subsampling_w=0, subsampling_h=0), keep=True
     )
 
     for sign in signs:

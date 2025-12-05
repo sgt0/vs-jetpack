@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, SupportsInt
 
 from jetpytools import CustomRuntimeError, FuncExcept, SupportsString, norm_func_name, to_arr
 from jetpytools.exceptions.base import CustomErrorMeta
@@ -30,7 +30,7 @@ class CustomExprError(VSObject, CustomRuntimeError, metaclass=_CustomExprErrorMe
         func: FuncExcept,
         clips: vs.VideoNode | Sequence[vs.VideoNode],
         expr: str | Sequence[str],
-        fmt: int | None,
+        fmt: SupportsInt | None,
         opt: bool,
         boundary: bool,
         **kwargs: Any,

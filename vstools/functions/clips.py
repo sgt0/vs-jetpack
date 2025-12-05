@@ -4,7 +4,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from functools import partial, wraps
 from inspect import signature
-from typing import Any, Literal, overload
+from typing import Any, Literal, SupportsInt, overload
 
 from jetpytools import CustomValueError, FuncExcept, StrictRange
 
@@ -53,7 +53,7 @@ class ProcessVariableClip[T](DynamicClipsCache[T]):
         self,
         clip: vs.VideoNode,
         out_dim: tuple[int, int] | Literal[False] | None = None,
-        out_fmt: int | vs.VideoFormat | Literal[False] | None = None,
+        out_fmt: SupportsInt | Literal[False] | None = None,
         cache_size: int = 10,
     ) -> None:
         """
@@ -84,7 +84,7 @@ class ProcessVariableClip[T](DynamicClipsCache[T]):
         if out_fmt is False:
             bk_args.update(format=vs.GRAY8, varformat=True)
         else:
-            bk_args.update(format=out_fmt if isinstance(out_fmt, int) else out_fmt.id)
+            bk_args.update(format=int(out_fmt))
 
         super().__init__(cache_size)
 
@@ -209,7 +209,7 @@ class ProcessVariableFormatClip(ProcessVariableClip[vs.VideoFormat]):
         return frame.format
 
     def normalize(self, clip: vs.VideoNode, cast_to: vs.VideoFormat) -> vs.VideoNode:
-        normalized = vs.core.resize.Point(vs.core.std.RemoveFrameProps(clip), format=cast_to.id)
+        normalized = vs.core.resize.Point(vs.core.std.RemoveFrameProps(clip), format=cast_to)
         return vs.core.std.CopyFrameProps(normalized, clip)
 
 
@@ -225,7 +225,7 @@ class ProcessVariableResFormatClip(ProcessVariableClip[tuple[int, int, vs.VideoF
     def normalize(self, clip: vs.VideoNode, cast_to: tuple[int, int, vs.VideoFormat]) -> vs.VideoNode:
         w, h, fmt = cast_to
 
-        normalized = vs.core.resize.Point(vs.core.std.RemoveFrameProps(clip), w, h, fmt.id)
+        normalized = vs.core.resize.Point(vs.core.std.RemoveFrameProps(clip), w, h, fmt)
 
         return vs.core.std.CopyFrameProps(normalized, clip)
 

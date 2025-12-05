@@ -83,11 +83,9 @@ def strength_zones_mask(
                 base_clip = base_clip + base_clip[-1] * (length - base_clip.num_frames)
 
     elif base is None:
-        base_clip = vs.core.std.BlankClip(format=get_video_format(format).id, length=length, color=base, keep=True)
+        base_clip = vs.core.std.BlankClip(format=get_video_format(format), length=length, color=base, keep=True)
     else:
-        base_clip = vs.core.std.BlankClip(
-            format=get_video_format(format).id, length=length, color=float(base), keep=True
-        )
+        base_clip = vs.core.std.BlankClip(format=get_video_format(format), length=length, color=float(base), keep=True)
 
     if not zones:
         return base_clip

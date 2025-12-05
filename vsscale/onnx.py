@@ -1392,7 +1392,7 @@ class BaseDPIR(BaseOnnxScaler):
         if isinstance(self.strength, vs.VideoNode):
             self.strength = norm_expr(self.strength, "x 255 /", format=strength_fmt, func=self.__class__)
         else:
-            self.strength = clip.std.BlankClip(format=strength_fmt.id, color=float(self.strength) / 255, keep=True)
+            self.strength = clip.std.BlankClip(format=strength_fmt, color=float(self.strength) / 255, keep=True)
 
         _log.debug("%s: Passing strength clip format: %s", self.inference, self.strength.format)
 

@@ -122,7 +122,7 @@ class DeferredMask(GeneralMask):
         """
         if self.refframes:
             hm = vs.core.std.BlankClip(
-                ref, format=ref.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0).id, keep=True
+                ref, format=ref.format.replace(color_family=vs.GRAY, subsampling_h=0, subsampling_w=0), keep=True
             )
 
             for ran, rf in zip(self.ranges, self.refframes):

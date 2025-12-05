@@ -55,7 +55,7 @@ def diff_creditless(
     if not ep_clip or ep_clip.num_frames == mask.num_frames:
         return mask
 
-    return insert_clip(ep_clip.std.BlankClip(format=mask.format.id, keep=True), mask, start_frame)
+    return insert_clip(ep_clip.std.BlankClip(format=mask.format, keep=True), mask, start_frame)
 
 
 def diff_creditless_oped(

@@ -804,7 +804,7 @@ class Resampler(BaseScaler):
             clip,
             **(
                 {
-                    "format": get_video_format(format).id,
+                    "format": get_video_format(format),
                     "matrix": Matrix.from_param_with_fallback(matrix),
                     "matrix_in": Matrix.from_param_with_fallback(matrix_in),
                     "transfer": Transfer.from_param_with_fallback(transfer),
@@ -1055,7 +1055,7 @@ class Kernel(Scaler, Descaler, Resampler):
             Dictionary of keyword arguments for the resample function.
         """
         return {
-            "format": get_video_format(format).id,
+            "format": get_video_format(format),
             "matrix": Matrix.from_param_with_fallback(matrix),
             "matrix_in": Matrix.from_param_with_fallback(matrix_in),
             "transfer": Transfer.from_param_with_fallback(transfer),

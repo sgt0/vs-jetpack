@@ -227,7 +227,7 @@ def squaremask(
         raise CustomValueError("mask exceeds clip size!", func)
 
     base_clip = vs.core.std.BlankClip(
-        clip, None, None, mask_format.id, 1, color=get_lowest_values(mask_format, ColorRange.FULL), keep=True
+        clip, None, None, mask_format, 1, color=get_lowest_values(mask_format, ColorRange.FULL), keep=True
     )
 
     replaces = ("mask_max", "x") if not invert else ("x", "mask_max")

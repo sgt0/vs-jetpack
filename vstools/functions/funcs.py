@@ -162,7 +162,7 @@ class FunctionUtil(VSObject, list[int]):
 
             self.cfamily_converted = True
 
-            clip = clip.resize.Bicubic(format=clip.format.replace(color_family=vs.YUV).id, matrix=self._matrix)
+            clip = clip.resize.Bicubic(format=clip.format.replace(color_family=vs.YUV), matrix=self._matrix)
 
         elif (
             cfamily in (vs.YUV, vs.GRAY) and not set(self.allowed_cfamilies) & {vs.YUV, vs.GRAY}
@@ -170,7 +170,7 @@ class FunctionUtil(VSObject, list[int]):
             self.cfamily_converted = True
 
             clip = clip.resize.Bicubic(
-                format=clip.format.replace(color_family=vs.RGB, subsampling_h=0, subsampling_w=0).id,
+                format=clip.format.replace(color_family=vs.RGB, subsampling_h=0, subsampling_w=0),
                 matrix_in=self._matrix,
                 chromaloc_in=self._chromaloc,
                 range_in=self._range_in.value_zimg if self._range_in is not None else None,
@@ -351,7 +351,7 @@ class FunctionUtil(VSObject, list[int]):
 
         if self.cfamily_converted:
             processed = processed.resize.Bicubic(
-                format=self.clip.format.id,
+                format=self.clip.format,
                 matrix=self.matrix if self.norm_clip.format.color_family is vs.RGB else None,
                 chromaloc=self.chromaloc,
                 range=self.color_range.value_zimg,
