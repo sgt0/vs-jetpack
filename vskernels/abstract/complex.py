@@ -701,8 +701,8 @@ class ComplexDescaler(LinearDescaler):
         linear: bool | None = None,
         sigmoid: bool | tuple[Slope, Center] = False,
         # ComplexDescaler adds border_handling, sample_grid_model, field_based,  ignore_mask and blur
-        border_handling: int | BorderHandling = BorderHandling.MIRROR,
-        sample_grid_model: int | SampleGridModel = SampleGridModel.MATCH_EDGES,
+        border_handling: int = BorderHandling.MIRROR,
+        sample_grid_model: int = SampleGridModel.MATCH_EDGES,
         field_based: FieldBasedLike | None = None,
         ignore_mask: vs.VideoNode | None = None,
         blur: float | None = None,
@@ -803,8 +803,8 @@ class ComplexDescaler(LinearDescaler):
         linear: bool | None = None,
         sigmoid: bool | tuple[Slope, Center] = False,
         # ComplexDescaler adds border_handling, sample_grid_model, field_based, ignore_mask and blur
-        border_handling: int | BorderHandling = BorderHandling.MIRROR,
-        sample_grid_model: int | SampleGridModel = SampleGridModel.MATCH_EDGES,
+        border_handling: int = BorderHandling.MIRROR,
+        sample_grid_model: int = SampleGridModel.MATCH_EDGES,
         field_based: FieldBasedLike | None = None,
         ignore_mask: vs.VideoNode | None = None,
         blur: float | None = None,

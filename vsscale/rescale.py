@@ -53,7 +53,7 @@ class RescaleBase(VSObjectABC):
         upscaler: ScalerLike = ArtCNN,
         downscaler: ScalerLike = Hermite(linear=True),
         field_based: FieldBasedLike | bool | None = None,
-        border_handling: int | BorderHandling = BorderHandling.MIRROR,
+        border_handling: int = BorderHandling.MIRROR,
         **kwargs: Any,
     ) -> None:
         self._clipy, *chroma = split(clip)
@@ -275,7 +275,7 @@ class Rescale(RescaleBase):
         crop: tuple[LeftCrop, RightCrop, TopCrop, BottomCrop] | None = None,
         shift: tuple[TopShift, LeftShift] = (0, 0),
         field_based: FieldBasedLike | bool | None = None,
-        border_handling: int | BorderHandling = BorderHandling.MIRROR,
+        border_handling: int = BorderHandling.MIRROR,
         **kwargs: Any,
     ) -> None:
         """
