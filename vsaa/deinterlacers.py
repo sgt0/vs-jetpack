@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections import UserDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from enum import IntFlag, auto
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
-from jetpytools import CustomNotImplementedError, CustomValueError, copy_signature, fallback, normalize_seq
+from jetpytools import CustomNotImplementedError, CustomValueError, fallback, normalize_seq
 
 from vsjetpack import TypeVar
 from vskernels import (
@@ -35,35 +36,23 @@ __all__ = [
 ]
 
 
-class DeinterlacerKwargs(dict[str, Any]):
+class DeinterlacerKwargs(UserDict[str, Any]):
     """
     A dict-like wrapper that syncs keys with a `Deinterlacer` instance.
 
     - If a key matches an attribute of `deinterlacer`, the value is set on
       the object instead of stored in the dict.
     - Otherwise, the pair is stored normally.
-
-    `update()` and `setdefault()` are overridden to respect this behavior.
     """
 
-    deinterlacer: Deinterlacer
-    """Deinterlacer object."""
+    def __init__(self, deinterlacer: Deinterlacer) -> None:
+        self.deinterlacer = deinterlacer
+        super().__init__()
 
     def __setitem__(self, key: str, value: Any) -> None:
         if not hasattr(self.deinterlacer, key):
             return super().__setitem__(key, value)
         setattr(self.deinterlacer, key, value)
-
-    @copy_signature(dict[str, Any].update)
-    def update(self, *args: Any, **kwargs: Any) -> None:
-        for k, v in dict(*args, **kwargs).items():
-            self[k] = v
-
-    @copy_signature(dict[str, Any].setdefault)
-    def setdefault(self, key: str, default: Any = None) -> Any:
-        if key not in self:
-            self[key] = default
-        return self[key]
 
 
 @dataclass(kw_only=True)
@@ -79,8 +68,8 @@ class Deinterlacer(Bobber, ABC):
     """Whether to double the FPS."""
 
     def __post_init__(self) -> None:
-        self.kwargs = DeinterlacerKwargs()
-        self.kwargs.deinterlacer = self
+        # UserDict inherits from MutableMapping but they share the same methods
+        self.kwargs = cast(dict[str, Any], DeinterlacerKwargs(self))
 
     def deinterlace(
         self,
