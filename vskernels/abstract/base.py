@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from functools import cache, wraps
 from inspect import isabstract
+from logging import getLogger
 from math import ceil
 from types import NoneType
 from typing import (
@@ -80,6 +81,8 @@ __all__ = [
     "Scaler",
     "ScalerLike",
 ]
+
+logger = getLogger(__name__)
 
 
 def _add_init_kwargs[BaseScalerT: BaseScaler, **P, R](
@@ -509,7 +512,11 @@ class Scaler(BaseScaler):
         """
         width, height = self._wh_norm(clip, width, height)
 
-        return self.scale_function(clip, **_norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs)))
+        scale_args = _norm_props_enums(self.get_scale_args(clip, shift, width, height, **kwargs))
+
+        logger.debug("%s: Passing clip: %r; arguments: %s", self.scale, clip, scale_args)
+
+        return self.scale_function(clip, **scale_args)
 
     def supersample(
         self, clip: vs.VideoNode, rfactor: float = 2.0, shift: tuple[TopShift, LeftShift] = (0, 0), **kwargs: Any
@@ -613,9 +620,11 @@ class Descaler(BaseScaler):
         """
         width, height = self._wh_norm(clip, width, height)
 
-        return self.descale_function(
-            clip, **_norm_props_enums(self.get_descale_args(clip, shift, width, height, **kwargs))
-        )
+        descale_args = _norm_props_enums(self.get_descale_args(clip, shift, width, height, **kwargs))
+
+        logger.debug("%s: Passing clip: %r; arguments: %s", self.descale, clip, descale_args)
+
+        return self.descale_function(clip, **descale_args)
 
     def rescale(
         self,
@@ -643,9 +652,11 @@ class Descaler(BaseScaler):
         """
         width, height = self._wh_norm(clip, width, height)
 
-        return self.rescale_function(
-            clip, **_norm_props_enums(self.get_rescale_args(clip, shift, width, height, **kwargs))
-        )
+        rescale_args = _norm_props_enums(self.get_rescale_args(clip, shift, width, height, **kwargs))
+
+        logger.debug("%s: Passing clip: %r; arguments: %s", self.rescale, clip, rescale_args)
+
+        return self.rescale_function(clip, **rescale_args)
 
     def get_descale_args(
         self,
@@ -745,14 +756,16 @@ class Resampler(BaseScaler):
         Returns:
             The resampled clip.
         """
-        return self.resample_function(
-            clip,
-            **_norm_props_enums(
-                self.get_resample_args(
-                    clip, format, matrix, matrix_in, transfer, transfer_in, primaries, primaries_in, **kwargs
-                )
-            ),
+
+        resample_args = _norm_props_enums(
+            self.get_resample_args(
+                clip, format, matrix, matrix_in, transfer, transfer_in, primaries, primaries_in, **kwargs
+            )
         )
+
+        logger.debug("%s: Passing clip: %r; arguments: %s", self.resample, clip, resample_args)
+
+        return self.resample_function(clip, **resample_args)
 
     def get_resample_args(
         self,
@@ -1078,8 +1091,11 @@ class Bobber(BaseScaler):
             The bobbed clip.
         """
         clip_fieldbased = FieldBased.from_param_or_video(tff, clip, True, self.__class__)
+        bob_args = self.get_bob_args(clip, tff=clip_fieldbased.is_tff, **kwargs)
 
-        return self.bob_function(clip, **self.get_bob_args(clip, tff=clip_fieldbased.is_tff, **kwargs))
+        logger.debug("%s: Passing clip: %r; arguments: %s", self.bob, clip, bob_args)
+
+        return self.bob_function(clip, **bob_args)
 
     def deinterlace(
         self, clip: vs.VideoNode, *, tff: FieldBasedLike | bool | None = None, double_rate: bool = True, **kwargs: Any

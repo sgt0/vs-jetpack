@@ -6,6 +6,7 @@ based on a custom kernel.
 from __future__ import annotations
 
 from abc import abstractmethod
+from logging import getLogger
 from math import ceil
 from typing import Any
 
@@ -22,6 +23,8 @@ __all__ = [
     "CustomComplexTapsKernel",
     "CustomKernel",
 ]
+
+logger = getLogger(__name__)
 
 
 class CustomKernel(Kernel):
@@ -52,10 +55,12 @@ class CustomKernel(Kernel):
     def scale_function(
         self, clip: vs.VideoNode, width: int | None = None, height: int | None = None, *args: Any, **kwargs: Any
     ) -> vs.VideoNode:
+        args = self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), width, height, *args
+
+        logger.debug("%s: Passing clip: %r; arguments: %s; %s", self.scale_function, clip, args, kwargs)
+
         try:
-            return core.resize2.Custom(
-                clip, self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), width, height, *args, **kwargs
-            )
+            return core.resize2.Custom(clip, *args, **kwargs)
         except vs.Error as e:
             raise CustomError(e, self.__class__) from e
 
@@ -65,10 +70,12 @@ class CustomKernel(Kernel):
         return self.scale_function(clip, width, height, *args, **kwargs)
 
     def descale_function(self, clip: vs.VideoNode, width: int, height: int, *args: Any, **kwargs: Any) -> vs.VideoNode:
+        args = width, height, self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), *args
+
+        logger.debug("%s: Passing clip: %r; arguments: %s; %s", self.descale_function, clip, args, kwargs)
+
         try:
-            return core.descale.Decustom(
-                clip, width, height, self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), *args, **kwargs
-            )
+            return core.descale.Decustom(clip, *args, **kwargs)
         except vs.Error as e:
             if "Output dimension must be" in str(e):
                 raise CustomValueError(
@@ -80,10 +87,12 @@ class CustomKernel(Kernel):
             raise CustomError(e, self.__class__) from e
 
     def rescale_function(self, clip: vs.VideoNode, width: int, height: int, *args: Any, **kwargs: Any) -> vs.VideoNode:
+        args = width, height, self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), *args
+
+        logger.debug("%s: Passing clip: %r; arguments: %s; %s", self.rescale_function, clip, args, kwargs)
+
         try:
-            return core.descale.ScaleCustom(
-                clip, width, height, self.kernel, ceil(kwargs.pop("taps", self.kernel_radius)), *args, **kwargs
-            )
+            return core.descale.ScaleCustom(clip, *args, **kwargs)
         except vs.Error as e:
             raise CustomError(e, self.__class__) from e
 
