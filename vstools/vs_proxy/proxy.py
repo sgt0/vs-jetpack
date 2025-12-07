@@ -1002,10 +1002,10 @@ class EnvironmentProxy(EnvironmentProxyBase):
         return setattr(get_current_environment(), name, value)
 
     @property
-    def data(self) -> None:
+    def data(self) -> EnvironmentData:
         data = self.env()
         assert data
-        return data  # type: ignore
+        return data
 
     @property
     def policy(self) -> EnvironmentPolicy:
