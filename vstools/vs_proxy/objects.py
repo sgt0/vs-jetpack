@@ -62,6 +62,7 @@ def _iterative_check(x: Any) -> bool:
 
 def _safe_vs_object_del(obj: Any) -> None:
     obj_dict = getattr(obj, "__dict__", None)
+
     if obj_dict is not None:
         for k, v in list(obj_dict.items()):
             if not k.startswith("__") and _iterative_check(v):
@@ -89,6 +90,12 @@ _clsregisters = "__clsvsdel_partial_register", "__clsvsdel_register"
 _objregisters = "__vsdel_partial_register", "__vsdel_register"
 
 
+def _has_custom_dunder(obj: VSObject | VSObjectMeta) -> bool:
+    return (isinstance(obj, VSObject) and obj.__class__.__vs_del__ != VSObject.__vs_del__) or (
+        isinstance(obj, VSObjectMeta) and obj.__class__.__cls_vs_del__ != VSObjectMeta.__cls_vs_del__
+    )
+
+
 def _register_vs_del(obj: VSObject | VSObjectMeta) -> None:
     """
     Register cleanup for both VSObject (instance-level) and VSObjectMeta (class-level).
@@ -113,12 +120,7 @@ def _register_vs_del(obj: VSObject | VSObjectMeta) -> None:
                 "%r has been freed using %r%s",
                 getattr(obj, "__name__", obj.__class__.__name__),
                 del_method,
-                "... Custom dunder detected!"
-                if (
-                    (isinstance(obj, VSObject) and obj.__class__.__vs_del__ != VSObject.__vs_del__)
-                    or (isinstance(obj, VSObjectMeta) and obj.__class__.__cls_vs_del__ != VSObjectMeta.__cls_vs_del__)
-                )
-                else "",
+                "... Custom dunder detected!" if _has_custom_dunder(obj) else "",
             )
 
         setattr(obj, prefix + partial_attr, vsdel_partial_register)
