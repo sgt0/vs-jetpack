@@ -5,7 +5,7 @@ from typing import Any
 from jetpytools import FuncExcept
 
 from vsexprtools import norm_expr
-from vstools import VSFunctionNoArgs, check_ref_clip, core, join, shift_clip, shift_clip_multi, vs
+from vstools import VSFunctionNoArgs, check_ref_clip, core, shift_clip, shift_clip_multi, vs
 
 from .funcs import vinverse
 from .utils import telecine_patterns
@@ -77,9 +77,9 @@ def deblend(
         deblended = decomber(deblended, **kwargs)
 
     if fieldmatched:
-        deblended = deblending_helper(fieldmatched, deblended, func=func)
+        deblended = deblending_helper(deblended, fieldmatched, func=func)
 
-    return join(fieldmatched or clip, deblended)
+    return deblended
 
 
 def deblend_bob(
@@ -101,10 +101,10 @@ def deblend_bob(
     ab0, bc0, c0 = shift_clip_multi(bobbed[::2], (0, 2))
     bc1, ab1, a1 = shift_clip_multi(bobbed[1::2])
 
-    deblended = norm_expr([a1, ab1, ab0, bc1, bc0, c0], ("b", "y x - z + b c - a + + 2 /"), func=func)
+    deblended = norm_expr([a1, ab1, ab0, bc1, bc0, c0], "y x - z + b c - a + + 2 /", func=func)
 
     if fieldmatched:
-        return deblending_helper(fieldmatched, deblended, func=func)
+        return deblending_helper(deblended, fieldmatched, func=func)
 
     return deblended
 
