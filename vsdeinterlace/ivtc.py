@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from jetpytools import fallback
+from jetpytools import fallback, normalize_seq
 
 from vstools import (
     FieldBased,
@@ -107,7 +107,7 @@ def vfm(
     cthresh: int = 9,
     mi: int = 80,
     chroma: bool = True,
-    block: tuple[int, int] = (16, 16),
+    block: int | tuple[int, int] = 16,
     y: tuple[int, int] = (16, 16),
     scthresh: float = 12,
     micmatch: int = 1,
@@ -127,8 +127,7 @@ def vfm(
         ```
 
     Args:
-        clip: Input clip. YUV420P8, YUV422P8, YUV440P8, YUV444P8, and GRAY8 are supported. Must have constant format
-            and dimensions.
+        clip: Input clip.
         tff: Sets the field order of the clip. Normally the field order is obtained from the `_FieldBased` frame
             property. This parameter is only used for those frames where the `_FieldBased` property has an invalid
             value or doesn't exist. If the field order is wrong, VFM's output will be visibly wrong in mode 0.
@@ -169,7 +168,7 @@ def vfm(
         block: Sets the size of the window used during combed frame detection. This has to do with the size of the area
             in which `mi` number of pixels are required to be detected as combed for a frame to be declared combed. See
             the `mi` parameter description for more info. Possible values are any power of 2 between 4 and 512. Defaults
-            to (16, 16).
+            to 16.
         y: The rows from `y0` to `y1` will be excluded from the field matching decision. This can be used to ignore
             subtitles, a logo, or other things that may interfere with the matching. Set `y0` equal to `y1` to disable.
             Defaults to (16, 16).
@@ -200,6 +199,24 @@ def vfm(
 
     tff = FieldBased.from_param_or_video(tff, clip, True, vfm).is_tff
 
+    nblock = normalize_seq(block, 2)
+
+    if clip2 is None and clip.format not in (vs.YUV420P8, vs.YUV422P8, vs.YUV440P8, vs.YUV444P8, vs.GRAY8):
+        new_family = vs.GRAY if clip.format.color_family is vs.GRAY else vs.YUV
+        new_subsampling_w = min(clip.format.subsampling_w, 2)
+        new_subsampling_h = min(clip.format.subsampling_h, 2)
+
+        clip2 = clip
+        clip = clip.resize.Bilinear(
+            format=clip.format.replace(
+                color_family=new_family,
+                sample_type=vs.SampleType.INTEGER,
+                bits_per_sample=8,
+                subsampling_w=new_subsampling_w,
+                subsampling_h=new_subsampling_h,
+            )
+        )
+
     fieldmatch = core.vivtc.VFM(
         clip,
         tff,
@@ -209,8 +226,8 @@ def vfm(
         cthresh,
         mi,
         chroma,
-        block[0],
-        block[1],
+        nblock[0],
+        nblock[1],
         y[0],
         y[1],
         scthresh,
@@ -224,10 +241,7 @@ def vfm(
             postprocess = postprocess(fallback(clip2, clip))
 
         FramerateMismatchError.check(
-            vfm,
-            clip,
-            postprocess,
-            message="The post-processing function must return a clip with the same framerate as the input clip!",
+            vfm, clip, postprocess, message="The post-processed clip must be the same framerate as the input clip!"
         )
 
         fieldmatch = core.akarin.Select([fieldmatch, postprocess], fieldmatch, "x._Combed")
@@ -241,7 +255,7 @@ def vdecimate(
     chroma: bool = True,
     dupthresh: float = 1.1,
     scthresh: float = 15,
-    block: tuple[int, int] = (16, 16),
+    block: int | tuple[int, int] = 16,
     clip2: vs.VideoNode | None = None,
     ovr: str | bytes | bytearray | None = None,
     dryrun: bool = False,
@@ -251,8 +265,7 @@ def vdecimate(
     duplicate.
 
     Args:
-        clip: Input clip. Must have constant format and dimensions, known length, integer sample type, and bit depth
-            between 8 and 16 bits per sample.
+        clip: Input clip.
         cycle: Size of a cycle, in frames. One in every `cycle` frames will be decimated. Defaults to 5.
         chroma: Controls whether the chroma is considered when calculating frame difference metrics. Defaults to True.
         dupthresh: This sets the threshold for duplicate detection. If the difference metric for a frame is less than
@@ -263,7 +276,7 @@ def vdecimate(
             luma plane. Good values are between 10 and 15. Defaults to 15.
         block: Sets the size of the blocks used for metric calculations. Larger blocks give better noise suppression,
             but also give worse detection of small movements. Possible values are any power of 2 between 4 and 512.
-            Defaults to (16, 16).
+            Defaults to 16.
         clip2: Clip that VDecimate will use to create the output frames. If `clip2` is used, VDecimate will perform all
             calculations based on `clip`, but will decimate frames from `clip2`. This can be used to work around
             VDecimate's video format limitations. Defaults to None.
@@ -289,4 +302,15 @@ def vdecimate(
     Returns:
          Decimated clip.
     """
-    return core.vivtc.VDecimate(clip, cycle, chroma, dupthresh, scthresh, block[0], block[1], clip2, ovr, dryrun)
+
+    nblock = normalize_seq(block, 2)
+
+    if clip2 is None and (clip.format.sample_type is not vs.SampleType.INTEGER or clip.format.bits_per_sample > 16):
+        new_bits = min(clip.format.bits_per_sample, 16)
+
+        clip2 = clip
+        clip = clip.resize.Bilinear(
+            format=clip.format.replace(sample_type=vs.SampleType.INTEGER, bits_per_sample=new_bits)
+        )
+
+    return core.vivtc.VDecimate(clip, cycle, chroma, dupthresh, scthresh, nblock[0], nblock[1], clip2, ovr, dryrun)
