@@ -396,7 +396,7 @@ class KeepArScaler(Scaler):
         sar: Sar | float | bool | None,
         dar: Dar | float | bool | None,
         dar_in: Dar | float | bool | None,
-        sar_scale: Fraction | float | Literal[False],
+        sar_scale: Fraction | float,
         keep_ar: bool | None,
     ) -> tuple[float, float, float]:
         if keep_ar is not None and None not in (sar, dar, dar_in):
@@ -422,7 +422,7 @@ class KeepArScaler(Scaler):
         out_dar = _norm_xar(dar, Dar.from_res(width, height), Dar(0), Dar)
         src_dar = _norm_xar(dar_in, Dar.from_clip(clip, False), out_dar, Dar)
 
-        if sar_scale is not False:
+        if sar_scale != 1:
             src_sar *= sar_scale
 
         return float(src_sar), float(src_dar), float(out_dar)
@@ -444,26 +444,22 @@ class KeepArScaler(Scaler):
         kwargs.setdefault("src_width", kwargs.pop("sw", clip.width))
         kwargs.setdefault("src_height", kwargs.pop("sh", clip.height))
 
-        sar_scale = kwargs.pop("_sar_scale", False)
-
+        sar_scale = kwargs.pop("_sar_scale", 1)
         src_res = Resolution(kwargs["src_width"], kwargs["src_height"])
 
         src_sar, src_dar, out_dar = self._ar_params_norm(clip, width, height, sar, dar, dar_in, sar_scale, keep_ar)
         out_sar: Sar | Literal[False] = False
 
-        if src_sar != 1.0:
-            out_dar = width / src_sar / height if src_sar > 1.0 else width / (height * src_sar)
-
+        if src_sar != 1:
+            out_dar = width / (src_sar / height if src_sar > 1 else height * src_sar)
             out_sar = Sar(1, 1)
 
         if src_dar != out_dar:
             if src_dar > out_dar:
                 src_shift, src_window = "src_left", "src_width"
-
                 fix_crop = src_res.width - (src_res.height * out_dar)
             else:
                 src_shift, src_window = "src_top", "src_height"
-
                 fix_crop = src_res.height - (src_res.width / out_dar)
 
             fix_shift = fix_crop / 2
