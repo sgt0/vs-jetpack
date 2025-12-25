@@ -451,7 +451,7 @@ class KeepArScaler(Scaler):
         out_sar: Sar | Literal[False] = False
 
         if src_sar != 1:
-            out_dar = width / (src_sar / height if src_sar > 1 else height * src_sar)
+            out_dar = (width / src_sar) / height if src_sar > 1 else width / (height * src_sar)
             out_sar = Sar(1, 1)
 
         if src_dar != out_dar:
