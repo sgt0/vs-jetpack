@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterator
 from fractions import Fraction
-from typing import Literal, NamedTuple, Self
+from typing import Literal, Self
 
 from jetpytools import CustomIntEnum, CustomRuntimeError, Sentinel, SentinelT
 
 from ..types import HoldsPropValue
 from ..vs_proxy import vs
 
-__all__ = ["Dar", "Resolution", "Sar", "SceneChangeMode"]
+__all__ = ["Dar", "Sar", "SceneChangeMode"]
 
 
 class Dar(Fraction):
@@ -128,31 +128,6 @@ class Sar(Fraction):
         """
 
         return vs.core.std.SetFrameProps(clip, _SARNum=self.numerator, _SARDen=self.denominator)
-
-
-class Resolution(NamedTuple):
-    """
-    Tuple representing a resolution.
-    """
-
-    width: int
-    height: int
-
-    @classmethod
-    def from_video(cls, clip: vs.VideoNode) -> Self:
-        """
-        Create a Resolution object using a given clip's dimensions.
-        """
-        return cls(clip.width, clip.height)
-
-    def transpose(self) -> Self:
-        """
-        Flip the Resolution matrix over its diagonal.
-        """
-        return self.__class__(self.height, self.width)
-
-    def __str__(self) -> str:
-        return f"{self.width}x{self.height}"
 
 
 class SceneChangeMode(CustomIntEnum):

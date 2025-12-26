@@ -22,7 +22,6 @@ from vstools import (
     Dar,
     FieldBased,
     FieldBasedLike,
-    Resolution,
     Sar,
     depth,
     expect_bits,
@@ -443,9 +442,7 @@ class KeepArScaler(Scaler):
         kwargs.setdefault("src_left", kwargs.pop("sx", shift[1]))
         kwargs.setdefault("src_width", kwargs.pop("sw", clip.width))
         kwargs.setdefault("src_height", kwargs.pop("sh", clip.height))
-
         sar_scale = kwargs.pop("_sar_scale", 1)
-        src_res = Resolution(kwargs["src_width"], kwargs["src_height"])
 
         src_sar, src_dar, out_dar = self._ar_params_norm(clip, width, height, sar, dar, dar_in, sar_scale, keep_ar)
         out_sar: Sar | Literal[False] = False
@@ -457,10 +454,10 @@ class KeepArScaler(Scaler):
         if src_dar != out_dar:
             if src_dar > out_dar:
                 src_shift, src_window = "src_left", "src_width"
-                fix_crop = src_res.width - (src_res.height * out_dar)
+                fix_crop = kwargs["src_width"] - (kwargs["src_height"] * out_dar)
             else:
                 src_shift, src_window = "src_top", "src_height"
-                fix_crop = src_res.height - (src_res.width / out_dar)
+                fix_crop = kwargs["src_height"] - (kwargs["src_width"] / out_dar)
 
             fix_shift = fix_crop / 2
 
