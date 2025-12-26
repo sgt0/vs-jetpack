@@ -21,7 +21,7 @@ class Dar(Fraction):
     """
 
     @classmethod
-    def from_res(cls, width: int, height: int, sar: Sar | None = None) -> Self:
+    def from_res(cls, width: int, height: int, sar: Sar | Literal[False] = False) -> Self:
         """
         Get the DAR from the specified dimensions and SAR.
 
@@ -36,11 +36,8 @@ class Dar(Fraction):
 
         dar = Fraction(width, height)
 
-        if sar:
-            if sar.denominator > sar.numerator:
-                dar /= sar
-            else:
-                dar *= sar
+        if sar is not False:
+            dar /= sar
 
         return cls(dar)
 
@@ -57,7 +54,7 @@ class Dar(Fraction):
             A DAR object created using the specified clip and SAR.
         """
 
-        return cls.from_res(clip.width, clip.height, Sar.from_clip(clip) if sar else None)
+        return cls.from_res(clip.width, clip.height, Sar.from_clip(clip) if sar else sar)
 
     def to_sar(self, active_area: int | Fraction, height: int) -> Sar:
         """
