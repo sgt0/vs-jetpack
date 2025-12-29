@@ -137,8 +137,10 @@ def setup_logging(level: str | int = INFO, **kwargs: Any) -> None:
     for module in _JETPACK_MODULES:
         logger = getLogger(module)
         logger.setLevel(level)
-        logger.addHandler(handler)
         logger.propagate = False
+
+        if not logger.hasHandlers():
+            logger.addHandler(handler)
 
     basicConfig(level=level, **kwargs)
 
