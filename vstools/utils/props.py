@@ -41,7 +41,7 @@ type _PropValue = (
 )
 
 
-_get_prop_cache = NodesPropsCache[vs.RawNode]()
+_get_prop_cache = NodesPropsCache[vs.RawNode](cache_size=25)
 
 
 def _normalize_types[T](types: type[T] | Iterable[type[T]]) -> tuple[type[T], ...]:
