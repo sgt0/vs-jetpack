@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from collections import UserDict
 from collections.abc import MutableMapping
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,7 @@ __all__ = [
 ]
 
 
-class ClipsCache(VSObject, dict[vs.VideoNode, vs.VideoNode]):
+class ClipsCache(VSObject, UserDict[vs.VideoNode, vs.VideoNode]):
     def __delitem__(self, key: vs.VideoNode) -> None:
         if key not in self:
             return
@@ -29,7 +30,7 @@ class ClipsCache(VSObject, dict[vs.VideoNode, vs.VideoNode]):
         return super().__delitem__(key)
 
 
-class DynamicClipsCache[T](VSObject, dict[T, vs.VideoNode]):
+class DynamicClipsCache[T](VSObject, UserDict[T, vs.VideoNode]):
     def __init__(self, cache_size: int = 2) -> None:
         self.cache_size = cache_size
 
@@ -46,7 +47,7 @@ class DynamicClipsCache[T](VSObject, dict[T, vs.VideoNode]):
         return super().__getitem__(key)
 
 
-class FramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, dict[int, FrameT]):
+class FramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, UserDict[int, FrameT]):
     def __init__(self, clip: NodeT, cache_size: int = 10) -> None:
         self.clip: NodeT = clip
         self.cache_size = cache_size
@@ -72,7 +73,7 @@ class FramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, dict[int, Fr
         return super().__getitem__(key)
 
 
-class NodeFramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, dict[NodeT, FramesCache[NodeT, FrameT]]):
+class NodeFramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, UserDict[NodeT, FramesCache[NodeT, FrameT]]):
     def _ensure_key(self, key: NodeT) -> None:
         if key not in self:
             super().__setitem__(key, FramesCache(key))
@@ -91,7 +92,7 @@ class NodeFramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObject, dict[Nod
 class ClipFramesCache(NodeFramesCache[vs.VideoNode, vs.VideoFrame]): ...
 
 
-class NodesPropsCache[NodeT: vs.RawNode](VSObject, dict[tuple[NodeT, int], MutableMapping[str, "_PropValue"]]):
+class NodesPropsCache[NodeT: vs.RawNode](VSObject, UserDict[tuple[NodeT, int], MutableMapping[str, "_PropValue"]]):
     def __delitem__(self, key: tuple[NodeT, int]) -> None:
         if key not in self:
             return
