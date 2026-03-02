@@ -34,7 +34,7 @@ from vstools import (
 
 __all__ = ["deblock_qed", "dpir", "dpir_mask", "mpeg2stinx"]
 
-_StrengthT = SupportsFloat | vs.VideoNode | None
+_StrengthT = SupportsFloat | vs.VideoNode
 
 
 class dpir(CustomStrEnum):  # noqa: N801
@@ -128,7 +128,7 @@ class dpir(CustomStrEnum):  # noqa: N801
 
             raise CustomRuntimeError
 
-        if not strength or not planes:
+        if not planes:
             return clip
 
         if not isinstance(strength, vs.VideoNode):
@@ -181,7 +181,7 @@ def dpir_mask(
     if relative:
         mask = gauss_blur(mask, 1.5)
 
-    mask = norm_expr(mask, f"{high} 255 / x {low} 255 / * -", func=dpir_mask)
+    mask = norm_expr(mask, f"{high} x {low} * -", func=dpir_mask)
 
     if linemask:
         lines = fallback(lines, high)
