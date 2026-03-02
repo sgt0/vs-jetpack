@@ -7,6 +7,7 @@ from jetpytools import CustomNotImplementedError, CustomRuntimeError, CustomStrE
 
 from vsaa import BWDIF, NNEDI3, Deinterlacer
 from vsexprtools import norm_expr
+from vsjetpack import deprecated
 from vskernels import Box, Point
 from vsmasktools import FDoG, MaskLike, Morpho, adg_mask, normalize_mask, strength_zones_mask
 from vsrgtools import MeanMode, gauss_blur, repair
@@ -162,6 +163,10 @@ class dpir(CustomStrEnum):  # noqa: N801
         return out
 
 
+@deprecated(
+    "dpir_mask is deprecated and will be removed in a future version.",
+    category=DeprecationWarning,
+)
 def dpir_mask(
     clip: vs.VideoNode,
     low: float = 5,
