@@ -34,7 +34,7 @@ from vstools import (
 
 __all__ = ["deblock_qed", "dpir", "dpir_mask", "mpeg2stinx"]
 
-_StrengthT = SupportsFloat | vs.VideoNode
+_StrengthT = SupportsFloat | vs.VideoNode | None
 
 
 class dpir(CustomStrEnum):  # noqa: N801
@@ -132,7 +132,7 @@ class dpir(CustomStrEnum):  # noqa: N801
             return clip
 
         if not isinstance(strength, vs.VideoNode):
-            base_strength = clip.std.BlankClip(format=vs.GRAYH, color=float(strength))
+            base_strength = clip.std.BlankClip(format=vs.GRAYH, color=float(strength) if strength else 0)
         else:
             base_strength = strength
 
@@ -149,7 +149,7 @@ class dpir(CustomStrEnum):  # noqa: N801
             no_dpir_zones = list[tuple[int, int]]()
 
             for r, s in zones:
-                if s is None or (not isinstance(s, vs.VideoNode) and float(s) == 0):
+                if s is None:
                     no_dpir_zones.extend(normalize_ranges(clip, r))
 
             out = replace_ranges(dpired, clip, no_dpir_zones)
