@@ -32,6 +32,7 @@ class ClipsCache(VSObjectABC, UserDict[vs.VideoNode, vs.VideoNode]):
 
 class DynamicClipsCache[T](VSObjectABC, UserDict[T, vs.VideoNode]):
     def __init__(self, cache_size: int = 2) -> None:
+        super().__init__()
         self.cache_size = cache_size
 
     @abstractmethod
@@ -69,6 +70,7 @@ class LRUCache[K, V](VSObject, OrderedDict[K, V]):
 
 class FramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObjectABC, UserDict[int, FrameT]):
     def __init__(self, clip: NodeT, cache_size: int = 10) -> None:
+        super().__init__()
         self.clip: NodeT = clip
         self.cache_size = cache_size
 
