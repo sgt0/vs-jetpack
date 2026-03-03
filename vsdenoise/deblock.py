@@ -129,7 +129,7 @@ class dpir(CustomStrEnum):  # noqa: N801
 
             raise CustomRuntimeError
 
-        if not planes:
+        if strength is None or not planes:
             return clip
 
         if not isinstance(strength, vs.VideoNode):
@@ -192,7 +192,7 @@ def dpir_mask(
         lines = fallback(lines, high)
         linemask = normalize_mask(linemask, y)
 
-        lines_clip = mask.std.BlankClip(color=lines / 255)
+        lines_clip = mask.std.BlankClip(color=lines)
 
         mask = mask.std.MaskedMerge(lines_clip, linemask)
 
