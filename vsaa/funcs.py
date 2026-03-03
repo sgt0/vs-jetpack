@@ -38,17 +38,16 @@ def pre_aa(
     wclip = func.work_clip
     tclips = dict[str, Any]()
 
-    for y in sorted((aa_dir for aa_dir in AntiAliaser.AADirection), key=lambda x: x.value, reverse=transpose_first):
+    for y in sorted(AntiAliaser.AADirection, key=lambda x: x.value, reverse=transpose_first):
         if direction in (y, AntiAliaser.AADirection.BOTH):
             if y == AntiAliaser.AADirection.HORIZONTAL:
                 wclip, tclips = antialiaser.transpose(wclip)
 
             aa = antialiaser.antialias(wclip, AntiAliaser.AADirection.VERTICAL, **tclips)
-            sharp = sharpener(wclip)
-            limit = MeanMode.MEDIAN(wclip, aa, sharp)
+            wclip = MeanMode.MEDIAN(wclip, aa, sharpener(wclip))
 
             if y == AntiAliaser.AADirection.HORIZONTAL:
-                wclip, tclips = antialiaser.transpose(limit)
+                wclip, tclips = antialiaser.transpose(wclip)
 
     return func.return_clip(wclip)
 
