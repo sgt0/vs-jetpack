@@ -169,8 +169,8 @@ class DitherType(CustomStrEnum, metaclass=_DitherTypeMeta):
         self,
         clip: vs.VideoNode,
         out_fmt: vs.VideoFormat,
-        range_in: ColorRange,
-        range_out: ColorRange,
+        range_in: ColorRangeLike | None,
+        range_out: ColorRangeLike | None,
         force_fmtc: bool,
     ) -> vs.VideoNode:
         """
@@ -178,24 +178,21 @@ class DitherType(CustomStrEnum, metaclass=_DitherTypeMeta):
         """
         fmt = get_video_format(clip)
 
+        if range_in is not None:
+            clip = ColorRange.ensure_presence(clip, range_in)
+            range_in = ColorRange.from_param(range_in).value_zimg
+
+        if range_out is not None:
+            range_out = ColorRange.from_param(range_out).value_zimg
+
         if not (self.is_fmtc or force_fmtc):
-            return clip.resize.Point(
-                format=out_fmt,
-                dither_type=self.value.lower(),
-                range_in=range_in.value_zimg,
-                range=range_out.value_zimg,
-            )
+            return clip.resize.Point(format=out_fmt, dither_type=self.value.lower(), range_in=range_in, range=range_out)
 
         # Workaround because fmtc doesn't support FLOAT 16 input
         if fmt.sample_type is vs.FLOAT and fmt.bits_per_sample == 16:
-            clip = DitherType.NONE.apply(clip, fmt.replace(bits_per_sample=32), range_in, range_out, False)
+            clip = DitherType.NONE.apply(clip, fmt.replace(bits_per_sample=32), None, None, False)
 
-        return clip.fmtc.bitdepth(
-            dmode=self._fmtc_dmode,
-            bits=out_fmt.bits_per_sample,
-            fulls=range_in is ColorRange.FULL,
-            fulld=range_out is ColorRange.FULL,
-        )
+        return clip.fmtc.bitdepth(dmode=self._fmtc_dmode, bits=out_fmt.bits_per_sample, fulls=range_in, fulld=range_out)
 
     @cachedproperty
     def is_fmtc(self) -> bool:
@@ -363,14 +360,8 @@ def depth(
     Returns:
         Converted clip with desired bit depth and sample type. `ColorFamily` will be same as input.
     """
-    if range_in is not None:
-        clip = ColorRange.ensure_presence(clip, range_in)
-
     in_fmt = get_video_format(clip)
     out_fmt = get_video_format(bitdepth or clip, sample_type=sample_type)
-
-    range_out = ColorRange.from_param_or_video(range_out, clip)
-    range_in = ColorRange.from_param_or_video(range_in, clip)
 
     if (in_fmt.bits_per_sample, in_fmt.sample_type, range_in) == (
         out_fmt.bits_per_sample,
