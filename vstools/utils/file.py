@@ -1,26 +1,8 @@
 from __future__ import annotations
 
-from jetpytools import CustomRuntimeError, SPath, SPathLike, add_script_path_hook, get_script_path
+from jetpytools import CustomRuntimeError, SPath, SPathLike, get_script_path
 
 __all__ = ["PackageStorage"]
-
-
-def _vspreview_script_path() -> SPath | None:
-    # TODO: move to vspreview
-    try:
-        from vspreview import is_preview
-
-        if is_preview():
-            from vspreview.core import main_window
-
-            return SPath(main_window().script_path)
-    except ModuleNotFoundError:
-        ...
-
-    return None
-
-
-add_script_path_hook(_vspreview_script_path)
 
 
 class PackageStorage:
