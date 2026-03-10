@@ -111,7 +111,7 @@ class CropAbs(NamedTuple):
         )
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class ScalingArgs:
     width: int
     height: int
