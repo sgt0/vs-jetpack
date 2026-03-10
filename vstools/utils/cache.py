@@ -52,21 +52,35 @@ class DynamicClipsCache[T](VSObjectABC, UserDict[T, vs.VideoNode]):
 class LRUCache[K, V](VSObject, OrderedDict[K, V]):
     def __init__(self, cache_size: int = 10) -> None:
         super().__init__()
-        self.cache_size = cache_size
+        self._cache_size = cache_size
 
     def __getitem__(self, key: K) -> V:
         val = super().__getitem__(key)
-        super().move_to_end(key)
-
+        self.move_to_end(key)
         return val
 
     def __setitem__(self, key: K, value: V) -> None:
         super().__setitem__(key, value)
-        super().move_to_end(key)
+        self.move_to_end(key)
+        self.prune()
 
-        while len(self) > self.cache_size:
-            oldkey = next(iter(self))
-            super().__delitem__(oldkey)
+    @property
+    def cache_size(self) -> int:
+        return self._cache_size
+
+    @cache_size.setter
+    def cache_size(self, value: int) -> None:
+        self._cache_size = value
+        self.prune()
+
+    @cache_size.deleter
+    def cache_size(self) -> None:
+        self._cache_size = 0
+        self.prune()
+
+    def prune(self) -> None:
+        while len(self) > self._cache_size:
+            self.popitem(last=False)
 
 
 class FramesCache[NodeT: vs.RawNode, FrameT: vs.RawFrame](VSObjectABC, UserDict[int, FrameT]):
