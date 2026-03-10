@@ -16,6 +16,7 @@ __all__ = [
     "ClipsCache",
     "DynamicClipsCache",
     "FramesCache",
+    "LRUCache",
     "NodeFramesCache",
     "NodesPropsCache",
     "cache_clip",
