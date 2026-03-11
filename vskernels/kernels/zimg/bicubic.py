@@ -86,192 +86,133 @@ class Bicubic(ZimgComplexKernel):
         return super()._pretty_string(**{"b": round(self.b, 3), "c": round(self.c, 3)} | attrs)
 
 
-class BSpline(Bicubic):
+class SpecialBicubic(Bicubic, abstract=True):
+    """
+    Base class for fixed-parameter bicubic presets.
+    """
+
+    b: float
+    c: float
+    blur: float = 1.0
+
+    def __init__(self, **kwargs: Any) -> None:
+        """
+        Initialize the scaler with optional arguments.
+
+        Args:
+            **kwargs: Keyword arguments that configure the internal scaling behavior.
+        """
+        super().__init__(**kwargs | {"b": self.b, "c": self.c} | ({"blur": self.blur} if self.blur != 1.0 else {}))
+
+
+class BSpline(SpecialBicubic):
     """
     BSpline resizer (b=1, c=0).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=1, c=0, **kwargs)
+    b = 1
+    c = 0
 
 
-class Hermite(Bicubic):
+class Hermite(SpecialBicubic):
     """
     Hermite resizer (b=0, c=0).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=0, **kwargs)
+    b = 0
+    c = 0
 
 
-class Mitchell(Bicubic):
+class Mitchell(SpecialBicubic):
     """
     Mitchell resizer (b=1/3, c=1/3).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=1 / 3, c=1 / 3, **kwargs)
+    b = 1 / 3
+    c = 1 / 3
 
 
-class Catrom(Bicubic):
+class Catrom(SpecialBicubic):
     """
     Catrom resizer (b=0, c=0.5).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=0.5, **kwargs)
+    b = 0
+    c = 0.5
 
 
-class FFmpegBicubic(Bicubic):
+class FFmpegBicubic(SpecialBicubic):
     """
     FFmpeg's swscale default resizer (b=0, c=0.6).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=0.6, **kwargs)
+    b = 0
+    c = 0.6
 
 
-class AdobeBicubic(Bicubic):
+class AdobeBicubic(SpecialBicubic):
     """
     Adobe's "Bicubic" interpolation preset resizer (b=0, c=0.75).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=0.75, **kwargs)
+    b = 0
+    c = 0.75
 
 
-class AdobeBicubicSharper(Bicubic):
+class AdobeBicubicSharper(SpecialBicubic):
     """
     Adobe's "Bicubic Sharper" interpolation preset resizer (b=0, c=1, blur=1.05).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=1, blur=1.05, **kwargs)
+    b = 0
+    c = 1
+    blur = 1.05
 
 
-class AdobeBicubicSmoother(Bicubic):
+class AdobeBicubicSmoother(SpecialBicubic):
     """
     Adobe's "Bicubic Smoother" interpolation preset resizer (b=0, c=0.625, blur=1.15).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=5 / 8, blur=1.15, **kwargs)
+    b = 0
+    c = 5 / 8
+    blur = 1.15
 
 
-class BicubicSharp(Bicubic):
+class BicubicSharp(SpecialBicubic):
     """
     BicubicSharp resizer (b=0, c=1).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        super().__init__(b=0, c=1, **kwargs)
+    b = 0
+    c = 1
 
 
-class RobidouxSoft(Bicubic):
+class RobidouxSoft(SpecialBicubic):
     """
     RobidouxSoft resizer (b=0.67962, c=0.16019).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        b = (9 - 3 * sqrt(2)) / 7
-        c = (1 - b) / 2
-        super().__init__(b=b, c=c, **kwargs)
+    b = (9 - 3 * sqrt(2)) / 7
+    c = (1 - b) / 2
 
 
-class Robidoux(Bicubic):
+class Robidoux(SpecialBicubic):
     """
     Robidoux resizer (b=0.37822, c=0.31089).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        b = 12 / (19 + 9 * sqrt(2))
-        c = 113 / (58 + 216 * sqrt(2))
-
-        super().__init__(b=b, c=c, **kwargs)
+    b = 12 / (19 + 9 * sqrt(2))
+    c = 113 / (58 + 216 * sqrt(2))
 
 
-class RobidouxSharp(Bicubic):
+class RobidouxSharp(SpecialBicubic):
     """
     RobidouxSharp resizer (b=0.26201, c=0.36899).
     """
 
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        Initialize the scaler with optional arguments.
-
-        Args:
-            **kwargs: Keyword arguments that configure the internal scaling behavior.
-        """
-        b = 6 / (13 + 7 * sqrt(2))
-        c = 7 / (2 + 12 * sqrt(2))
-
-        super().__init__(b=b, c=c, **kwargs)
+    b = 6 / (13 + 7 * sqrt(2))
+    c = 7 / (2 + 12 * sqrt(2))
 
 
 class BicubicAuto(Bicubic):
